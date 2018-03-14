@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:app="http://schemas.android.com/apk/res-auto"
+      xmlns:tools="http://schemas.android.com/tools">
+    <item
+        android:id="@+id/action_dji"
+        android:orderInCategory="200"
+        app:showAsAction="always"
+        android:title="DJI"/>
+    <item
+        android:id="@+id/action_gcs"
+        android:orderInCategory="300"
+        app:showAsAction="always"
+        android:title="GCS"/>
+    <item
+        android:id="@+id/action_settings"
+        android:orderInCategory="400"
+        app:showAsAction="always"
+        android:title="Settings"
+        android:icon="@drawable/ic_settings_white_24dp"/>
+
+</menu>
