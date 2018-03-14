@@ -36,7 +36,7 @@ struct URLProtocol;
  * Codec information
  */
 JNIEXPORT jstring
-Java_io_diux_rogue_rosettadrone_video_NativeHelper_codecinfotest(JNIEnv *env, jobject obj) {
+Java_sq_rogue_rosettadrone_video_NativeHelper_codecinfotest(JNIEnv *env, jobject obj) {
     char info[40000] = {0};
 
     av_register_all();
@@ -69,7 +69,7 @@ void invokeFrameDataCallback(JNIEnv *env, jobject obj, uint8_t *buf, int size, i
  * Initialize the ffmpeg and software decoder.
  */
 JNIEXPORT jboolean
-Java_io_diux_rogue_rosettadrone_video_NativeHelper_init(JNIEnv *env, jobject obj) {
+Java_sq_rogue_rosettadrone_video_NativeHelper_init(JNIEnv *env, jobject obj) {
     jclass clazz = (*env)->GetObjectClass(env, obj);
     dataCallbackMID = (*env)->GetMethodID(env, clazz, "onFrameDataRecv", "([BIIZII)V");
     if (isFFmpegInitialized == 0) {
@@ -120,11 +120,11 @@ int parse(JNIEnv *env, jobject obj, uint8_t *pBuff, int videosize, uint64_t pts)
         av_init_packet(&packet);
         if (m_pCodecPaser == NULL) {
             LOGE("m_pCodecPaser == NULL");
-            Java_io_diux_rogue_rosettadrone_video_NativeHelper_init(env, obj);
+            Java_sq_rogue_rosettadrone_video_NativeHelper_init(env, obj);
         }
         if (m_pCodecCtx == NULL) {
             LOGE("m_pCodecCtx == NULL");
-            Java_io_diux_rogue_rosettadrone_video_NativeHelper_init(env, obj);
+            Java_sq_rogue_rosettadrone_video_NativeHelper_init(env, obj);
         }
         paserLen = av_parser_parse2(m_pCodecPaser, m_pCodecCtx, &packet.data, &packet.size,
                                     pFrameBuff,
@@ -175,7 +175,7 @@ uint8_t audaudsize2 = 12;
  * Framing the raw data from camera.
  */
 JNIEXPORT jboolean
-Java_io_diux_rogue_rosettadrone_video_NativeHelper_parse(JNIEnv *env, jobject obj, jbyteArray pBuff,
+Java_sq_rogue_rosettadrone_video_NativeHelper_parse(JNIEnv *env, jobject obj, jbyteArray pBuff,
                                                          int size) {
     jbyte *jBuff = (jbyte *) ((*env)->GetByteArrayElements(env, pBuff, 0));
     uint8_t *buff = (uint8_t *) jBuff;
@@ -209,7 +209,7 @@ Java_io_diux_rogue_rosettadrone_video_NativeHelper_parse(JNIEnv *env, jobject ob
  * Release the ffmpeg.
  */
 JNIEXPORT jboolean
-Java_io_diux_rogue_rosettadrone_video_NativeHelper_release(JNIEnv *env, jobject obj) {
+Java_sq_rogue_rosettadrone_video_NativeHelper_release(JNIEnv *env, jobject obj) {
     if (m_pCodecCtx) {
         avcodec_close(m_pCodecCtx);
         m_pCodecCtx = NULL;

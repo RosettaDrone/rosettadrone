@@ -32,7 +32,7 @@ before commanding an arm or takeoff.
 
 2. In Android Studio, select **File->New->Import Project** and navigate to the downloaded folder.
  
-3. Sign up for the DJI Developer Program at https://developer.dji.com/mobile-sdk/ and sign up for an Application key.
+3. Sign up for the DJI Developer Program at https://developer.dji.com/mobile-sdk/ and sign up for an Application key. The package name should be sq.rogue.rosettadrone.
  
 4. Create a new file called keys.xml in the /values folder, and insert the following:
 ```
