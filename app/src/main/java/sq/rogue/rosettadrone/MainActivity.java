@@ -228,6 +228,8 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
         mUIHandler.postDelayed(RunnableUpdateUI, 1000);
         mGCSCommunicator = new GCSCommunicatorAsyncTask();
         mGCSCommunicator.execute();
+
+        //NativeHelper.getInstance().init();
     }
 
     private void requestPermissions() {
@@ -363,7 +365,9 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
     }
 
     private void onClickDJIStatus() {
+
         Log.d(TAG, "onClickDJIStatus()");
+        mModel.startWaypointMission();
     }
 
     private void onClickGCSStatus() {
@@ -431,7 +435,6 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
 
     private void onDroneConnected() {
         mModel.setDjiAircraft((Aircraft) mProduct);
-        mModel.setMissionControl(DJISDKManager.getInstance().getMissionControl());
         mModel.loadParamsFromDJI();
         initVideoStreamDecoder();
         initPacketizer();
@@ -453,7 +456,6 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
 
     private void onDroneDisconnected() {
         mModel.setDjiAircraft(null);
-        mModel.setMissionControl(null);
     }
 
 

@@ -14,6 +14,11 @@ import dji.sdk.mission.waypoint.WaypointMissionOperatorListener;
 class RosettaMissionOperatorListener implements WaypointMissionOperatorListener {
     private String TAG = "RosettaDrone";
     private int WAYPOINT_COUNT = 0;
+    private MainActivity activity;
+
+    public void setMainActivity(MainActivity activity) {
+        this.activity = activity;
+    }
 
     @Override
     public void onDownloadUpdate(@NonNull WaypointMissionDownloadEvent waypointMissionDownloadEvent) {
@@ -21,7 +26,7 @@ class RosettaMissionOperatorListener implements WaypointMissionOperatorListener 
         if (waypointMissionDownloadEvent.getProgress() != null
                 && waypointMissionDownloadEvent.getProgress().isSummaryDownloaded
                 && waypointMissionDownloadEvent.getProgress().downloadedWaypointIndex == (WAYPOINT_COUNT - 1)) {
-            Log.d(TAG, "Download successful!");
+            activity.logMessageDJI("Mission download successful!");
         }
         updateWaypointMissionState();
     }
@@ -29,10 +34,11 @@ class RosettaMissionOperatorListener implements WaypointMissionOperatorListener 
     @Override
     public void onUploadUpdate(@NonNull WaypointMissionUploadEvent waypointMissionUploadEvent) {
         // Example of Upload Listener
+        //activity.logMessageDJI("Uploaded waypoint " +  waypointMissionUploadEvent.getProgress().uploadedWaypointIndex);
         if (waypointMissionUploadEvent.getProgress() != null
                 && waypointMissionUploadEvent.getProgress().isSummaryUploaded
                 && waypointMissionUploadEvent.getProgress().uploadedWaypointIndex == (WAYPOINT_COUNT - 1)) {
-            Log.d(TAG, "Upload successful!");
+            activity.logMessageDJI("Mission upload successful!");
         }
         updateWaypointMissionState();
     }
@@ -54,16 +60,17 @@ class RosettaMissionOperatorListener implements WaypointMissionOperatorListener 
 
     @Override
     public void onExecutionStart() {
-        Log.d(TAG, "Execution started!");
+        activity.logMessageDJI("Execution started!");
         updateWaypointMissionState();
     }
 
     @Override
     public void onExecutionFinish(@Nullable DJIError djiError) {
-        Log.d(TAG, "Execution finished!");
+        activity.logMessageDJI("Execution finished!");
         updateWaypointMissionState();
     }
 
     private void updateWaypointMissionState() {
+
     }
 };

@@ -158,7 +158,7 @@ public class MAVLinkReceiver {
              **************************************************************/
 
             case MAVLINK_MSG_ID_MISSION_REQUEST_LIST:
-                parent.logMessageToGCS("mission_request_list received");
+                parent.logMessageDJI("MSN: RD received mission_request_list from GCS");
                 mModel.send_mission_count();
                 break;
 
@@ -168,14 +168,18 @@ public class MAVLinkReceiver {
 
             case MAVLINK_MSG_ID_MISSION_REQUEST:
                 msg_mission_request msg_request = new msg_mission_request();
+                parent.logMessageDJI("MSN: RD received mission_request from GCS: " + String.valueOf(msg_request.seq));
                 mModel.send_mission_item(msg_request.seq);
                 break;
 
             case MAVLINK_MSG_ID_MISSION_ACK:
                 msg_mission_ack msg_ack = new msg_mission_ack();
+                parent.logMessageDJI("MSN: RD received mission_ack from GCS");
                 if (msg_ack.type == MAV_MISSION_TYPE_MISSION) {
+                    parent.logMessageDJI("MSN: ack success");
                     // TODO success
                 } else {
+                    parent.logMessageDJI("MSN: ack fail");
                     // TODO fail
                 }
                 break;
@@ -189,24 +193,25 @@ public class MAVLinkReceiver {
                 //mModel.getMissionControl().getWaypointMissionOperator().getLoadedMission().getWaypointList().clear();
                 msg_mission_count msg_count = (msg_mission_count) msg;
                 mNumGCSWaypoints = msg_count.count;
-                parent.logMessageToGCS("Num GCS waypoints: " + String.valueOf(mNumGCSWaypoints));
+                parent.logMessageDJI("Num waypoints from GCS: " + String.valueOf(mNumGCSWaypoints));
                 wpState = WP_STATE_REQ_WP;
                 mModel.request_mission_item(0);
                 break;
 
             case MAVLINK_MSG_ID_MISSION_ITEM:
                 msg_mission_item msg_item = (msg_mission_item) msg;
+                parent.logMessageDJI("MSN: Received mission_item from GCS: " + String.valueOf(msg_item.seq));
+                parent.logMessageDJI("   " + String.valueOf(msg_item.x) + ", " + String.valueOf(msg_item.y));
                 Waypoint wp = new Waypoint(msg_item.x, msg_item.y, msg_item.z); // TODO check altitude conversion
                 mWaypointList.add(wp);
 
                 // We are done fetching a complete mission from the GCS...
                 if (msg_item.seq == mNumGCSWaypoints - 1) {
-                    parent.logMessageToGCS("All wps received");
+                    parent.logMessageDJI("All waypoints received from GCS");
                     wpState = WP_STATE_INACTIVE;
                     finalizeNewMission();
                     mModel.send_mission_ack();
                 } else {
-                    parent.logMessageToGCS("Received " + msg_item.seq + ", requesting next wp:" + String.valueOf(msg_item.seq + 1));
                     mModel.request_mission_item((msg_item.seq + 1));
                 }
                 break;
@@ -216,11 +221,13 @@ public class MAVLinkReceiver {
              **************************************************************/
 
             case MAVLINK_MSG_ID_MISSION_SET_CURRENT:
+                parent.logMessageDJI("MSN: received set_current from GCS");
                 // TODO
                 break;
 
             case MAVLINK_MSG_ID_MISSION_CLEAR_ALL:
-                mModel.getMissionControl().getWaypointMissionOperator().getLoadedMission().getWaypointList().clear();
+                parent.logMessageDJI("MSN: received clear_all from GCS");
+                mModel.getWaypointMissionOperator().getLoadedMission().getWaypointList().clear();
                 break;
 
         }
