@@ -263,6 +263,8 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
     }
 
     private void initPacketizer() {
+        if(packetizer != null && packetizer.getRtpSocket() != null)
+            packetizer.getRtpSocket().close();
         packetizer = new H264Packetizer();
         packetizer.setInputStream(new ByteArrayInputStream("".getBytes()));
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
@@ -627,8 +629,10 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
         }
 
         private void createTelemetrySocket() {
-            if (socket != null)
+            if (socket != null) {
                 socket.disconnect();
+                socket.close();
+            }
 
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
             String gcsIPString = "127.0.0.1";
