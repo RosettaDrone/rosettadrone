@@ -129,8 +129,12 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
                     logDJI.appendLogText(mNewDJI);
                     mNewDJI = "";
                 }
-                if (mModel.isRSArmingEnabled())
-                    toggleBtnArming.setChecked(true);
+                if(mModel != null) {
+                    if (mModel.isRSArmingEnabled())
+                        toggleBtnArming.setChecked(true);
+                    else
+                        toggleBtnArming.setChecked(false);
+                }
                 else
                     toggleBtnArming.setChecked(false);
                 invalidateOptionsMenu();
