@@ -144,7 +144,7 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
-        Log.d("TABS", "*** onCreate()");
+        Log.d(TAG, "onCreate()");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -284,6 +284,7 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
 
     @Override
     protected void onResume() {
+        Log.d(TAG, "onResume()");
         super.onResume();
     }
 
@@ -567,7 +568,7 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
         }
 
         protected Integer doInBackground(Integer... ints2) {
-            Log.d("TABS", "doInBackground()");
+            Log.d("RDTHREADS", "doInBackground()");
 
             try {
                 onRenewDatalinks();
@@ -614,18 +615,14 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
             } catch (Exception e) {
                 Log.d(TAG, "exception", e);
             }
+            socket.disconnect();
+            timer.cancel();
+            Log.d("RDTHREADS", "doInBackground() complete");
             return 0;
         }
 
         protected void onProgressUpdate(Integer... progress) {
 
-        }
-
-        protected void onPostExecute(Long result) {
-            Log.d("TABS", "onPostExecute()");
-            socket.disconnect();
-
-            timer.cancel();
         }
 
         private void createTelemetrySocket() {
@@ -678,7 +675,6 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
             while ((line = br.readLine()) != null) {
                 if (line.startsWith("#"))
                     continue;
-                Log.d(TAG, line);
                 String[] paramData = line.split("\t");
                 String paramName = paramData[2];
                 Float paramValue = Float.valueOf(paramData[3]);
