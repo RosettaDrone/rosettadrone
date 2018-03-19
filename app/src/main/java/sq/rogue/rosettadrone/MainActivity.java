@@ -312,6 +312,26 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
     protected void onDestroy() {
         Log.i(TAG, "onDestroy");
         mGCSCommunicator.cancel(true);
+        mGCSCommunicator = null;
+
+        mUIHandler.removeCallbacksAndMessages(null);
+        mDJIHandler.removeCallbacksAndMessages(null);
+
+        if(VideoFeeder.getInstance() != null) {
+            if(VideoFeeder.getInstance().getPrimaryVideoFeed() != null)
+                VideoFeeder.getInstance().getPrimaryVideoFeed().setCallback(null);
+        }
+        mModel = null;
+
+//        try { mModel.getDjiAircraft().getRemoteController().setHardwareStateCallback(null); }
+//        catch(Exception e) {}
+//        try { mModel.getDjiAircraft().getBattery().setStateCallback(null); }
+//        catch(Exception e) {}
+//        try { Battery.setAggregationStateCallback(null); }
+//        catch(Exception e) {}
+//        try { mModel.getDjiAircraft().getBattery().getCellVoltages(null); }
+//        catch(Exception e) {}
+
         super.onDestroy();
     }
 
