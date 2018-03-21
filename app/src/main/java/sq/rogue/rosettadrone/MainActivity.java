@@ -571,6 +571,46 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
         }
     };
 
+
+    private void loadMockParamFile() {
+        mModel.getParams().clear();
+        try {
+
+            AssetManager am = getAssets();
+            InputStream is = am.open("DJIMock.txt");
+            InputStreamReader inputStreamReader = new InputStreamReader(is);
+            BufferedReader br = new BufferedReader(inputStreamReader);
+
+            String line;
+            while ((line = br.readLine()) != null) {
+                if (line.startsWith("#"))
+                    continue;
+                String[] paramData = line.split("\t");
+                String paramName = paramData[2];
+                Float paramValue = Float.valueOf(paramData[3]);
+                short paramType = Short.valueOf(paramData[4]);
+
+                mModel.getParams().add(new MAVParam(paramName, paramValue, paramType));
+            }
+        } catch (FileNotFoundException e) {
+            Log.d(TAG, "exception", e);
+        } catch (IOException e) {
+            Log.d(TAG, "exception", e);
+        }
+    }
+
+    public void logMessageToGCS(String msg) {
+        mNewOutbound += "\n" + msg;
+    }
+
+    public void logMessageFromGCS(String msg) {
+        mNewInbound += "\n" + msg;
+    }
+
+    public void logMessageDJI(String msg) {
+        mNewDJI += "\n" + msg;
+    }
+
     private static class GCSSenderTimerTask extends TimerTask {
 
         private WeakReference<MainActivity> mainActivityWeakReference;
@@ -607,6 +647,7 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
             mainActivityWeakReference.get().initPacketizer();
         }
 
+        @Override
         protected Integer doInBackground(Integer... ints2) {
             Log.d("RDTHREADS", "doInBackground()");
 
@@ -661,6 +702,19 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
             return 0;
         }
 
+        @Override
+        protected void onPostExecute(Integer integer) {
+            /*
+            TODO Not sure what to do here...
+             */
+            if (mainActivityWeakReference.get() == null || mainActivityWeakReference.get().isFinishing())
+                return;
+
+            mainActivityWeakReference.clear();
+
+        }
+
+        @Override
         protected void onProgressUpdate(Integer... progress) {
 
         }
@@ -701,44 +755,5 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
             mainActivityWeakReference.get().mModel.setSocket(mainActivityWeakReference.get().socket);
         }
 
-    }
-
-    private void loadMockParamFile() {
-        mModel.getParams().clear();
-        try {
-
-            AssetManager am = getAssets();
-            InputStream is = am.open("DJIMock.txt");
-            InputStreamReader inputStreamReader = new InputStreamReader(is);
-            BufferedReader br = new BufferedReader(inputStreamReader);
-
-            String line;
-            while ((line = br.readLine()) != null) {
-                if (line.startsWith("#"))
-                    continue;
-                String[] paramData = line.split("\t");
-                String paramName = paramData[2];
-                Float paramValue = Float.valueOf(paramData[3]);
-                short paramType = Short.valueOf(paramData[4]);
-
-                mModel.getParams().add(new MAVParam(paramName, paramValue, paramType));
-            }
-        } catch (FileNotFoundException e) {
-            Log.d(TAG, "exception", e);
-        } catch (IOException e) {
-            Log.d(TAG, "exception", e);
-        }
-    }
-
-    public void logMessageToGCS(String msg) {
-        mNewOutbound += "\n" + msg;
-    }
-
-    public void logMessageFromGCS(String msg) {
-        mNewInbound += "\n" + msg;
-    }
-
-    public void logMessageDJI(String msg) {
-        mNewDJI += "\n" + msg;
     }
 }
