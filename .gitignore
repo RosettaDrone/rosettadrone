@@ -41,6 +41,8 @@ captures/
 .idea/vcs.xml
 .idea/dictionaries
 .idea/libraries
+.idea/modules.xml
+.idea/runConfigurations.xml
 
 # Keystore files
 *.jks
