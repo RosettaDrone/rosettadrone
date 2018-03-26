@@ -35,6 +35,7 @@ public class LogFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_log, container, false);
         mTextViewTraffic = (TextView) view.findViewById(R.id.textView_traffic);
         mTextViewTraffic.setMovementMethod(new ScrollingMovementMethod());
+        mTextViewTraffic.setHorizontallyScrolling(true);
 //        mScrollView = (ScrollView) view.findViewById(R.id.textAreaScrollerTraffic);
 
 //        mTextViewTraffic.addTextChangedListener(new TextWatcher() {
@@ -91,6 +92,13 @@ public class LogFragment extends Fragment {
 //        mTextViewTraffic.setText(newText);
         mTextViewTraffic.append(text);
 
+        final int scrollAmt = mTextViewTraffic.getLayout().getLineTop(mTextViewTraffic.getLineCount())
+                - mTextViewTraffic.getHeight();
+        if (scrollAmt > 0) {
+            mTextViewTraffic.scrollTo(0, scrollAmt);
+        } else {
+            mTextViewTraffic.scrollTo(0, 0);
+        }
     }
 
     public void clearLogText(String text) {

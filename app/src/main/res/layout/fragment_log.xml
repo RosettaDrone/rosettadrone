@@ -15,14 +15,13 @@
             <!--android:layout_width="match_parent"-->
             <!--android:layout_height="match_parent">-->
 
+    <!--Can set android:maxLines for overflow control here-->
+    <!--android:gravity-->
             <TextView
                 android:id="@+id/textView_traffic"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:scrollHorizontally="true"
                 android:scrollbars="vertical"
-                android:gravity="bottom"
-                android:ellipsize="start"
                 android:text=""
                 />
         <!--</HorizontalScrollView>-->
