@@ -21,6 +21,7 @@
                 android:layout_height="match_parent"
                 android:scrollHorizontally="true"
                 android:scrollbars="vertical"
+                android:gravity="bottom"
                 android:ellipsize="start"
                 android:text=""
                 />

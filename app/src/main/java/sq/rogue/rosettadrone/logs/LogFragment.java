@@ -79,13 +79,18 @@ public class LogFragment extends Fragment {
     }
 
     public void appendLogText(String text) {
-        String newText = mTextViewTraffic.getText().toString() + text;
-        int overflow = newText.length() - mMaxCharacters;
-        if (overflow > 0) {
-            newText = newText.substring(overflow); // trim off oldest characters
-            newText = newText.split("\n", 2)[1]; // ensure the remainder starts on a new message
-        }
-        mTextViewTraffic.setText(newText);
+        /*
+        TODO: Re-add overflow control
+         */
+//        String newText = mTextViewTraffic.getText().toString() + text;
+//        int overflow = newText.length() - mMaxCharacters;
+//        if (overflow > 0) {
+//            newText = newText.substring(overflow); // trim off oldest characters
+//            newText = newText.split("\n", 2)[1]; // ensure the remainder starts on a new message
+//        }
+//        mTextViewTraffic.setText(newText);
+        mTextViewTraffic.append(text);
+
     }
 
     public void clearLogText(String text) {
