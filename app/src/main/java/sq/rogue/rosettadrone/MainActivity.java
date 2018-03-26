@@ -6,7 +6,6 @@ package sq.rogue.rosettadrone;
 // MenuItemTetColor: RPP @ https://stackoverflow.com/questions/31713628/change-menuitem-text-color-programmatically
 
 import android.Manifest;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.AssetManager;
@@ -16,12 +15,12 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -63,6 +62,9 @@ import dji.sdk.base.BaseProduct;
 import dji.sdk.camera.VideoFeeder;
 import dji.sdk.products.Aircraft;
 import dji.sdk.sdkmanager.DJISDKManager;
+import sq.rogue.rosettadrone.logs.LogFragment;
+import sq.rogue.rosettadrone.logs.LogPagerAdapter;
+import sq.rogue.rosettadrone.settings.SettingsActivity;
 import sq.rogue.rosettadrone.video.DJIVideoStreamDecoder;
 import sq.rogue.rosettadrone.video.H264Packetizer;
 import sq.rogue.rosettadrone.video.NativeHelper;
@@ -695,10 +697,16 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
 
             } catch (Exception e) {
                 Log.d(TAG, "exception", e);
+            } finally  {
+                if (mainActivityWeakReference.get().socket.isConnected()) {
+                    mainActivityWeakReference.get().socket.disconnect();
+                }
+                if (timer != null) {
+                    timer.cancel();
+                }
+                Log.d("RDTHREADS", "doInBackground() complete");
+
             }
-            mainActivityWeakReference.get().socket.disconnect();
-            timer.cancel();
-            Log.d("RDTHREADS", "doInBackground() complete");
             return 0;
         }
 

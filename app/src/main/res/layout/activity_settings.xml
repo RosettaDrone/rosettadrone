@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    tools:context=".SettingsActivity">
+    tools:context=".settings.SettingsActivity">
 
     <FrameLayout
         android:id="@+id/pref_container"

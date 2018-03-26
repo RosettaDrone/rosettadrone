@@ -1,9 +1,11 @@
-package sq.rogue.rosettadrone;
+package sq.rogue.rosettadrone.settings;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
+
+import sq.rogue.rosettadrone.R;
 
 public class SettingsActivity extends AppCompatActivity {
 

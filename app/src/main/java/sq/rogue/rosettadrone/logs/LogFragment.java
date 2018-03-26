@@ -1,10 +1,11 @@
-package sq.rogue.rosettadrone;
+package sq.rogue.rosettadrone.logs;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.text.method.ScrollingMovementMethod;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,12 +13,14 @@ import android.view.ViewTreeObserver;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import sq.rogue.rosettadrone.R;
+
 public class LogFragment extends Fragment {
 
     private final int DEFAULT_MAX_CHARACTERS = 200000;
 
     private TextView mTextViewTraffic;
-    private ScrollView mScrollView;
+//    private ScrollView mScrollView;
     private boolean mViewAtBottom = true;
 
     private int mMaxCharacters = DEFAULT_MAX_CHARACTERS;
@@ -31,40 +34,41 @@ public class LogFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_log, container, false);
         mTextViewTraffic = (TextView) view.findViewById(R.id.textView_traffic);
-        mScrollView = (ScrollView) view.findViewById(R.id.textAreaScrollerTraffic);
+        mTextViewTraffic.setMovementMethod(new ScrollingMovementMethod());
+//        mScrollView = (ScrollView) view.findViewById(R.id.textAreaScrollerTraffic);
 
-        mTextViewTraffic.addTextChangedListener(new TextWatcher() {
-
-            @Override
-            public void afterTextChanged(Editable arg0) {
-                if (mViewAtBottom)
-                    mScrollView.fullScroll(ScrollView.FOCUS_DOWN);
-            }
-
-            @Override
-            public void beforeTextChanged(CharSequence arg0, int arg1,
-                                          int arg2, int arg3) {
-                //override stub
-            }
-
-            @Override
-            public void onTextChanged(CharSequence arg0, int arg1, int arg2,
-                                      int arg3) {
-                //override stub
-            }
-        });
-        mScrollView.getViewTreeObserver().addOnScrollChangedListener(new ViewTreeObserver.OnScrollChangedListener() {
-            @Override
-            public void onScrollChanged() {
-                if (mScrollView != null) {
-                    if (mScrollView.getChildAt(0).getBottom() <= (mScrollView.getHeight() + mScrollView.getScrollY()) + 200) {
-                        mViewAtBottom = true;
-                    } else {
-                        mViewAtBottom = false;
-                    }
-                }
-            }
-        });
+//        mTextViewTraffic.addTextChangedListener(new TextWatcher() {
+//
+//            @Override
+//            public void afterTextChanged(Editable arg0) {
+//                if (mViewAtBottom)
+//                    mScrollView.fullScroll(ScrollView.FOCUS_DOWN);
+//            }
+//
+//            @Override
+//            public void beforeTextChanged(CharSequence arg0, int arg1,
+//                                          int arg2, int arg3) {
+//                //override stub
+//            }
+//
+//            @Override
+//            public void onTextChanged(CharSequence arg0, int arg1, int arg2,
+//                                      int arg3) {
+//                //override stub
+//            }
+//        });
+//        mScrollView.getViewTreeObserver().addOnScrollChangedListener(new ViewTreeObserver.OnScrollChangedListener() {
+//            @Override
+//            public void onScrollChanged() {
+//                if (mScrollView != null) {
+//                    if (mScrollView.getChildAt(0).getBottom() <= (mScrollView.getHeight() + mScrollView.getScrollY()) + 200) {
+//                        mViewAtBottom = true;
+//                    } else {
+//                        mViewAtBottom = false;
+//                    }
+//                }
+//            }
+//        });
         return view;
     }
 
