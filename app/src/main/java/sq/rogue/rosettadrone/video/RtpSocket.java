@@ -117,6 +117,7 @@ public class RtpSocket implements Runnable {
 
         try {
             mSocket = new MulticastSocket();
+            mSocket.setLoopbackMode(false); // enable multicast traffic to be seen locally
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }

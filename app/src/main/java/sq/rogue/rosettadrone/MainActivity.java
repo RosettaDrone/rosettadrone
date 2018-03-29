@@ -274,7 +274,7 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
         String videoIPString = "127.0.0.1";
         if (prefs.getBoolean("pref_external_gcs", false))
-            videoIPString = prefs.getString("pref_gcs_ip", null);
+            videoIPString = prefs.getString("pref_video_ip", null);
         int videoPort = Integer.parseInt(prefs.getString("pref_video_port", "-1"));
         try {
             packetizer.getRtpSocket().setDestination(InetAddress.getByName(videoIPString), videoPort, 5000);

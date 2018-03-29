@@ -17,6 +17,13 @@
         android:numeric="integer"
         android:defaultValue="14550"/>
     <EditTextPreference
+        android:key="pref_video_ip"
+        android:title="@string/pref_video_ip"
+        android:inputType="number"
+        android:digits="0123456789."
+        android:defaultValue="127.0.0.1"
+        android:dependency="pref_external_gcs"/>
+    <EditTextPreference
         android:key="pref_video_port"
         android:title="@string/pref_video_port"
         android:numeric="integer"
