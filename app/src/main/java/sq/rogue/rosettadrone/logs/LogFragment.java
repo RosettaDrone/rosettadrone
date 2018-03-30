@@ -82,6 +82,7 @@ public class LogFragment extends Fragment {
     public void appendLogText(String text) {
         /*
         TODO: Re-add overflow control
+        Using substring is very expensive
          */
 //        String newText = mTextViewTraffic.getText().toString() + text;
 //        int overflow = newText.length() - mMaxCharacters;
@@ -90,6 +91,14 @@ public class LogFragment extends Fragment {
 //            newText = newText.split("\n", 2)[1]; // ensure the remainder starts on a new message
 //        }
 //        mTextViewTraffic.setText(newText);
+
+        /*
+        Very naive solution. Writing out to a log is possible solution if log needs preserved,
+        however parsing with substring will have a very severe impact on performance
+         */
+        if (mTextViewTraffic.getText().length() > 20000) {
+            mTextViewTraffic.setText("");
+        }
         mTextViewTraffic.append(text);
 
         final int scrollAmt = mTextViewTraffic.getLayout().getLineTop(mTextViewTraffic.getLineCount())
