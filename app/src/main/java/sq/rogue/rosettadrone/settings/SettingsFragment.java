@@ -73,16 +73,16 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Shared
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 
-        switch (key) {
-            case "pref_gcs_ip":
-                break;
-            case "pref_telem_port":
-                break;
-            case "pref_video_port":
-                break;
-            default:
-                break;
-        }
+//        switch (key) {
+//            case "pref_gcs_ip":
+//                break;
+//            case "pref_telem_port":
+//                break;
+//            case "pref_video_port":
+//                break;
+//            default:
+//                break;
+//        }
         updatePreference(findPreference(key));
     }
 

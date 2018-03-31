@@ -13,6 +13,13 @@
             android:defaultValue="127.0.0.1"
             android:dependency="pref_external_gcs"/>
         <android.support.v7.preference.EditTextPreference
+            android:key="pref_video_ip"
+            android:title="@string/pref_video_ip"
+            android:inputType="number"
+            android:digits="0123456789."
+            android:defaultValue="127.0.0.1"
+            android:dependency="pref_external_gcs"/>
+        <android.support.v7.preference.EditTextPreference
             android:key="pref_telem_port"
             android:title="@string/pref_telem_port"
             android:numeric="integer"

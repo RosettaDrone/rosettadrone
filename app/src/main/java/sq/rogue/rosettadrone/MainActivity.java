@@ -278,7 +278,7 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
         String videoIPString = "127.0.0.1";
         if (prefs.getBoolean("pref_external_gcs", false))
-            videoIPString = prefs.getString("pref_gcs_ip", null);
+            videoIPString = prefs.getString("pref_video_ip", null);
         int videoPort = Integer.parseInt(prefs.getString("pref_video_port", "-1"));
         try {
             packetizer.getRtpSocket().setDestination(InetAddress.getByName(videoIPString), videoPort, 5000);
@@ -594,8 +594,6 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
 
                 mModel.getParams().add(new MAVParam(paramName, paramValue, paramType));
             }
-        } catch (FileNotFoundException e) {
-            Log.d(TAG, "exception", e);
         } catch (IOException e) {
             Log.d(TAG, "exception", e);
         }
@@ -687,9 +685,6 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
                                 mainActivityWeakReference.get().mMavlinkReceiver.process(msg);
                             }
                         }
-                    } catch (PortUnreachableException e) {
-                        //logMessageDJI("Port unreachable: " + e.toString());
-                    } catch (SocketTimeoutException e) {
                     } catch (IOException e) {
                         //logMessageDJI("IOException: " + e.toString());
                     }
