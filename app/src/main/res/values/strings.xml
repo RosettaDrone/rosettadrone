@@ -4,5 +4,4 @@
     <string name="pref_video_ip">Video IP Address</string>
     <string name="pref_telem_port">Telemetry Port</string>
     <string name="pref_video_port">Video Port</string>
-    <string name="pref_video_ip">Video IP Address</string>
 </resources>
