@@ -9,6 +9,10 @@ import sq.rogue.rosettadrone.R;
 
 public class SettingsActivity extends AppCompatActivity {
 
+    /**
+     *
+     * @param savedInstanceState
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
