@@ -206,7 +206,7 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
         viewPager.setOffscreenPageLimit(2);
 
 
-        tabLayout.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
                 viewPager.setCurrentItem(tab.getPosition());
