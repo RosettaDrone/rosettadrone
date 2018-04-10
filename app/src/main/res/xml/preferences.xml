@@ -30,6 +30,11 @@
             android:title="@string/pref_video_port"
             android:numeric="integer"
             android:defaultValue="5600"/>
+        <android.support.v7.preference.SwitchPreferenceCompat
+            android:key="pref_log_mavlink"
+            android:title="Log Mavlink Messages"
+            android:defaultValue="false"
+            android:summary="May decrease performance due to volume of messages"/>
     <!--</android.support.v7.preference.PreferenceCategory>-->
 </android.support.v7.preference.PreferenceScreen>
 

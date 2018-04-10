@@ -93,6 +93,8 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
     private ViewPager viewPager;
     private LogPagerAdapter adapter;
 
+    private SharedPreferences prefs;
+
 
     private String mNewOutbound = "";
     private String mNewInbound = "";
@@ -157,6 +159,7 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
         setContentView(R.layout.activity_main);
 
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
+        prefs = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
 
         requestPermissions();
 
@@ -275,7 +278,6 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
             packetizer.getRtpSocket().close();
         packetizer = new H264Packetizer();
         packetizer.setInputStream(new ByteArrayInputStream("".getBytes()));
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
         String videoIPString = "127.0.0.1";
         if (prefs.getBoolean("pref_external_gcs", false))
             videoIPString = prefs.getString("pref_video_ip", null);
@@ -600,11 +602,13 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
     }
 
     public void logMessageToGCS(String msg) {
-        mNewOutbound += "\n" + msg;
+        if(prefs.getBoolean("pref_log_mavlink",false))
+            mNewOutbound += "\n" + msg;
     }
 
     public void logMessageFromGCS(String msg) {
-        mNewInbound += "\n" + msg;
+        if(prefs.getBoolean("pref_log_mavlink",false))
+            mNewInbound += "\n" + msg;
     }
 
     public void logMessageDJI(String msg) {
@@ -681,7 +685,8 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
 
                             if (packet != null) {
                                 MAVLinkMessage msg = packet.unpack();
-                                mainActivityWeakReference.get().logMessageFromGCS(msg.toString());
+                                if(mainActivityWeakReference.get().prefs.getBoolean("pref_log_mavlink", false))
+                                    mainActivityWeakReference.get().logMessageFromGCS(msg.toString());
                                 mainActivityWeakReference.get().mMavlinkReceiver.process(msg);
                             }
                         }
@@ -728,11 +733,10 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
                 mainActivityWeakReference.get().socket.close();
             }
 
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mainActivityWeakReference.get());
             String gcsIPString = "127.0.0.1";
-            if (prefs.getBoolean("pref_external_gcs", false))
-                gcsIPString = prefs.getString("pref_gcs_ip", null);
-            int telemIPPort = Integer.parseInt(prefs.getString("pref_telem_port", "-1"));
+            if (mainActivityWeakReference.get().prefs.getBoolean("pref_external_gcs", false))
+                gcsIPString = mainActivityWeakReference.get().prefs.getString("pref_gcs_ip", null);
+            int telemIPPort = Integer.parseInt(mainActivityWeakReference.get().prefs.getString("pref_telem_port", "-1"));
 
             try {
                 mainActivityWeakReference.get().socket = new DatagramSocket();
