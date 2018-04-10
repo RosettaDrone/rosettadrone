@@ -1,31 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <CheckBoxPreference
-        android:key="pref_external_gcs"
-        android:title="Use GCS on an external device"
-        android:defaultValue="false"/>
-    <EditTextPreference
-        android:key="pref_gcs_ip"
-        android:title="@string/pref_gcs_ip"
-        android:inputType="number"
-        android:digits="0123456789."
-        android:defaultValue="127.0.0.1"
-        android:dependency="pref_external_gcs"/>
-    <EditTextPreference
-        android:key="pref_telem_port"
-        android:title="@string/pref_telem_port"
-        android:numeric="integer"
-        android:defaultValue="14550"/>
-    <EditTextPreference
-        android:key="pref_video_ip"
-        android:title="@string/pref_video_ip"
-        android:inputType="number"
-        android:digits="0123456789."
-        android:defaultValue="127.0.0.1"
-        android:dependency="pref_external_gcs"/>
-    <EditTextPreference
-        android:key="pref_video_port"
-        android:title="@string/pref_video_port"
-        android:numeric="integer"
-        android:defaultValue="5600"/>
-</PreferenceScreen>
+
+<android.support.v7.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <!--<android.support.v7.preference.PreferenceCategory android:title="Configuration">-->
+        <android.support.v7.preference.SwitchPreferenceCompat
+            android:key="pref_external_gcs"
+            android:title="Use GCS on an external device"
+            android:defaultValue="false"/>
+        <android.support.v7.preference.EditTextPreference
+            android:key="pref_gcs_ip"
+            android:title="@string/pref_gcs_ip"
+            android:inputType="number"
+            android:digits="0123456789."
+            android:defaultValue="127.0.0.1"
+            android:dependency="pref_external_gcs"/>
+        <android.support.v7.preference.EditTextPreference
+            android:key="pref_video_ip"
+            android:title="@string/pref_video_ip"
+            android:inputType="number"
+            android:digits="0123456789."
+            android:defaultValue="127.0.0.1"
+            android:dependency="pref_external_gcs"/>
+        <android.support.v7.preference.EditTextPreference
+            android:key="pref_telem_port"
+            android:title="@string/pref_telem_port"
+            android:numeric="integer"
+            android:defaultValue="14550"/>
+        <android.support.v7.preference.EditTextPreference
+            android:key="pref_video_port"
+            android:title="@string/pref_video_port"
+            android:numeric="integer"
+            android:defaultValue="5600"/>
+    <!--</android.support.v7.preference.PreferenceCategory>-->
+</android.support.v7.preference.PreferenceScreen>
+

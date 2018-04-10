@@ -493,11 +493,7 @@ public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
         if (dataHandler != null) {
             dataHandler.removeCallbacksAndMessages(null);
         }
-        if (Build.VERSION.SDK_INT >= 18) {
-            dataHandlerThread.quitSafely();
-        } else {
-            dataHandlerThread.quit();
-        }
+        dataHandlerThread.quitSafely();
 
         try {
             dataHandlerThread.join(3000);

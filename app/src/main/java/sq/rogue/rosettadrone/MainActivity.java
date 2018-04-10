@@ -15,12 +15,12 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -41,6 +41,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.ref.WeakReference;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -61,6 +62,9 @@ import dji.sdk.base.BaseProduct;
 import dji.sdk.camera.VideoFeeder;
 import dji.sdk.products.Aircraft;
 import dji.sdk.sdkmanager.DJISDKManager;
+import sq.rogue.rosettadrone.logs.LogFragment;
+import sq.rogue.rosettadrone.logs.LogPagerAdapter;
+import sq.rogue.rosettadrone.settings.SettingsActivity;
 import sq.rogue.rosettadrone.video.DJIVideoStreamDecoder;
 import sq.rogue.rosettadrone.video.H264Packetizer;
 import sq.rogue.rosettadrone.video.NativeHelper;
@@ -202,7 +206,7 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
         viewPager.setOffscreenPageLimit(2);
 
 
-        tabLayout.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
                 viewPager.setCurrentItem(tab.getPosition());
@@ -230,7 +234,7 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
         mDJIHandler = new Handler(Looper.getMainLooper());
         mUIHandler = new Handler(Looper.getMainLooper());
         mUIHandler.postDelayed(RunnableUpdateUI, 1000);
-        mGCSCommunicator = new GCSCommunicatorAsyncTask();
+        mGCSCommunicator = new GCSCommunicatorAsyncTask(this);
         mGCSCommunicator.execute();
 
         //NativeHelper.getInstance().init();
@@ -569,122 +573,6 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
         }
     };
 
-    private class GCSSenderTimerTask extends TimerTask {
-        @Override
-        public void run() {
-            mModel.tick();
-        }
-    }
-
-
-    private class GCSCommunicatorAsyncTask extends AsyncTask<Integer, Integer, Integer> {
-
-        public boolean request_renew_datalinks = false;
-        private Timer timer;
-
-        public void renewDatalinks() {
-            request_renew_datalinks = true;
-        }
-
-        private void onRenewDatalinks() {
-            createTelemetrySocket();
-            initPacketizer();
-        }
-
-        protected Integer doInBackground(Integer... ints2) {
-            Log.d("RDTHREADS", "doInBackground()");
-
-            try {
-                onRenewDatalinks();
-                mMavlinkParser = new Parser();
-
-                GCSSenderTimerTask gcsSender = new GCSSenderTimerTask();
-                timer = new Timer(true);
-                timer.scheduleAtFixedRate(gcsSender, 0, 100);
-
-                while (!isCancelled()) {
-                    // Listen for packets
-                    try {
-                        if (request_renew_datalinks == true) {
-                            request_renew_datalinks = false;
-                            onRenewDatalinks();
-
-                        }
-                        byte[] buf = new byte[1000];
-                        DatagramPacket dp = new DatagramPacket(buf, buf.length);
-                        socket.receive(dp);
-
-                        byte[] bytes = dp.getData();
-                        int[] ints = new int[bytes.length];
-                        for (int i = 0; i < bytes.length; i++)
-                            ints[i] = bytes[i] & 0xff;
-
-                        for (int i = 0; i < bytes.length; i++) {
-                            MAVLinkPacket packet = mMavlinkParser.mavlink_parse_char(ints[i]);
-
-                            if (packet != null) {
-                                MAVLinkMessage msg = packet.unpack();
-                                logMessageFromGCS(msg.toString());
-                                mMavlinkReceiver.process(msg);
-                            }
-                        }
-                    } catch (PortUnreachableException e) {
-                        //logMessageDJI("Port unreachable: " + e.toString());
-                    } catch (SocketTimeoutException e) {
-                    } catch (IOException e) {
-                        //logMessageDJI("IOException: " + e.toString());
-                    }
-                }
-
-            } catch (Exception e) {
-                Log.d(TAG, "exception", e);
-            }
-            socket.disconnect();
-            timer.cancel();
-            Log.d("RDTHREADS", "doInBackground() complete");
-            return 0;
-        }
-
-        protected void onProgressUpdate(Integer... progress) {
-
-        }
-
-        private void createTelemetrySocket() {
-            if (socket != null) {
-                socket.disconnect();
-                socket.close();
-            }
-
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
-            String gcsIPString = "127.0.0.1";
-            if (prefs.getBoolean("pref_external_gcs", false) == true)
-                gcsIPString = prefs.getString("pref_gcs_ip", null);
-            int telemIPPort = Integer.parseInt(prefs.getString("pref_telem_port", "-1"));
-
-            try {
-                socket = new DatagramSocket();
-                socket.connect(InetAddress.getByName(gcsIPString), telemIPPort);
-                socket.setSoTimeout(10);
-                logMessageDJI("Starting GCS telemetry link: " + gcsIPString + ":" + String.valueOf(telemIPPort));
-            } catch (SocketException e) {
-                Log.d(TAG, "createTelemetrySocket() - socket exception");
-                Log.d(TAG, "exception", e);
-                logMessageDJI("Telemetry socket exception: " + gcsIPString + ":" + String.valueOf(telemIPPort));
-            } // TODO
-            catch (UnknownHostException e) {
-                Log.d(TAG, "createTelemetrySocket() - unknown host exception");
-                Log.d(TAG, "exception", e);
-                logMessageDJI("Unknown telemetry host: " + gcsIPString + ":" + String.valueOf(telemIPPort));
-            } // TODO
-
-            Log.d(TAG, socket.getInetAddress().toString());
-            Log.d(TAG, socket.getLocalAddress().toString());
-            Log.d(TAG, String.valueOf(socket.getPort()));
-            Log.d(TAG, String.valueOf(socket.getLocalPort()));
-
-            mModel.setSocket(socket);
-        }
-    }
 
     private void loadMockParamFile() {
         mModel.getParams().clear();
@@ -706,8 +594,6 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
 
                 mModel.getParams().add(new MAVParam(paramName, paramValue, paramType));
             }
-        } catch (FileNotFoundException e) {
-            Log.d(TAG, "exception", e);
         } catch (IOException e) {
             Log.d(TAG, "exception", e);
         }
@@ -723,5 +609,154 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
 
     public void logMessageDJI(String msg) {
         mNewDJI += "\n" + msg;
+    }
+
+    private static class GCSSenderTimerTask extends TimerTask {
+
+        private WeakReference<MainActivity> mainActivityWeakReference;
+
+        GCSSenderTimerTask(WeakReference<MainActivity> mainActivityWeakReference) {
+            this.mainActivityWeakReference = mainActivityWeakReference;
+        }
+
+        @Override
+        public void run() {
+            mainActivityWeakReference.get().mModel.tick();
+        }
+    }
+
+
+    private static class GCSCommunicatorAsyncTask extends AsyncTask<Integer, Integer, Integer> {
+
+        public boolean request_renew_datalinks = false;
+        private Timer timer;
+        private static final String TAG = GCSSenderTimerTask.class.getSimpleName();
+
+        private WeakReference<MainActivity> mainActivityWeakReference;
+
+        GCSCommunicatorAsyncTask(MainActivity mainActivity) {
+            mainActivityWeakReference = new WeakReference<>(mainActivity);
+        }
+
+        public void renewDatalinks() {
+            request_renew_datalinks = true;
+        }
+
+        private void onRenewDatalinks() {
+            createTelemetrySocket();
+            mainActivityWeakReference.get().initPacketizer();
+        }
+
+        @Override
+        protected Integer doInBackground(Integer... ints2) {
+            Log.d("RDTHREADS", "doInBackground()");
+
+            try {
+                onRenewDatalinks();
+                mainActivityWeakReference.get().mMavlinkParser = new Parser();
+
+                GCSSenderTimerTask gcsSender = new GCSSenderTimerTask(mainActivityWeakReference);
+                timer = new Timer(true);
+                timer.scheduleAtFixedRate(gcsSender, 0, 100);
+
+                while (!isCancelled()) {
+                    // Listen for packets
+                    try {
+                        if (request_renew_datalinks) {
+                            request_renew_datalinks = false;
+                            onRenewDatalinks();
+
+                        }
+                        byte[] buf = new byte[1000];
+                        DatagramPacket dp = new DatagramPacket(buf, buf.length);
+                        mainActivityWeakReference.get().socket.receive(dp);
+
+                        byte[] bytes = dp.getData();
+                        int[] ints = new int[bytes.length];
+                        for (int i = 0; i < bytes.length; i++)
+                            ints[i] = bytes[i] & 0xff;
+
+                        for (int i = 0; i < bytes.length; i++) {
+                            MAVLinkPacket packet = mainActivityWeakReference.get().mMavlinkParser.mavlink_parse_char(ints[i]);
+
+                            if (packet != null) {
+                                MAVLinkMessage msg = packet.unpack();
+                                mainActivityWeakReference.get().logMessageFromGCS(msg.toString());
+                                mainActivityWeakReference.get().mMavlinkReceiver.process(msg);
+                            }
+                        }
+                    } catch (IOException e) {
+                        //logMessageDJI("IOException: " + e.toString());
+                    }
+                }
+
+            } catch (Exception e) {
+                Log.d(TAG, "exception", e);
+            } finally  {
+                if (mainActivityWeakReference.get().socket.isConnected()) {
+                    mainActivityWeakReference.get().socket.disconnect();
+                }
+                if (timer != null) {
+                    timer.cancel();
+                }
+                Log.d("RDTHREADS", "doInBackground() complete");
+
+            }
+            return 0;
+        }
+
+        @Override
+        protected void onPostExecute(Integer integer) {
+            /*
+            TODO Not sure what to do here...
+             */
+            if (mainActivityWeakReference.get() == null || mainActivityWeakReference.get().isFinishing())
+                return;
+
+            mainActivityWeakReference.clear();
+
+        }
+
+        @Override
+        protected void onProgressUpdate(Integer... progress) {
+
+        }
+
+        private void createTelemetrySocket() {
+            if (mainActivityWeakReference.get().socket != null) {
+                mainActivityWeakReference.get().socket.disconnect();
+                mainActivityWeakReference.get().socket.close();
+            }
+
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mainActivityWeakReference.get());
+            String gcsIPString = "127.0.0.1";
+            if (prefs.getBoolean("pref_external_gcs", false))
+                gcsIPString = prefs.getString("pref_gcs_ip", null);
+            int telemIPPort = Integer.parseInt(prefs.getString("pref_telem_port", "-1"));
+
+            try {
+                mainActivityWeakReference.get().socket = new DatagramSocket();
+                mainActivityWeakReference.get().socket.connect(InetAddress.getByName(gcsIPString), telemIPPort);
+                mainActivityWeakReference.get().socket.setSoTimeout(10);
+                mainActivityWeakReference.get().logMessageDJI("Starting GCS telemetry link: " + gcsIPString + ":" + String.valueOf(telemIPPort));
+            } catch (SocketException e) {
+                Log.d(TAG, "createTelemetrySocket() - socket exception");
+                Log.d(TAG, "exception", e);
+                mainActivityWeakReference.get().logMessageDJI("Telemetry socket exception: " + gcsIPString + ":" + String.valueOf(telemIPPort));
+            } // TODO
+            catch (UnknownHostException e) {
+                Log.d(TAG, "createTelemetrySocket() - unknown host exception");
+                Log.d(TAG, "exception", e);
+                mainActivityWeakReference.get().logMessageDJI("Unknown telemetry host: " + gcsIPString + ":" + String.valueOf(telemIPPort));
+            } // TODO
+
+            Log.d(TAG, mainActivityWeakReference.get().socket.getInetAddress().toString());
+            Log.d(TAG, mainActivityWeakReference.get().socket.getLocalAddress().toString());
+            Log.d(TAG, String.valueOf(mainActivityWeakReference.get().socket.getPort()));
+            Log.d(TAG, String.valueOf(mainActivityWeakReference.get().socket.getLocalPort()));
+
+            mainActivityWeakReference.get().mModel.setSocket(mainActivityWeakReference.get().socket);
+        }
+
     }
 }

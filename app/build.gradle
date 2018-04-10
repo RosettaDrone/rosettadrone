@@ -50,14 +50,23 @@ android {
 }
 
 dependencies {
+//    debugImplementation 'com.squareup.leakcanary:leakcanary-android:1.5.4'
+//    releaseImplementation 'com.squareup.leakcanary:leakcanary-android-no-op:1.5.4'
+
     compile fileTree(include: ['*.jar'], dir: 'libs')
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
     compile 'com.android.support:appcompat-v7:25.4.0'
+    compile 'com.android.support:preference-v7:25.4.0'
+    compile 'com.android.support:preference-v14:25.4.0'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
     compile 'com.android.support:design:25.4.0'
+
     testCompile 'junit:junit:4.12'
+    testCompile 'org.mockito:mockito-core:2.7.22'
+    androidTestCompile 'org.mockito:mockito-android:2.7.22'
+
     compile 'com.dji:dji-sdk:4.4.1'
     provided 'com.dji:dji-sdk-provided:4.4.1'
     compile 'com.android.support:multidex:1.0.2'

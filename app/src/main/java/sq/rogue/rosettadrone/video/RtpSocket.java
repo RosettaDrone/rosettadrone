@@ -77,7 +77,6 @@ public class RtpSocket implements Runnable {
     /**
      * This RTP socket implements a buffering mechanism relying on a FIFO of buffers and a Thread.
      *
-     * @throws IOException
      */
     public RtpSocket() {
 
@@ -117,7 +116,9 @@ public class RtpSocket implements Runnable {
 
         try {
             mSocket = new MulticastSocket();
+
             mSocket.setLoopbackMode(false); // enable multicast traffic to be seen locally
+
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }
@@ -237,7 +238,7 @@ public class RtpSocket implements Runnable {
     /**
      * Puts the buffer back into the FIFO without sending the packet.
      */
-    public void commitBuffer() throws IOException {
+    public void commitBuffer() {
 
         if (mThread == null) {
             mThread = new Thread(this);
@@ -252,7 +253,7 @@ public class RtpSocket implements Runnable {
     /**
      * Sends the RTP packet over the network.
      */
-    public void commitBuffer(int length) throws IOException {
+    public void commitBuffer(int length) {
         updateSequence();
         mPackets[mBufferIn].setLength(length);
 
