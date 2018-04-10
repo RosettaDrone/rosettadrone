@@ -271,6 +271,7 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
         DJIVideoStreamDecoder.getInstance().setYuvDataListener(MainActivity.this);
         DJIVideoStreamDecoder.getInstance().setFrameDataListener(MainActivity.this);
         DJIVideoStreamDecoder.getInstance().resume();
+
     }
 
     private void initPacketizer() {
@@ -323,11 +324,11 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
         mUIHandler.removeCallbacksAndMessages(null);
         mDJIHandler.removeCallbacksAndMessages(null);
 
-        if(VideoFeeder.getInstance() != null) {
-            if(VideoFeeder.getInstance().getPrimaryVideoFeed() != null)
-                VideoFeeder.getInstance().getPrimaryVideoFeed().setCallback(null);
-        }
-        mModel = null;
+//        if(VideoFeeder.getInstance() != null) {
+//            if(VideoFeeder.getInstance().getPrimaryVideoFeed() != null)
+//                VideoFeeder.getInstance().getPrimaryVideoFeed().setCallback(null);
+//        }
+//        mModel = null;
 
 //        try { mModel.getDjiAircraft().getRemoteController().setHardwareStateCallback(null); }
 //        catch(Exception e) {}
