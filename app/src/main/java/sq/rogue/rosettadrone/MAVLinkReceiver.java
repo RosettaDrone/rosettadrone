@@ -39,6 +39,7 @@ import static com.MAVLink.common.msg_param_request_read.MAVLINK_MSG_ID_PARAM_REQ
 import static com.MAVLink.common.msg_param_set.MAVLINK_MSG_ID_PARAM_SET;
 import static com.MAVLink.common.msg_set_mode.MAVLINK_MSG_ID_SET_MODE;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_COMPONENT_ARM_DISARM;
+import static com.MAVLink.enums.MAV_CMD.MAV_CMD_DO_DIGICAM_CONTROL;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_DO_SET_HOME;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_DO_SET_MODE;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_GET_HOME_POSITION;
@@ -47,6 +48,8 @@ import static com.MAVLink.enums.MAV_CMD.MAV_CMD_NAV_LOITER_UNLIM;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_NAV_RETURN_TO_LAUNCH;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_NAV_TAKEOFF;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES;
+import static com.MAVLink.enums.MAV_CMD.MAV_CMD_VIDEO_START_CAPTURE;
+import static com.MAVLink.enums.MAV_CMD.MAV_CMD_VIDEO_STOP_CAPTURE;
 import static com.MAVLink.enums.MAV_MISSION_TYPE.MAV_MISSION_TYPE_MISSION;
 import static dji.common.flightcontroller.FlightControlState.ATTI;
 
@@ -81,27 +84,24 @@ public class MAVLinkReceiver {
 
             case MAVLINK_MSG_ID_COMMAND_LONG:
                 msg_command_long msg_cmd = (msg_command_long) msg;
+                parent.logMessageDJI("Command: " + msg_cmd.command);
                 switch (msg_cmd.command) {
                     case MAV_CMD_COMPONENT_ARM_DISARM:
-                        //parent.logMessageDJI("Arm/disarm received: " + msg_cmd.param1);
                         if (msg_cmd.param1 == 1)
                             mModel.armMotors();
                         else
                             mModel.disarmMotors();
                         break;
                     case MAV_CMD_DO_SET_MODE:
-                        //parent.logMessageDJI("MAV_CMD_DO_SET_MODE: " + msg_cmd.param1);
                         changeFlightMode((int)msg_cmd.param1);
                         break;
                     case MAV_CMD_NAV_LOITER_UNLIM:
                         mModel.set_flight_mode(ATTI);
                         break;
                     case MAV_CMD_NAV_TAKEOFF:
-                        //parent.logMessageDJI("MAV_CMD_NAV_TAKEOFF received");
                         mModel.do_takeoff();
                         break;
                     case MAV_CMD_NAV_LAND:
-                        //parent.logMessageDJI("MAV_CMD_NAV_LAND received");
                         mModel.do_land();
                         break;
                     case MAV_CMD_DO_SET_HOME:
@@ -117,6 +117,14 @@ public class MAVLinkReceiver {
                         break;
                     case MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES:
                         mModel.send_autopilot_version();
+                        break;
+                    case MAV_CMD_VIDEO_START_CAPTURE:
+                        break;
+                    case MAV_CMD_VIDEO_STOP_CAPTURE:
+                        break;
+                    case MAV_CMD_DO_DIGICAM_CONTROL:
+                        // DEPRECATED but still used by QGC
+                        mModel.takePhoto();
                         break;
                 }
                 break;

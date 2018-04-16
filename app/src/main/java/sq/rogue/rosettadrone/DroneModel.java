@@ -48,6 +48,7 @@ import java.util.Arrays;
 
 import dji.common.battery.AggregationState;
 import dji.common.battery.BatteryState;
+import dji.common.camera.SettingsDefinitions;
 import dji.common.error.DJIError;
 import dji.common.flightcontroller.Attitude;
 import dji.common.flightcontroller.ConnectionFailSafeBehavior;
@@ -70,6 +71,7 @@ import dji.sdk.products.Aircraft;
 
 
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_COMPONENT_ARM_DISARM;
+import static com.MAVLink.enums.MAV_CMD.MAV_CMD_DO_DIGICAM_CONTROL;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_DO_SET_MODE;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_NAV_TAKEOFF;
 import static com.MAVLink.enums.MAV_COMPONENT.MAV_COMP_ID_AUTOPILOT1;
@@ -1000,6 +1002,22 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     public void set_flight_mode(FlightControlState djiMode) {
         // TODO
         return;
+    }
+
+    public void takePhoto() {
+        SettingsDefinitions.ShootPhotoMode photoMode = SettingsDefinitions.ShootPhotoMode.SINGLE;
+        djiAircraft.getCamera().startShootPhoto(new CommonCallbacks.CompletionCallback() {
+            @Override
+            public void onResult(DJIError djiError) {
+                if(djiError == null) {
+                    parent.logMessageDJI("Took photo");
+                    send_command_ack(MAV_CMD_DO_DIGICAM_CONTROL, MAV_RESULT.MAV_RESULT_ACCEPTED);
+                } else {
+                    parent.logMessageDJI("Error taking photo: " + djiError.toString());
+                    send_command_ack(MAV_CMD_DO_DIGICAM_CONTROL, MAV_RESULT.MAV_RESULT_FAILED);
+                }
+            }
+        });
     }
 
 
