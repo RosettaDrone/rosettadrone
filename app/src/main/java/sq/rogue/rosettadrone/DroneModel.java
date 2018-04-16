@@ -961,13 +961,12 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                 if (djiError != null) {
                     parent.logMessageDJI("Error: " + djiError.toString());
                     send_command_ack(MAV_CMD_NAV_TAKEOFF, MAV_RESULT.MAV_RESULT_FAILED);
-                    mGCSCommandedMode = NOT_USING_GCS_COMMANDED_MODE;
                 }
                 else {
                     parent.logMessageDJI("Takeoff successful!\n");
                     send_command_ack(MAV_CMD_NAV_TAKEOFF, MAV_RESULT.MAV_RESULT_ACCEPTED);
-                    mGCSCommandedMode = NOT_USING_GCS_COMMANDED_MODE;
                 }
+                mGCSCommandedMode = NOT_USING_GCS_COMMANDED_MODE;
             }
         });
     }

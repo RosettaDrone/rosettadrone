@@ -44,6 +44,7 @@ import static com.MAVLink.enums.MAV_CMD.MAV_CMD_DO_SET_MODE;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_GET_HOME_POSITION;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_NAV_LAND;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_NAV_LOITER_UNLIM;
+import static com.MAVLink.enums.MAV_CMD.MAV_CMD_NAV_RETURN_TO_LAUNCH;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_NAV_TAKEOFF;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES;
 import static com.MAVLink.enums.MAV_MISSION_TYPE.MAV_MISSION_TYPE_MISSION;
@@ -105,6 +106,11 @@ public class MAVLinkReceiver {
                         break;
                     case MAV_CMD_DO_SET_HOME:
                         // TODO;
+                        break;
+                    case MAV_CMD_NAV_RETURN_TO_LAUNCH:
+                        //parent.logMessageDJI("MAV_CMD_NAV_RETURN_TO_LAUNCH received");
+                        mModel.do_go_home();
+                        mModel.send_command_ack(MAV_CMD_NAV_RETURN_TO_LAUNCH, MAV_RESULT.MAV_RESULT_ACCEPTED);
                         break;
                     case MAV_CMD_GET_HOME_POSITION:
                         mModel.send_home_position();
