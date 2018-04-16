@@ -9,6 +9,7 @@ import com.MAVLink.common.msg_altitude;
 import com.MAVLink.common.msg_attitude;
 import com.MAVLink.common.msg_autopilot_version;
 import com.MAVLink.common.msg_battery_status;
+import com.MAVLink.common.msg_command_ack;
 import com.MAVLink.common.msg_global_position_int;
 import com.MAVLink.common.msg_gps_raw_int;
 import com.MAVLink.common.msg_heartbeat;
@@ -34,6 +35,7 @@ import com.MAVLink.enums.MAV_MISSION_RESULT;
 import com.MAVLink.enums.MAV_MISSION_TYPE;
 import com.MAVLink.enums.MAV_MODE_FLAG;
 import com.MAVLink.enums.MAV_PROTOCOL_CAPABILITY;
+import com.MAVLink.enums.MAV_RESULT;
 import com.MAVLink.enums.MAV_STATE;
 import com.MAVLink.enums.MAV_TYPE;
 
@@ -67,6 +69,9 @@ import dji.sdk.mission.waypoint.WaypointMissionOperator;
 import dji.sdk.products.Aircraft;
 
 
+import static com.MAVLink.enums.MAV_CMD.MAV_CMD_COMPONENT_ARM_DISARM;
+import static com.MAVLink.enums.MAV_CMD.MAV_CMD_DO_SET_MODE;
+import static com.MAVLink.enums.MAV_CMD.MAV_CMD_NAV_TAKEOFF;
 import static com.MAVLink.enums.MAV_COMPONENT.MAV_COMP_ID_AUTOPILOT1;
 import static sq.rogue.rosettadrone.util.getTimestampMicroseconds;
 
@@ -277,6 +282,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         Log.d(TAG, "Command: arm motors");
         if (!mRSArmingEnabled) {
             parent.logMessageDJI("You must arm Rosetta Drone before arming motors");
+            send_command_ack(MAV_CMD_COMPONENT_ARM_DISARM, MAV_RESULT.MAV_RESULT_DENIED);
             return;
         }
 
@@ -284,8 +290,12 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             @Override
             public void onResult(DJIError djiError) {
                 // TODO reattempt if arming/disarming fails
+                if(djiError == null)
+                    send_command_ack(MAV_CMD_COMPONENT_ARM_DISARM, MAV_RESULT.MAV_RESULT_ACCEPTED);
+                else
+                    send_command_ack(MAV_CMD_COMPONENT_ARM_DISARM, MAV_RESULT.MAV_RESULT_FAILED);
                 Log.d(TAG, "onResult()");
-                mRSArmingEnabled = false;
+                //mRSArmingEnabled = false;
             }
         });
     }
@@ -297,6 +307,10 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             @Override
             public void onResult(DJIError djiError) {
                 // TODO reattempt if arming/disarming fails
+                if(djiError == null)
+                    send_command_ack(MAV_CMD_COMPONENT_ARM_DISARM, MAV_RESULT.MAV_RESULT_ACCEPTED);
+                else
+                    send_command_ack(MAV_CMD_COMPONENT_ARM_DISARM, MAV_RESULT.MAV_RESULT_FAILED);
                 Log.d(TAG, "onResult()");
                 mRSArmingEnabled = false;
             }
@@ -448,6 +462,15 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         LocationCoordinate3D coord = djiAircraft.getFlightController().getState().getAircraftLocation();
         msg.altitude_relative = (int) (coord.getAltitude() * 1000);
         sendMessage(msg);
+    }
+
+    public void send_command_ack(int message_id, int result) {
+        msg_command_ack msg = new msg_command_ack();
+        msg.command = message_id;
+        msg.result = (short)result;
+        sendMessage(msg);
+        parent.logMessageDJI("Ack: " + message_id + ", " + result);
+
     }
 
     public void send_global_position_int() {
