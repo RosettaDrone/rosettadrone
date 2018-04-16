@@ -11,6 +11,7 @@ import com.MAVLink.common.msg_mission_request;
 import com.MAVLink.common.msg_param_request_read;
 import com.MAVLink.common.msg_param_set;
 import com.MAVLink.common.msg_set_mode;
+import com.MAVLink.enums.MAV_RESULT;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,6 +40,7 @@ import static com.MAVLink.common.msg_param_set.MAVLINK_MSG_ID_PARAM_SET;
 import static com.MAVLink.common.msg_set_mode.MAVLINK_MSG_ID_SET_MODE;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_COMPONENT_ARM_DISARM;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_DO_SET_HOME;
+import static com.MAVLink.enums.MAV_CMD.MAV_CMD_DO_SET_MODE;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_GET_HOME_POSITION;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_NAV_LAND;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_NAV_LOITER_UNLIM;
@@ -80,17 +82,25 @@ public class MAVLinkReceiver {
                 msg_command_long msg_cmd = (msg_command_long) msg;
                 switch (msg_cmd.command) {
                     case MAV_CMD_COMPONENT_ARM_DISARM:
+                        //parent.logMessageDJI("Arm/disarm received: " + msg_cmd.param1);
                         if (msg_cmd.param1 == 1)
                             mModel.armMotors();
                         else
                             mModel.disarmMotors();
+                        break;
+                    case MAV_CMD_DO_SET_MODE:
+                        //parent.logMessageDJI("MAV_CMD_DO_SET_MODE: " + msg_cmd.param1);
+                        changeFlightMode((int)msg_cmd.param1);
+                        break;
                     case MAV_CMD_NAV_LOITER_UNLIM:
                         mModel.set_flight_mode(ATTI);
                         break;
                     case MAV_CMD_NAV_TAKEOFF:
+                        //parent.logMessageDJI("MAV_CMD_NAV_TAKEOFF received");
                         mModel.do_takeoff();
                         break;
                     case MAV_CMD_NAV_LAND:
+                        //parent.logMessageDJI("MAV_CMD_NAV_LAND received");
                         mModel.do_land();
                         break;
                     case MAV_CMD_DO_SET_HOME:
@@ -112,17 +122,10 @@ public class MAVLinkReceiver {
 
             case MAVLINK_MSG_ID_SET_MODE:
                 msg_set_mode msg_set_mode = (msg_set_mode) msg;
-                if (msg_set_mode.custom_mode == ArduCopterFlightModes.AUTO)
-                    mModel.startWaypointMission();
-                else if (msg_set_mode.custom_mode == ArduCopterFlightModes.RTL)
-                    mModel.do_go_home();
-                else if (msg_set_mode.custom_mode == ArduCopterFlightModes.LAND)
-                    mModel.do_land();
-                else if (msg_set_mode.custom_mode == ArduCopterFlightModes.GUIDED)
-                    mModel.do_takeoff();
-                if (msg_set_mode.custom_mode != ArduCopterFlightModes.AUTO)
-                    mModel.stopWaypointMission();
+                parent.logMessageDJI("MAVLINK_MSG_ID_SET_MODE: " + msg_set_mode.custom_mode);
+                changeFlightMode((int)msg_set_mode.custom_mode);
                 break;
+
             /**************************************************************
              * These messages are used when GCS requests params from MAV  *
              **************************************************************/
@@ -229,13 +232,29 @@ public class MAVLinkReceiver {
                 parent.logMessageDJI("MSN: received clear_all from GCS");
                 mModel.getWaypointMissionOperator().getLoadedMission().getWaypointList().clear();
                 break;
-
         }
 
     }
 
     public long getTimestampLastGCSHeartbeat() {
         return mTimeStampLastGCSHeartbeat;
+    }
+
+    private void changeFlightMode(int flightMode) {
+        mModel.setGCSCommandedMode(flightMode);
+
+        if (flightMode == ArduCopterFlightModes.AUTO)
+            mModel.startWaypointMission();
+        else if (flightMode == ArduCopterFlightModes.RTL)
+            mModel.do_go_home();
+        else if (flightMode == ArduCopterFlightModes.LAND)
+            mModel.do_land();
+
+        if (flightMode != ArduCopterFlightModes.AUTO)
+            mModel.stopWaypointMission();
+
+        mModel.send_command_ack(MAV_CMD_DO_SET_MODE, MAV_RESULT.MAV_RESULT_ACCEPTED);
+
     }
 
     protected void generateNewMission() {

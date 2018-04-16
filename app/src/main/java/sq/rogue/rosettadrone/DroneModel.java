@@ -86,6 +86,8 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     private MainActivity parent;
     private int mSystemId = 1;
     private int mComponentId = MAV_COMP_ID_AUTOPILOT1;
+    private int mGCSCommandedMode;
+    private static final int NOT_USING_GCS_COMMANDED_MODE = -1;
 
     private int mThrottleSetting;
     private int mFullChargeCapacity_mAh;
@@ -98,6 +100,16 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     private int mUplinkQuality = 0;
 
     private boolean mRSArmingEnabled = false;
+
+
+    public int getGCSCommandedMode() {
+        return mGCSCommandedMode;
+    }
+
+    public void setGCSCommandedMode(int GCSCommandedMode) {
+        mGCSCommandedMode = GCSCommandedMode;
+    }
+
 
     private RosettaMissionOperatorListener mMissionOperatorListener;
 
@@ -290,8 +302,10 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             @Override
             public void onResult(DJIError djiError) {
                 // TODO reattempt if arming/disarming fails
-                if(djiError == null)
+                if(djiError == null) {
                     send_command_ack(MAV_CMD_COMPONENT_ARM_DISARM, MAV_RESULT.MAV_RESULT_ACCEPTED);
+                    mRSArmingEnabled = false;
+                }
                 else
                     send_command_ack(MAV_CMD_COMPONENT_ARM_DISARM, MAV_RESULT.MAV_RESULT_FAILED);
                 Log.d(TAG, "onResult()");
@@ -433,6 +447,8 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             case MOTORS_JUST_STARTED:
                 break;
         }
+        if(mGCSCommandedMode == ArduCopterFlightModes.GUIDED)
+            msg.custom_mode = ArduCopterFlightModes.GUIDED;
 
         if (djiAircraft.getFlightController().getState().areMotorsOn())
             msg.base_mode |= MAV_MODE_FLAG.MAV_MODE_FLAG_SAFETY_ARMED;
@@ -469,7 +485,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         msg.command = message_id;
         msg.result = (short)result;
         sendMessage(msg);
-        parent.logMessageDJI("Ack: " + message_id + ", " + result);
+        //parent.logMessageDJI("Ack: " + message_id + ", " + result);
 
     }
 
@@ -938,39 +954,39 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     public void do_takeoff() {
-        if (!mRSArmingEnabled) {
-            parent.logMessageDJI("You must arm Rosetta Drone before commanding a takeoff");
-            return;
-        }
-        mRSArmingEnabled = false;
-        parent.logMessageDJI("Taking off...");
+        parent.logMessageDJI("Initiating takeoff");
         djiAircraft.getFlightController().startTakeoff(new CommonCallbacks.CompletionCallback() {
             @Override
             public void onResult(DJIError djiError) {
-                if (djiError != null)
+                if (djiError != null) {
                     parent.logMessageDJI("Error: " + djiError.toString());
+                    send_command_ack(MAV_CMD_NAV_TAKEOFF, MAV_RESULT.MAV_RESULT_FAILED);
+                    mGCSCommandedMode = NOT_USING_GCS_COMMANDED_MODE;
+                }
                 else {
                     parent.logMessageDJI("Takeoff successful!\n");
+                    send_command_ack(MAV_CMD_NAV_TAKEOFF, MAV_RESULT.MAV_RESULT_ACCEPTED);
+                    mGCSCommandedMode = NOT_USING_GCS_COMMANDED_MODE;
                 }
             }
         });
     }
 
     public void do_land() {
-        parent.logMessageDJI("Landing...");
+        parent.logMessageDJI("Initiating landing");
         djiAircraft.getFlightController().startLanding(new CommonCallbacks.CompletionCallback() {
             @Override
             public void onResult(DJIError djiError) {
                 if (djiError != null)
                     parent.logMessageDJI("Error: " + djiError.toString());
                 else
-                    parent.logMessageDJI("Land successful!\n");
+                    parent.logMessageDJI("Landing successful!\n");
             }
         });
     }
 
     public void do_go_home() {
-        parent.logMessageDJI("Going home...");
+        parent.logMessageDJI("Initiating Go Home");
         djiAircraft.getFlightController().startGoHome(new CommonCallbacks.CompletionCallback() {
             @Override
             public void onResult(DJIError djiError) {
