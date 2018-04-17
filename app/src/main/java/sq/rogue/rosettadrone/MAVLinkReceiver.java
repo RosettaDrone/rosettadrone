@@ -22,6 +22,7 @@ import dji.common.mission.waypoint.WaypointMissionFinishedAction;
 import dji.common.mission.waypoint.WaypointMissionFlightPathMode;
 import dji.common.mission.waypoint.WaypointMissionGotoWaypointMode;
 import dji.common.mission.waypoint.WaypointMissionHeadingMode;
+import dji.common.mission.waypoint.WaypointMissionState;
 
 import static com.MAVLink.common.msg_command_int.MAVLINK_MSG_ID_COMMAND_INT;
 import static com.MAVLink.common.msg_command_long.MAVLINK_MSG_ID_COMMAND_LONG;
@@ -258,14 +259,27 @@ public class MAVLinkReceiver {
         mModel.setGCSCommandedMode(flightMode);
 
         if (flightMode == ArduCopterFlightModes.AUTO)
-            mModel.startWaypointMission();
+            if(mModel.getWaypointMissionOperator().getCurrentState() == WaypointMissionState.EXECUTION_PAUSED) {
+                parent.logMessageDJI("Command: resume mission");
+                mModel.resumeWaypointMission();
+            }
+            else {
+                parent.logMessageDJI("Command: start mission");
+                mModel.startWaypointMission();
+            }
+        else if(flightMode == ArduCopterFlightModes.BRAKE) {
+            mModel.pauseWaypointMission();
+            mModel.setGCSCommandedMode(flightMode);
+        }
+
         else if (flightMode == ArduCopterFlightModes.RTL)
             mModel.do_go_home();
         else if (flightMode == ArduCopterFlightModes.LAND)
             mModel.do_land();
 
-        if (flightMode != ArduCopterFlightModes.AUTO)
-            mModel.stopWaypointMission();
+        if (mModel.getWaypointMissionOperator().getCurrentState() == WaypointMissionState.EXECUTING && flightMode != ArduCopterFlightModes.AUTO)
+            parent.logMessageDJI("Command: pause mission");
+            mModel.pauseWaypointMission();
 
         mModel.send_command_ack(MAV_CMD_DO_SET_MODE, MAV_RESULT.MAV_RESULT_ACCEPTED);
 

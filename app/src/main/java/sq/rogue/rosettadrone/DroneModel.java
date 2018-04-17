@@ -76,6 +76,7 @@ import static com.MAVLink.enums.MAV_CMD.MAV_CMD_DO_SET_MODE;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_NAV_TAKEOFF;
 import static com.MAVLink.enums.MAV_COMPONENT.MAV_COMP_ID_AUTOPILOT1;
 import static sq.rogue.rosettadrone.util.getTimestampMicroseconds;
+import static sq.rogue.rosettadrone.util.safeSleep;
 
 
 public class DroneModel implements CommonCallbacks.CompletionCallback {
@@ -117,21 +118,33 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
     public void setWaypointMission(WaypointMission wpMission)
     {
-        if(getWaypointMissionOperator().loadMission(wpMission) != null)
-            parent.logMessageDJI("loadMission() returned error");
-        else
+        DJIError load_error = getWaypointMissionOperator().loadMission(wpMission);
+        if(load_error != null)
+            parent.logMessageDJI("loadMission() returned error: " + load_error.toString());
+        else {
+            parent.logMessageDJI("Uploading mission");
             getWaypointMissionOperator().uploadMission(
                     new CommonCallbacks.CompletionCallback() {
                         @Override
                         public void onResult(DJIError djiError) {
                             if (djiError == null) {
-                                parent.logMessageDJI("Waypoint mission successfully uploaded to drone!");
+                                while (getWaypointMissionOperator().getCurrentState() == WaypointMissionState.UPLOADING) {
+                                    parent.logMessageDJI(".");
+                                    safeSleep(500);
+                                }
+                                if (getWaypointMissionOperator().getCurrentState() == WaypointMissionState.READY_TO_EXECUTE)
+                                    parent.logMessageDJI("Waypoint mission successfully uploaded to drone!");
+                                else
+                                    parent.logMessageDJI("Error uploading waypoint mission to drone");
+
                             } else {
                                 parent.logMessageDJI("Error uploading: " + djiError.getDescription());
-                                getWaypointMissionOperator().retryUploadMission(null);
+                                parent.logMessageDJI(("Please try re-uploading"));
                             }
+                            parent.logMessageDJI("New state: " + getWaypointMissionOperator().getCurrentState().getName());
                         }
                     });
+        }
     }
 
     public Aircraft getDjiAircraft() {
@@ -293,6 +306,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 //    }
 
     public void armMotors() {
+        parent.logMessageDJI("armMotors()");
         Log.d(TAG, "Command: arm motors");
         if (!mRSArmingEnabled) {
             parent.logMessageDJI("You must arm Rosetta Drone before arming motors");
@@ -311,7 +325,6 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                 else
                     send_command_ack(MAV_CMD_COMPONENT_ARM_DISARM, MAV_RESULT.MAV_RESULT_FAILED);
                 Log.d(TAG, "onResult()");
-                //mRSArmingEnabled = false;
             }
         });
     }
@@ -451,6 +464,8 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         }
         if(mGCSCommandedMode == ArduCopterFlightModes.GUIDED)
             msg.custom_mode = ArduCopterFlightModes.GUIDED;
+        else if(mGCSCommandedMode == ArduCopterFlightModes.BRAKE)
+            msg.custom_mode = ArduCopterFlightModes.BRAKE;
 
         if (djiAircraft.getFlightController().getState().areMotorsOn())
             msg.base_mode |= MAV_MODE_FLAG.MAV_MODE_FLAG_SAFETY_ARMED;
@@ -487,7 +502,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         msg.command = message_id;
         msg.result = (short)result;
         sendMessage(msg);
-        //parent.logMessageDJI("Ack: " + message_id + ", " + result);
+        parent.logMessageDJI("Ack: " + message_id + ", " + result);
 
     }
 
@@ -918,22 +933,34 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             parent.logMessageDJI("Ready to execute mission!\n");
         } else {
             parent.logMessageDJI("Not ready to execute mission\n");
+            parent.logMessageDJI(getWaypointMissionOperator().getCurrentState().getName());
             return;
         }
-        if (mRSArmingEnabled) {
-            do_takeoff();
-            getWaypointMissionOperator().startMission(new CommonCallbacks.CompletionCallback() {
-                @Override
-                public void onResult(DJIError djiError) {
-                    if (djiError != null)
-                        parent.logMessageDJI("Error: " + djiError.toString());
-                    else
-                        parent.logMessageDJI("Mission started!");
-                }
-            });
-        } else
-            parent.logMessageDJI("You must arm Rosetta Drone before starting a mission");
+//        if (mRSArmingEnabled) {
+//            do_takeoff();
+//            getWaypointMissionOperator().startMission(new CommonCallbacks.CompletionCallback() {
+//                @Override
+//                public void onResult(DJIError djiError) {
+//                    if (djiError != null)
+//                        parent.logMessageDJI("Error: " + djiError.toString());
+//                    else
+//                        parent.logMessageDJI("Mission started!");
+//                }
+//            });
+//        } else
+//            parent.logMessageDJI("You must arm Rosetta Drone before starting a mission");
+
+        getWaypointMissionOperator().startMission(new CommonCallbacks.CompletionCallback() {
+            @Override
+            public void onResult(DJIError djiError) {
+                if (djiError != null)
+                    parent.logMessageDJI("Error: " + djiError.toString());
+                else
+                    parent.logMessageDJI("Mission started!");
+            }
+        });
     }
+
 
     public void stopWaypointMission() {
         if (getWaypointMissionOperator() == null) {
@@ -943,13 +970,55 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
         if (getWaypointMissionOperator().getCurrentState() == WaypointMissionState.EXECUTING) {
             parent.logMessageDJI("Stopping mission...\n");
-            getWaypointMissionOperator().pauseMission(new CommonCallbacks.CompletionCallback() {
+            getWaypointMissionOperator().stopMission(new CommonCallbacks.CompletionCallback() {
                 @Override
                 public void onResult(DJIError djiError) {
                     if (djiError != null)
                         parent.logMessageDJI("Error: " + djiError.toString());
                     else
                         parent.logMessageDJI("Mission stopped!\n");
+                }
+            });
+        }
+    }
+
+    public void pauseWaypointMission() {
+        if (getWaypointMissionOperator() == null) {
+            parent.logMessageDJI("pauseWaypointMission() - mWaypointMissionOperator null");
+            return;
+        }
+
+        if (getWaypointMissionOperator().getCurrentState() == WaypointMissionState.EXECUTING) {
+            parent.logMessageDJI("Pausing mission...\n");
+            getWaypointMissionOperator().pauseMission(new CommonCallbacks.CompletionCallback() {
+                @Override
+                public void onResult(DJIError djiError) {
+                    if (djiError != null)
+                        parent.logMessageDJI("Error: " + djiError.toString());
+                    else
+                        parent.logMessageDJI("Mission paused!\n");
+                }
+            });
+        }
+    }
+
+    public void resumeWaypointMission() {
+        if (getWaypointMissionOperator() == null) {
+            parent.logMessageDJI("resumeWaypointMission() - mWaypointMissionOperator null");
+            return;
+        }
+
+        if (getWaypointMissionOperator().getCurrentState() == WaypointMissionState.EXECUTION_PAUSED) {
+            parent.logMessageDJI("Resuming mission...\n");
+            getWaypointMissionOperator().resumeMission(new CommonCallbacks.CompletionCallback() {
+                @Override
+                public void onResult(DJIError djiError) {
+                    if (djiError != null)
+                        parent.logMessageDJI("Error: " + djiError.toString());
+                    else {
+                        parent.logMessageDJI("Mission resumed!\n");
+                        mGCSCommandedMode = NOT_USING_GCS_COMMANDED_MODE;
+                    }
                 }
             });
         }
@@ -1159,5 +1228,28 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         public void onFailure(DJIError djiError) {
 
         }
+    }
+
+    public void echoLoadedMission() {
+        getWaypointMissionOperator().downloadMission(
+                new CommonCallbacks.CompletionCallback() {
+                    @Override
+                    public void onResult(DJIError djiError) {
+                        if (djiError == null) {
+                            parent.logMessageDJI("Waypoint mission successfully downloaded");
+                        } else {
+                            parent.logMessageDJI("Error downloading: " + djiError.getDescription());
+                        }
+                    }
+                });
+        WaypointMission wm = getWaypointMissionOperator().getLoadedMission();
+        if(wm == null) {
+            parent.logMessageDJI("No mission loaded");
+            return;
+        }
+        parent.logMessageDJI("Waypoint count: " + wm.getWaypointCount());
+        for(Waypoint w : wm.getWaypointList())
+            parent.logMessageDJI(w.coordinate.toString());
+        parent.logMessageDJI("State: " + getWaypointMissionOperator().getCurrentState().getName());
     }
 }

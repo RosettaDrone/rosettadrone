@@ -406,6 +406,7 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
 
     private void onClickGCSStatus() {
         Log.d(TAG, "onClickGCSStatus()");
+        mModel.echoLoadedMission();
     }
 
     private void onClickSettings() {
