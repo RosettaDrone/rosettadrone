@@ -159,11 +159,11 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         mRSArmingEnabled = RSArmingEnabled;
     }
 
-    public void setDjiAircraft(Aircraft djiAircraft) {
+    public boolean setDjiAircraft(Aircraft djiAircraft) {
 
-        this.djiAircraft = djiAircraft;
         if (djiAircraft == null || djiAircraft.getRemoteController() == null)
-            return;
+            return false;
+        this.djiAircraft = djiAircraft;
 
         Arrays.fill(mCellVoltages, 0xffff); // indicates no cell per mavlink definition
 
@@ -171,7 +171,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
          * Called whenever RC state changes               *
          **************************************************/
 
-        djiAircraft.getRemoteController().setHardwareStateCallback(new HardwareState.HardwareStateCallback() {
+        this.djiAircraft.getRemoteController().setHardwareStateCallback(new HardwareState.HardwareStateCallback() {
             @Override
             public void onUpdate(@NonNull HardwareState rcHardwareState) {
                 // DJI: range [-660,660]
@@ -184,21 +184,26 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
          **************************************************/
 
 
-        djiAircraft.getBattery().setStateCallback(new BatteryState.Callback() {
+        if (this.djiAircraft != null) {
+            this.djiAircraft.getBattery().setStateCallback(new BatteryState.Callback() {
 
-            @Override
-            public void onUpdate(BatteryState batteryState) {
-                Log.d(TAG, "Battery State callback");
-                mFullChargeCapacity_mAh = batteryState.getFullChargeCapacity();
-                mChargeRemaining_mAh = batteryState.getChargeRemaining();
-                mVoltage_mV = batteryState.getVoltage();
-                mCurrent_mA = Math.abs(batteryState.getCurrent());
-                mBatteryTemp_C = batteryState.getTemperature();
-                Log.d(TAG, "Current: " + String.valueOf(batteryState.getCurrent()));
-            }
-        });
+                @Override
+                public void onUpdate(BatteryState batteryState) {
+                    Log.d(TAG, "Battery State callback");
+                    mFullChargeCapacity_mAh = batteryState.getFullChargeCapacity();
+                    mChargeRemaining_mAh = batteryState.getChargeRemaining();
+                    mVoltage_mV = batteryState.getVoltage();
+                    mCurrent_mA = Math.abs(batteryState.getCurrent());
+                    mBatteryTemp_C = batteryState.getTemperature();
+                    Log.d(TAG, "Current: " + String.valueOf(batteryState.getCurrent()));
+                }
+            });
 
-        djiAircraft.getBattery().getCellVoltages(new CellVoltageCompletionCallback());
+            this.djiAircraft.getBattery().getCellVoltages(new CellVoltageCompletionCallback());
+        } else {
+            Log.e(TAG, "djiAircraft.getBattery() IS NULL");
+            return false;
+        }
 
         Battery.setAggregationStateCallback(new AggregationState.Callback() {
             @Override
@@ -231,6 +236,8 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 //        });
 
         initMissionOperator();
+
+        return true;
     }
 
     public WaypointMissionOperator getWaypointMissionOperator() {
@@ -716,69 +723,76 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             send_param(i);
     }
 
-    public void loadParamsFromDJI() {
+    public boolean loadParamsFromDJI() {
         for (int i = 0; i < getParams().size(); i++) {
 
-            switch (getParams().get(i).getParamName()) {
-                case "DJI_CTRL_MODE":
-                    getDjiAircraft().getFlightController().getControlMode(new ParamControlModeCallback(i));
-                    break;
-                case "DJI_ENBL_LEDS":
-                    getDjiAircraft().getFlightController().getLEDsEnabled(new ParamBooleanCallback(i));
-                    break;
-                case "DJI_ENBL_QSPIN":
-                    getDjiAircraft().getFlightController().getQuickSpinEnabled(new ParamBooleanCallback(i));
-                    break;
-                case "DJI_ENBL_RADIUS":
-                    getDjiAircraft().getFlightController().getMaxFlightRadiusLimitationEnabled(new ParamBooleanCallback(i));
-                    break;
-                case "DJI_ENBL_TFOLLOW":
-                    getDjiAircraft().getFlightController().getTerrainFollowModeEnabled(new ParamBooleanCallback(i));
-                    break;
-                case "DJI_ENBL_TRIPOD":
-                    getDjiAircraft().getFlightController().getTripodModeEnabled(new ParamBooleanCallback(i));
-                    break;
-                case "DJI_FAILSAFE":
-                    getDjiAircraft().getFlightController().getConnectionFailSafeBehavior(new ParamConnectionFailSafeBehaviorCallback(i));
-                    break;
-                case "DJI_LOW_BAT":
-                    getDjiAircraft().getFlightController().getLowBatteryWarningThreshold(new ParamIntegerCallback(i));
-                    break;
-                case "DJI_MAX_HEIGHT":
-                    getDjiAircraft().getFlightController().getMaxFlightHeight(new ParamIntegerCallback(i));
-                    break;
-                case "DJI_MAX_RADIUS":
-                    getDjiAircraft().getFlightController().getMaxFlightRadius(new ParamIntegerCallback(i));
-                    break;
-                case "DJI_RLPCH_MODE":
-                    if (getDjiAircraft().getFlightController().getRollPitchControlMode() == RollPitchControlMode.ANGLE)
-                        getParams().get(i).setParamValue(0f);
-                    else if (getDjiAircraft().getFlightController().getRollPitchControlMode() == RollPitchControlMode.VELOCITY)
-                        getParams().get(i).setParamValue(1f);
-                    break;
-                case "DJI_RTL_HEIGHT":
-                    getDjiAircraft().getFlightController().getGoHomeHeightInMeters(new ParamIntegerCallback(i));
-                    break;
-                case "DJI_SERIOUS_BAT":
-                    getDjiAircraft().getFlightController().getSeriousLowBatteryWarningThreshold(new ParamIntegerCallback(i));
-                    break;
-                case "DJI_SMART_RTH":
-                    getDjiAircraft().getFlightController().getSmartReturnToHomeEnabled(new ParamBooleanCallback(i));
-                    break;
-                case "DJI_VERT_MODE":
-                    if (getDjiAircraft().getFlightController().getVerticalControlMode() == VerticalControlMode.VELOCITY)
-                        getParams().get(i).setParamValue(0f);
-                    else if (getDjiAircraft().getFlightController().getVerticalControlMode() == VerticalControlMode.POSITION)
-                        getParams().get(i).setParamValue(1f);
-                    break;
-                case "DJI_YAW_MODE":
-                    if (getDjiAircraft().getFlightController().getYawControlMode() == YawControlMode.ANGLE)
-                        getParams().get(i).setParamValue(0f);
-                    else if (getDjiAircraft().getFlightController().getYawControlMode() == YawControlMode.ANGULAR_VELOCITY)
-                        getParams().get(i).setParamValue(1f);
-                    break;
+            if (getDjiAircraft() != null) {
+                switch (getParams().get(i).getParamName()) {
+                    case "DJI_CTRL_MODE":
+                        getDjiAircraft().getFlightController().getControlMode(new ParamControlModeCallback(i));
+                        break;
+                    case "DJI_ENBL_LEDS":
+                        getDjiAircraft().getFlightController().getLEDsEnabled(new ParamBooleanCallback(i));
+                        break;
+                    case "DJI_ENBL_QSPIN":
+                        getDjiAircraft().getFlightController().getQuickSpinEnabled(new ParamBooleanCallback(i));
+                        break;
+                    case "DJI_ENBL_RADIUS":
+                        getDjiAircraft().getFlightController().getMaxFlightRadiusLimitationEnabled(new ParamBooleanCallback(i));
+                        break;
+                    case "DJI_ENBL_TFOLLOW":
+                        getDjiAircraft().getFlightController().getTerrainFollowModeEnabled(new ParamBooleanCallback(i));
+                        break;
+                    case "DJI_ENBL_TRIPOD":
+                        getDjiAircraft().getFlightController().getTripodModeEnabled(new ParamBooleanCallback(i));
+                        break;
+                    case "DJI_FAILSAFE":
+                        getDjiAircraft().getFlightController().getConnectionFailSafeBehavior(new ParamConnectionFailSafeBehaviorCallback(i));
+                        break;
+                    case "DJI_LOW_BAT":
+                        getDjiAircraft().getFlightController().getLowBatteryWarningThreshold(new ParamIntegerCallback(i));
+                        break;
+                    case "DJI_MAX_HEIGHT":
+                        getDjiAircraft().getFlightController().getMaxFlightHeight(new ParamIntegerCallback(i));
+                        break;
+                    case "DJI_MAX_RADIUS":
+                        getDjiAircraft().getFlightController().getMaxFlightRadius(new ParamIntegerCallback(i));
+                        break;
+                    case "DJI_RLPCH_MODE":
+                        if (getDjiAircraft().getFlightController().getRollPitchControlMode() == RollPitchControlMode.ANGLE)
+                            getParams().get(i).setParamValue(0f);
+                        else if (getDjiAircraft().getFlightController().getRollPitchControlMode() == RollPitchControlMode.VELOCITY)
+                            getParams().get(i).setParamValue(1f);
+                        break;
+                    case "DJI_RTL_HEIGHT":
+                        getDjiAircraft().getFlightController().getGoHomeHeightInMeters(new ParamIntegerCallback(i));
+                        break;
+                    case "DJI_SERIOUS_BAT":
+                        getDjiAircraft().getFlightController().getSeriousLowBatteryWarningThreshold(new ParamIntegerCallback(i));
+                        break;
+                    case "DJI_SMART_RTH":
+                        getDjiAircraft().getFlightController().getSmartReturnToHomeEnabled(new ParamBooleanCallback(i));
+                        break;
+                    case "DJI_VERT_MODE":
+                        if (getDjiAircraft().getFlightController().getVerticalControlMode() == VerticalControlMode.VELOCITY)
+                            getParams().get(i).setParamValue(0f);
+                        else if (getDjiAircraft().getFlightController().getVerticalControlMode() == VerticalControlMode.POSITION)
+                            getParams().get(i).setParamValue(1f);
+                        break;
+                    case "DJI_YAW_MODE":
+                        if (getDjiAircraft().getFlightController().getYawControlMode() == YawControlMode.ANGLE)
+                            getParams().get(i).setParamValue(0f);
+                        else if (getDjiAircraft().getFlightController().getYawControlMode() == YawControlMode.ANGULAR_VELOCITY)
+                            getParams().get(i).setParamValue(1f);
+                        break;
+                }
+                return true;
+            } else {
+                Log.e(TAG, "AIRCRAFT IS NULL");
+                return false;
             }
         }
+        return false;
     }
 
 

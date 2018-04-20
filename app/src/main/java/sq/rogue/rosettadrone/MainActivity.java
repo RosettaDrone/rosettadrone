@@ -237,8 +237,6 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
         mDJIHandler = new Handler(Looper.getMainLooper());
         mUIHandler = new Handler(Looper.getMainLooper());
         mUIHandler.postDelayed(RunnableUpdateUI, 1000);
-        mGCSCommunicator = new GCSCommunicatorAsyncTask(this);
-        mGCSCommunicator.execute();
 
         //NativeHelper.getInstance().init();
     }
@@ -473,8 +471,16 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
     };
 
     private void onDroneConnected() {
-        mModel.setDjiAircraft((Aircraft) mProduct);
-        mModel.loadParamsFromDJI();
+        mGCSCommunicator = new GCSCommunicatorAsyncTask(this);
+        mGCSCommunicator.execute();
+
+        while (!mModel.setDjiAircraft((Aircraft) mProduct)){
+
+        }
+        while (!mModel.loadParamsFromDJI()) {
+
+        }
+
         initVideoStreamDecoder();
         initPacketizer();
         mReceivedVideoDataCallBack = new VideoFeeder.VideoDataCallback() {
@@ -494,7 +500,17 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
     }
 
     private void onDroneDisconnected() {
+
         mModel.setDjiAircraft(null);
+        if (mGCSCommunicator != null) {
+            mGCSCommunicator.cancel(true);
+            mGCSCommunicator = null;
+        }
+        packetizer.getRtpSocket().close();
+
+        DJIVideoStreamDecoder.getInstance().stop();
+
+//        mGCSCommunicator.cancel(true);
     }
 
 
@@ -729,15 +745,17 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
         }
 
         @Override
+        protected void onCancelled(Integer result) {
+            super.onCancelled();
+        }
+
+        @Override
         protected void onProgressUpdate(Integer... progress) {
 
         }
 
         private void createTelemetrySocket() {
-            if (mainActivityWeakReference.get().socket != null) {
-                mainActivityWeakReference.get().socket.disconnect();
-                mainActivityWeakReference.get().socket.close();
-            }
+            close();
 
             String gcsIPString = "127.0.0.1";
             if (mainActivityWeakReference.get().prefs.getBoolean("pref_external_gcs", false))
@@ -766,6 +784,13 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
             Log.d(TAG, String.valueOf(mainActivityWeakReference.get().socket.getLocalPort()));
 
             mainActivityWeakReference.get().mModel.setSocket(mainActivityWeakReference.get().socket);
+        }
+
+        protected void close() {
+            if (mainActivityWeakReference.get().socket != null) {
+                mainActivityWeakReference.get().socket.disconnect();
+                mainActivityWeakReference.get().socket.close();
+            }
         }
 
     }
