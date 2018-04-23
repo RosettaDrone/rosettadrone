@@ -281,7 +281,11 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
         packetizer.setInputStream(new ByteArrayInputStream("".getBytes()));
         String videoIPString = "127.0.0.1";
         if (prefs.getBoolean("pref_external_gcs", false))
-            videoIPString = prefs.getString("pref_video_ip", null);
+            if (!prefs.getBoolean("pref_combined_gcs", false)) {
+                videoIPString = prefs.getString("pref_gcs_ip", null);
+            } else {
+                videoIPString = prefs.getString("pref_video_ip", null);
+            }
         int videoPort = Integer.parseInt(prefs.getString("pref_video_port", "-1"));
         try {
             packetizer.getRtpSocket().setDestination(InetAddress.getByName(videoIPString), videoPort, 5000);
