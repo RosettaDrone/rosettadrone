@@ -317,8 +317,10 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             send_command_ack(MAV_CMD_COMPONENT_ARM_DISARM, MAV_RESULT.MAV_RESULT_DENIED);
             return;
         }
-        
-        mMotorsArmed = true;
+        else {
+            send_command_ack(MAV_CMD_COMPONENT_ARM_DISARM, MAV_RESULT.MAV_RESULT_ACCEPTED);
+            mMotorsArmed = true;
+        }
         return;
 
 //
@@ -476,7 +478,6 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         if(mMotorsArmed)
             msg.base_mode |= MAV_MODE_FLAG.MAV_MODE_FLAG_SAFETY_ARMED;
 
-        // msg.custom_mode =
         msg.system_status = MAV_STATE.MAV_STATE_ACTIVE;
         msg.mavlink_version = 3;
         sendMessage(msg);
@@ -1027,20 +1028,26 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             return;
         }
 
-        parent.logMessageDJI("Initiating takeoff");
-        djiAircraft.getFlightController().startTakeoff(new CommonCallbacks.CompletionCallback() {
-            @Override
-            public void onResult(DJIError djiError) {
-                if (djiError != null) {
-                    parent.logMessageDJI("Error: " + djiError.toString());
-                    send_command_ack(MAV_CMD_NAV_TAKEOFF, MAV_RESULT.MAV_RESULT_FAILED);
-                } else {
-                    parent.logMessageDJI("Takeoff successful!\n");
-                    send_command_ack(MAV_CMD_NAV_TAKEOFF, MAV_RESULT.MAV_RESULT_ACCEPTED);
+        if(getWaypointMissionOperator().getCurrentState() == WaypointMissionState.READY_TO_EXECUTE) {
+            startWaypointMission();
+            send_command_ack(MAV_CMD_NAV_TAKEOFF, MAV_RESULT.MAV_RESULT_ACCEPTED);
+        }
+        else {
+            parent.logMessageDJI("Initiating takeoff");
+            djiAircraft.getFlightController().startTakeoff(new CommonCallbacks.CompletionCallback() {
+                @Override
+                public void onResult(DJIError djiError) {
+                    if (djiError != null) {
+                        parent.logMessageDJI("Error: " + djiError.toString());
+                        send_command_ack(MAV_CMD_NAV_TAKEOFF, MAV_RESULT.MAV_RESULT_FAILED);
+                    } else {
+                        parent.logMessageDJI("Takeoff successful!\n");
+                        send_command_ack(MAV_CMD_NAV_TAKEOFF, MAV_RESULT.MAV_RESULT_ACCEPTED);
+                    }
+                    mGCSCommandedMode = NOT_USING_GCS_COMMANDED_MODE;
                 }
-                mGCSCommandedMode = NOT_USING_GCS_COMMANDED_MODE;
-            }
-        });
+            });
+        }
     }
 
     public void do_land() {

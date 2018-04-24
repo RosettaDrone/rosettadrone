@@ -87,11 +87,8 @@ public class MAVLinkReceiver {
                 msg_command_long msg_cmd = (msg_command_long) msg;
                 switch (msg_cmd.command) {
                     case MAV_CMD_COMPONENT_ARM_DISARM:
-                        if (msg_cmd.param1 == 1) {
-                            parent.logMessageDJI("Command: arm motors");
-                            mModel.send_command_ack(MAV_CMD_COMPONENT_ARM_DISARM, MAV_RESULT.MAV_RESULT_ACCEPTED);
+                        if (msg_cmd.param1 == 1)
                             mModel.armMotors();
-                        }
                         else
                             mModel.disarmMotors();
 
@@ -260,15 +257,14 @@ public class MAVLinkReceiver {
     private void changeFlightMode(int flightMode) {
         mModel.setGCSCommandedMode(flightMode);
 
-        if (flightMode == ArduCopterFlightModes.AUTO)
+        if (flightMode == ArduCopterFlightModes.AUTO) {
             if(mModel.getWaypointMissionOperator().getCurrentState() == WaypointMissionState.EXECUTION_PAUSED) {
-                parent.logMessageDJI("Command: resume mission");
+                parent.logMessageDJI("Resuming mission");
                 mModel.resumeWaypointMission();
             }
-            else {
-                parent.logMessageDJI("Command: start mission");
+            else if(mModel.getWaypointMissionOperator().getCurrentState() == WaypointMissionState.READY_TO_EXECUTE)
                 mModel.startWaypointMission();
-            }
+        }
         else if(flightMode == ArduCopterFlightModes.BRAKE) {
             mModel.pauseWaypointMission();
             mModel.setGCSCommandedMode(flightMode);
@@ -278,10 +274,6 @@ public class MAVLinkReceiver {
             mModel.do_go_home();
         else if (flightMode == ArduCopterFlightModes.LAND)
             mModel.do_land();
-
-        if (mModel.getWaypointMissionOperator().getCurrentState() == WaypointMissionState.EXECUTING && flightMode != ArduCopterFlightModes.AUTO)
-            parent.logMessageDJI("Command: pause mission");
-            mModel.pauseWaypointMission();
 
         mModel.send_command_ack(MAV_CMD_DO_SET_MODE, MAV_RESULT.MAV_RESULT_ACCEPTED);
 
