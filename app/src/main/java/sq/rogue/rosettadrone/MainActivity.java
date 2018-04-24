@@ -347,7 +347,7 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
     @Override
     protected void onActivityResult(int reqCode, int resCode, Intent data) {
         super.onActivityResult(reqCode, resCode, data);
-        if (reqCode == RESULT_SETTINGS)
+        if (reqCode == RESULT_SETTINGS && mGCSCommunicator != null)
             mGCSCommunicator.renewDatalinks();
     }
 
