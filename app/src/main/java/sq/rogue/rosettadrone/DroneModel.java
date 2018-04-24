@@ -478,6 +478,15 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         if(mMotorsArmed)
             msg.base_mode |= MAV_MODE_FLAG.MAV_MODE_FLAG_SAFETY_ARMED;
 
+        // Catches manual landings
+        // Automatically disarm motors if aircraft is on the ground and a takeoff is not in progress
+        if(!getDjiAircraft().getFlightController().getState().isFlying() && mGCSCommandedMode != ArduCopterFlightModes.GUIDED)
+            mMotorsArmed = false;
+
+        // Catches manual takeoffs
+        if(getDjiAircraft().getFlightController().getState().areMotorsOn())
+            mMotorsArmed = true;
+
         msg.system_status = MAV_STATE.MAV_STATE_ACTIVE;
         msg.mavlink_version = 3;
         sendMessage(msg);
