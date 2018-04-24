@@ -575,9 +575,12 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
         @Override
         public void onConnectivityChange(boolean isConnected) {
             Log.d(TAG, "onConnectivityChange()");
-            if (!isConnected) {
+            logMessageDJI("onConnectivityChange()");
+            if (isConnected)
+                onDroneConnected();
+            else
                 onDroneDisconnected();
-            }
+
             notifyStatusChange();
         }
     };
