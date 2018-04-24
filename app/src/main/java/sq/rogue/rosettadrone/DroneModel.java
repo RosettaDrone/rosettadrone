@@ -312,8 +312,6 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 //    }
 
     public void armMotors() {
-        parent.logMessageDJI("armMotors()");
-        Log.d(TAG, "Command: arm motors");
         if (!mRSArmingEnabled) {
             parent.logMessageDJI("You must arm Rosetta Drone before arming motors");
             send_command_ack(MAV_CMD_COMPONENT_ARM_DISARM, MAV_RESULT.MAV_RESULT_DENIED);
@@ -335,7 +333,6 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     public void disarmMotors() {
-        Log.d(TAG, "Command: disarm motors");
         djiAircraft.getFlightController().turnOffMotors(new CommonCallbacks.CompletionCallback() {
 
             @Override
@@ -507,8 +504,6 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         msg.command = message_id;
         msg.result = (short) result;
         sendMessage(msg);
-        parent.logMessageDJI("Ack: " + message_id + ", " + result);
-
     }
 
     public void send_global_position_int() {
@@ -1032,6 +1027,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
     public void do_takeoff() {
         parent.logMessageDJI("Initiating takeoff");
+        disarmMotors();
         djiAircraft.getFlightController().startTakeoff(new CommonCallbacks.CompletionCallback() {
             @Override
             public void onResult(DJIError djiError) {

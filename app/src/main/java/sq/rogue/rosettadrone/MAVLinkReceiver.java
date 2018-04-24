@@ -85,13 +85,13 @@ public class MAVLinkReceiver {
 
             case MAVLINK_MSG_ID_COMMAND_LONG:
                 msg_command_long msg_cmd = (msg_command_long) msg;
-                parent.logMessageDJI("Command: " + msg_cmd.command);
                 switch (msg_cmd.command) {
                     case MAV_CMD_COMPONENT_ARM_DISARM:
                         if (msg_cmd.param1 == 1)
                             mModel.armMotors();
                         else
                             mModel.disarmMotors();
+
                         break;
                     case MAV_CMD_DO_SET_MODE:
                         changeFlightMode((int)msg_cmd.param1);
@@ -109,7 +109,6 @@ public class MAVLinkReceiver {
                         // TODO;
                         break;
                     case MAV_CMD_NAV_RETURN_TO_LAUNCH:
-                        //parent.logMessageDJI("MAV_CMD_NAV_RETURN_TO_LAUNCH received");
                         mModel.do_go_home();
                         mModel.send_command_ack(MAV_CMD_NAV_RETURN_TO_LAUNCH, MAV_RESULT.MAV_RESULT_ACCEPTED);
                         break;
