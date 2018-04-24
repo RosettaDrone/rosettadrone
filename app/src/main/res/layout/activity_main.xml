@@ -15,11 +15,12 @@
         android:orientation="horizontal">
 
         <ToggleButton
-            android:id="@+id/toggBtnEnablerArming"
+            android:id="@+id/toggBtnSafety"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textOn="Arming Enabled"
-            android:textOff="Arming Disabled"
+            android:textOn="Safety Enabled"
+            android:textOff="Ready to Fly"
+            android:checked="true"
             android:gravity="center"
             android:textColor="@color/colorRed"
             />

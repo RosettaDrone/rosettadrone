@@ -87,8 +87,11 @@ public class MAVLinkReceiver {
                 msg_command_long msg_cmd = (msg_command_long) msg;
                 switch (msg_cmd.command) {
                     case MAV_CMD_COMPONENT_ARM_DISARM:
-                        if (msg_cmd.param1 == 1)
+                        if (msg_cmd.param1 == 1) {
+                            parent.logMessageDJI("Command: arm motors");
+                            mModel.send_command_ack(MAV_CMD_COMPONENT_ARM_DISARM, MAV_RESULT.MAV_RESULT_ACCEPTED);
                             mModel.armMotors();
+                        }
                         else
                             mModel.disarmMotors();
 

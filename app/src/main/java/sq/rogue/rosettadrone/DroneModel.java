@@ -46,6 +46,7 @@ import java.net.PortUnreachableException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import dji.common.airlink.SignalQualityCallback;
 import dji.common.battery.AggregationState;
 import dji.common.battery.BatteryState;
 import dji.common.camera.SettingsDefinitions;
@@ -102,7 +103,16 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     private int mDownlinkQuality = 0;
     private int mUplinkQuality = 0;
 
-    private boolean mRSArmingEnabled = false;
+    private boolean mSafetyEnabled = true;
+    private boolean mMotorsArmed = false;
+
+    public boolean isMotorsArmed() {
+        return mMotorsArmed;
+    }
+
+    public void setMotorsArmed(boolean motorsArmed) {
+        mMotorsArmed = motorsArmed;
+    }
 
 
     public int getGCSCommandedMode() {
@@ -150,12 +160,12 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         return djiAircraft;
     }
 
-    public boolean isRSArmingEnabled() {
-        return mRSArmingEnabled;
+    public boolean isSafetyEnabled() {
+        return mSafetyEnabled;
     }
 
-    public void setRSArmingEnabled(boolean RSArmingEnabled) {
-        mRSArmingEnabled = RSArmingEnabled;
+    public void setSafetyEnabled(boolean SafetyEnabled) {
+        mSafetyEnabled = SafetyEnabled;
     }
 
     public boolean setDjiAircraft(Aircraft djiAircraft) {
@@ -219,20 +229,20 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         /**************************************************
          * Called whenever airlink quality changes        *
          **************************************************/
-//
-//        djiAircraft.getAirLink().setDownlinkSignalQualityCallback(new SignalQualityCallback() {
-//            @Override
-//            public void onUpdate(int i) {
-//                mDownlinkQuality = i;
-//            }
-//        });
-//
-//        djiAircraft.getAirLink().setUplinkSignalQualityCallback(new SignalQualityCallback() {
-//            @Override
-//            public void onUpdate(int i) {
-//                mUplinkQuality = i;
-//            }
-//        });
+
+        djiAircraft.getAirLink().setDownlinkSignalQualityCallback(new SignalQualityCallback() {
+            @Override
+            public void onUpdate(int i) {
+                mDownlinkQuality = i;
+            }
+        });
+
+        djiAircraft.getAirLink().setUplinkSignalQualityCallback(new SignalQualityCallback() {
+            @Override
+            public void onUpdate(int i) {
+                mUplinkQuality = i;
+            }
+        });
 
         initMissionOperator();
 
@@ -301,35 +311,29 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         }
     }
 
-//    private void disarmIfNeeded() {
-//        // This handles an edge case where ground stations may send multiple commands to start the drone if
-//        // previous attempts are unsuccessful. Once the user gives the stick down command to disable the
-//        // motors, we disable RosettaDrone arming to be absolutely sure the motors can't start up again.
-//        if(djiAircraft.getFlightController().getState().areMotorsOn() == false && mRSArmingEnabled == true && mArmingWasCommanded == true) {
-//            parent.logMessageDJI("disarmIfNeeded()");
-//            mRSArmingEnabled = false;
-//        }
-//    }
-
     public void armMotors() {
-        if (!mRSArmingEnabled) {
-            parent.logMessageDJI("You must arm Rosetta Drone before arming motors");
+        if (mSafetyEnabled) {
+            parent.logMessageDJI("You must turn off safety to arm motors");
             send_command_ack(MAV_CMD_COMPONENT_ARM_DISARM, MAV_RESULT.MAV_RESULT_DENIED);
             return;
         }
+        
+        mMotorsArmed = true;
+        return;
 
-        djiAircraft.getFlightController().turnOnMotors(new CommonCallbacks.CompletionCallback() {
-            @Override
-            public void onResult(DJIError djiError) {
-                // TODO reattempt if arming/disarming fails
-                if (djiError == null) {
-                    send_command_ack(MAV_CMD_COMPONENT_ARM_DISARM, MAV_RESULT.MAV_RESULT_ACCEPTED);
-                    mRSArmingEnabled = false;
-                } else
-                    send_command_ack(MAV_CMD_COMPONENT_ARM_DISARM, MAV_RESULT.MAV_RESULT_FAILED);
-                Log.d(TAG, "onResult()");
-            }
-        });
+//
+//        djiAircraft.getFlightController().turnOnMotors(new CommonCallbacks.CompletionCallback() {
+//            @Override
+//            public void onResult(DJIError djiError) {
+//                // TODO reattempt if arming/disarming fails
+//                if (djiError == null) {
+//                    send_command_ack(MAV_CMD_COMPONENT_ARM_DISARM, MAV_RESULT.MAV_RESULT_ACCEPTED);
+//                    mSafetyEnabled = false;
+//                } else
+//                    send_command_ack(MAV_CMD_COMPONENT_ARM_DISARM, MAV_RESULT.MAV_RESULT_FAILED);
+//                Log.d(TAG, "onResult()");
+//            }
+//        });
     }
 
     public void disarmMotors() {
@@ -343,7 +347,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                 else
                     send_command_ack(MAV_CMD_COMPONENT_ARM_DISARM, MAV_RESULT.MAV_RESULT_FAILED);
                 Log.d(TAG, "onResult()");
-                mRSArmingEnabled = false;
+                mMotorsArmed = false;
             }
         });
     }
@@ -466,10 +470,10 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         }
         if (mGCSCommandedMode == ArduCopterFlightModes.GUIDED)
             msg.custom_mode = ArduCopterFlightModes.GUIDED;
-        else if (mGCSCommandedMode == ArduCopterFlightModes.BRAKE)
+        if (mGCSCommandedMode == ArduCopterFlightModes.BRAKE)
             msg.custom_mode = ArduCopterFlightModes.BRAKE;
-
-        if (djiAircraft.getFlightController().getState().areMotorsOn())
+        
+        if(mMotorsArmed)
             msg.base_mode |= MAV_MODE_FLAG.MAV_MODE_FLAG_SAFETY_ARMED;
 
         // msg.custom_mode =
@@ -937,19 +941,10 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             parent.logMessageDJI(getWaypointMissionOperator().getCurrentState().getName());
             return;
         }
-//        if (mRSArmingEnabled) {
-//            do_takeoff();
-//            getWaypointMissionOperator().startMission(new CommonCallbacks.CompletionCallback() {
-//                @Override
-//                public void onResult(DJIError djiError) {
-//                    if (djiError != null)
-//                        parent.logMessageDJI("Error: " + djiError.toString());
-//                    else
-//                        parent.logMessageDJI("Mission started!");
-//                }
-//            });
-//        } else
-//            parent.logMessageDJI("You must arm Rosetta Drone before starting a mission");
+        if (mSafetyEnabled) {
+            parent.logMessageDJI("You must turn off safety to start mission");
+            return;
+        }
 
         getWaypointMissionOperator().startMission(new CommonCallbacks.CompletionCallback() {
             @Override
@@ -1026,8 +1021,13 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     public void do_takeoff() {
+        if(mSafetyEnabled) {
+            parent.logMessageDJI("You must turn off safety to takeoff");
+            send_command_ack(MAV_CMD_NAV_TAKEOFF, MAV_RESULT.MAV_RESULT_DENIED);
+            return;
+        }
+
         parent.logMessageDJI("Initiating takeoff");
-        disarmMotors();
         djiAircraft.getFlightController().startTakeoff(new CommonCallbacks.CompletionCallback() {
             @Override
             public void onResult(DJIError djiError) {
@@ -1050,8 +1050,10 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             public void onResult(DJIError djiError) {
                 if (djiError != null)
                     parent.logMessageDJI("Error: " + djiError.toString());
-                else
+                else {
                     parent.logMessageDJI("Landing successful!\n");
+                    mMotorsArmed = false;
+                }
             }
         });
     }

@@ -143,7 +143,7 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
                     mNewDJI = "";
                 }
                 if(mModel != null) {
-                    if (mModel.isRSArmingEnabled())
+                    if (mModel.isSafetyEnabled())
                         toggleBtnArming.setChecked(true);
                     else
                         toggleBtnArming.setChecked(false);
@@ -165,6 +165,7 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         prefs = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
 
@@ -172,7 +173,7 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
 
         mButtonClear = (Button) findViewById(R.id.button_clear);
         viewPager = (ViewPager) findViewById(R.id.pager);
-        toggleBtnArming = (ToggleButton) findViewById(R.id.toggBtnEnablerArming);
+        toggleBtnArming = (ToggleButton) findViewById(R.id.toggBtnSafety);
         tabLayout = (TabLayout) findViewById(R.id.tab_layout);
 
         mButtonClear.setOnClickListener(new View.OnClickListener() {
@@ -185,14 +186,15 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
 
         deleteApplicationDirectory();
 
+
         toggleBtnArming.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
-                    mModel.setRSArmingEnabled(true);
-                    toggleBtnArming.setTextColor(Color.GREEN);
-                } else {
-                    mModel.setRSArmingEnabled(false);
+                    mModel.setSafetyEnabled(true);
                     toggleBtnArming.setTextColor(Color.RED);
+                } else {
+                    mModel.setSafetyEnabled(false);
+                    toggleBtnArming.setTextColor(Color.GREEN);
                 }
             }
         });
@@ -841,6 +843,5 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
                 mainActivityWeakReference.get().socket.close();
             }
         }
-
     }
 }
