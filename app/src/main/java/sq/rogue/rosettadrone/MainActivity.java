@@ -320,8 +320,8 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
     @Override
     protected void onDestroy() {
         Log.i(TAG, "onDestroy");
-        mGCSCommunicator.cancel(true);
-        mGCSCommunicator = null;
+        logMessageDJI("onDestroy()");
+        closeGCSCommunicator();
 
         mUIHandler.removeCallbacksAndMessages(null);
         mDJIHandler.removeCallbacksAndMessages(null);
@@ -449,6 +449,7 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
         @Override
         public void onProductChange(BaseProduct oldProduct, BaseProduct newProduct) {
             Log.d(TAG, "onProductChange()");
+            logMessageDJI("onProductChange()");
 
             mProduct = newProduct;
 
@@ -500,17 +501,21 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
     }
 
     private void onDroneDisconnected() {
-
+        logMessageDJI("onDroneDisconnected()");
         mModel.setDjiAircraft(null);
-        if (mGCSCommunicator != null) {
-            mGCSCommunicator.cancel(true);
-            mGCSCommunicator = null;
-        }
+        closeGCSCommunicator();
         packetizer.getRtpSocket().close();
 
         DJIVideoStreamDecoder.getInstance().stop();
 
 //        mGCSCommunicator.cancel(true);
+    }
+
+    private void closeGCSCommunicator() {
+        if(mGCSCommunicator != null) {
+            mGCSCommunicator.cancel(true);
+            mGCSCommunicator = null;
+        }
     }
 
 
