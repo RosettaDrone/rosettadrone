@@ -8,11 +8,14 @@ package sq.rogue.rosettadrone;
 import android.Manifest;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.NonNull;
@@ -29,6 +32,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.MAVLink.MAVLinkPacket;
@@ -37,6 +41,7 @@ import com.MAVLink.Parser;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -68,6 +73,8 @@ import sq.rogue.rosettadrone.settings.SettingsActivity;
 import sq.rogue.rosettadrone.video.DJIVideoStreamDecoder;
 import sq.rogue.rosettadrone.video.H264Packetizer;
 import sq.rogue.rosettadrone.video.NativeHelper;
+
+import static sq.rogue.rosettadrone.util.safeSleep;
 
 public class MainActivity extends AppCompatActivity implements DJIVideoStreamDecoder.IYuvDataListener, DJIVideoStreamDecoder.IFrameDataListener {
 
@@ -176,6 +183,7 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
             }
         });
 
+        deleteApplicationDirectory();
 
         toggleBtnArming.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -239,6 +247,28 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
         mUIHandler.postDelayed(RunnableUpdateUI, 1000);
 
         //NativeHelper.getInstance().init();
+    }
+
+    private void deleteApplicationDirectory() {
+        Log.d("RosettaDrone", "deleteApplicationDirectory()");
+        try {
+            PackageInfo p = getPackageManager().getPackageInfo(getPackageName(), 0);
+            String s = p.applicationInfo.dataDir;
+            Log.d(TAG, s);
+            File dir = new File(s);
+            if (dir.isDirectory())
+            {
+                Log.d("RosettaDrone", "yes, is directory");
+                String[] children = dir.list();
+                for (int i = 0; i < children.length; i++)
+                {
+                    new File(dir, children[i]).delete();
+                }
+            }
+        }
+        catch(PackageManager.NameNotFoundException e) { Log.d(TAG, "exception", e); }
+        //File dir = new File(Environment.getExternalStorageDirectory()+"DJI/sq.rogue.rosettadrone");
+
     }
 
     private void requestPermissions() {
@@ -475,8 +505,19 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
         mGCSCommunicator = new GCSCommunicatorAsyncTask(this);
         mGCSCommunicator.execute();
 
+        // Multiple tries and a timeout are necessary because of a bug that causes all the
+        // components of mProduct to be null sometimes.
+        int tries = 0;
         while (!mModel.setDjiAircraft((Aircraft) mProduct)){
-
+            safeSleep(1000);
+            logMessageDJI("Connecting to drone...");
+            tries++;
+            if( tries == 5)
+            {
+                Toast.makeText(this, "Oops, DJI's SDK just glitched. Please restart the app.",
+                        Toast.LENGTH_LONG).show();
+                return;
+            }
         }
         while (!mModel.loadParamsFromDJI()) {
 
