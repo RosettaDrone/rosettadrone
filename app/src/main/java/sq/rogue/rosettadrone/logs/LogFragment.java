@@ -3,14 +3,11 @@ package sq.rogue.rosettadrone.logs;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.text.method.ScrollingMovementMethod;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
-import android.widget.ScrollView;
 import android.widget.TextView;
 
 import sq.rogue.rosettadrone.R;
@@ -20,7 +17,7 @@ public class LogFragment extends Fragment {
     private final int DEFAULT_MAX_CHARACTERS = 200000;
 
     private TextView mTextViewTraffic;
-//    private ScrollView mScrollView;
+    //    private ScrollView mScrollView;
     private boolean mViewAtBottom = true;
 
     private int mMaxCharacters = DEFAULT_MAX_CHARACTERS;
@@ -36,6 +33,7 @@ public class LogFragment extends Fragment {
         mTextViewTraffic = (TextView) view.findViewById(R.id.textView_traffic);
         mTextViewTraffic.setMovementMethod(new ScrollingMovementMethod());
         mTextViewTraffic.setHorizontallyScrolling(true);
+
 //        mScrollView = (ScrollView) view.findViewById(R.id.textAreaScrollerTraffic);
 
 //        mTextViewTraffic.addTextChangedListener(new TextWatcher() {
@@ -73,15 +71,49 @@ public class LogFragment extends Fragment {
         return view;
     }
 
+    /**
+     *
+     * @param textView
+     */
+    public void setTextView(TextView textView) {
+        mTextViewTraffic = textView;
+    }
+
+    /**
+     *
+     * @param savedInstanceState
+     */
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
     }
 
+    /**
+     * Checks the length of log and compares it against the maximum number of characters permitted.
+     * If the log is longer than the maximum number of characters the log is cleared.
+     * @return True if the log is cleared. False if the log is not.
+     */
+    // TODO: Implement a better solution to overflow control
+    public boolean checkOverflow() {
+        /*
+        Very naive solution. Writing out to a log is possible solution if log needs preserved,
+        however parsing with substring will have a very severe impact on performance
+         */
+//        if (mTextViewTraffic.getText().length() > DEFAULT_MAX_CHARACTERS) {
+//            clearLogText();
+//            return true;
+//        }
+        return false;
+    }
+
+    /**
+     * Verifies that the log can hold more text, then appends the text to the log and if enabled scrolls
+     * to the bottom of the log.
+     * @param text The text to append to the log.
+     */
     public void appendLogText(String text) {
         /*
-        TODO: Re-add overflow control
         Using substring is very expensive
          */
 //        String newText = mTextViewTraffic.getText().toString() + text;
@@ -92,42 +124,67 @@ public class LogFragment extends Fragment {
 //        }
 //        mTextViewTraffic.setText(newText);
 
-        /*
-        Very naive solution. Writing out to a log is possible solution if log needs preserved,
-        however parsing with substring will have a very severe impact on performance
-         */
-        if (mTextViewTraffic.getText().length() > 20000) {
-            mTextViewTraffic.setText("");
-        }
+        checkOverflow();
+
         mTextViewTraffic.append(text);
 
-        final int scrollAmt = mTextViewTraffic.getLayout().getLineTop(mTextViewTraffic.getLineCount())
-                - mTextViewTraffic.getHeight();
-        if (scrollAmt > 0) {
-            mTextViewTraffic.scrollTo(0, scrollAmt);
-        } else {
-            mTextViewTraffic.scrollTo(0, 0);
-        }
+        scrollToBottom();
     }
 
-    public void clearLogText(String text) {
+    /**
+     * Calculates the difference between the top of the TextView and the height of the TextView then
+     * scrolls to the difference.
+     */
+    public void scrollToBottom() {
+        final int scrollAmt = mTextViewTraffic.getLayout().getLineTop(mTextViewTraffic.getLineCount())
+                - mTextViewTraffic.getHeight();
+        if (scrollAmt > 0 && scrollAmt < 1000) {
+            mTextViewTraffic.scrollTo(0, scrollAmt);
+        }
+//        else {
+//            mTextViewTraffic.scrollTo(0, 0);
+//        }
+
+//        Log.d("TEST", String.valueOf(scrollAmt));
+    }
+
+    /**
+     * Clears all text out of the TextView.
+     */
+    public void clearLogText() {
         mTextViewTraffic.setText("");
     }
 
+    /**
+     * Helper method to set the underlying TextView text. Will overwrite all text currently in the log.
+     * @param text Text to set.
+     */
     public void setLogText(String text) {
         mTextViewTraffic.setText(text);
     }
 
+    /**
+     * Retrieves the text from the underlying TextView.
+     * @return String representation of the log.
+     */
     public String getLogText() {
         if (mTextViewTraffic != null)
             return mTextViewTraffic.getText().toString();
-        return "";
+        return null;
     }
 
+    /**
+     * Gets the maximum number of characters the log can hold.
+     * @return The maximum number of characters the log can hold.
+     */
     public int getMaxCharacters() {
         return mMaxCharacters;
     }
 
+    /**
+     * Sets the maximum number of characters the log can hold.
+     * @param maxCharacters The new maximum number of characters the log can hold.
+     */
     public void setMaxCharacters(int maxCharacters) {
         mMaxCharacters = maxCharacters;
     }
