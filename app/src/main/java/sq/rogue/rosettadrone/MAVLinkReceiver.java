@@ -11,12 +11,15 @@ import com.MAVLink.common.msg_mission_request;
 import com.MAVLink.common.msg_param_request_read;
 import com.MAVLink.common.msg_param_set;
 import com.MAVLink.common.msg_set_mode;
+import com.MAVLink.enums.MAV_CMD;
 import com.MAVLink.enums.MAV_RESULT;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import dji.common.mission.waypoint.Waypoint;
+import dji.common.mission.waypoint.WaypointAction;
+import dji.common.mission.waypoint.WaypointActionType;
 import dji.common.mission.waypoint.WaypointMission;
 import dji.common.mission.waypoint.WaypointMissionFinishedAction;
 import dji.common.mission.waypoint.WaypointMissionFlightPathMode;
@@ -68,7 +71,7 @@ public class MAVLinkReceiver {
     private final int WP_STATE_REQ_WP = 2;
     private MainActivity parent;
     private WaypointMission.Builder mBuilder;
-    private List<Waypoint> mWaypointList;
+    private ArrayList<msg_mission_item> mMissionItemList;
 
     public MAVLinkReceiver(MainActivity parent, DroneModel model) {
 
@@ -175,7 +178,6 @@ public class MAVLinkReceiver {
              **************************************************************/
 
             case MAVLINK_MSG_ID_MISSION_REQUEST_LIST:
-                parent.logMessageDJI("MSN: RD received mission_request_list from GCS");
                 mModel.send_mission_count();
                 break;
 
@@ -185,18 +187,14 @@ public class MAVLinkReceiver {
 
             case MAVLINK_MSG_ID_MISSION_REQUEST:
                 msg_mission_request msg_request = new msg_mission_request();
-                parent.logMessageDJI("MSN: RD received mission_request from GCS: " + String.valueOf(msg_request.seq));
                 mModel.send_mission_item(msg_request.seq);
                 break;
 
             case MAVLINK_MSG_ID_MISSION_ACK:
                 msg_mission_ack msg_ack = new msg_mission_ack();
-                parent.logMessageDJI("MSN: RD received mission_ack from GCS");
                 if (msg_ack.type == MAV_MISSION_TYPE_MISSION) {
-                    parent.logMessageDJI("MSN: ack success");
                     // TODO success
                 } else {
-                    parent.logMessageDJI("MSN: ack fail");
                     // TODO fail
                 }
                 break;
@@ -210,21 +208,17 @@ public class MAVLinkReceiver {
                 //mModel.getMissionControl().getWaypointMissionOperator().getLoadedMission().getWaypointList().clear();
                 msg_mission_count msg_count = (msg_mission_count) msg;
                 mNumGCSWaypoints = msg_count.count;
-                parent.logMessageDJI("Num waypoints from GCS: " + String.valueOf(mNumGCSWaypoints));
                 wpState = WP_STATE_REQ_WP;
+                mMissionItemList = new ArrayList<msg_mission_item>();
                 mModel.request_mission_item(0);
                 break;
 
             case MAVLINK_MSG_ID_MISSION_ITEM:
                 msg_mission_item msg_item = (msg_mission_item) msg;
-                parent.logMessageDJI("MSN: Received mission_item from GCS: " + String.valueOf(msg_item.seq));
-                parent.logMessageDJI("   " + String.valueOf(msg_item.x) + ", " + String.valueOf(msg_item.y));
-                Waypoint wp = new Waypoint(msg_item.x, msg_item.y, msg_item.z); // TODO check altitude conversion
-                mWaypointList.add(wp);
+                mMissionItemList.add(msg_item);
 
                 // We are done fetching a complete mission from the GCS...
                 if (msg_item.seq == mNumGCSWaypoints - 1) {
-                    parent.logMessageDJI("All waypoints received from GCS");
                     wpState = WP_STATE_INACTIVE;
                     finalizeNewMission();
                     mModel.send_mission_ack();
@@ -289,12 +283,45 @@ public class MAVLinkReceiver {
         mBuilder.gotoFirstWaypointMode(WaypointMissionGotoWaypointMode.SAFELY);
         mBuilder.headingMode(WaypointMissionHeadingMode.AUTO);
         mBuilder.repeatTimes(1);
-        mWaypointList = new ArrayList<>();
+        mMissionItemList = new ArrayList<>();
     }
 
     protected void finalizeNewMission() {
-        mBuilder.waypointList(mWaypointList).waypointCount(mWaypointList.size());
+        ArrayList<Waypoint> dji_wps = new ArrayList<Waypoint>();
+        Waypoint currentWP = null;
+
+        parent.logMessageDJI("==============================");
+        parent.logMessageDJI("Waypoint Mission Uploaded");
+        parent.logMessageDJI("==============================");
+
+        for(msg_mission_item m : this.mMissionItemList) {
+            switch(m.command) {
+                case MAV_CMD_NAV_TAKEOFF:
+                case MAV_CMD.MAV_CMD_NAV_WAYPOINT:
+                    currentWP = new Waypoint(m.x, m.y, m.z); // TODO check altitude conversion
+                    if(m.param1 > 0)
+                        currentWP.addAction(new WaypointAction(WaypointActionType.STAY, (int)m.param1*1000));
+                    dji_wps.add(currentWP);
+                    parent.logMessageDJI("Waypoint: " + m.x + ", " + m.y + " at " + m.z + "m");
+                    break;
+                case MAV_CMD.MAV_CMD_DO_CHANGE_SPEED:
+                    if(m.param2 > 0)
+                    mBuilder.autoFlightSpeed(m.param2);
+                    break;
+                case MAV_CMD.MAV_CMD_DO_MOUNT_CONTROL:
+                    currentWP.addAction(new WaypointAction(WaypointActionType.GIMBAL_PITCH, (int)m.param1));
+                    parent.logMessageDJI("Set gimbal pitch: " + m.param1);
+                    break;
+                case MAV_CMD.MAV_CMD_IMAGE_START_CAPTURE:
+                    if(currentWP != null)
+                        currentWP.addAction(new WaypointAction(WaypointActionType.START_TAKE_PHOTO, 0));
+                    parent.logMessageDJI("Take photo");
+                    break;
+            }
+        }
+        parent.logMessageDJI("Speed for mission will be " + mBuilder.getAutoFlightSpeed() + " m/s");
+        parent.logMessageDJI("==============================");
+        mBuilder.waypointList(dji_wps).waypointCount(dji_wps.size());
         mModel.setWaypointMission(mBuilder.build());
     }
-
 }

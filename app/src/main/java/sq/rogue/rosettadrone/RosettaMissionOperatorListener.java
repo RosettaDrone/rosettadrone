@@ -38,7 +38,6 @@ class RosettaMissionOperatorListener implements WaypointMissionOperatorListener 
         if (waypointMissionUploadEvent.getProgress() != null
                 && waypointMissionUploadEvent.getProgress().isSummaryUploaded
                 && waypointMissionUploadEvent.getProgress().uploadedWaypointIndex == (WAYPOINT_COUNT - 1)) {
-            activity.logMessageDJI("Mission upload successful!");
         }
         updateWaypointMissionState();
     }

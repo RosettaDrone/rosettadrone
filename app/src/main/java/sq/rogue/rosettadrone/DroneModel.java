@@ -138,11 +138,10 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                         public void onResult(DJIError djiError) {
                             if (djiError == null) {
                                 while (getWaypointMissionOperator().getCurrentState() == WaypointMissionState.UPLOADING) {
-                                    parent.logMessageDJI(".");
-                                    safeSleep(500);
+                                    // Do nothing
                                 }
                                 if (getWaypointMissionOperator().getCurrentState() == WaypointMissionState.READY_TO_EXECUTE)
-                                    parent.logMessageDJI("Waypoint mission successfully uploaded to drone!");
+                                    parent.logMessageDJI("Mission uploaded and ready to execute!");
                                 else
                                     parent.logMessageDJI("Error uploading waypoint mission to drone");
 
@@ -150,7 +149,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                                 parent.logMessageDJI("Error uploading: " + djiError.getDescription());
                                 parent.logMessageDJI(("Please try re-uploading"));
                             }
-                            parent.logMessageDJI("New state: " + getWaypointMissionOperator().getCurrentState().getName());
+                            //parent.logMessageDJI("New state: " + getWaypointMissionOperator().getCurrentState().getName());
                         }
                     });
         }
