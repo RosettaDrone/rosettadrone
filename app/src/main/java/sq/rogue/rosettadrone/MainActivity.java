@@ -165,6 +165,15 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        String versionName = "";
+        try {
+            PackageInfo pInfo = this.getPackageManager().getPackageInfo(getPackageName(), 0);
+            versionName = pInfo.versionName;
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
+        getSupportActionBar().setTitle("Rosetta Drone v" + versionName);
+
 
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         prefs = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
