@@ -1,7 +1,20 @@
 # Rosetta Drone
-MAVLink wrapper for DJI
 
-*** IMPORTANT SAFETY NOTE *** Due to imperfect translation between DJI and Mavlink, props may begin spinning at unexpected times. This usually occurs when the user requests arming or takeoff in the GCS, then changes their mind, but the GCS sends repeated arm or takeoff requests. The recommended method to arm motors is to use the RC transmitter. Always treat props as if they are live! ***
+Rosetta Drone is a Mavlink wrapper for the DJI SDK, which allows users to fly DJI drones using Mavlink-speaking ground control stations. In theory it should work with any Mavlink GCS, but all testing so far has been done with QGroundControl. 
+
+*** IMPORTANT SAFETY NOTE *** Due to imperfect translation between DJI and Mavlink, props may begin spinning at unexpected times. Always treat props as if they are live. Use Rosetta Drone's "safety" feature, which *should* prevent the drone from acknowledging unexpected GCS arm or takeoff commands.
+
+The user assumes all responsibility for prevention of harm or damage. This is an evolving, experimental app.
+
+See "Known issues" below before use.
+
+# Features
+
+* Report telemetry in QGC like position, attitude, relative altitude, heading, and battery remaining
+* Command Return-to-Launch from QGC
+* View drone video feeds in QGC or forward RTP to an IP address of your choice (currently Mavic Pro only)
+* Create and fly waypoint missions
+
 
 # Usage
 
@@ -11,10 +24,12 @@ MAVLink wrapper for DJI
 
 2. Start Rosetta Drone. The DJI light in the top-right will turn green if the app is successfully communicating with your drone.
 
-3. Start QGroundControl. A telemetry connection should be immediately established, and the GCS light in Rosetta Drone will turn green. 
+3. If you wish to use QGroundControl on an external device, click the Gear icon to access Settings, check **Use GCS on an external device**, then specify an IP address.
+
+4. Start QGroundControl. A telemetry connection should be immediately established, and the GCS light in Rosetta Drone will turn green. 
 Note that if you are using QGroundControl on the same device as RosettaDrone, the GCS light may not turn green if QGC is in the background. 
 
-4. To start video:
+5. To start video:
 
     a. Click the "Q" icon in the top-left corner of QGC
     
@@ -22,8 +37,9 @@ Note that if you are using QGroundControl on the same device as RosettaDrone, th
     
     c. Change **UDP Port** to 5600.
 
-5. Takeoff is recommended using the RC transmitter. To arm or takeoff from the GCS, the "ARMING ENABLED" button in RosettaDrone must be green.
-before commanding an arm or takeoff.
+6. Takeoff is recommended using the RC transmitter. To arm or takeoff from the GCS, click the **SAFETY ENABLED** button. It will turn green and say **READY TO FLY**. Then use the QGroundControl **Takeoff** or **Start Mission** function.
+
+7. After flight, ensure the safety is enabled before approaching props.
 
     
 # Building from source
@@ -32,38 +48,55 @@ before commanding an arm or takeoff.
 
 2. In Android Studio, select **File->New->Import Project** and navigate to the downloaded folder.
  
-3. Sign up for the DJI Developer Program at https://developer.dji.com/mobile-sdk/ and sign up for an Application key. The package name should be sq.rogue.rosettadrone.
+3. Sign up for the DJI Developer Program at https://developer.dji.com/mobile-sdk/ and create an Application key. The package name should be sq.rogue.rosettadrone.
  
 4. Create a new file called keys.xml in the /values folder, and insert the following:
-```
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="dji_key">INSERT KEY HERE</string>
-</resources>
-```
-
+    ```
+    <?xml version="1.0" encoding="utf-8"?>
+    <resources>
+        <string name="dji_key">INSERT KEY HERE</string>
+    </resources>
+    ```
+    
 5. Run **Build->Make Project**
 
 # DJI-Mavlink Translation Notes
 
 Anyone who speaks multiple languages knows that translations are rarely perfect. The same is the case here.
 
-- DJI reports heading in True, which RosettaDrone passes along in vfr_hud.hdg. The mavlink protocol does not specify magnetic or true.
+- The **ARM** button in QGC does not work, by design. Sending a "Takeoff" or "Start Mission" command from QGC will arm the motors and takeoff.
 
-- DJI only reports altitude above home point, or what mavlink calls "relative altitude." There is know to extract altitude above mean sea level (AMSL) from DJI's SDK.
+- DJI reports heading in True, which RosettaDrone passes along in vfr_hud.hdg. The mavlink protocol does not specify magnetic or true.
 
 - DJI and Mavlink use different scales to characterize GPS accuracy. DJI also does not report hdop or vdop.
 
+- Radio signal strength is not yet implemented
+
 - RosettaDrone reports groundspeed and airspeed as the same, and does no wind correction
 
+- There is currently no way to turn the video camera on or off in QGC, but DJI controllers will still work fine
+
+- The only implemented waypoint actions include delaying at a waypoint, taking a photo, or changing the gimbal pitch
+
+# Known Issues for Users
+
+- Video streaming only works for the Mavic Pro. Some unknown bug in the code causes video from other platforms to be scrambled. Help wanted!
+
+- Occassionally RosettaDrone will loop through repeated "Connecting to drone..." messages upon plugging in a drone. We believe this is a bug in the DJI SDK. Try restarting the drone, killing RosettaDrone, and restarting it. If that doesn't work, reinstalling the app clears caches and usually solves the problem.
+
+- On some phones, RosettaDrone runs poorly when in the background. This leads to garbled video in QGC, whether it is in running on the phone or an external device. Samsung S7 and S8 seem to work fine, but we have seen this problem with the Pixel 2, HTC 10, and Nexus 6. We are moving video streaming to a Service rather than Activity, which we hope will help.
+
+# Known Issues for Developers
+
+RosettaDrone uses MAVLink code generated by the MAVLink code generator, using the ArduPilot dialect. The Java code generator contains errors (see issues [#805](https://github.com/mavlink/mavlink/issues/805) and [#806](https://github.com/mavlink/mavlink/issues/806)), and the code required manual tweaking after generation. This means that simply dropping in updated auto-generated files will likely produce errors.
+
+The use of an ArduPilot dialect over PX4 is not intended to be a statement of preference. The author believes strongly in the importance of maintaining maximum compatibility across both projects. 
+
 # Acknowledgements
+
+Rosetta Drone was brought to you by developers from Rogue Squadron, a UAS/C-UAS red team at the Defense Innovation Unit Experimental.
 
 Rosetta Drone uses a modified version of DJI's [Android Video Stream Decoding Sample](https://developer.dji.com/mobile-sdk/documentation/sample-code/index.html), which is released under the MIT License.
 
 Video RTP packing uses code modified from the [libstreamer](https://github.com/fyhertz/libstreaming) library, licensed under Apache 2.
  
-# Developer notes
-
-RosettaDrone uses MAVLink code generated by the MAVLink code generator, using the ArduPilot dialect. The Java code generator contains errors (see issues [#805](https://github.com/mavlink/mavlink/issues/805) and [#806](https://github.com/mavlink/mavlink/issues/806)), and the code required manual tweaking after generation. This means that simply dropping in updated auto-generated files will likely produce errors.
-
-The use of an ArduPilot dialect over PX4 is not intended to be a statement of preference. The author believes strongly in the importance of maintaining maximum compatibility across both projects. 
