@@ -68,14 +68,22 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Shared
         findPreference("pref_telem_port").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
             @Override
             public boolean onPreferenceChange(Preference preference, Object newValue) {
-                return Integer.parseInt((String) newValue) >= 1 && Integer.parseInt((String) newValue) <= 65535;
+                try {
+                    return Integer.parseInt((String) newValue) >= 1 && Integer.parseInt((String) newValue) <= 65535;
+                } catch (NumberFormatException e) {
+                    return false;
+                }
             }
         });
 
         findPreference("pref_video_port").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
             @Override
             public boolean onPreferenceChange(Preference preference, Object newValue) {
-                return (Integer) newValue >= 1 && (Integer) newValue <= 65535;
+                try {
+                    return Integer.parseInt((String) newValue) >= 1 && Integer.parseInt((String) newValue) <= 65535;
+                } catch (NumberFormatException e) {
+                    return false;
+                }
             }
         });
     }
