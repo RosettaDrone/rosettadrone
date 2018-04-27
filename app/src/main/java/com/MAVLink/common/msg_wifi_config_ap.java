@@ -33,6 +33,24 @@ public class msg_wifi_config_ap extends MAVLinkMessage {
 
 
     /**
+     * Constructor for a new message, just initializes the msgid
+     */
+    public msg_wifi_config_ap() {
+        msgid = MAVLINK_MSG_ID_WIFI_CONFIG_AP;
+    }
+
+    /**
+     * Constructor for a new message, initializes the message with the payload
+     * from a mavlink packet
+     */
+    public msg_wifi_config_ap(MAVLinkPacket mavLinkPacket) {
+        this.sysid = mavLinkPacket.sysid;
+        this.compid = mavLinkPacket.compid;
+        this.msgid = MAVLINK_MSG_ID_WIFI_CONFIG_AP;
+        unpack(mavLinkPacket.payload);
+    }
+
+    /**
      * Generates the payload for a mavlink message for a message of this type
      *
      * @return
@@ -79,23 +97,19 @@ public class msg_wifi_config_ap extends MAVLinkMessage {
     }
 
     /**
-     * Constructor for a new message, just initializes the msgid
+     * Gets the message, formated as a string
      */
-    public msg_wifi_config_ap() {
-        msgid = MAVLINK_MSG_ID_WIFI_CONFIG_AP;
-    }
+    public String getSsid() {
+        StringBuffer buf = new StringBuffer();
+        for (int i = 0; i < 32; i++) {
+            if (ssid[i] != 0)
+                buf.append((char) ssid[i]);
+            else
+                break;
+        }
+        return buf.toString();
 
-    /**
-     * Constructor for a new message, initializes the message with the payload
-     * from a mavlink packet
-     */
-    public msg_wifi_config_ap(MAVLinkPacket mavLinkPacket) {
-        this.sysid = mavLinkPacket.sysid;
-        this.compid = mavLinkPacket.compid;
-        this.msgid = MAVLINK_MSG_ID_WIFI_CONFIG_AP;
-        unpack(mavLinkPacket.payload);
     }
-
 
     /**
      * Sets the buffer of this message with a string, adds the necessary padding
@@ -114,11 +128,11 @@ public class msg_wifi_config_ap extends MAVLinkMessage {
     /**
      * Gets the message, formated as a string
      */
-    public String getSsid() {
+    public String getPassword() {
         StringBuffer buf = new StringBuffer();
-        for (int i = 0; i < 32; i++) {
-            if (ssid[i] != 0)
-                buf.append((char) ssid[i]);
+        for (int i = 0; i < 64; i++) {
+            if (password[i] != 0)
+                buf.append((char) password[i]);
             else
                 break;
         }
@@ -138,21 +152,6 @@ public class msg_wifi_config_ap extends MAVLinkMessage {
         for (int i = len; i < 64; i++) {            // padding for the rest of the buffer
             password[i] = 0;
         }
-    }
-
-    /**
-     * Gets the message, formated as a string
-     */
-    public String getPassword() {
-        StringBuffer buf = new StringBuffer();
-        for (int i = 0; i < 64; i++) {
-            if (password[i] != 0)
-                buf.append((char) password[i]);
-            else
-                break;
-        }
-        return buf.toString();
-
     }
 
     /**

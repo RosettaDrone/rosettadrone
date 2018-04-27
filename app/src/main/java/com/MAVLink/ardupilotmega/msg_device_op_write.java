@@ -73,6 +73,24 @@ public class msg_device_op_write extends MAVLinkMessage {
 
 
     /**
+     * Constructor for a new message, just initializes the msgid
+     */
+    public msg_device_op_write() {
+        msgid = MAVLINK_MSG_ID_DEVICE_OP_WRITE;
+    }
+
+    /**
+     * Constructor for a new message, initializes the message with the payload
+     * from a mavlink packet
+     */
+    public msg_device_op_write(MAVLinkPacket mavLinkPacket) {
+        this.sysid = mavLinkPacket.sysid;
+        this.compid = mavLinkPacket.compid;
+        this.msgid = MAVLINK_MSG_ID_DEVICE_OP_WRITE;
+        unpack(mavLinkPacket.payload);
+    }
+
+    /**
      * Generates the payload for a mavlink message for a message of this type
      *
      * @return
@@ -153,23 +171,19 @@ public class msg_device_op_write extends MAVLinkMessage {
     }
 
     /**
-     * Constructor for a new message, just initializes the msgid
+     * Gets the message, formated as a string
      */
-    public msg_device_op_write() {
-        msgid = MAVLINK_MSG_ID_DEVICE_OP_WRITE;
-    }
+    public String getBusname() {
+        StringBuffer buf = new StringBuffer();
+        for (int i = 0; i < 40; i++) {
+            if (busname[i] != 0)
+                buf.append((char) busname[i]);
+            else
+                break;
+        }
+        return buf.toString();
 
-    /**
-     * Constructor for a new message, initializes the message with the payload
-     * from a mavlink packet
-     */
-    public msg_device_op_write(MAVLinkPacket mavLinkPacket) {
-        this.sysid = mavLinkPacket.sysid;
-        this.compid = mavLinkPacket.compid;
-        this.msgid = MAVLINK_MSG_ID_DEVICE_OP_WRITE;
-        unpack(mavLinkPacket.payload);
     }
-
 
     /**
      * Sets the buffer of this message with a string, adds the necessary padding
@@ -183,21 +197,6 @@ public class msg_device_op_write extends MAVLinkMessage {
         for (int i = len; i < 40; i++) {            // padding for the rest of the buffer
             busname[i] = 0;
         }
-    }
-
-    /**
-     * Gets the message, formated as a string
-     */
-    public String getBusname() {
-        StringBuffer buf = new StringBuffer();
-        for (int i = 0; i < 40; i++) {
-            if (busname[i] != 0)
-                buf.append((char) busname[i]);
-            else
-                break;
-        }
-        return buf.toString();
-
     }
 
     /**

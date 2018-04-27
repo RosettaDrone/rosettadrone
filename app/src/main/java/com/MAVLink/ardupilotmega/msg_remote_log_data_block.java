@@ -43,6 +43,24 @@ public class msg_remote_log_data_block extends MAVLinkMessage {
 
 
     /**
+     * Constructor for a new message, just initializes the msgid
+     */
+    public msg_remote_log_data_block() {
+        msgid = MAVLINK_MSG_ID_REMOTE_LOG_DATA_BLOCK;
+    }
+
+    /**
+     * Constructor for a new message, initializes the message with the payload
+     * from a mavlink packet
+     */
+    public msg_remote_log_data_block(MAVLinkPacket mavLinkPacket) {
+        this.sysid = mavLinkPacket.sysid;
+        this.compid = mavLinkPacket.compid;
+        this.msgid = MAVLINK_MSG_ID_REMOTE_LOG_DATA_BLOCK;
+        unpack(mavLinkPacket.payload);
+    }
+
+    /**
      * Generates the payload for a mavlink message for a message of this type
      *
      * @return
@@ -89,25 +107,6 @@ public class msg_remote_log_data_block extends MAVLinkMessage {
 
 
     }
-
-    /**
-     * Constructor for a new message, just initializes the msgid
-     */
-    public msg_remote_log_data_block() {
-        msgid = MAVLINK_MSG_ID_REMOTE_LOG_DATA_BLOCK;
-    }
-
-    /**
-     * Constructor for a new message, initializes the message with the payload
-     * from a mavlink packet
-     */
-    public msg_remote_log_data_block(MAVLinkPacket mavLinkPacket) {
-        this.sysid = mavLinkPacket.sysid;
-        this.compid = mavLinkPacket.compid;
-        this.msgid = MAVLINK_MSG_ID_REMOTE_LOG_DATA_BLOCK;
-        unpack(mavLinkPacket.payload);
-    }
-
 
     /**
      * Returns a string with the MSG name and data

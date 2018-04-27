@@ -10,8 +10,7 @@ import sq.rogue.rosettadrone.R;
 public class SettingsActivity extends AppCompatActivity {
 
     /**
-     *
-     * @param savedInstanceState
+     * @param savedInstanceState Any saved state we are carrying over into the new activity instance
      */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,6 +23,8 @@ public class SettingsActivity extends AppCompatActivity {
             fragmentTransaction.add(R.id.pref_container, preferenceFragment);
             fragmentTransaction.commit();
         }
+
+
 //        // Display the fragment as the main content.
 //        getFragmentManager().beginTransaction()
 //                .replace(android.R.id.content, new SettingsFragment())

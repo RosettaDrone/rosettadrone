@@ -38,6 +38,24 @@ public class msg_named_value_int extends MAVLinkMessage {
 
 
     /**
+     * Constructor for a new message, just initializes the msgid
+     */
+    public msg_named_value_int() {
+        msgid = MAVLINK_MSG_ID_NAMED_VALUE_INT;
+    }
+
+    /**
+     * Constructor for a new message, initializes the message with the payload
+     * from a mavlink packet
+     */
+    public msg_named_value_int(MAVLinkPacket mavLinkPacket) {
+        this.sysid = mavLinkPacket.sysid;
+        this.compid = mavLinkPacket.compid;
+        this.msgid = MAVLINK_MSG_ID_NAMED_VALUE_INT;
+        unpack(mavLinkPacket.payload);
+    }
+
+    /**
      * Generates the payload for a mavlink message for a message of this type
      *
      * @return
@@ -82,23 +100,19 @@ public class msg_named_value_int extends MAVLinkMessage {
     }
 
     /**
-     * Constructor for a new message, just initializes the msgid
+     * Gets the message, formated as a string
      */
-    public msg_named_value_int() {
-        msgid = MAVLINK_MSG_ID_NAMED_VALUE_INT;
-    }
+    public String getName() {
+        StringBuffer buf = new StringBuffer();
+        for (int i = 0; i < 10; i++) {
+            if (name[i] != 0)
+                buf.append((char) name[i]);
+            else
+                break;
+        }
+        return buf.toString();
 
-    /**
-     * Constructor for a new message, initializes the message with the payload
-     * from a mavlink packet
-     */
-    public msg_named_value_int(MAVLinkPacket mavLinkPacket) {
-        this.sysid = mavLinkPacket.sysid;
-        this.compid = mavLinkPacket.compid;
-        this.msgid = MAVLINK_MSG_ID_NAMED_VALUE_INT;
-        unpack(mavLinkPacket.payload);
     }
-
 
     /**
      * Sets the buffer of this message with a string, adds the necessary padding
@@ -112,21 +126,6 @@ public class msg_named_value_int extends MAVLinkMessage {
         for (int i = len; i < 10; i++) {            // padding for the rest of the buffer
             name[i] = 0;
         }
-    }
-
-    /**
-     * Gets the message, formated as a string
-     */
-    public String getName() {
-        StringBuffer buf = new StringBuffer();
-        for (int i = 0; i < 10; i++) {
-            if (name[i] != 0)
-                buf.append((char) name[i]);
-            else
-                break;
-        }
-        return buf.toString();
-
     }
 
     /**

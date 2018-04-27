@@ -83,6 +83,24 @@ public class msg_airspeed_autocal extends MAVLinkMessage {
 
 
     /**
+     * Constructor for a new message, just initializes the msgid
+     */
+    public msg_airspeed_autocal() {
+        msgid = MAVLINK_MSG_ID_AIRSPEED_AUTOCAL;
+    }
+
+    /**
+     * Constructor for a new message, initializes the message with the payload
+     * from a mavlink packet
+     */
+    public msg_airspeed_autocal(MAVLinkPacket mavLinkPacket) {
+        this.sysid = mavLinkPacket.sysid;
+        this.compid = mavLinkPacket.compid;
+        this.msgid = MAVLINK_MSG_ID_AIRSPEED_AUTOCAL;
+        unpack(mavLinkPacket.payload);
+    }
+
+    /**
      * Generates the payload for a mavlink message for a message of this type
      *
      * @return
@@ -153,25 +171,6 @@ public class msg_airspeed_autocal extends MAVLinkMessage {
         this.Pcz = payload.getFloat();
 
     }
-
-    /**
-     * Constructor for a new message, just initializes the msgid
-     */
-    public msg_airspeed_autocal() {
-        msgid = MAVLINK_MSG_ID_AIRSPEED_AUTOCAL;
-    }
-
-    /**
-     * Constructor for a new message, initializes the message with the payload
-     * from a mavlink packet
-     */
-    public msg_airspeed_autocal(MAVLinkPacket mavLinkPacket) {
-        this.sysid = mavLinkPacket.sysid;
-        this.compid = mavLinkPacket.compid;
-        this.msgid = MAVLINK_MSG_ID_AIRSPEED_AUTOCAL;
-        unpack(mavLinkPacket.payload);
-    }
-
 
     /**
      * Returns a string with the MSG name and data

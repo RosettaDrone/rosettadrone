@@ -88,6 +88,24 @@ public class msg_adsb_vehicle extends MAVLinkMessage {
 
 
     /**
+     * Constructor for a new message, just initializes the msgid
+     */
+    public msg_adsb_vehicle() {
+        msgid = MAVLINK_MSG_ID_ADSB_VEHICLE;
+    }
+
+    /**
+     * Constructor for a new message, initializes the message with the payload
+     * from a mavlink packet
+     */
+    public msg_adsb_vehicle(MAVLinkPacket mavLinkPacket) {
+        this.sysid = mavLinkPacket.sysid;
+        this.compid = mavLinkPacket.compid;
+        this.msgid = MAVLINK_MSG_ID_ADSB_VEHICLE;
+        unpack(mavLinkPacket.payload);
+    }
+
+    /**
      * Generates the payload for a mavlink message for a message of this type
      *
      * @return
@@ -172,23 +190,19 @@ public class msg_adsb_vehicle extends MAVLinkMessage {
     }
 
     /**
-     * Constructor for a new message, just initializes the msgid
+     * Gets the message, formated as a string
      */
-    public msg_adsb_vehicle() {
-        msgid = MAVLINK_MSG_ID_ADSB_VEHICLE;
-    }
+    public String getCallsign() {
+        StringBuffer buf = new StringBuffer();
+        for (int i = 0; i < 9; i++) {
+            if (callsign[i] != 0)
+                buf.append((char) callsign[i]);
+            else
+                break;
+        }
+        return buf.toString();
 
-    /**
-     * Constructor for a new message, initializes the message with the payload
-     * from a mavlink packet
-     */
-    public msg_adsb_vehicle(MAVLinkPacket mavLinkPacket) {
-        this.sysid = mavLinkPacket.sysid;
-        this.compid = mavLinkPacket.compid;
-        this.msgid = MAVLINK_MSG_ID_ADSB_VEHICLE;
-        unpack(mavLinkPacket.payload);
     }
-
 
     /**
      * Sets the buffer of this message with a string, adds the necessary padding
@@ -202,21 +216,6 @@ public class msg_adsb_vehicle extends MAVLinkMessage {
         for (int i = len; i < 9; i++) {            // padding for the rest of the buffer
             callsign[i] = 0;
         }
-    }
-
-    /**
-     * Gets the message, formated as a string
-     */
-    public String getCallsign() {
-        StringBuffer buf = new StringBuffer();
-        for (int i = 0; i < 9; i++) {
-            if (callsign[i] != 0)
-                buf.append((char) callsign[i]);
-            else
-                break;
-        }
-        return buf.toString();
-
     }
 
     /**

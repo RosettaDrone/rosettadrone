@@ -16,6 +16,10 @@ public class CRC {
     private static final int CRC_INIT_VALUE = 0xffff;
     private int crcValue;
 
+    public CRC() {
+        start_checksum();
+    }
+
     /**
      * Accumulate the X.25 CRC by adding one char at a time.
      * <p>
@@ -54,10 +58,6 @@ public class CRC {
 
     public int getLSB() {
         return (crcValue & 0xff);
-    }
-
-    public CRC() {
-        start_checksum();
     }
 
 }

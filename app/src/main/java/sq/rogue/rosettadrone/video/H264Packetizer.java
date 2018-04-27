@@ -6,9 +6,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,13 +35,12 @@ import java.net.InetAddress;
 public class H264Packetizer extends AbstractPacketizer implements Runnable {
 
     public final static String TAG = "H264Packetizer";
-
+    byte[] header = new byte[5];
     private Thread t = null;
     private int naluLength = 0;
     private long delay = 0, oldtime = 0;
     private Statistics stats = new Statistics();
     private byte[] sps = null, pps = null, stapa = null;
-    byte[] header = new byte[5];
     private int count = 0;
     private int streamType = 1;
 

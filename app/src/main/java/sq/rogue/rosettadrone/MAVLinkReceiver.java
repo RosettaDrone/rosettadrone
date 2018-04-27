@@ -60,15 +60,13 @@ import static dji.common.flightcontroller.FlightControlState.ATTI;
 
 public class MAVLinkReceiver {
     private final String TAG = "RosettaDrone";
-
-    DroneModel mModel;
-    private long mTimeStampLastGCSHeartbeat = 0;
-
-    private int mNumGCSWaypoints = 0;
-    private int wpState = 0;
     private final int WP_STATE_INACTIVE = 0;
     private final int WP_STATE_REQ_COUNT = 1;
     private final int WP_STATE_REQ_WP = 2;
+    DroneModel mModel;
+    private long mTimeStampLastGCSHeartbeat = 0;
+    private int mNumGCSWaypoints = 0;
+    private int wpState = 0;
     private MainActivity parent;
     private WaypointMission.Builder mBuilder;
     private ArrayList<msg_mission_item> mMissionItemList;
@@ -97,7 +95,7 @@ public class MAVLinkReceiver {
 
                         break;
                     case MAV_CMD_DO_SET_MODE:
-                        changeFlightMode((int)msg_cmd.param1);
+                        changeFlightMode((int) msg_cmd.param1);
                         break;
                     case MAV_CMD_NAV_LOITER_UNLIM:
                         mModel.set_flight_mode(ATTI);
@@ -140,7 +138,7 @@ public class MAVLinkReceiver {
             case MAVLINK_MSG_ID_SET_MODE:
                 msg_set_mode msg_set_mode = (msg_set_mode) msg;
                 parent.logMessageDJI("MAVLINK_MSG_ID_SET_MODE: " + msg_set_mode.custom_mode);
-                changeFlightMode((int)msg_set_mode.custom_mode);
+                changeFlightMode((int) msg_set_mode.custom_mode);
                 break;
 
             /**************************************************************
@@ -252,19 +250,15 @@ public class MAVLinkReceiver {
         mModel.setGCSCommandedMode(flightMode);
 
         if (flightMode == ArduCopterFlightModes.AUTO) {
-            if(mModel.getWaypointMissionOperator().getCurrentState() == WaypointMissionState.EXECUTION_PAUSED) {
+            if (mModel.getWaypointMissionOperator().getCurrentState() == WaypointMissionState.EXECUTION_PAUSED) {
                 parent.logMessageDJI("Resuming mission");
                 mModel.resumeWaypointMission();
-            }
-            else if(mModel.getWaypointMissionOperator().getCurrentState() == WaypointMissionState.READY_TO_EXECUTE)
+            } else if (mModel.getWaypointMissionOperator().getCurrentState() == WaypointMissionState.READY_TO_EXECUTE)
                 mModel.startWaypointMission();
-        }
-        else if(flightMode == ArduCopterFlightModes.BRAKE) {
+        } else if (flightMode == ArduCopterFlightModes.BRAKE) {
             mModel.pauseWaypointMission();
             mModel.setGCSCommandedMode(flightMode);
-        }
-
-        else if (flightMode == ArduCopterFlightModes.RTL)
+        } else if (flightMode == ArduCopterFlightModes.RTL)
             mModel.do_go_home();
         else if (flightMode == ArduCopterFlightModes.LAND)
             mModel.do_land();

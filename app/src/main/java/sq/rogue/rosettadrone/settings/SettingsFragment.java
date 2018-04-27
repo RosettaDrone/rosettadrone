@@ -2,16 +2,12 @@ package sq.rogue.rosettadrone.settings;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.support.v14.preference.MultiSelectListPreference;
 import android.support.v7.preference.EditTextPreference;
 import android.support.v7.preference.ListPreference;
 import android.support.v7.preference.Preference;
 import android.support.v7.preference.PreferenceFragmentCompat;
 import android.support.v7.preference.PreferenceGroup;
 import android.util.Patterns;
-
-import java.util.Map;
-import java.util.regex.Pattern;
 
 import sq.rogue.rosettadrone.R;
 
@@ -21,9 +17,9 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Shared
     SharedPreferences sharedPreferences;
 
     /**
-     *
-     * @param savedInstanceState
-     */
+     * @param savedInstanceState Any saved state we are bringing into the new fragment instance
+     **/
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -40,7 +36,6 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Shared
     }
 
     /**
-     *
      * @param savedInstanceState
      * @param rootKey
      */
@@ -130,7 +125,6 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Shared
     }
 
     /**
-     *
      * @param sharedPreferences
      * @param key
      */
@@ -151,7 +145,6 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Shared
     }
 
     /**
-     *
      * @param preference
      */
     private void updatePreference(Preference preference) {

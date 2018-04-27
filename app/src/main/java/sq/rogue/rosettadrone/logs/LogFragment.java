@@ -4,7 +4,6 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.text.method.ScrollingMovementMethod;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -72,16 +71,15 @@ public class LogFragment extends Fragment {
     }
 
     /**
-     *
-     * @param textView
+     * Set the backing TextView
+     * @param textView The new backing TextView
      */
     public void setTextView(TextView textView) {
         mTextViewTraffic = textView;
     }
 
     /**
-     *
-     * @param savedInstanceState
+     * @param savedInstanceState Any saved state we are carrying over into the new activity instance
      */
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
@@ -92,6 +90,7 @@ public class LogFragment extends Fragment {
     /**
      * Checks the length of log and compares it against the maximum number of characters permitted.
      * If the log is longer than the maximum number of characters the log is cleared.
+     *
      * @return True if the log is cleared. False if the log is not.
      */
     // TODO: Implement a better solution to overflow control
@@ -110,6 +109,7 @@ public class LogFragment extends Fragment {
     /**
      * Verifies that the log can hold more text, then appends the text to the log and if enabled scrolls
      * to the bottom of the log.
+     *
      * @param text The text to append to the log.
      */
     public void appendLogText(String text) {
@@ -156,15 +156,8 @@ public class LogFragment extends Fragment {
     }
 
     /**
-     * Helper method to set the underlying TextView text. Will overwrite all text currently in the log.
-     * @param text Text to set.
-     */
-    public void setLogText(String text) {
-        mTextViewTraffic.setText(text);
-    }
-
-    /**
      * Retrieves the text from the underlying TextView.
+     *
      * @return String representation of the log.
      */
     public String getLogText() {
@@ -174,7 +167,17 @@ public class LogFragment extends Fragment {
     }
 
     /**
+     * Helper method to set the underlying TextView text. Will overwrite all text currently in the log.
+     *
+     * @param text Text to set.
+     */
+    public void setLogText(String text) {
+        mTextViewTraffic.setText(text);
+    }
+
+    /**
      * Gets the maximum number of characters the log can hold.
+     *
      * @return The maximum number of characters the log can hold.
      */
     public int getMaxCharacters() {
@@ -183,6 +186,7 @@ public class LogFragment extends Fragment {
 
     /**
      * Sets the maximum number of characters the log can hold.
+     *
      * @param maxCharacters The new maximum number of characters the log can hold.
      */
     public void setMaxCharacters(int maxCharacters) {

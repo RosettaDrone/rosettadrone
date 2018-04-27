@@ -6,23 +6,13 @@
 
 package com.MAVLink;
 
-import com.MAVLink.MAVLinkPacket;
 import com.MAVLink.Messages.MAVLinkStats;
 
 public class Parser {
 
-    /**
-     * States from the parsing state machine
-     */
-    enum MAV_states {
-        MAVLINK_PARSE_STATE_UNINIT, MAVLINK_PARSE_STATE_IDLE, MAVLINK_PARSE_STATE_GOT_STX, MAVLINK_PARSE_STATE_GOT_LENGTH, MAVLINK_PARSE_STATE_GOT_SEQ, MAVLINK_PARSE_STATE_GOT_SYSID, MAVLINK_PARSE_STATE_GOT_COMPID, MAVLINK_PARSE_STATE_GOT_MSGID, MAVLINK_PARSE_STATE_GOT_CRC1, MAVLINK_PARSE_STATE_GOT_PAYLOAD
-    }
-
-    MAV_states state = MAV_states.MAVLINK_PARSE_STATE_UNINIT;
-
     public MAVLinkStats stats;
+    MAV_states state = MAV_states.MAVLINK_PARSE_STATE_UNINIT;
     private MAVLinkPacket m;
-
     public Parser() {
         this(false);
     }
@@ -120,5 +110,12 @@ public class Parser {
 
         }
         return null;
+    }
+
+    /**
+     * States from the parsing state machine
+     */
+    enum MAV_states {
+        MAVLINK_PARSE_STATE_UNINIT, MAVLINK_PARSE_STATE_IDLE, MAVLINK_PARSE_STATE_GOT_STX, MAVLINK_PARSE_STATE_GOT_LENGTH, MAVLINK_PARSE_STATE_GOT_SEQ, MAVLINK_PARSE_STATE_GOT_SYSID, MAVLINK_PARSE_STATE_GOT_COMPID, MAVLINK_PARSE_STATE_GOT_MSGID, MAVLINK_PARSE_STATE_GOT_CRC1, MAVLINK_PARSE_STATE_GOT_PAYLOAD
     }
 }

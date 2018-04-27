@@ -6,9 +6,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -51,17 +51,15 @@ public class RtpSocket implements Runnable {
 
     public static final int RTP_HEADER_LENGTH = 12;
     public static final int MTU = 1300;
-
+    protected OutputStream mOutputStream = null;
     private MulticastSocket mSocket;
     private DatagramPacket[] mPackets;
     private byte[][] mBuffers;
-    private long[] mTimestamps;
 
     //private SenderReport mReport;
-
+    private long[] mTimestamps;
     private Semaphore mBufferRequested, mBufferCommitted;
     private Thread mThread;
-
     private int mTransport;
     private long mCacheSize;
     private long mClock = 0;
@@ -70,13 +68,10 @@ public class RtpSocket implements Runnable {
     private int mBufferCount, mBufferIn, mBufferOut;
     private int mCount = 0;
     private byte mTcpHeader[];
-    protected OutputStream mOutputStream = null;
-
     private AverageBitrate mAverageBitrate;
 
     /**
      * This RTP socket implements a buffering mechanism relying on a FIFO of buffers and a Thread.
-     *
      */
     public RtpSocket() {
 
@@ -96,21 +91,21 @@ public class RtpSocket implements Runnable {
             mBuffers[i] = new byte[MTU];
             mPackets[i] = new DatagramPacket(mBuffers[i], 1);
 
-			/*							     Version(2)  Padding(0)					 					*/
+            /*							     Version(2)  Padding(0)					 					*/
             /*									 ^		  ^			Extension(0)						*/
-			/*									 |		  |				^								*/
-			/*									 | --------				|								*/
-			/*									 | |---------------------								*/
-			/*									 | ||  -----------------------> Source Identifier(0)	*/
-			/*									 | ||  |												*/
+            /*									 |		  |				^								*/
+            /*									 | --------				|								*/
+            /*									 | |---------------------								*/
+            /*									 | ||  -----------------------> Source Identifier(0)	*/
+            /*									 | ||  |												*/
             mBuffers[i][0] = (byte) Integer.parseInt("10000000", 2);
 
-			/* Payload Type */
+            /* Payload Type */
             mBuffers[i][1] = (byte) 96;
 
-			/* Byte 2,3        ->  Sequence Number                   */
-			/* Byte 4,5,6,7    ->  Timestamp                         */
-			/* Byte 8,9,10,11  ->  Sync Source Identifier            */
+            /* Byte 2,3        ->  Sequence Number                   */
+            /* Byte 4,5,6,7    ->  Timestamp                         */
+            /* Byte 8,9,10,11  ->  Sync Source Identifier            */
 
         }
 
@@ -144,6 +139,13 @@ public class RtpSocket implements Runnable {
     }
 
     /**
+     * Returns the SSRC of the stream.
+     */
+    public int getSSRC() {
+        return mSsrc;
+    }
+
+    /**
      * Sets the SSRC of the stream.
      */
     public void setSSRC(int ssrc) {
@@ -152,13 +154,6 @@ public class RtpSocket implements Runnable {
             setLong(mBuffers[i], ssrc, 8, 12);
         }
         //mReport.setSSRC(mSsrc);
-    }
-
-    /**
-     * Returns the SSRC of the stream.
-     */
-    public int getSSRC() {
-        return mSsrc;
     }
 
     /**

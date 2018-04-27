@@ -70,10 +70,8 @@ import dji.sdk.mission.MissionControl;
 import dji.sdk.mission.waypoint.WaypointMissionOperator;
 import dji.sdk.products.Aircraft;
 
-
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_COMPONENT_ARM_DISARM;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_DO_DIGICAM_CONTROL;
-import static com.MAVLink.enums.MAV_CMD.MAV_CMD_DO_SET_MODE;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_NAV_TAKEOFF;
 import static com.MAVLink.enums.MAV_COMPONENT.MAV_COMP_ID_AUTOPILOT1;
 import static sq.rogue.rosettadrone.util.getTimestampMicroseconds;
@@ -81,8 +79,8 @@ import static sq.rogue.rosettadrone.util.safeSleep;
 
 
 public class DroneModel implements CommonCallbacks.CompletionCallback {
+    private static final int NOT_USING_GCS_COMMANDED_MODE = -1;
     private final String TAG = "RosettaDrone";
-
     private Aircraft djiAircraft;
     private ArrayList<MAVParam> params = new ArrayList<MAVParam>();
     private DatagramSocket socket;
@@ -91,8 +89,6 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     private int mSystemId = 1;
     private int mComponentId = MAV_COMP_ID_AUTOPILOT1;
     private int mGCSCommandedMode;
-    private static final int NOT_USING_GCS_COMMANDED_MODE = -1;
-
     private int mThrottleSetting;
     private int mFullChargeCapacity_mAh;
     private int mChargeRemaining_mAh;
@@ -105,6 +101,12 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
     private boolean mSafetyEnabled = true;
     private boolean mMotorsArmed = false;
+    private RosettaMissionOperatorListener mMissionOperatorListener;
+
+    public DroneModel(MainActivity parent, DatagramSocket socket) {
+        this.parent = parent;
+        this.socket = socket;
+    }
 
     public boolean isMotorsArmed() {
         return mMotorsArmed;
@@ -114,7 +116,6 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         mMotorsArmed = motorsArmed;
     }
 
-
     public int getGCSCommandedMode() {
         return mGCSCommandedMode;
     }
@@ -122,9 +123,6 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     public void setGCSCommandedMode(int GCSCommandedMode) {
         mGCSCommandedMode = GCSCommandedMode;
     }
-
-
-    private RosettaMissionOperatorListener mMissionOperatorListener;
 
     public void setWaypointMission(WaypointMission wpMission) {
         DJIError load_error = getWaypointMissionOperator().loadMission(wpMission);
@@ -271,11 +269,6 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         this.socket = socket;
     }
 
-    public DroneModel(MainActivity parent, DatagramSocket socket) {
-        this.parent = parent;
-        this.socket = socket;
-    }
-
     public void tick() {
         ticks += 100;
 
@@ -315,8 +308,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             parent.logMessageDJI("You must turn off safety to arm motors");
             send_command_ack(MAV_CMD_COMPONENT_ARM_DISARM, MAV_RESULT.MAV_RESULT_DENIED);
             return;
-        }
-        else {
+        } else {
             send_command_ack(MAV_CMD_COMPONENT_ARM_DISARM, MAV_RESULT.MAV_RESULT_ACCEPTED);
             mMotorsArmed = true;
         }
@@ -473,17 +465,17 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             msg.custom_mode = ArduCopterFlightModes.GUIDED;
         if (mGCSCommandedMode == ArduCopterFlightModes.BRAKE)
             msg.custom_mode = ArduCopterFlightModes.BRAKE;
-        
-        if(mMotorsArmed)
+
+        if (mMotorsArmed)
             msg.base_mode |= MAV_MODE_FLAG.MAV_MODE_FLAG_SAFETY_ARMED;
 
         // Catches manual landings
         // Automatically disarm motors if aircraft is on the ground and a takeoff is not in progress
-        if(!getDjiAircraft().getFlightController().getState().isFlying() && mGCSCommandedMode != ArduCopterFlightModes.GUIDED)
+        if (!getDjiAircraft().getFlightController().getState().isFlying() && mGCSCommandedMode != ArduCopterFlightModes.GUIDED)
             mMotorsArmed = false;
 
         // Catches manual takeoffs
-        if(getDjiAircraft().getFlightController().getState().areMotorsOn())
+        if (getDjiAircraft().getFlightController().getState().areMotorsOn())
             mMotorsArmed = true;
 
         msg.system_status = MAV_STATE.MAV_STATE_ACTIVE;
@@ -1030,17 +1022,16 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     public void do_takeoff() {
-        if(mSafetyEnabled) {
+        if (mSafetyEnabled) {
             parent.logMessageDJI("You must turn off safety to takeoff");
             send_command_ack(MAV_CMD_NAV_TAKEOFF, MAV_RESULT.MAV_RESULT_DENIED);
             return;
         }
 
-        if(getWaypointMissionOperator().getCurrentState() == WaypointMissionState.READY_TO_EXECUTE) {
+        if (getWaypointMissionOperator().getCurrentState() == WaypointMissionState.READY_TO_EXECUTE) {
             startWaypointMission();
             send_command_ack(MAV_CMD_NAV_TAKEOFF, MAV_RESULT.MAV_RESULT_ACCEPTED);
-        }
-        else {
+        } else {
             parent.logMessageDJI("Initiating takeoff");
             djiAircraft.getFlightController().startTakeoff(new CommonCallbacks.CompletionCallback() {
                 @Override
@@ -1117,138 +1108,6 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
     }
 
-
-/********************************************
- * Parameter callbacks                      *
- ********************************************/
-
-public class ParamIntegerCallback implements CommonCallbacks.CompletionCallbackWith<Integer> {
-    private int paramIndex;
-
-    public ParamIntegerCallback(int paramIndex) {
-        this.paramIndex = paramIndex;
-    }
-
-    @Override
-    public void onSuccess(Integer integer) {
-        getParams().get(paramIndex).setParamValue((float) integer);
-        parent.logMessageDJI("Fetched param from DJI: " + getParams().get(paramIndex).getParamName() + "=" + String.valueOf(integer));
-    }
-
-    @Override
-    public void onFailure(DJIError djiError) {
-        getParams().get(paramIndex).setParamValue(-99.0f);
-        parent.logMessageDJI("Param fetch fail: " + getParams().get(paramIndex).getParamName());
-    }
-}
-
-public class ParamBooleanCallback implements CommonCallbacks.CompletionCallbackWith<Boolean> {
-    private int paramIndex;
-
-    public ParamBooleanCallback(int paramIndex) {
-        this.paramIndex = paramIndex;
-    }
-
-    @Override
-    public void onSuccess(Boolean aBoolean) {
-        getParams().get(paramIndex).setParamValue(aBoolean ? 1.0f : 0.0f);
-        parent.logMessageDJI("Fetched param from DJI: " + getParams().get(paramIndex).getParamName() + "=" + String.valueOf(aBoolean));
-    }
-
-    @Override
-    public void onFailure(DJIError djiError) {
-        getParams().get(paramIndex).setParamValue(-99.0f);
-        parent.logMessageDJI("Param fetch fail: " + getParams().get(paramIndex).getParamName());
-    }
-}
-
-public class ParamControlModeCallback implements CommonCallbacks.CompletionCallbackWith<ControlMode> {
-    private int paramIndex;
-
-    public ParamControlModeCallback(int paramIndex) {
-        this.paramIndex = paramIndex;
-    }
-
-    @Override
-    public void onSuccess(ControlMode cMode) {
-        if (cMode == ControlMode.MANUAL)
-            getParams().get(paramIndex).setParamValue(0f);
-        else if (cMode == ControlMode.SMART)
-            getParams().get(paramIndex).setParamValue(2f);
-        else if (cMode == ControlMode.UNKNOWN)
-            getParams().get(paramIndex).setParamValue(255f);
-
-        parent.logMessageDJI("Fetched param from DJI: " + getParams().get(paramIndex).getParamName() + "=" + String.valueOf(cMode));
-    }
-
-    @Override
-    public void onFailure(DJIError djiError) {
-        getParams().get(paramIndex).setParamValue(-99.0f);
-        parent.logMessageDJI("Param fetch fail: " + getParams().get(paramIndex).getParamName());
-    }
-}
-
-public class ParamConnectionFailSafeBehaviorCallback implements CommonCallbacks.CompletionCallbackWith<ConnectionFailSafeBehavior> {
-    private int paramIndex;
-
-    public ParamConnectionFailSafeBehaviorCallback(int paramIndex) {
-        this.paramIndex = paramIndex;
-    }
-
-    @Override
-    public void onSuccess(ConnectionFailSafeBehavior behavior) {
-        if (behavior == ConnectionFailSafeBehavior.HOVER)
-            getParams().get(paramIndex).setParamValue(0f);
-        else if (behavior == ConnectionFailSafeBehavior.LANDING)
-            getParams().get(paramIndex).setParamValue(1f);
-        else if (behavior == ConnectionFailSafeBehavior.GO_HOME)
-            getParams().get(paramIndex).setParamValue(2f);
-        else if (behavior == ConnectionFailSafeBehavior.UNKNOWN)
-            getParams().get(paramIndex).setParamValue(255f);
-
-        parent.logMessageDJI("Fetched param from DJI: " + getParams().get(paramIndex).getParamName() + "=" + String.valueOf(behavior));
-    }
-
-    @Override
-    public void onFailure(DJIError djiError) {
-        getParams().get(paramIndex).setParamValue(-99.0f);
-        parent.logMessageDJI("Param fetch fail: " + getParams().get(paramIndex).getParamName());
-    }
-}
-
-public class ParamWriteCompletionCallback implements CommonCallbacks.CompletionCallback {
-
-    private int paramIndex;
-
-    public ParamWriteCompletionCallback(int paramIndex) {
-        this.paramIndex = paramIndex;
-    }
-
-    @Override
-    public void onResult(DJIError djiError) {
-        if (djiError == null)
-            parent.logMessageDJI(("Wrote param to DJI: " + getParams().get(paramIndex).getParamName()));
-        else
-            parent.logMessageDJI(("Error writing param to DJI: " + getParams().get(paramIndex).getParamName()));
-    }
-}
-
-public class CellVoltageCompletionCallback implements CommonCallbacks.CompletionCallbackWith<Integer[]> {
-
-    @Override
-    public void onSuccess(Integer integer[]) {
-        for (int i = 0; i < integer.length; i++)
-            mCellVoltages[i] = integer[i];
-        Log.d(TAG, "got cell voltages, v[0] =" + String.valueOf(mCellVoltages[0]));
-    }
-
-    @Override
-    public void onFailure(DJIError djiError) {
-
-    }
-
-}
-
     public void echoLoadedMission() {
         getWaypointMissionOperator().downloadMission(
                 new CommonCallbacks.CompletionCallback() {
@@ -1270,5 +1129,136 @@ public class CellVoltageCompletionCallback implements CommonCallbacks.Completion
         for (Waypoint w : wm.getWaypointList())
             parent.logMessageDJI(w.coordinate.toString());
         parent.logMessageDJI("State: " + getWaypointMissionOperator().getCurrentState().getName());
+    }
+
+    /********************************************
+     * Parameter callbacks                      *
+     ********************************************/
+
+    public class ParamIntegerCallback implements CommonCallbacks.CompletionCallbackWith<Integer> {
+        private int paramIndex;
+
+        public ParamIntegerCallback(int paramIndex) {
+            this.paramIndex = paramIndex;
+        }
+
+        @Override
+        public void onSuccess(Integer integer) {
+            getParams().get(paramIndex).setParamValue((float) integer);
+            parent.logMessageDJI("Fetched param from DJI: " + getParams().get(paramIndex).getParamName() + "=" + String.valueOf(integer));
+        }
+
+        @Override
+        public void onFailure(DJIError djiError) {
+            getParams().get(paramIndex).setParamValue(-99.0f);
+            parent.logMessageDJI("Param fetch fail: " + getParams().get(paramIndex).getParamName());
+        }
+    }
+
+    public class ParamBooleanCallback implements CommonCallbacks.CompletionCallbackWith<Boolean> {
+        private int paramIndex;
+
+        public ParamBooleanCallback(int paramIndex) {
+            this.paramIndex = paramIndex;
+        }
+
+        @Override
+        public void onSuccess(Boolean aBoolean) {
+            getParams().get(paramIndex).setParamValue(aBoolean ? 1.0f : 0.0f);
+            parent.logMessageDJI("Fetched param from DJI: " + getParams().get(paramIndex).getParamName() + "=" + String.valueOf(aBoolean));
+        }
+
+        @Override
+        public void onFailure(DJIError djiError) {
+            getParams().get(paramIndex).setParamValue(-99.0f);
+            parent.logMessageDJI("Param fetch fail: " + getParams().get(paramIndex).getParamName());
+        }
+    }
+
+    public class ParamControlModeCallback implements CommonCallbacks.CompletionCallbackWith<ControlMode> {
+        private int paramIndex;
+
+        public ParamControlModeCallback(int paramIndex) {
+            this.paramIndex = paramIndex;
+        }
+
+        @Override
+        public void onSuccess(ControlMode cMode) {
+            if (cMode == ControlMode.MANUAL)
+                getParams().get(paramIndex).setParamValue(0f);
+            else if (cMode == ControlMode.SMART)
+                getParams().get(paramIndex).setParamValue(2f);
+            else if (cMode == ControlMode.UNKNOWN)
+                getParams().get(paramIndex).setParamValue(255f);
+
+            parent.logMessageDJI("Fetched param from DJI: " + getParams().get(paramIndex).getParamName() + "=" + String.valueOf(cMode));
+        }
+
+        @Override
+        public void onFailure(DJIError djiError) {
+            getParams().get(paramIndex).setParamValue(-99.0f);
+            parent.logMessageDJI("Param fetch fail: " + getParams().get(paramIndex).getParamName());
+        }
+    }
+
+    public class ParamConnectionFailSafeBehaviorCallback implements CommonCallbacks.CompletionCallbackWith<ConnectionFailSafeBehavior> {
+        private int paramIndex;
+
+        public ParamConnectionFailSafeBehaviorCallback(int paramIndex) {
+            this.paramIndex = paramIndex;
+        }
+
+        @Override
+        public void onSuccess(ConnectionFailSafeBehavior behavior) {
+            if (behavior == ConnectionFailSafeBehavior.HOVER)
+                getParams().get(paramIndex).setParamValue(0f);
+            else if (behavior == ConnectionFailSafeBehavior.LANDING)
+                getParams().get(paramIndex).setParamValue(1f);
+            else if (behavior == ConnectionFailSafeBehavior.GO_HOME)
+                getParams().get(paramIndex).setParamValue(2f);
+            else if (behavior == ConnectionFailSafeBehavior.UNKNOWN)
+                getParams().get(paramIndex).setParamValue(255f);
+
+            parent.logMessageDJI("Fetched param from DJI: " + getParams().get(paramIndex).getParamName() + "=" + String.valueOf(behavior));
+        }
+
+        @Override
+        public void onFailure(DJIError djiError) {
+            getParams().get(paramIndex).setParamValue(-99.0f);
+            parent.logMessageDJI("Param fetch fail: " + getParams().get(paramIndex).getParamName());
+        }
+    }
+
+    public class ParamWriteCompletionCallback implements CommonCallbacks.CompletionCallback {
+
+        private int paramIndex;
+
+        public ParamWriteCompletionCallback(int paramIndex) {
+            this.paramIndex = paramIndex;
+        }
+
+        @Override
+        public void onResult(DJIError djiError) {
+            if (djiError == null)
+                parent.logMessageDJI(("Wrote param to DJI: " + getParams().get(paramIndex).getParamName()));
+            else
+                parent.logMessageDJI(("Error writing param to DJI: " + getParams().get(paramIndex).getParamName()));
+        }
+    }
+
+    public class CellVoltageCompletionCallback implements CommonCallbacks.CompletionCallbackWith<Integer[]> {
+
+        @Override
+        public void onSuccess(Integer integer[]) {
+            for (int i = 0; i < integer.length; i++)
+                mCellVoltages[i] = integer[i];
+            Log.d(TAG, "got cell voltages, v[0] =" + String.valueOf(mCellVoltages[0]));
+        }
+
+        @Override
+        public void onFailure(DJIError djiError) {
+
+        }
+
     }
 }
