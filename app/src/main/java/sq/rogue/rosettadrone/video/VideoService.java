@@ -195,11 +195,11 @@ public class VideoService extends Service implements DJIVideoStreamDecoder.IYuvD
         String videoIPString = "127.0.0.1";
         if (sharedPreferences.getBoolean("pref_external_gcs", false))
             if (!sharedPreferences.getBoolean("pref_combined_gcs", false)) {
-                videoIPString = sharedPreferences.getString("pref_gcs_ip", null);
+                videoIPString = sharedPreferences.getString("pref_gcs_ip", "127.0.0.1");
             } else {
-                videoIPString = sharedPreferences.getString("pref_video_ip", null);
+                videoIPString = sharedPreferences.getString("pref_video_ip", "127.0.0.1");
             }
-        int videoPort = Integer.parseInt(sharedPreferences.getString("pref_video_port", "-1"));
+        int videoPort = Integer.parseInt(sharedPreferences.getString("pref_video_port", "5600"));
         try {
             mPacketizer.getRtpSocket().setDestination(InetAddress.getByName(videoIPString), videoPort, 5000);
 //            logMessageDJI("Starting GCS video link: " + videoIPString + ":" + String.valueOf(videoPort));
