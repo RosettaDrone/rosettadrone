@@ -4,6 +4,8 @@ import android.app.IntentService;
 import android.app.Service;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.LocalSocket;
+import android.net.LocalSocketAddress;
 import android.os.Binder;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
@@ -11,6 +13,8 @@ import android.support.annotation.Nullable;
 import android.util.Log;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
@@ -66,36 +70,39 @@ public class VideoService extends Service implements DJIVideoStreamDecoder.IYuvD
     @Override
     public int onStartCommand(Intent intent, int flags, int startID) {
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        if (intent.getAction() != null) {
-            Log.d(TAG, intent.getAction());
-            switch (intent.getAction()) {
-                case ACTION_START:
-                    break;
-                case ACTION_STOP:
-                    break;
-                case ACTION_RESTART:
-                    if (isRunning) {
-                        setActionDroneDisconnected();
+        if (intent != null) {
+            if (intent.getAction() != null) {
+                Log.d(TAG, intent.getAction());
+                switch (intent.getAction()) {
+                    case ACTION_START:
+                        break;
+                    case ACTION_STOP:
+                        break;
+                    case ACTION_RESTART:
+                        if (isRunning) {
+                            setActionDroneDisconnected();
+                            spinThread();
+                        }
+                        break;
+                    case ACTION_UPDATE:
+                        break;
+                    case ACTION_DRONE_CONNECTED:
+                        mModel = (Model) intent.getSerializableExtra("model");
                         spinThread();
-                    }
-                    break;
-                case ACTION_UPDATE:
-                    break;
-                case ACTION_DRONE_CONNECTED:
-                    mModel = (Model) intent.getSerializableExtra("model");
-                    spinThread();
-                    break;
-                case ACTION_DRONE_DISCONNECTED:
-                    setActionDroneDisconnected();
-                    break;
-                case ACTION_SET_MODEL:
-                    break;
-                case ACTION_SEND_NAL:
-                    break;
-                default:
-                    break;
+                        break;
+                    case ACTION_DRONE_DISCONNECTED:
+                        setActionDroneDisconnected();
+                        break;
+                    case ACTION_SET_MODEL:
+                        break;
+                    case ACTION_SEND_NAL:
+                        break;
+                    default:
+                        break;
+                }
             }
         }
+
         return START_STICKY;
     }
 
@@ -191,7 +198,6 @@ public class VideoService extends Service implements DJIVideoStreamDecoder.IYuvD
         if (mPacketizer != null && mPacketizer.getRtpSocket() != null)
             mPacketizer.getRtpSocket().close();
         mPacketizer = new H264Packetizer();
-        mPacketizer.setInputStream(new ByteArrayInputStream("".getBytes()));
         String videoIPString = "127.0.0.1";
         if (sharedPreferences.getBoolean("pref_external_gcs", false))
             if (!sharedPreferences.getBoolean("pref_combined_gcs", false)) {
@@ -214,6 +220,7 @@ public class VideoService extends Service implements DJIVideoStreamDecoder.IYuvD
         // Pack a single NAL for RTP and send
         if (mPacketizer != null) {
             ByteArrayInputStream is = new ByteArrayInputStream(buffer);
+
             mPacketizer.setInputStream(is);
             mPacketizer.run2();
         }
