@@ -6,6 +6,7 @@ package sq.rogue.rosettadrone;
 // MenuItemTetColor: RPP @ https://stackoverflow.com/questions/31713628/change-menuitem-text-color-programmatically
 
 import android.Manifest;
+import android.app.Notification;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
@@ -695,7 +696,15 @@ public class MainActivity extends AppCompatActivity {
     private void sendIntent(Intent intent) {
         Log.d(TAG, "sendIntent");
         if (intent != null) {
-            startService(intent);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                try {
+                    startService(intent);
+                } catch (IllegalStateException e) {
+                    startForegroundService(intent);
+                }
+            } else {
+                startService(intent);
+            }
         }
     }
 
@@ -855,7 +864,9 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG, String.valueOf(mainActivityWeakReference.get().socket.getPort()));
             Log.d(TAG, String.valueOf(mainActivityWeakReference.get().socket.getLocalPort()));
 
-            mainActivityWeakReference.get().mModel.setSocket(mainActivityWeakReference.get().socket);
+            if (mainActivityWeakReference.get() != null) {
+                mainActivityWeakReference.get().mModel.setSocket(mainActivityWeakReference.get().socket);
+            }
         }
 
         protected void close() {

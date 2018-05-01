@@ -23,6 +23,8 @@ import android.util.Log;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * RFC 3984.
@@ -36,7 +38,7 @@ public class H264Packetizer extends AbstractPacketizer implements Runnable {
 
     public final static String TAG = "H264Packetizer";
     byte[] header = new byte[5];
-    private Thread t = null;
+    private ExecutorService executorService;
     private int naluLength = 0;
     private long delay = 0, oldtime = 0;
     private Statistics stats = new Statistics();
@@ -54,28 +56,25 @@ public class H264Packetizer extends AbstractPacketizer implements Runnable {
         } catch (IOException e) {
             Log.d(TAG, "error setting socket", e);
         }
+
+        executorService = Executors.newSingleThreadExecutor();
     }
 
     public void start() {
         Log.d(TAG, "start()");
-        if (t == null) {
-            t = new Thread(this);
-            t.start();
+        if (executorService != null) {
+            executorService.submit(this);
         }
     }
 
     public void stop() {
-        if (t != null) {
+        if (executorService != null) {
             try {
                 is.close();
             } catch (IOException e) {
+                e.printStackTrace();
             }
-            t.interrupt();
-            try {
-                t.join();
-            } catch (InterruptedException e) {
-            }
-            t = null;
+            executorService.shutdownNow();
         }
     }
 
@@ -106,9 +105,6 @@ public class H264Packetizer extends AbstractPacketizer implements Runnable {
     }
 
     public void run() {
-    }
-
-    public void run2() {
         long duration = 0;
         stats.reset();
         count = 0;
@@ -128,9 +124,7 @@ public class H264Packetizer extends AbstractPacketizer implements Runnable {
                 delay = stats.average();
                 //Log.d(TAG,"duration: "+duration/1000000+" delay: "+delay/1000000);
             }
-        } catch (IOException e) {
-            Log.d(TAG, "exception", e);
-        } catch (InterruptedException e) {
+        } catch (IOException | InterruptedException e) {
             Log.d(TAG, "exception", e);
         }
     }

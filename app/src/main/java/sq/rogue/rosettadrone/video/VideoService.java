@@ -1,20 +1,29 @@
 package sq.rogue.rosettadrone.video;
 
 import android.app.IntentService;
+import android.app.Notification;
 import android.app.Service;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.icu.util.Output;
 import android.net.LocalSocket;
 import android.net.LocalSocketAddress;
 import android.os.Binder;
+import android.os.Build;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
@@ -22,6 +31,7 @@ import java.util.Arrays;
 import dji.common.product.Model;
 import dji.sdk.base.BaseProduct;
 import dji.sdk.camera.VideoFeeder;
+import dji.thirdparty.sanselan.util.IOUtils;
 import sq.rogue.rosettadrone.DroneModel;
 
 public class VideoService extends Service implements DJIVideoStreamDecoder.IYuvDataListener, DJIVideoStreamDecoder.IFrameDataListener {
@@ -46,6 +56,7 @@ public class VideoService extends Service implements DJIVideoStreamDecoder.IYuvD
 
     protected H264Packetizer mPacketizer;
     protected VideoFeeder.VideoDataCallback mReceivedVideoDataCallBack = null;
+
     protected Model mModel;
     protected SharedPreferences sharedPreferences;
 
@@ -128,6 +139,9 @@ public class VideoService extends Service implements DJIVideoStreamDecoder.IYuvD
     }
 
     public void setActionDroneConnected() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForeground(1, new Notification());
+        }
         initVideoStreamDecoder();
         initPacketizer();
 
@@ -150,6 +164,7 @@ public class VideoService extends Service implements DJIVideoStreamDecoder.IYuvD
     }
 
     private void setActionDroneDisconnected() {
+        stopForeground(true);
         isRunning = false;
         mPacketizer.getRtpSocket().close();
         mPacketizer.stop();
@@ -219,10 +234,8 @@ public class VideoService extends Service implements DJIVideoStreamDecoder.IYuvD
     protected void sendNAL(byte[] buffer) {
         // Pack a single NAL for RTP and send
         if (mPacketizer != null) {
-            ByteArrayInputStream is = new ByteArrayInputStream(buffer);
-
-            mPacketizer.setInputStream(is);
-            mPacketizer.run2();
+            mPacketizer.setInputStream(new ByteArrayInputStream(buffer));
+            mPacketizer.run();
         }
     }
 
