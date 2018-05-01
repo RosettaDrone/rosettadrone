@@ -618,13 +618,8 @@ public class MainActivity extends AppCompatActivity {
      *
      */
     private void sendRestartVideoService() {
-        String videoIP;
+        String videoIP = getVideoIP();
 
-        if (!prefs.getBoolean("pref_combined_gcs", false)) {
-            videoIP = prefs.getString("pref_gcs_ip", "127.0.0.1");
-        } else {
-            videoIP = prefs.getString("pref_video_ip", "127.0.0.1");
-        }
         int videoPort = Integer.parseInt(prefs.getString("pref_video_port", "5600"));
 
         logMessageDJI("Restarting Video link to " + videoIP + ":" + videoPort);
@@ -644,13 +639,8 @@ public class MainActivity extends AppCompatActivity {
      *
      */
     private void sendDroneConnected() {
-        String videoIP;
+        String videoIP = getVideoIP();
 
-        if (!prefs.getBoolean("pref_combined_gcs", false)) {
-            videoIP = prefs.getString("pref_gcs_ip", "127.0.0.1");
-        } else {
-            videoIP = prefs.getString("pref_video_ip", "127.0.0.1");
-        }
         int videoPort = Integer.parseInt(prefs.getString("pref_video_port", "5600"));
 
         logMessageDJI("Starting Video link to " + videoIP + ":" + videoPort);
@@ -666,6 +656,20 @@ public class MainActivity extends AppCompatActivity {
     private void sendDroneDisconnected() {
         Intent intent = setupIntent(ACTION_DRONE_DISCONNECTED);
         sendIntent(intent);
+    }
+
+    private String getVideoIP() {
+        String videoIP = "127.0.0.1";
+
+        if (prefs.getBoolean("pref_external_gcs", false)) {
+            if (!prefs.getBoolean("pref_combined_gcs", false)) {
+                videoIP = prefs.getString("pref_gcs_ip", "127.0.0.1");
+            } else {
+                videoIP = prefs.getString("pref_video_ip", "127.0.0.1");
+            }
+        }
+
+        return videoIP;
     }
     /**
      *
@@ -822,7 +826,11 @@ public class MainActivity extends AppCompatActivity {
         private void createTelemetrySocket() {
             close();
 
-            String gcsIPString = mainActivityWeakReference.get().prefs.getString("pref_gcs_ip", "127.0.0.1");
+            String gcsIPString = "127.0.0.1";
+
+            if (mainActivityWeakReference.get().prefs.getBoolean("pref_external_gcs", false))
+                gcsIPString = mainActivityWeakReference.get().prefs.getString("pref_gcs_ip", "127.0.0.1");
+
 
             int telemIPPort = Integer.parseInt(mainActivityWeakReference.get().prefs.getString("pref_telem_port", "14550"));
 
