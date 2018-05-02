@@ -6,9 +6,9 @@ Rosetta Drone currently only supports the Mavic Pro. We are looking for help tro
 
 *** IMPORTANT SAFETY NOTE *** Due to imperfect translation between DJI and Mavlink, props may begin spinning at unexpected times. Always treat props as if they are live. Use Rosetta Drone's "safety" feature, which *should* prevent the drone from acknowledging unexpected GCS arm or takeoff commands.
 
-The user assumes all responsibility for prevention of harm or damage. This is an evolving, experimental app.
+The user assumes all responsibility for prevention of harm or damage. This is an evolving, experimental app. See "Known issues" below before use.
 
-See "Known issues" below before use.
+Download the Android .APK from the [Releases](https://github.com/jacobsenmd/rosettadrone/releases) tab.
 
 # Features
 
