@@ -103,6 +103,24 @@ public class msg_uavionix_adsb_out_dynamic extends MAVLinkMessage {
 
 
     /**
+     * Constructor for a new message, just initializes the msgid
+     */
+    public msg_uavionix_adsb_out_dynamic() {
+        msgid = MAVLINK_MSG_ID_UAVIONIX_ADSB_OUT_DYNAMIC;
+    }
+
+    /**
+     * Constructor for a new message, initializes the message with the payload
+     * from a mavlink packet
+     */
+    public msg_uavionix_adsb_out_dynamic(MAVLinkPacket mavLinkPacket) {
+        this.sysid = mavLinkPacket.sysid;
+        this.compid = mavLinkPacket.compid;
+        this.msgid = MAVLINK_MSG_ID_UAVIONIX_ADSB_OUT_DYNAMIC;
+        unpack(mavLinkPacket.payload);
+    }
+
+    /**
      * Generates the payload for a mavlink message for a message of this type
      *
      * @return
@@ -189,25 +207,6 @@ public class msg_uavionix_adsb_out_dynamic extends MAVLinkMessage {
         this.emergencyStatus = payload.getUnsignedByte();
 
     }
-
-    /**
-     * Constructor for a new message, just initializes the msgid
-     */
-    public msg_uavionix_adsb_out_dynamic() {
-        msgid = MAVLINK_MSG_ID_UAVIONIX_ADSB_OUT_DYNAMIC;
-    }
-
-    /**
-     * Constructor for a new message, initializes the message with the payload
-     * from a mavlink packet
-     */
-    public msg_uavionix_adsb_out_dynamic(MAVLinkPacket mavLinkPacket) {
-        this.sysid = mavLinkPacket.sysid;
-        this.compid = mavLinkPacket.compid;
-        this.msgid = MAVLINK_MSG_ID_UAVIONIX_ADSB_OUT_DYNAMIC;
-        unpack(mavLinkPacket.payload);
-    }
-
 
     /**
      * Returns a string with the MSG name and data

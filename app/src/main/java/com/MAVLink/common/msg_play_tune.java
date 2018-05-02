@@ -38,6 +38,24 @@ public class msg_play_tune extends MAVLinkMessage {
 
 
     /**
+     * Constructor for a new message, just initializes the msgid
+     */
+    public msg_play_tune() {
+        msgid = MAVLINK_MSG_ID_PLAY_TUNE;
+    }
+
+    /**
+     * Constructor for a new message, initializes the message with the payload
+     * from a mavlink packet
+     */
+    public msg_play_tune(MAVLinkPacket mavLinkPacket) {
+        this.sysid = mavLinkPacket.sysid;
+        this.compid = mavLinkPacket.compid;
+        this.msgid = MAVLINK_MSG_ID_PLAY_TUNE;
+        unpack(mavLinkPacket.payload);
+    }
+
+    /**
      * Generates the payload for a mavlink message for a message of this type
      *
      * @return
@@ -82,23 +100,19 @@ public class msg_play_tune extends MAVLinkMessage {
     }
 
     /**
-     * Constructor for a new message, just initializes the msgid
+     * Gets the message, formated as a string
      */
-    public msg_play_tune() {
-        msgid = MAVLINK_MSG_ID_PLAY_TUNE;
-    }
+    public String getTune() {
+        StringBuffer buf = new StringBuffer();
+        for (int i = 0; i < 30; i++) {
+            if (tune[i] != 0)
+                buf.append((char) tune[i]);
+            else
+                break;
+        }
+        return buf.toString();
 
-    /**
-     * Constructor for a new message, initializes the message with the payload
-     * from a mavlink packet
-     */
-    public msg_play_tune(MAVLinkPacket mavLinkPacket) {
-        this.sysid = mavLinkPacket.sysid;
-        this.compid = mavLinkPacket.compid;
-        this.msgid = MAVLINK_MSG_ID_PLAY_TUNE;
-        unpack(mavLinkPacket.payload);
     }
-
 
     /**
      * Sets the buffer of this message with a string, adds the necessary padding
@@ -112,21 +126,6 @@ public class msg_play_tune extends MAVLinkMessage {
         for (int i = len; i < 30; i++) {            // padding for the rest of the buffer
             tune[i] = 0;
         }
-    }
-
-    /**
-     * Gets the message, formated as a string
-     */
-    public String getTune() {
-        StringBuffer buf = new StringBuffer();
-        for (int i = 0; i < 30; i++) {
-            if (tune[i] != 0)
-                buf.append((char) tune[i]);
-            else
-                break;
-        }
-        return buf.toString();
-
     }
 
     /**

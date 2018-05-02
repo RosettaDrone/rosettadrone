@@ -43,6 +43,24 @@ public class msg_setup_signing extends MAVLinkMessage {
 
 
     /**
+     * Constructor for a new message, just initializes the msgid
+     */
+    public msg_setup_signing() {
+        msgid = MAVLINK_MSG_ID_SETUP_SIGNING;
+    }
+
+    /**
+     * Constructor for a new message, initializes the message with the payload
+     * from a mavlink packet
+     */
+    public msg_setup_signing(MAVLinkPacket mavLinkPacket) {
+        this.sysid = mavLinkPacket.sysid;
+        this.compid = mavLinkPacket.compid;
+        this.msgid = MAVLINK_MSG_ID_SETUP_SIGNING;
+        unpack(mavLinkPacket.payload);
+    }
+
+    /**
      * Generates the payload for a mavlink message for a message of this type
      *
      * @return
@@ -89,25 +107,6 @@ public class msg_setup_signing extends MAVLinkMessage {
 
 
     }
-
-    /**
-     * Constructor for a new message, just initializes the msgid
-     */
-    public msg_setup_signing() {
-        msgid = MAVLINK_MSG_ID_SETUP_SIGNING;
-    }
-
-    /**
-     * Constructor for a new message, initializes the message with the payload
-     * from a mavlink packet
-     */
-    public msg_setup_signing(MAVLinkPacket mavLinkPacket) {
-        this.sysid = mavLinkPacket.sysid;
-        this.compid = mavLinkPacket.compid;
-        this.msgid = MAVLINK_MSG_ID_SETUP_SIGNING;
-        unpack(mavLinkPacket.payload);
-    }
-
 
     /**
      * Returns a string with the MSG name and data

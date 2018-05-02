@@ -58,6 +58,24 @@ public class msg_local_position_ned extends MAVLinkMessage {
 
 
     /**
+     * Constructor for a new message, just initializes the msgid
+     */
+    public msg_local_position_ned() {
+        msgid = MAVLINK_MSG_ID_LOCAL_POSITION_NED;
+    }
+
+    /**
+     * Constructor for a new message, initializes the message with the payload
+     * from a mavlink packet
+     */
+    public msg_local_position_ned(MAVLinkPacket mavLinkPacket) {
+        this.sysid = mavLinkPacket.sysid;
+        this.compid = mavLinkPacket.compid;
+        this.msgid = MAVLINK_MSG_ID_LOCAL_POSITION_NED;
+        unpack(mavLinkPacket.payload);
+    }
+
+    /**
      * Generates the payload for a mavlink message for a message of this type
      *
      * @return
@@ -108,25 +126,6 @@ public class msg_local_position_ned extends MAVLinkMessage {
         this.vz = payload.getFloat();
 
     }
-
-    /**
-     * Constructor for a new message, just initializes the msgid
-     */
-    public msg_local_position_ned() {
-        msgid = MAVLINK_MSG_ID_LOCAL_POSITION_NED;
-    }
-
-    /**
-     * Constructor for a new message, initializes the message with the payload
-     * from a mavlink packet
-     */
-    public msg_local_position_ned(MAVLinkPacket mavLinkPacket) {
-        this.sysid = mavLinkPacket.sysid;
-        this.compid = mavLinkPacket.compid;
-        this.msgid = MAVLINK_MSG_ID_LOCAL_POSITION_NED;
-        unpack(mavLinkPacket.payload);
-    }
-
 
     /**
      * Returns a string with the MSG name and data

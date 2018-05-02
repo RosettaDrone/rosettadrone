@@ -38,6 +38,24 @@ public class msg_gopro_heartbeat extends MAVLinkMessage {
 
 
     /**
+     * Constructor for a new message, just initializes the msgid
+     */
+    public msg_gopro_heartbeat() {
+        msgid = MAVLINK_MSG_ID_GOPRO_HEARTBEAT;
+    }
+
+    /**
+     * Constructor for a new message, initializes the message with the payload
+     * from a mavlink packet
+     */
+    public msg_gopro_heartbeat(MAVLinkPacket mavLinkPacket) {
+        this.sysid = mavLinkPacket.sysid;
+        this.compid = mavLinkPacket.compid;
+        this.msgid = MAVLINK_MSG_ID_GOPRO_HEARTBEAT;
+        unpack(mavLinkPacket.payload);
+    }
+
+    /**
      * Generates the payload for a mavlink message for a message of this type
      *
      * @return
@@ -72,25 +90,6 @@ public class msg_gopro_heartbeat extends MAVLinkMessage {
         this.flags = payload.getUnsignedByte();
 
     }
-
-    /**
-     * Constructor for a new message, just initializes the msgid
-     */
-    public msg_gopro_heartbeat() {
-        msgid = MAVLINK_MSG_ID_GOPRO_HEARTBEAT;
-    }
-
-    /**
-     * Constructor for a new message, initializes the message with the payload
-     * from a mavlink packet
-     */
-    public msg_gopro_heartbeat(MAVLinkPacket mavLinkPacket) {
-        this.sysid = mavLinkPacket.sysid;
-        this.compid = mavLinkPacket.compid;
-        this.msgid = MAVLINK_MSG_ID_GOPRO_HEARTBEAT;
-        unpack(mavLinkPacket.payload);
-    }
-
 
     /**
      * Returns a string with the MSG name and data

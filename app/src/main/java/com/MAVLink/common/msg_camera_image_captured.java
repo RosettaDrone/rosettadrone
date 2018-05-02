@@ -78,6 +78,24 @@ public class msg_camera_image_captured extends MAVLinkMessage {
 
 
     /**
+     * Constructor for a new message, just initializes the msgid
+     */
+    public msg_camera_image_captured() {
+        msgid = MAVLINK_MSG_ID_CAMERA_IMAGE_CAPTURED;
+    }
+
+    /**
+     * Constructor for a new message, initializes the message with the payload
+     * from a mavlink packet
+     */
+    public msg_camera_image_captured(MAVLinkPacket mavLinkPacket) {
+        this.sysid = mavLinkPacket.sysid;
+        this.compid = mavLinkPacket.compid;
+        this.msgid = MAVLINK_MSG_ID_CAMERA_IMAGE_CAPTURED;
+        unpack(mavLinkPacket.payload);
+    }
+
+    /**
      * Generates the payload for a mavlink message for a message of this type
      *
      * @return
@@ -162,23 +180,19 @@ public class msg_camera_image_captured extends MAVLinkMessage {
     }
 
     /**
-     * Constructor for a new message, just initializes the msgid
+     * Gets the message, formated as a string
      */
-    public msg_camera_image_captured() {
-        msgid = MAVLINK_MSG_ID_CAMERA_IMAGE_CAPTURED;
-    }
+    public String getFile_Url() {
+        StringBuffer buf = new StringBuffer();
+        for (int i = 0; i < 205; i++) {
+            if (file_url[i] != 0)
+                buf.append((char) file_url[i]);
+            else
+                break;
+        }
+        return buf.toString();
 
-    /**
-     * Constructor for a new message, initializes the message with the payload
-     * from a mavlink packet
-     */
-    public msg_camera_image_captured(MAVLinkPacket mavLinkPacket) {
-        this.sysid = mavLinkPacket.sysid;
-        this.compid = mavLinkPacket.compid;
-        this.msgid = MAVLINK_MSG_ID_CAMERA_IMAGE_CAPTURED;
-        unpack(mavLinkPacket.payload);
     }
-
 
     /**
      * Sets the buffer of this message with a string, adds the necessary padding
@@ -192,21 +206,6 @@ public class msg_camera_image_captured extends MAVLinkMessage {
         for (int i = len; i < 205; i++) {            // padding for the rest of the buffer
             file_url[i] = 0;
         }
-    }
-
-    /**
-     * Gets the message, formated as a string
-     */
-    public String getFile_Url() {
-        StringBuffer buf = new StringBuffer();
-        for (int i = 0; i < 205; i++) {
-            if (file_url[i] != 0)
-                buf.append((char) file_url[i]);
-            else
-                break;
-        }
-        return buf.toString();
-
     }
 
     /**

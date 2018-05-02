@@ -6,15 +6,70 @@
 
 package com.MAVLink;
 
-import java.io.Serializable;
-
-import com.MAVLink.Messages.MAVLinkPayload;
 import com.MAVLink.Messages.MAVLinkMessage;
+import com.MAVLink.Messages.MAVLinkPayload;
 import com.MAVLink.ardupilotmega.CRC;
-
-import com.MAVLink.ardupilotmega.*;
+import com.MAVLink.ardupilotmega.msg_adap_tuning;
+import com.MAVLink.ardupilotmega.msg_ahrs;
+import com.MAVLink.ardupilotmega.msg_ahrs2;
+import com.MAVLink.ardupilotmega.msg_ahrs3;
+import com.MAVLink.ardupilotmega.msg_airspeed_autocal;
+import com.MAVLink.ardupilotmega.msg_ap_adc;
+import com.MAVLink.ardupilotmega.msg_autopilot_version_request;
+import com.MAVLink.ardupilotmega.msg_battery2;
+import com.MAVLink.ardupilotmega.msg_camera_feedback;
+import com.MAVLink.ardupilotmega.msg_camera_status;
+import com.MAVLink.ardupilotmega.msg_compassmot_status;
+import com.MAVLink.ardupilotmega.msg_data16;
+import com.MAVLink.ardupilotmega.msg_data32;
+import com.MAVLink.ardupilotmega.msg_data64;
+import com.MAVLink.ardupilotmega.msg_data96;
+import com.MAVLink.ardupilotmega.msg_device_op_read;
+import com.MAVLink.ardupilotmega.msg_device_op_read_reply;
+import com.MAVLink.ardupilotmega.msg_device_op_write;
+import com.MAVLink.ardupilotmega.msg_device_op_write_reply;
+import com.MAVLink.ardupilotmega.msg_digicam_configure;
+import com.MAVLink.ardupilotmega.msg_digicam_control;
+import com.MAVLink.ardupilotmega.msg_ekf_status_report;
+import com.MAVLink.ardupilotmega.msg_fence_fetch_point;
+import com.MAVLink.ardupilotmega.msg_fence_point;
+import com.MAVLink.ardupilotmega.msg_fence_status;
+import com.MAVLink.ardupilotmega.msg_gimbal_control;
+import com.MAVLink.ardupilotmega.msg_gimbal_report;
+import com.MAVLink.ardupilotmega.msg_gimbal_torque_cmd_report;
+import com.MAVLink.ardupilotmega.msg_gopro_get_request;
+import com.MAVLink.ardupilotmega.msg_gopro_get_response;
+import com.MAVLink.ardupilotmega.msg_gopro_heartbeat;
+import com.MAVLink.ardupilotmega.msg_gopro_set_request;
+import com.MAVLink.ardupilotmega.msg_gopro_set_response;
+import com.MAVLink.ardupilotmega.msg_hwstatus;
+import com.MAVLink.ardupilotmega.msg_led_control;
+import com.MAVLink.ardupilotmega.msg_limits_status;
+import com.MAVLink.ardupilotmega.msg_mag_cal_progress;
+import com.MAVLink.ardupilotmega.msg_mag_cal_report;
+import com.MAVLink.ardupilotmega.msg_meminfo;
+import com.MAVLink.ardupilotmega.msg_mount_configure;
+import com.MAVLink.ardupilotmega.msg_mount_control;
+import com.MAVLink.ardupilotmega.msg_mount_status;
+import com.MAVLink.ardupilotmega.msg_pid_tuning;
+import com.MAVLink.ardupilotmega.msg_radio;
+import com.MAVLink.ardupilotmega.msg_rally_fetch_point;
+import com.MAVLink.ardupilotmega.msg_rally_point;
+import com.MAVLink.ardupilotmega.msg_rangefinder;
+import com.MAVLink.ardupilotmega.msg_remote_log_block_status;
+import com.MAVLink.ardupilotmega.msg_remote_log_data_block;
+import com.MAVLink.ardupilotmega.msg_rpm;
+import com.MAVLink.ardupilotmega.msg_sensor_offsets;
+import com.MAVLink.ardupilotmega.msg_set_mag_offsets;
+import com.MAVLink.ardupilotmega.msg_simstate;
+import com.MAVLink.ardupilotmega.msg_vision_position_delta;
+import com.MAVLink.ardupilotmega.msg_wind;
 import com.MAVLink.common.*;
-import com.MAVLink.uAvionix.*;
+import com.MAVLink.uAvionix.msg_uavionix_adsb_out_cfg;
+import com.MAVLink.uAvionix.msg_uavionix_adsb_out_dynamic;
+import com.MAVLink.uAvionix.msg_uavionix_adsb_transceiver_health_report;
+
+import java.io.Serializable;
 
 /**
  * Common interface for all MAVLink Messages
@@ -36,10 +91,8 @@ import com.MAVLink.uAvionix.*;
  * The maximum packet length is 263 bytes for full payload
  */
 public class MAVLinkPacket implements Serializable {
-    private static final long serialVersionUID = 2095947771227815314L;
-
     public static final int MAVLINK_STX = 254;
-
+    private static final long serialVersionUID = 2095947771227815314L;
     /**
      * Message length. NOT counting STX, LENGTH, SEQ, SYSID, COMPID, MSGID, CRC1 and CRC2
      */

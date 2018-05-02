@@ -38,6 +38,24 @@ public class msg_data_stream extends MAVLinkMessage {
 
 
     /**
+     * Constructor for a new message, just initializes the msgid
+     */
+    public msg_data_stream() {
+        msgid = MAVLINK_MSG_ID_DATA_STREAM;
+    }
+
+    /**
+     * Constructor for a new message, initializes the message with the payload
+     * from a mavlink packet
+     */
+    public msg_data_stream(MAVLinkPacket mavLinkPacket) {
+        this.sysid = mavLinkPacket.sysid;
+        this.compid = mavLinkPacket.compid;
+        this.msgid = MAVLINK_MSG_ID_DATA_STREAM;
+        unpack(mavLinkPacket.payload);
+    }
+
+    /**
      * Generates the payload for a mavlink message for a message of this type
      *
      * @return
@@ -72,25 +90,6 @@ public class msg_data_stream extends MAVLinkMessage {
         this.on_off = payload.getUnsignedByte();
 
     }
-
-    /**
-     * Constructor for a new message, just initializes the msgid
-     */
-    public msg_data_stream() {
-        msgid = MAVLINK_MSG_ID_DATA_STREAM;
-    }
-
-    /**
-     * Constructor for a new message, initializes the message with the payload
-     * from a mavlink packet
-     */
-    public msg_data_stream(MAVLinkPacket mavLinkPacket) {
-        this.sysid = mavLinkPacket.sysid;
-        this.compid = mavLinkPacket.compid;
-        this.msgid = MAVLINK_MSG_ID_DATA_STREAM;
-        unpack(mavLinkPacket.payload);
-    }
-
 
     /**
      * Returns a string with the MSG name and data

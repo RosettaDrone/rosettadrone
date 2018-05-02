@@ -83,6 +83,24 @@ public class msg_optical_flow_rad extends MAVLinkMessage {
 
 
     /**
+     * Constructor for a new message, just initializes the msgid
+     */
+    public msg_optical_flow_rad() {
+        msgid = MAVLINK_MSG_ID_OPTICAL_FLOW_RAD;
+    }
+
+    /**
+     * Constructor for a new message, initializes the message with the payload
+     * from a mavlink packet
+     */
+    public msg_optical_flow_rad(MAVLinkPacket mavLinkPacket) {
+        this.sysid = mavLinkPacket.sysid;
+        this.compid = mavLinkPacket.compid;
+        this.msgid = MAVLINK_MSG_ID_OPTICAL_FLOW_RAD;
+        unpack(mavLinkPacket.payload);
+    }
+
+    /**
      * Generates the payload for a mavlink message for a message of this type
      *
      * @return
@@ -153,25 +171,6 @@ public class msg_optical_flow_rad extends MAVLinkMessage {
         this.quality = payload.getUnsignedByte();
 
     }
-
-    /**
-     * Constructor for a new message, just initializes the msgid
-     */
-    public msg_optical_flow_rad() {
-        msgid = MAVLINK_MSG_ID_OPTICAL_FLOW_RAD;
-    }
-
-    /**
-     * Constructor for a new message, initializes the message with the payload
-     * from a mavlink packet
-     */
-    public msg_optical_flow_rad(MAVLinkPacket mavLinkPacket) {
-        this.sysid = mavLinkPacket.sysid;
-        this.compid = mavLinkPacket.compid;
-        this.msgid = MAVLINK_MSG_ID_OPTICAL_FLOW_RAD;
-        unpack(mavLinkPacket.payload);
-    }
-
 
     /**
      * Returns a string with the MSG name and data

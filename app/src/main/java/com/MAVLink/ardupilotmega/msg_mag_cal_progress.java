@@ -68,6 +68,24 @@ public class msg_mag_cal_progress extends MAVLinkMessage {
 
 
     /**
+     * Constructor for a new message, just initializes the msgid
+     */
+    public msg_mag_cal_progress() {
+        msgid = MAVLINK_MSG_ID_MAG_CAL_PROGRESS;
+    }
+
+    /**
+     * Constructor for a new message, initializes the message with the payload
+     * from a mavlink packet
+     */
+    public msg_mag_cal_progress(MAVLinkPacket mavLinkPacket) {
+        this.sysid = mavLinkPacket.sysid;
+        this.compid = mavLinkPacket.compid;
+        this.msgid = MAVLINK_MSG_ID_MAG_CAL_PROGRESS;
+        unpack(mavLinkPacket.payload);
+    }
+
+    /**
      * Generates the payload for a mavlink message for a message of this type
      *
      * @return
@@ -134,25 +152,6 @@ public class msg_mag_cal_progress extends MAVLinkMessage {
 
 
     }
-
-    /**
-     * Constructor for a new message, just initializes the msgid
-     */
-    public msg_mag_cal_progress() {
-        msgid = MAVLINK_MSG_ID_MAG_CAL_PROGRESS;
-    }
-
-    /**
-     * Constructor for a new message, initializes the message with the payload
-     * from a mavlink packet
-     */
-    public msg_mag_cal_progress(MAVLinkPacket mavLinkPacket) {
-        this.sysid = mavLinkPacket.sysid;
-        this.compid = mavLinkPacket.compid;
-        this.msgid = MAVLINK_MSG_ID_MAG_CAL_PROGRESS;
-        unpack(mavLinkPacket.payload);
-    }
-
 
     /**
      * Returns a string with the MSG name and data

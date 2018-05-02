@@ -44,6 +44,24 @@ public class msg_mission_count extends MAVLinkMessage {
 
 
     /**
+     * Constructor for a new message, just initializes the msgid
+     */
+    public msg_mission_count() {
+        msgid = MAVLINK_MSG_ID_MISSION_COUNT;
+    }
+
+    /**
+     * Constructor for a new message, initializes the message with the payload
+     * from a mavlink packet
+     */
+    public msg_mission_count(MAVLinkPacket mavLinkPacket) {
+        this.sysid = mavLinkPacket.sysid;
+        this.compid = mavLinkPacket.compid;
+        this.msgid = MAVLINK_MSG_ID_MISSION_COUNT;
+        unpack(mavLinkPacket.payload);
+    }
+
+    /**
      * Generates the payload for a mavlink message for a message of this type
      *
      * @return
@@ -82,25 +100,6 @@ public class msg_mission_count extends MAVLinkMessage {
         //this.mission_type = payload.getUnsignedByte();
         this.mission_type = MAV_MISSION_TYPE.MAV_MISSION_TYPE_MISSION;
     }
-
-    /**
-     * Constructor for a new message, just initializes the msgid
-     */
-    public msg_mission_count() {
-        msgid = MAVLINK_MSG_ID_MISSION_COUNT;
-    }
-
-    /**
-     * Constructor for a new message, initializes the message with the payload
-     * from a mavlink packet
-     */
-    public msg_mission_count(MAVLinkPacket mavLinkPacket) {
-        this.sysid = mavLinkPacket.sysid;
-        this.compid = mavLinkPacket.compid;
-        this.msgid = MAVLINK_MSG_ID_MISSION_COUNT;
-        unpack(mavLinkPacket.payload);
-    }
-
 
     /**
      * Returns a string with the MSG name and data

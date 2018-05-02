@@ -6,7 +6,10 @@ package sq.rogue.rosettadrone;
 // MenuItemTetColor: RPP @ https://stackoverflow.com/questions/31713628/change-menuitem-text-color-programmatically
 
 import android.Manifest;
+import android.app.Notification;
+import android.content.ComponentName;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -15,8 +18,8 @@ import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.design.widget.TabLayout;
@@ -42,7 +45,6 @@ import com.MAVLink.Parser;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -50,14 +52,11 @@ import java.lang.ref.WeakReference;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.PortUnreachableException;
 import java.net.SocketException;
-import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.regex.Pattern;
 
 import dji.common.error.DJIError;
 import dji.common.error.DJISDKError;
@@ -73,25 +72,27 @@ import sq.rogue.rosettadrone.settings.SettingsActivity;
 import sq.rogue.rosettadrone.video.DJIVideoStreamDecoder;
 import sq.rogue.rosettadrone.video.H264Packetizer;
 import sq.rogue.rosettadrone.video.NativeHelper;
-
+import sq.rogue.rosettadrone.video.VideoService;
 import static sq.rogue.rosettadrone.util.safeSleep;
+import static sq.rogue.rosettadrone.video.VideoService.ACTION_DRONE_CONNECTED;
+import static sq.rogue.rosettadrone.video.VideoService.ACTION_DRONE_DISCONNECTED;
+import static sq.rogue.rosettadrone.video.VideoService.ACTION_RESTART;
+import static sq.rogue.rosettadrone.video.VideoService.ACTION_SEND_NAL;
+import static sq.rogue.rosettadrone.video.VideoService.ACTION_SET_MODEL;
+import static sq.rogue.rosettadrone.video.VideoService.ACTION_START;
+import static sq.rogue.rosettadrone.video.VideoService.ACTION_STOP;
 
-public class MainActivity extends AppCompatActivity implements DJIVideoStreamDecoder.IYuvDataListener, DJIVideoStreamDecoder.IFrameDataListener {
+public class MainActivity extends AppCompatActivity {
 
-    private Handler mDJIHandler;
-    private Handler mUIHandler;
-
+    public static final String FLAG_CONNECTION_CHANGE = "dji_sdk_connection_change";
     private final static int RESULT_SETTINGS = 1001;
-
+    private static BaseProduct mProduct;
     private final String TAG = "RosettaDrone";
     private final int GCS_TIMEOUT_mSEC = 2000;
-    public static final String FLAG_CONNECTION_CHANGE = "dji_sdk_connection_change";
-    private static BaseProduct mProduct;
-
+    private Handler mDJIHandler;
+    private Handler mUIHandler;
     private Button mButtonClear;
     private ToggleButton toggleBtnArming;
-    protected VideoFeeder.VideoDataCallback mReceivedVideoDataCallBack = null;
-    private H264Packetizer packetizer;
 
     private LogFragment logDJI;
     private LogFragment logToGCS;
@@ -113,11 +114,6 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
     private MAVLinkReceiver mMavlinkReceiver;
     private Parser mMavlinkParser;
     private GCSCommunicatorAsyncTask mGCSCommunicator;
-
-    private static final Pattern PARTIAl_IP_ADDRESS =
-            Pattern.compile("^((25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[1-9][0-9]|[0-9])\\.){0,3}" +
-                    "((25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[1-9][0-9]|[0-9])){0,1}$");
-
 
     private Runnable RunnableUpdateUI = new Runnable() {
         // We have to update UI from here because we can't update the UI from the
@@ -142,19 +138,106 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
                     logDJI.appendLogText(mNewDJI);
                     mNewDJI = "";
                 }
-                if(mModel != null) {
+                if (mModel != null) {
                     if (mModel.isSafetyEnabled())
                         toggleBtnArming.setChecked(true);
                     else
                         toggleBtnArming.setChecked(false);
-                }
-                else
+                } else
                     toggleBtnArming.setChecked(false);
                 invalidateOptionsMenu();
             } catch (Exception e) {
                 Log.d(TAG, "exception", e);
             }
             mUIHandler.postDelayed(this, 100);
+        }
+    };
+    private Runnable djiUpdateRunnable = new Runnable() {
+        @Override
+        public void run() {
+            Intent intent = new Intent(FLAG_CONNECTION_CHANGE);
+            sendBroadcast(intent);
+        }
+    };
+    private BaseComponent.ComponentListener mDJIComponentListener = new BaseComponent.ComponentListener() {
+        @Override
+        public void onConnectivityChange(boolean isConnected) {
+            notifyStatusChange();
+        }
+    };
+    private BaseProduct.BaseProductListener mDJIBaseProductListener = new BaseProduct.BaseProductListener() {
+        @Override
+        public void onComponentChange(BaseProduct.ComponentKey key, BaseComponent oldComponent, BaseComponent newComponent) {
+            Log.d(TAG, "onComponentChange()");
+            if (newComponent != null) {
+                newComponent.setComponentListener(mDJIComponentListener);
+            }
+            notifyStatusChange();
+        }
+
+        @Override
+        public void onConnectivityChange(boolean isConnected) {
+            Log.d(TAG, "onConnectivityChange()");
+            logMessageDJI("onConnectivityChange()");
+            if (isConnected)
+                onDroneConnected();
+            else
+                onDroneDisconnected();
+
+            notifyStatusChange();
+        }
+    };
+    private DJISDKManager.SDKManagerCallback mDJISDKManagerCallback = new DJISDKManager.SDKManagerCallback() {
+        @Override
+        public void onRegister(DJIError error) {
+            Log.d(TAG, error == null ? "success" : error.getDescription());
+            if (error == DJISDKError.REGISTRATION_SUCCESS) {
+                DJISDKManager.getInstance().startConnectionToProduct();
+                Handler handler = new Handler(Looper.getMainLooper());
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        //Toast.makeText(getApplicationContext(), "DJI SDK registered", Toast.LENGTH_LONG).show();
+                        logMessageDJI("DJI SDK registered");
+                    }
+                });
+            } else {
+                Handler handler = new Handler(Looper.getMainLooper());
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        logMessageDJI("DJI SDK registration failed");
+                        //Toast.makeText(getApplicationContext(), "DJI SDK registration failed", Toast.LENGTH_LONG).show();
+                    }
+                });
+            }
+            if (error != null) {
+                Log.e(TAG, error.toString());
+            }
+        }
+
+        @Override
+        public void onProductChange(BaseProduct oldProduct, BaseProduct newProduct) {
+            Log.d(TAG, "onProductChange()");
+            logMessageDJI("onProductChange()");
+
+            mProduct = newProduct;
+
+            if (mProduct == null) {
+                logMessageDJI("No DJI drone detected");
+                onDroneDisconnected();
+            } else {
+                if (mProduct instanceof Aircraft) {
+                    logMessageDJI("DJI aircraft detected");
+                    onDroneConnected();
+                } else {
+                    logMessageDJI("DJI non-aircraft product detected");
+                    onDroneDisconnected();
+                }
+                mProduct.setBaseProductListener(mDJIBaseProductListener);
+            }
+
+            notifyStatusChange();
         }
     };
 
@@ -267,17 +350,16 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
             String s = p.applicationInfo.dataDir;
             Log.d(TAG, s);
             File dir = new File(s);
-            if (dir.isDirectory())
-            {
+            if (dir.isDirectory()) {
                 Log.d("RosettaDrone", "yes, is directory");
                 String[] children = dir.list();
-                for (int i = 0; i < children.length; i++)
-                {
+                for (int i = 0; i < children.length; i++) {
                     new File(dir, children[i]).delete();
                 }
             }
+        } catch (PackageManager.NameNotFoundException e) {
+            Log.d(TAG, "exception", e);
         }
-        catch(PackageManager.NameNotFoundException e) { Log.d(TAG, "exception", e); }
         //File dir = new File(Environment.getExternalStorageDirectory()+"DJI/sq.rogue.rosettadrone");
 
     }
@@ -302,38 +384,6 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         DJISDKManager.getInstance().registerApp(this, mDJISDKManagerCallback);
         invalidateOptionsMenu();
-    }
-
-    private void initVideoStreamDecoder() {
-        NativeHelper.getInstance().init();
-        DJIVideoStreamDecoder.getInstance().init(getApplicationContext(), null);
-        DJIVideoStreamDecoder.getInstance().setYuvDataListener(MainActivity.this);
-        DJIVideoStreamDecoder.getInstance().setFrameDataListener(MainActivity.this);
-        DJIVideoStreamDecoder.getInstance().resume();
-
-    }
-
-    private void initPacketizer() {
-        if(packetizer != null && packetizer.getRtpSocket() != null)
-            packetizer.getRtpSocket().close();
-        packetizer = new H264Packetizer();
-        packetizer.setInputStream(new ByteArrayInputStream("".getBytes()));
-        String videoIPString = "127.0.0.1";
-        if (prefs.getBoolean("pref_external_gcs", false))
-            if (!prefs.getBoolean("pref_combined_gcs", false)) {
-                videoIPString = prefs.getString("pref_gcs_ip", null);
-            } else {
-                videoIPString = prefs.getString("pref_video_ip", null);
-            }
-        int videoPort = Integer.parseInt(prefs.getString("pref_video_port", "-1"));
-        try {
-            packetizer.getRtpSocket().setDestination(InetAddress.getByName(videoIPString), videoPort, 5000);
-            logMessageDJI("Starting GCS video link: " + videoIPString + ":" + String.valueOf(videoPort));
-
-        } catch (UnknownHostException e) {
-            Log.d(TAG, "exception", e);
-            logMessageDJI("Unknown video host: " + videoIPString + ":" + String.valueOf(videoPort));
-        }
     }
 
     @Override
@@ -387,9 +437,12 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
 
     @Override
     protected void onActivityResult(int reqCode, int resCode, Intent data) {
+        Log.d(TAG, "onActivityResult");
         super.onActivityResult(reqCode, resCode, data);
-        if (reqCode == RESULT_SETTINGS && mGCSCommunicator != null)
+        if (reqCode == RESULT_SETTINGS && mGCSCommunicator != null) {
             mGCSCommunicator.renewDatalinks();
+            sendRestartVideoService();
+        }
     }
 
     @Override
@@ -458,60 +511,6 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
         startActivityForResult(intent, RESULT_SETTINGS);
     }
 
-    private DJISDKManager.SDKManagerCallback mDJISDKManagerCallback = new DJISDKManager.SDKManagerCallback() {
-        @Override
-        public void onRegister(DJIError error) {
-            Log.d(TAG, error == null ? "success" : error.getDescription());
-            if (error == DJISDKError.REGISTRATION_SUCCESS) {
-                DJISDKManager.getInstance().startConnectionToProduct();
-                Handler handler = new Handler(Looper.getMainLooper());
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        //Toast.makeText(getApplicationContext(), "DJI SDK registered", Toast.LENGTH_LONG).show();
-                        logMessageDJI("DJI SDK registered");
-                    }
-                });
-            } else {
-                Handler handler = new Handler(Looper.getMainLooper());
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        logMessageDJI("DJI SDK registration failed");
-                        //Toast.makeText(getApplicationContext(), "DJI SDK registration failed", Toast.LENGTH_LONG).show();
-                    }
-                });
-            }
-            if (error != null) {
-                Log.e(TAG, error.toString());
-            }
-        }
-
-        @Override
-        public void onProductChange(BaseProduct oldProduct, BaseProduct newProduct) {
-            Log.d(TAG, "onProductChange()");
-            logMessageDJI("onProductChange()");
-
-            mProduct = newProduct;
-
-            if (mProduct == null) {
-                logMessageDJI("No DJI drone detected");
-                onDroneDisconnected();
-            } else {
-                if (mProduct instanceof Aircraft) {
-                    logMessageDJI("DJI aircraft detected");
-                    onDroneConnected();
-                } else {
-                    logMessageDJI("DJI non-aircraft product detected");
-                    onDroneDisconnected();
-                }
-                mProduct.setBaseProductListener(mDJIBaseProductListener);
-            }
-
-            notifyStatusChange();
-        }
-    };
-
     private void onDroneConnected() {
         mGCSCommunicator = new GCSCommunicatorAsyncTask(this);
         mGCSCommunicator.execute();
@@ -519,12 +518,11 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
         // Multiple tries and a timeout are necessary because of a bug that causes all the
         // components of mProduct to be null sometimes.
         int tries = 0;
-        while (!mModel.setDjiAircraft((Aircraft) mProduct)){
+        while (!mModel.setDjiAircraft((Aircraft) mProduct)) {
             safeSleep(1000);
             logMessageDJI("Connecting to drone...");
             tries++;
-            if( tries == 5)
-            {
+            if (tries == 5) {
                 Toast.makeText(this, "Oops, DJI's SDK just glitched. Please restart the app.",
                         Toast.LENGTH_LONG).show();
                 return;
@@ -534,129 +532,30 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
 
         }
 
-        initVideoStreamDecoder();
-        initPacketizer();
-        mReceivedVideoDataCallBack = new VideoFeeder.VideoDataCallback() {
+        sendDroneConnected();
 
-            @Override
-            public void onReceive(byte[] videoBuffer, int size) {
-                //Log.d(TAG, "camera recv video data size: " + size);
-                //sendNAL(videoBuffer);
-                DJIVideoStreamDecoder.getInstance().parse(videoBuffer, size);
-            }
-        };
-        if (!mProduct.getModel().equals(Model.UNKNOWN_AIRCRAFT)) {
-            if (VideoFeeder.getInstance().getPrimaryVideoFeed() != null) {
-                VideoFeeder.getInstance().getPrimaryVideoFeed().setCallback(mReceivedVideoDataCallBack);
-            }
-        }
     }
 
     private void onDroneDisconnected() {
         logMessageDJI("onDroneDisconnected()");
         mModel.setDjiAircraft(null);
         closeGCSCommunicator();
-        packetizer.getRtpSocket().close();
 
-        DJIVideoStreamDecoder.getInstance().stop();
-
-//        mGCSCommunicator.cancel(true);
+        sendDroneDisconnected();
     }
 
     private void closeGCSCommunicator() {
-        if(mGCSCommunicator != null) {
+        if (mGCSCommunicator != null) {
             mGCSCommunicator.cancel(true);
             mGCSCommunicator = null;
         }
     }
-
-
-    @Override
-    public void onYuvDataReceived(byte[] yuvFrame, int width, int height) {
-    }
-
-    @Override
-    public void onFrameDataReceived(byte[] frame, int width, int height) {
-        // Called whenever a new H264 frame is received from the DJI video decoder
-        splitNALs(frame);
-    }
-
-    public void splitNALs(byte[] buffer) {
-        // One H264 frame can contain multiple NALs
-        int packet_start_idx = 0;
-        int packet_end_idx = 0;
-        if (buffer.length < 4)
-            return;
-        for (int i = 3; i < buffer.length - 3; i++) {
-            // This block handles all but the last NAL in the frame
-            if ((buffer[i] & 0xff) == 0 && (buffer[i + 1] & 0xff) == 0 && (buffer[i + 2] & 0xff) == 0 && (buffer[i + 3] & 0xff) == 1) {
-                packet_end_idx = i;
-                byte[] packet = Arrays.copyOfRange(buffer, packet_start_idx, packet_end_idx);
-                sendNAL(packet);
-                packet_start_idx = i;
-            }
-
-
-        }
-        // This block handles the last NAL in the frame, or the single NAL if only one exists
-        packet_end_idx = buffer.length;
-        byte[] packet = Arrays.copyOfRange(buffer, packet_start_idx, packet_end_idx);
-        sendNAL(packet);
-        //sendPacket(packet);
-    }
-
-    protected void sendNAL(byte[] buffer) {
-        // Pack a single NAL for RTP and send
-        if (packetizer != null) {
-            ByteArrayInputStream is = new ByteArrayInputStream(buffer);
-            packetizer.setInputStream(is);
-            packetizer.run2();
-        }
-    }
-
-    private BaseProduct.BaseProductListener mDJIBaseProductListener = new BaseProduct.BaseProductListener() {
-        @Override
-        public void onComponentChange(BaseProduct.ComponentKey key, BaseComponent oldComponent, BaseComponent newComponent) {
-            Log.d(TAG, "onComponentChange()");
-            if (newComponent != null) {
-                newComponent.setComponentListener(mDJIComponentListener);
-            }
-            notifyStatusChange();
-        }
-
-        @Override
-        public void onConnectivityChange(boolean isConnected) {
-            Log.d(TAG, "onConnectivityChange()");
-            logMessageDJI("onConnectivityChange()");
-            if (isConnected)
-                onDroneConnected();
-            else
-                onDroneDisconnected();
-
-            notifyStatusChange();
-        }
-    };
-    private BaseComponent.ComponentListener mDJIComponentListener = new BaseComponent.ComponentListener() {
-        @Override
-        public void onConnectivityChange(boolean isConnected) {
-            notifyStatusChange();
-        }
-    };
 
     private void notifyStatusChange() {
         mDJIHandler.removeCallbacks(djiUpdateRunnable);
         Log.d(TAG, "notifyStatusChange()");
         mDJIHandler.postDelayed(djiUpdateRunnable, 500);
     }
-
-    private Runnable djiUpdateRunnable = new Runnable() {
-        @Override
-        public void run() {
-            Intent intent = new Intent(FLAG_CONNECTION_CHANGE);
-            sendBroadcast(intent);
-        }
-    };
-
 
     private void loadMockParamFile() {
         mModel.getParams().clear();
@@ -684,18 +583,136 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
     }
 
     public void logMessageToGCS(String msg) {
-        if(prefs.getBoolean("pref_log_mavlink",false))
+        if (prefs.getBoolean("pref_log_mavlink", false))
             mNewOutbound += "\n" + msg;
     }
 
     public void logMessageFromGCS(String msg) {
-        if(prefs.getBoolean("pref_log_mavlink",false))
+        if (prefs.getBoolean("pref_log_mavlink", false))
             mNewInbound += "\n" + msg;
     }
 
     public void logMessageDJI(String msg) {
         mNewDJI += "\n" + msg;
     }
+
+    //region Interface to VideoService
+    //---------------------------------------------------------------------------------------
+
+    /**
+     *
+     */
+    private void sendStartVideoService() {
+        Intent intent = setupIntent(ACTION_START);
+        sendIntent(intent);
+    }
+
+    /**
+     *
+     */
+    private void sendStopVideoService() {
+        Intent intent = setupIntent(ACTION_STOP);
+        sendIntent(intent);
+    }
+
+    /**
+     *
+     */
+    private void sendRestartVideoService() {
+        String videoIP = getVideoIP();
+
+        int videoPort = Integer.parseInt(prefs.getString("pref_video_port", "5600"));
+
+        logMessageDJI("Restarting Video link to " + videoIP + ":" + videoPort);
+        Intent intent = setupIntent(ACTION_RESTART);
+        sendIntent(intent);
+    }
+
+    /**
+     *
+     */
+    private void sendSetBackingMode() {
+        Intent intent = setupIntent(ACTION_SET_MODEL);
+        sendIntent(intent);
+    }
+
+    /**
+     *
+     */
+    private void sendDroneConnected() {
+        String videoIP = getVideoIP();
+
+        int videoPort = Integer.parseInt(prefs.getString("pref_video_port", "5600"));
+
+        logMessageDJI("Starting Video link to " + videoIP + ":" + videoPort);
+
+        Intent intent = setupIntent(ACTION_DRONE_CONNECTED);
+        intent.putExtra("model", mProduct.getModel());
+        sendIntent(intent);
+    }
+
+    /**
+     *
+     */
+    private void sendDroneDisconnected() {
+        Intent intent = setupIntent(ACTION_DRONE_DISCONNECTED);
+        sendIntent(intent);
+    }
+
+    private String getVideoIP() {
+        String videoIP = "127.0.0.1";
+
+        if (prefs.getBoolean("pref_external_gcs", false)) {
+            if (!prefs.getBoolean("pref_combined_gcs", false)) {
+                videoIP = prefs.getString("pref_gcs_ip", "127.0.0.1");
+            } else {
+                videoIP = prefs.getString("pref_video_ip", "127.0.0.1");
+            }
+        }
+
+        return videoIP;
+    }
+    /**
+     *
+     * @param action
+     * @param extras
+     * @return
+     */
+    private Intent setupIntent(String action, Object... extras) {
+        Intent intent = new Intent(this, VideoService.class);
+        intent.setAction(action);
+
+        for (Object extra: extras) {
+//            intent.putExtra()
+        }
+
+        return intent;
+    }
+
+    /**
+     *
+     * @param intent
+     */
+    private void sendIntent(Intent intent) {
+        Log.d(TAG, "sendIntent");
+        if (intent != null) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                try {
+                    startService(intent);
+                } catch (IllegalStateException e) {
+                    startForegroundService(intent);
+                }
+            } else {
+                startService(intent);
+            }
+        }
+    }
+
+    //---------------------------------------------------------------------------------------
+    //endregion
+
+    //region GCS Timer Task
+    //---------------------------------------------------------------------------------------
 
     private static class GCSSenderTimerTask extends TimerTask {
 
@@ -714,10 +731,9 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
 
     private static class GCSCommunicatorAsyncTask extends AsyncTask<Integer, Integer, Integer> {
 
+        private static final String TAG = GCSSenderTimerTask.class.getSimpleName();
         public boolean request_renew_datalinks = false;
         private Timer timer;
-        private static final String TAG = GCSSenderTimerTask.class.getSimpleName();
-
         private WeakReference<MainActivity> mainActivityWeakReference;
 
         GCSCommunicatorAsyncTask(MainActivity mainActivity) {
@@ -725,12 +741,14 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
         }
 
         public void renewDatalinks() {
+            Log.d(TAG, "renewDataLinks");
             request_renew_datalinks = true;
         }
 
         private void onRenewDatalinks() {
+            Log.d(TAG, "onRenewDataLinks");
             createTelemetrySocket();
-            mainActivityWeakReference.get().initPacketizer();
+//            mainActivityWeakReference.get().sendRestartVideoService();
         }
 
         @Override
@@ -738,7 +756,7 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
             Log.d("RDTHREADS", "doInBackground()");
 
             try {
-                onRenewDatalinks();
+                createTelemetrySocket();
                 mainActivityWeakReference.get().mMavlinkParser = new Parser();
 
                 GCSSenderTimerTask gcsSender = new GCSSenderTimerTask(mainActivityWeakReference);
@@ -767,7 +785,7 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
 
                             if (packet != null) {
                                 MAVLinkMessage msg = packet.unpack();
-                                if(mainActivityWeakReference.get().prefs.getBoolean("pref_log_mavlink", false))
+                                if (mainActivityWeakReference.get().prefs.getBoolean("pref_log_mavlink", false))
                                     mainActivityWeakReference.get().logMessageFromGCS(msg.toString());
                                 mainActivityWeakReference.get().mMavlinkReceiver.process(msg);
                             }
@@ -779,7 +797,7 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
 
             } catch (Exception e) {
                 Log.d(TAG, "exception", e);
-            } finally  {
+            } finally {
                 if (mainActivityWeakReference.get().socket.isConnected()) {
                     mainActivityWeakReference.get().socket.disconnect();
                 }
@@ -818,9 +836,12 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
             close();
 
             String gcsIPString = "127.0.0.1";
+
             if (mainActivityWeakReference.get().prefs.getBoolean("pref_external_gcs", false))
-                gcsIPString = mainActivityWeakReference.get().prefs.getString("pref_gcs_ip", null);
-            int telemIPPort = Integer.parseInt(mainActivityWeakReference.get().prefs.getString("pref_telem_port", "-1"));
+                gcsIPString = mainActivityWeakReference.get().prefs.getString("pref_gcs_ip", "127.0.0.1");
+
+
+            int telemIPPort = Integer.parseInt(mainActivityWeakReference.get().prefs.getString("pref_telem_port", "14550"));
 
             try {
                 mainActivityWeakReference.get().socket = new DatagramSocket();
@@ -843,7 +864,9 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
             Log.d(TAG, String.valueOf(mainActivityWeakReference.get().socket.getPort()));
             Log.d(TAG, String.valueOf(mainActivityWeakReference.get().socket.getLocalPort()));
 
-            mainActivityWeakReference.get().mModel.setSocket(mainActivityWeakReference.get().socket);
+            if (mainActivityWeakReference.get() != null) {
+                mainActivityWeakReference.get().mModel.setSocket(mainActivityWeakReference.get().socket);
+            }
         }
 
         protected void close() {
@@ -853,4 +876,8 @@ public class MainActivity extends AppCompatActivity implements DJIVideoStreamDec
             }
         }
     }
+
+    //---------------------------------------------------------------------------------------
+    //endregion
+
 }

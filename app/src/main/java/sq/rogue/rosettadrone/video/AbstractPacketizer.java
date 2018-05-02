@@ -6,9 +6,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,16 +46,25 @@ abstract public class AbstractPacketizer {
         socket.setSSRC(ssrc);
     }
 
+    /**
+     * For debugging purposes.
+     */
+    protected static String printBuffer(byte[] buffer, int start, int end) {
+        String str = "";
+        for (int i = start; i < end; i++) str += "," + Integer.toHexString(buffer[i] & 0xFF);
+        return str;
+    }
+
     public RtpSocket getRtpSocket() {
         return socket;
     }
 
-    public void setSSRC(int ssrc) {
-        socket.setSSRC(ssrc);
-    }
-
     public int getSSRC() {
         return socket.getSSRC();
+    }
+
+    public void setSSRC(int ssrc) {
+        socket.setSSRC(ssrc);
     }
 
     public void setInputStream(InputStream is) {
@@ -92,15 +101,6 @@ abstract public class AbstractPacketizer {
      */
     protected void send(int length) throws IOException {
         socket.commitBuffer(length);
-    }
-
-    /**
-     * For debugging purposes.
-     */
-    protected static String printBuffer(byte[] buffer, int start, int end) {
-        String str = "";
-        for (int i = start; i < end; i++) str += "," + Integer.toHexString(buffer[i] & 0xFF);
-        return str;
     }
 
     /**

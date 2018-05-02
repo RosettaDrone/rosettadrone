@@ -46,47 +46,55 @@ import sq.rogue.rosettadrone.R;
  * 6. Release the ffmpeg and the MediaCodec, stop the decoding thread.
  */
 public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
+    public static final String VIDEO_ENCODING_FORMAT = "video/avc";
     private static final String TAG = DJIVideoStreamDecoder.class.getSimpleName();
     private static final int BUF_QUEUE_SIZE = 30;
     private static final int MSG_INIT_CODEC = 0;
     private static final int MSG_FRAME_QUEUE_IN = 1;
     private static final int MSG_DECODE_FRAME = 2;
     private static final int MSG_YUV_DATA = 3;
-    public static final String VIDEO_ENCODING_FORMAT = "video/avc";
+    private static DJIVideoStreamDecoder instance;
+    private final boolean DEBUG = false;
+    public int frameIndex = -1;
+    public int width;
+    public int height;
+    MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
+    LinkedList<Long> bufferChangedQueue = new LinkedList<Long>();
     private HandlerThread handlerThreadNew;
     private Handler handlerNew;
-    private final boolean DEBUG = false;
-    private static DJIVideoStreamDecoder instance;
     private Queue<DJIFrame> frameQueue;
     private HandlerThread dataHandlerThread;
     private Handler dataHandler;
     private Context context;
     private MediaCodec codec;
     private Surface surface;
-
-    public int frameIndex = -1;
     private long currentTime;
-    public int width;
-    public int height;
     private boolean hasIFrameInQueue = false;
-    MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
-    LinkedList<Long> bufferChangedQueue = new LinkedList<Long>();
-
     private long createTime;
+    private IYuvDataListener yuvDataListener;
+    private IFrameDataListener frameDataListener;
 
-    public interface IYuvDataListener {
-        /**
-         * Callback method for processing the yuv frame data from hardware decoder.
-         *
-         * @param yuvFrame
-         * @param width
-         * @param height
-         */
-        void onYuvDataReceived(byte[] yuvFrame, int width, int height);
+    private DJIVideoStreamDecoder() {
+        createTime = System.currentTimeMillis();
+        frameQueue = new ArrayBlockingQueue<DJIFrame>(BUF_QUEUE_SIZE);
+        startDataHandler();
+        handlerThreadNew = new HandlerThread("native parser thread");
+        handlerThreadNew.start();
+        handlerNew = new Handler(handlerThreadNew.getLooper(), new Handler.Callback() {
+            @Override
+            public boolean handleMessage(Message msg) {
+                byte[] buf = (byte[]) msg.obj;
+                NativeHelper.getInstance().parse(buf, msg.arg1);
+                return false;
+            }
+        });
     }
 
-    public interface IFrameDataListener {
-        void onFrameDataReceived(byte[] frame, int width, int height);
+    public static DJIVideoStreamDecoder getInstance() {
+        if (instance == null) {
+            instance = new DJIVideoStreamDecoder();
+        }
+        return instance;
     }
 
     /**
@@ -103,51 +111,6 @@ public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
 
     public void setFrameDataListener(IFrameDataListener frameDataListener) {
         this.frameDataListener = frameDataListener;
-    }
-
-    private IYuvDataListener yuvDataListener;
-    private IFrameDataListener frameDataListener;
-
-    /**
-     * A data structure for containing the frames.
-     */
-    private static class DJIFrame {
-        public byte[] videoBuffer;
-        public int size;
-        public long pts;
-        public long incomingTimeMs;
-        public long fedIntoCodecTime;
-        public long codecOutputTime;
-        public boolean isKeyFrame;
-        public int frameNum;
-        public long frameIndex;
-        public int width;
-        public int height;
-
-        public DJIFrame(byte[] videoBuffer, int size, long pts, long incomingTimeUs, boolean isKeyFrame,
-                        int frameNum, long frameIndex, int width, int height) {
-            this.videoBuffer = videoBuffer;
-            this.size = size;
-            this.pts = pts;
-            this.incomingTimeMs = incomingTimeUs;
-            this.isKeyFrame = isKeyFrame;
-            this.frameNum = frameNum;
-            this.frameIndex = frameIndex;
-            this.width = width;
-            this.height = height;
-        }
-
-        public long getQueueDelay() {
-            return fedIntoCodecTime - incomingTimeMs;
-        }
-
-        public long getDecodingDelay() {
-            return codecOutputTime - fedIntoCodecTime;
-        }
-
-        public long getTotalDelay() {
-            return codecOutputTime - fedIntoCodecTime;
-        }
     }
 
     private void logd(String tag, String log) {
@@ -170,30 +133,6 @@ public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
 
     private void loge(String log) {
         loge(TAG, log);
-    }
-
-    private DJIVideoStreamDecoder() {
-        createTime = System.currentTimeMillis();
-        frameQueue = new ArrayBlockingQueue<DJIFrame>(BUF_QUEUE_SIZE);
-        startDataHandler();
-        handlerThreadNew = new HandlerThread("native parser thread");
-        handlerThreadNew.start();
-        handlerNew = new Handler(handlerThreadNew.getLooper(), new Handler.Callback() {
-            @Override
-            public boolean handleMessage(Message msg) {
-                byte[] buf = (byte[]) msg.obj;
-                NativeHelper.getInstance().parse(buf, msg.arg1);
-                return false;
-            }
-        });
-    }
-
-
-    public static DJIVideoStreamDecoder getInstance() {
-        if (instance == null) {
-            instance = new DJIVideoStreamDecoder();
-        }
-        return instance;
     }
 
     /**
@@ -372,7 +311,6 @@ public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
         }
         return null;
     }
-
 
     /**
      * Initialize the hardware decoder.
@@ -596,11 +534,11 @@ public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
                 inputFrame.height != this.height) {
             this.width = inputFrame.width;
             this.height = inputFrame.height;
-           /*
-    	    * On some devices, the codec supports changing of resolution during the fly
-    	    * However, on some devices, that is not the case.
-    	    * So, reset the codec in order to fix this issue.
-    	    */
+            /*
+             * On some devices, the codec supports changing of resolution during the fly
+             * However, on some devices, that is not the case.
+             * So, reset the codec in order to fix this issue.
+             */
             loge("init decoder for the 1st time or when resolution changes");
             if (dataHandler != null && !dataHandler.hasMessages(MSG_INIT_CODEC)) {
                 dataHandler.sendEmptyMessage(MSG_INIT_CODEC);
@@ -743,6 +681,63 @@ public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
 
             dataHandler.obtainMessage(MSG_FRAME_QUEUE_IN, newFrame).sendToTarget();
 
+        }
+    }
+
+    public interface IYuvDataListener {
+        /**
+         * Callback method for processing the yuv frame data from hardware decoder.
+         *
+         * @param yuvFrame
+         * @param width
+         * @param height
+         */
+        void onYuvDataReceived(byte[] yuvFrame, int width, int height);
+    }
+
+    public interface IFrameDataListener {
+        void onFrameDataReceived(byte[] frame, int width, int height);
+    }
+
+    /**
+     * A data structure for containing the frames.
+     */
+    private static class DJIFrame {
+        public byte[] videoBuffer;
+        public int size;
+        public long pts;
+        public long incomingTimeMs;
+        public long fedIntoCodecTime;
+        public long codecOutputTime;
+        public boolean isKeyFrame;
+        public int frameNum;
+        public long frameIndex;
+        public int width;
+        public int height;
+
+        public DJIFrame(byte[] videoBuffer, int size, long pts, long incomingTimeUs, boolean isKeyFrame,
+                        int frameNum, long frameIndex, int width, int height) {
+            this.videoBuffer = videoBuffer;
+            this.size = size;
+            this.pts = pts;
+            this.incomingTimeMs = incomingTimeUs;
+            this.isKeyFrame = isKeyFrame;
+            this.frameNum = frameNum;
+            this.frameIndex = frameIndex;
+            this.width = width;
+            this.height = height;
+        }
+
+        public long getQueueDelay() {
+            return fedIntoCodecTime - incomingTimeMs;
+        }
+
+        public long getDecodingDelay() {
+            return codecOutputTime - fedIntoCodecTime;
+        }
+
+        public long getTotalDelay() {
+            return codecOutputTime - fedIntoCodecTime;
         }
     }
 }

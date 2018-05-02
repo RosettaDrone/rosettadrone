@@ -113,6 +113,24 @@ public class msg_servo_output_raw extends MAVLinkMessage {
 
 
     /**
+     * Constructor for a new message, just initializes the msgid
+     */
+    public msg_servo_output_raw() {
+        msgid = MAVLINK_MSG_ID_SERVO_OUTPUT_RAW;
+    }
+
+    /**
+     * Constructor for a new message, initializes the message with the payload
+     * from a mavlink packet
+     */
+    public msg_servo_output_raw(MAVLinkPacket mavLinkPacket) {
+        this.sysid = mavLinkPacket.sysid;
+        this.compid = mavLinkPacket.compid;
+        this.msgid = MAVLINK_MSG_ID_SERVO_OUTPUT_RAW;
+        unpack(mavLinkPacket.payload);
+    }
+
+    /**
      * Generates the payload for a mavlink message for a message of this type
      *
      * @return
@@ -207,25 +225,6 @@ public class msg_servo_output_raw extends MAVLinkMessage {
         this.servo16_raw = payload.getUnsignedShort();
 
     }
-
-    /**
-     * Constructor for a new message, just initializes the msgid
-     */
-    public msg_servo_output_raw() {
-        msgid = MAVLINK_MSG_ID_SERVO_OUTPUT_RAW;
-    }
-
-    /**
-     * Constructor for a new message, initializes the message with the payload
-     * from a mavlink packet
-     */
-    public msg_servo_output_raw(MAVLinkPacket mavLinkPacket) {
-        this.sysid = mavLinkPacket.sysid;
-        this.compid = mavLinkPacket.compid;
-        this.msgid = MAVLINK_MSG_ID_SERVO_OUTPUT_RAW;
-        unpack(mavLinkPacket.payload);
-    }
-
 
     /**
      * Returns a string with the MSG name and data

@@ -48,6 +48,24 @@ public class msg_v2_extension extends MAVLinkMessage {
 
 
     /**
+     * Constructor for a new message, just initializes the msgid
+     */
+    public msg_v2_extension() {
+        msgid = MAVLINK_MSG_ID_V2_EXTENSION;
+    }
+
+    /**
+     * Constructor for a new message, initializes the message with the payload
+     * from a mavlink packet
+     */
+    public msg_v2_extension(MAVLinkPacket mavLinkPacket) {
+        this.sysid = mavLinkPacket.sysid;
+        this.compid = mavLinkPacket.compid;
+        this.msgid = MAVLINK_MSG_ID_V2_EXTENSION;
+        unpack(mavLinkPacket.payload);
+    }
+
+    /**
      * Generates the payload for a mavlink message for a message of this type
      *
      * @return
@@ -98,25 +116,6 @@ public class msg_v2_extension extends MAVLinkMessage {
 
 
     }
-
-    /**
-     * Constructor for a new message, just initializes the msgid
-     */
-    public msg_v2_extension() {
-        msgid = MAVLINK_MSG_ID_V2_EXTENSION;
-    }
-
-    /**
-     * Constructor for a new message, initializes the message with the payload
-     * from a mavlink packet
-     */
-    public msg_v2_extension(MAVLinkPacket mavLinkPacket) {
-        this.sysid = mavLinkPacket.sysid;
-        this.compid = mavLinkPacket.compid;
-        this.msgid = MAVLINK_MSG_ID_V2_EXTENSION;
-        unpack(mavLinkPacket.payload);
-    }
-
 
     /**
      * Returns a string with the MSG name and data

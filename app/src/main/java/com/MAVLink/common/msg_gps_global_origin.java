@@ -43,6 +43,24 @@ public class msg_gps_global_origin extends MAVLinkMessage {
 
 
     /**
+     * Constructor for a new message, just initializes the msgid
+     */
+    public msg_gps_global_origin() {
+        msgid = MAVLINK_MSG_ID_GPS_GLOBAL_ORIGIN;
+    }
+
+    /**
+     * Constructor for a new message, initializes the message with the payload
+     * from a mavlink packet
+     */
+    public msg_gps_global_origin(MAVLinkPacket mavLinkPacket) {
+        this.sysid = mavLinkPacket.sysid;
+        this.compid = mavLinkPacket.compid;
+        this.msgid = MAVLINK_MSG_ID_GPS_GLOBAL_ORIGIN;
+        unpack(mavLinkPacket.payload);
+    }
+
+    /**
      * Generates the payload for a mavlink message for a message of this type
      *
      * @return
@@ -81,25 +99,6 @@ public class msg_gps_global_origin extends MAVLinkMessage {
         this.time_usec = payload.getUnsignedLong();
 
     }
-
-    /**
-     * Constructor for a new message, just initializes the msgid
-     */
-    public msg_gps_global_origin() {
-        msgid = MAVLINK_MSG_ID_GPS_GLOBAL_ORIGIN;
-    }
-
-    /**
-     * Constructor for a new message, initializes the message with the payload
-     * from a mavlink packet
-     */
-    public msg_gps_global_origin(MAVLinkPacket mavLinkPacket) {
-        this.sysid = mavLinkPacket.sysid;
-        this.compid = mavLinkPacket.compid;
-        this.msgid = MAVLINK_MSG_ID_GPS_GLOBAL_ORIGIN;
-        unpack(mavLinkPacket.payload);
-    }
-
 
     /**
      * Returns a string with the MSG name and data

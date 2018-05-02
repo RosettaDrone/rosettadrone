@@ -44,6 +44,24 @@ public class msg_mission_ack extends MAVLinkMessage {
 
 
     /**
+     * Constructor for a new message, just initializes the msgid
+     */
+    public msg_mission_ack() {
+        msgid = MAVLINK_MSG_ID_MISSION_ACK;
+    }
+
+    /**
+     * Constructor for a new message, initializes the message with the payload
+     * from a mavlink packet
+     */
+    public msg_mission_ack(MAVLinkPacket mavLinkPacket) {
+        this.sysid = mavLinkPacket.sysid;
+        this.compid = mavLinkPacket.compid;
+        this.msgid = MAVLINK_MSG_ID_MISSION_ACK;
+        unpack(mavLinkPacket.payload);
+    }
+
+    /**
      * Generates the payload for a mavlink message for a message of this type
      *
      * @return
@@ -83,25 +101,6 @@ public class msg_mission_ack extends MAVLinkMessage {
         this.mission_type = MAV_MISSION_TYPE.MAV_MISSION_TYPE_MISSION;
 
     }
-
-    /**
-     * Constructor for a new message, just initializes the msgid
-     */
-    public msg_mission_ack() {
-        msgid = MAVLINK_MSG_ID_MISSION_ACK;
-    }
-
-    /**
-     * Constructor for a new message, initializes the message with the payload
-     * from a mavlink packet
-     */
-    public msg_mission_ack(MAVLinkPacket mavLinkPacket) {
-        this.sysid = mavLinkPacket.sysid;
-        this.compid = mavLinkPacket.compid;
-        this.msgid = MAVLINK_MSG_ID_MISSION_ACK;
-        unpack(mavLinkPacket.payload);
-    }
-
 
     /**
      * Returns a string with the MSG name and data

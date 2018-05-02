@@ -43,6 +43,24 @@ public class msg_file_transfer_protocol extends MAVLinkMessage {
 
 
     /**
+     * Constructor for a new message, just initializes the msgid
+     */
+    public msg_file_transfer_protocol() {
+        msgid = MAVLINK_MSG_ID_FILE_TRANSFER_PROTOCOL;
+    }
+
+    /**
+     * Constructor for a new message, initializes the message with the payload
+     * from a mavlink packet
+     */
+    public msg_file_transfer_protocol(MAVLinkPacket mavLinkPacket) {
+        this.sysid = mavLinkPacket.sysid;
+        this.compid = mavLinkPacket.compid;
+        this.msgid = MAVLINK_MSG_ID_FILE_TRANSFER_PROTOCOL;
+        unpack(mavLinkPacket.payload);
+    }
+
+    /**
      * Generates the payload for a mavlink message for a message of this type
      *
      * @return
@@ -89,25 +107,6 @@ public class msg_file_transfer_protocol extends MAVLinkMessage {
 
 
     }
-
-    /**
-     * Constructor for a new message, just initializes the msgid
-     */
-    public msg_file_transfer_protocol() {
-        msgid = MAVLINK_MSG_ID_FILE_TRANSFER_PROTOCOL;
-    }
-
-    /**
-     * Constructor for a new message, initializes the message with the payload
-     * from a mavlink packet
-     */
-    public msg_file_transfer_protocol(MAVLinkPacket mavLinkPacket) {
-        this.sysid = mavLinkPacket.sysid;
-        this.compid = mavLinkPacket.compid;
-        this.msgid = MAVLINK_MSG_ID_FILE_TRANSFER_PROTOCOL;
-        unpack(mavLinkPacket.payload);
-    }
-
 
     /**
      * Returns a string with the MSG name and data

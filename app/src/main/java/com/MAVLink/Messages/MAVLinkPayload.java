@@ -10,19 +10,14 @@ import java.nio.ByteBuffer;
 
 public class MAVLinkPayload {
 
+    public static final int MAX_PAYLOAD_SIZE = 255;
     private static final byte UNSIGNED_BYTE_MIN_VALUE = 0;
     private static final short UNSIGNED_BYTE_MAX_VALUE = Byte.MAX_VALUE - Byte.MIN_VALUE;
-
     private static final short UNSIGNED_SHORT_MIN_VALUE = 0;
     private static final int UNSIGNED_SHORT_MAX_VALUE = Short.MAX_VALUE - Short.MIN_VALUE;
-
     private static final int UNSIGNED_INT_MIN_VALUE = 0;
     private static final long UNSIGNED_INT_MAX_VALUE = (long) Integer.MAX_VALUE - Integer.MIN_VALUE;
-
     private static final long UNSIGNED_LONG_MIN_VALUE = 0;
-
-    public static final int MAX_PAYLOAD_SIZE = 255;
-
     public final ByteBuffer payload;
     public int index;
 
