@@ -2,6 +2,8 @@
 
 Rosetta Drone is a Mavlink wrapper for the DJI SDK, which allows users to fly DJI drones using Mavlink-speaking ground control stations. In theory it should work with any Mavlink GCS, but all testing so far has been done with QGroundControl. 
 
+Rosetta Drone currently only supports the Mavic Pro. We are looking for help troubleshooting one remaining bug that is garbling video feeds from other DJI drone types. 
+
 *** IMPORTANT SAFETY NOTE *** Due to imperfect translation between DJI and Mavlink, props may begin spinning at unexpected times. Always treat props as if they are live. Use Rosetta Drone's "safety" feature, which *should* prevent the drone from acknowledging unexpected GCS arm or takeoff commands.
 
 The user assumes all responsibility for prevention of harm or damage. This is an evolving, experimental app.
@@ -84,7 +86,9 @@ Anyone who speaks multiple languages knows that translations are rarely perfect.
 
 - Occassionally RosettaDrone will loop through repeated "Connecting to drone..." messages upon plugging in a drone. We believe this is a bug in the DJI SDK. Try restarting the drone, killing RosettaDrone, and restarting it. If that doesn't work, reinstalling the app clears caches and usually solves the problem.
 
-- On some phones, RosettaDrone runs poorly when in the background. This leads to garbled video in QGC, whether it is in running on the phone or an external device. Samsung S7 and S8 seem to work fine, but we have seen this problem with the Pixel 2, HTC 10, and Nexus 6. We are moving video streaming to a Service rather than Activity, which we hope will help.
+- If you change the UDP port while QGC is running, you may need to restart QGC
+
+- There is no bounds checking for DJI parameters. It is your responsibility to enter valid parameters.
 
 # Known Issues for Developers
 
