@@ -1,11 +1,17 @@
 package sq.rogue.rosettadrone.logs;
 
+import android.annotation.SuppressLint;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.text.method.ScrollingMovementMethod;
+import android.util.Log;
+import android.view.GestureDetector;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
@@ -22,6 +28,16 @@ public class LogFragment extends Fragment {
     private boolean mViewAtBottom = true;
 
     private int mMaxCharacters = DEFAULT_MAX_CHARACTERS;
+    private int LONG_PRESS_TIMEOUT = 3000;
+
+    GestureDetector gestureDetector;
+
+    final Handler handler = new Handler();
+    Runnable mLongPressed = new Runnable() {
+        public void run() {
+            clearLogText();
+        }
+    };
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -29,6 +45,7 @@ public class LogFragment extends Fragment {
         super.onCreate(savedInstanceState);
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 //        Log.d(TAG, "onCreateView");
@@ -37,18 +54,39 @@ public class LogFragment extends Fragment {
 
         View view = inflater.inflate(R.layout.fragment_log, container, false);
         mTextViewTraffic = view.findViewById(R.id.log);
-        mTextViewTraffic.setMovementMethod(new ScrollingMovementMethod());
-        mTextViewTraffic.setHorizontallyScrolling(true);
 
-        mTextViewTraffic.setOnLongClickListener(new View.OnLongClickListener() {
+        mTextViewTraffic.setOnTouchListener(new View.OnTouchListener() {
             @Override
-            public boolean onLongClick(View v) {
-                clearLogText();
-                return true;
+            public boolean onTouch(View v, MotionEvent event) {
+//                Log.d(TAG, "onTouch");
+                if(event.getAction() == MotionEvent.ACTION_DOWN) {
+                    Log.d(TAG, "ACTION_DOWN");
+                    handler.postDelayed(mLongPressed, LONG_PRESS_TIMEOUT);
+                }
+                if((event.getAction() == MotionEvent.ACTION_UP)) {
+                    if (event.getAction() == MotionEvent.ACTION_UP)
+                        Log.d(TAG, "ACTION_UP");
+
+                    handler.removeCallbacks(mLongPressed);
+                }
+                return false;
             }
         });
+
+        mTextViewTraffic.setMovementMethod(new ScrollingMovementMethod());
+        mTextViewTraffic.setHorizontallyScrolling(true);
+//        mTextViewTraffic.setOnLongClickListener(new View.OnLongClickListener() {
+//            @Override
+//            public boolean onLongClick(View v) {
+//                clearLogText();
+//                return true;
+//            }
+//        });
         return view;
     }
+
+
+
 
     /**
      * Set the backing TextView
