@@ -13,65 +13,46 @@ import sq.rogue.rosettadrone.R;
 
 public class LogFragment extends Fragment {
 
+    private final String TAG = getClass().getSimpleName();
+
     private final int DEFAULT_MAX_CHARACTERS = 200000;
+//    private final String INSTANCE_STATE_KEY = "saved_state";
 
     private TextView mTextViewTraffic;
-    //    private ScrollView mScrollView;
     private boolean mViewAtBottom = true;
 
     private int mMaxCharacters = DEFAULT_MAX_CHARACTERS;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+//        Log.d(TAG, "onCreate");
         super.onCreate(savedInstanceState);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+//        Log.d(TAG, "onCreateView");
+        super.onCreateView(inflater, container, savedInstanceState);
+        this.setRetainInstance(true);
+
         View view = inflater.inflate(R.layout.fragment_log, container, false);
-        mTextViewTraffic = (TextView) view.findViewById(R.id.textView_traffic);
+        mTextViewTraffic = view.findViewById(R.id.log);
         mTextViewTraffic.setMovementMethod(new ScrollingMovementMethod());
         mTextViewTraffic.setHorizontallyScrolling(true);
 
-//        mScrollView = (ScrollView) view.findViewById(R.id.textAreaScrollerTraffic);
-
-//        mTextViewTraffic.addTextChangedListener(new TextWatcher() {
-//
-//            @Override
-//            public void afterTextChanged(Editable arg0) {
-//                if (mViewAtBottom)
-//                    mScrollView.fullScroll(ScrollView.FOCUS_DOWN);
-//            }
-//
-//            @Override
-//            public void beforeTextChanged(CharSequence arg0, int arg1,
-//                                          int arg2, int arg3) {
-//                //override stub
-//            }
-//
-//            @Override
-//            public void onTextChanged(CharSequence arg0, int arg1, int arg2,
-//                                      int arg3) {
-//                //override stub
-//            }
-//        });
-//        mScrollView.getViewTreeObserver().addOnScrollChangedListener(new ViewTreeObserver.OnScrollChangedListener() {
-//            @Override
-//            public void onScrollChanged() {
-//                if (mScrollView != null) {
-//                    if (mScrollView.getChildAt(0).getBottom() <= (mScrollView.getHeight() + mScrollView.getScrollY()) + 200) {
-//                        mViewAtBottom = true;
-//                    } else {
-//                        mViewAtBottom = false;
-//                    }
-//                }
-//            }
-//        });
+        mTextViewTraffic.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                clearLogText();
+                return true;
+            }
+        });
         return view;
     }
 
     /**
      * Set the backing TextView
+     *
      * @param textView The new backing TextView
      */
     public void setTextView(TextView textView) {
@@ -83,7 +64,10 @@ public class LogFragment extends Fragment {
      */
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+//        Log.d(TAG, "onActivityCreated");
         super.onActivityCreated(savedInstanceState);
+        this.setRetainInstance(true);
+
 
     }
 
@@ -113,17 +97,6 @@ public class LogFragment extends Fragment {
      * @param text The text to append to the log.
      */
     public void appendLogText(String text) {
-        /*
-        Using substring is very expensive
-         */
-//        String newText = mTextViewTraffic.getText().toString() + text;
-//        int overflow = newText.length() - mMaxCharacters;
-//        if (overflow > 0) {
-//            newText = newText.substring(overflow); // trim off oldest characters
-//            newText = newText.split("\n", 2)[1]; // ensure the remainder starts on a new message
-//        }
-//        mTextViewTraffic.setText(newText);
-
         checkOverflow();
 
         mTextViewTraffic.append(text);
@@ -136,11 +109,14 @@ public class LogFragment extends Fragment {
      * scrolls to the difference.
      */
     public void scrollToBottom() {
-        final int scrollAmt = mTextViewTraffic.getLayout().getLineTop(mTextViewTraffic.getLineCount())
-                - mTextViewTraffic.getHeight();
-        if (scrollAmt > 0 && scrollAmt < 1000) {
-            mTextViewTraffic.scrollTo(0, scrollAmt);
+        if (mTextViewTraffic != null && mTextViewTraffic.getLayout() != null) {
+            final int scrollAmt = mTextViewTraffic.getLayout().getLineTop(mTextViewTraffic.getLineCount())
+                    - mTextViewTraffic.getHeight();
+            if (scrollAmt > 0 && scrollAmt < 1000) {
+                mTextViewTraffic.scrollTo(0, scrollAmt);
+            }
         }
+
 //        else {
 //            mTextViewTraffic.scrollTo(0, 0);
 //        }

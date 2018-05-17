@@ -10,4 +10,13 @@
     <string name="pref_video_port">Video Port</string>
 
     <string name="pref_log_messages">Log Mavlink Messages</string>
+
+    <string name="dji">DJI</string>
+    <string name="gcs">GCS</string>
+
+    <string name="safety">SAFETY</string>
+    <string name="safety_on">SAFETY ENABLED</string>
+    <string name="safety_off">SAFETY DISABLED</string>
+
+    <string name="settings">Settings</string>
 </resources>

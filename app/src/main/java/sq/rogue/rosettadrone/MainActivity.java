@@ -6,44 +6,39 @@ package sq.rogue.rosettadrone;
 // MenuItemTetColor: RPP @ https://stackoverflow.com/questions/31713628/change-menuitem-text-color-programmatically
 
 import android.Manifest;
-import android.app.Notification;
-import android.content.ComponentName;
+import android.annotation.SuppressLint;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
-import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.IBinder;
 import android.os.Looper;
 import android.support.annotation.NonNull;
-import android.support.design.widget.TabLayout;
+import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.view.ViewPager;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.preference.PreferenceManager;
+import android.support.v7.widget.SwitchCompat;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
+import android.view.ViewGroup;
 import android.widget.CompoundButton;
-import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.ToggleButton;
 
 import com.MAVLink.MAVLinkPacket;
 import com.MAVLink.Messages.MAVLinkMessage;
 import com.MAVLink.Parser;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -54,30 +49,24 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.util.Arrays;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import dji.common.error.DJIError;
 import dji.common.error.DJISDKError;
-import dji.common.product.Model;
 import dji.sdk.base.BaseComponent;
 import dji.sdk.base.BaseProduct;
-import dji.sdk.camera.VideoFeeder;
 import dji.sdk.products.Aircraft;
 import dji.sdk.sdkmanager.DJISDKManager;
 import sq.rogue.rosettadrone.logs.LogFragment;
-import sq.rogue.rosettadrone.logs.LogPagerAdapter;
 import sq.rogue.rosettadrone.settings.SettingsActivity;
-import sq.rogue.rosettadrone.video.DJIVideoStreamDecoder;
-import sq.rogue.rosettadrone.video.H264Packetizer;
-import sq.rogue.rosettadrone.video.NativeHelper;
 import sq.rogue.rosettadrone.video.VideoService;
+
+import static android.support.design.widget.Snackbar.LENGTH_LONG;
 import static sq.rogue.rosettadrone.util.safeSleep;
 import static sq.rogue.rosettadrone.video.VideoService.ACTION_DRONE_CONNECTED;
 import static sq.rogue.rosettadrone.video.VideoService.ACTION_DRONE_DISCONNECTED;
 import static sq.rogue.rosettadrone.video.VideoService.ACTION_RESTART;
-import static sq.rogue.rosettadrone.video.VideoService.ACTION_SEND_NAL;
 import static sq.rogue.rosettadrone.video.VideoService.ACTION_SET_MODEL;
 import static sq.rogue.rosettadrone.video.VideoService.ACTION_START;
 import static sq.rogue.rosettadrone.video.VideoService.ACTION_STOP;
@@ -91,18 +80,17 @@ public class MainActivity extends AppCompatActivity {
     private final int GCS_TIMEOUT_mSEC = 2000;
     private Handler mDJIHandler;
     private Handler mUIHandler;
-    private Button mButtonClear;
-    private ToggleButton toggleBtnArming;
+    private SwitchCompat mSafety;
 
+    private FragmentManager fragmentManager;
     private LogFragment logDJI;
-    private LogFragment logToGCS;
-    private LogFragment logFromGCS;
-    private TabLayout tabLayout;
-    private ViewPager viewPager;
-    private LogPagerAdapter adapter;
+    private LogFragment logOutbound;
+    private LogFragment logInbound;
+
+    private BottomNavigationView bottomNavigationView;
+    private int navState = -1;
 
     private SharedPreferences prefs;
-
 
     private String mNewOutbound = "";
     private String mNewInbound = "";
@@ -123,29 +111,23 @@ public class MainActivity extends AppCompatActivity {
         public void run() {
 
             try {
-                if (!mNewOutbound.equals("")) {
-                    //((LogFragment)adapter.getItem(0)).appendLogText(mNewOutbound);
-                    logToGCS.appendLogText(mNewOutbound);
-                    mNewOutbound = "";
-                }
-                if (!mNewInbound.equals("")) {
-                    //((LogFragment)adapter.getItem(1)).appendLogText(mNewOutbound);
-                    logFromGCS.appendLogText(mNewInbound);
-                    mNewInbound = "";
-                }
                 if (!mNewDJI.equals("")) {
-                    //((LogFragment)adapter.getItem(2)).appendLogText(mNewOutbound);
+//                    ((LogFragment) logPagerAdapter.getItem(0)).appendLogText(mNewDJI);
                     logDJI.appendLogText(mNewDJI);
                     mNewDJI = "";
                 }
-                if (mModel != null) {
-                    if (mModel.isSafetyEnabled())
-                        toggleBtnArming.setChecked(true);
-                    else
-                        toggleBtnArming.setChecked(false);
-                } else
-                    toggleBtnArming.setChecked(false);
-                invalidateOptionsMenu();
+                if (!mNewOutbound.equals("")) {
+//                    ((LogFragment) logPagerAdapter.getItem(1)).appendLogText(mNewOutbound);
+                    logOutbound.appendLogText(mNewOutbound);
+
+                    mNewOutbound = "";
+                }
+                if (!mNewInbound.equals("")) {
+//                    ((LogFragment) logPagerAdapter.getItem(2)).appendLogText(mNewInbound);
+                    logInbound.appendLogText(mNewInbound);
+                    mNewInbound = "";
+                }
+
             } catch (Exception e) {
                 Log.d(TAG, "exception", e);
             }
@@ -168,7 +150,7 @@ public class MainActivity extends AppCompatActivity {
     private BaseProduct.BaseProductListener mDJIBaseProductListener = new BaseProduct.BaseProductListener() {
         @Override
         public void onComponentChange(BaseProduct.ComponentKey key, BaseComponent oldComponent, BaseComponent newComponent) {
-            Log.d(TAG, "onComponentChange()");
+//            Log.d(TAG, "onComponentChange()");
             if (newComponent != null) {
                 newComponent.setComponentListener(mDJIComponentListener);
             }
@@ -177,8 +159,8 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onConnectivityChange(boolean isConnected) {
-            Log.d(TAG, "onConnectivityChange()");
-            logMessageDJI("onConnectivityChange()");
+//            Log.d(TAG, "onConnectivityChange()");
+//            logMessageDJI("onConnectivityChange()");
             if (isConnected)
                 onDroneConnected();
             else
@@ -190,7 +172,7 @@ public class MainActivity extends AppCompatActivity {
     private DJISDKManager.SDKManagerCallback mDJISDKManagerCallback = new DJISDKManager.SDKManagerCallback() {
         @Override
         public void onRegister(DJIError error) {
-            Log.d(TAG, error == null ? "success" : error.getDescription());
+//            Log.d(TAG, error == null ? "success" : error.getDescription());
             if (error == DJISDKError.REGISTRATION_SUCCESS) {
                 DJISDKManager.getInstance().startConnectionToProduct();
                 Handler handler = new Handler(Looper.getMainLooper());
@@ -218,8 +200,8 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onProductChange(BaseProduct oldProduct, BaseProduct newProduct) {
-            Log.d(TAG, "onProductChange()");
-            logMessageDJI("onProductChange()");
+//            Log.d(TAG, "onProductChange()");
+//            logMessageDJI("onProductChange()");
 
             mProduct = newProduct;
 
@@ -244,7 +226,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
-        Log.d(TAG, "onCreate()");
+//        Log.d(TAG, "onCreate()");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -263,74 +245,14 @@ public class MainActivity extends AppCompatActivity {
 
         requestPermissions();
 
-        mButtonClear = (Button) findViewById(R.id.button_clear);
-        viewPager = (ViewPager) findViewById(R.id.pager);
-        toggleBtnArming = (ToggleButton) findViewById(R.id.toggBtnSafety);
-        tabLayout = (TabLayout) findViewById(R.id.tab_layout);
-
-        mButtonClear.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                logDJI.setLogText("");
-                logFromGCS.setLogText("");
-                logToGCS.setLogText("");
-            }
-        });
-
         deleteApplicationDirectory();
 
-
-        toggleBtnArming.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-                    mModel.setSafetyEnabled(true);
-                    toggleBtnArming.setTextColor(Color.RED);
-                } else {
-                    mModel.setSafetyEnabled(false);
-                    toggleBtnArming.setTextColor(Color.GREEN);
-                }
-            }
-        });
-
-        tabLayout.removeAllTabs();
-        tabLayout.addTab(tabLayout.newTab().setText("DJI"));
-        tabLayout.addTab(tabLayout.newTab().setText("To GCS"));
-        tabLayout.addTab(tabLayout.newTab().setText("From GCS"));
-        tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
-
-        LogFragment[] fragments = new LogFragment[3];
-        if (savedInstanceState == null) {
-            for (int i = 0; i < 3; i++)
-                fragments[i] = new LogFragment();
-        } else {
-            for (int i = 0; i < 3; i++)
-                fragments[i] = (LogFragment) getSupportFragmentManager().getFragments().get(i);
+        if (savedInstanceState != null) {
+            navState = savedInstanceState.getInt("navigation_state");
         }
-        adapter = new LogPagerAdapter(fragments, getSupportFragmentManager());
-        viewPager.setAdapter(adapter);
-        viewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
-        viewPager.setOffscreenPageLimit(2);
+        initLogs();
+        initBottomNav();
 
-
-        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
-            @Override
-            public void onTabSelected(TabLayout.Tab tab) {
-                viewPager.setCurrentItem(tab.getPosition());
-            }
-
-            @Override
-            public void onTabUnselected(TabLayout.Tab tab) {
-
-            }
-
-            @Override
-            public void onTabReselected(TabLayout.Tab tab) {
-
-            }
-        });
-
-        logDJI = (LogFragment) adapter.getItem(0);
-        logToGCS = (LogFragment) adapter.getItem(1);
-        logFromGCS = (LogFragment) adapter.getItem(2);
 
         mModel = new DroneModel(this, null);
         mMavlinkReceiver = new MAVLinkReceiver(this, mModel);
@@ -340,21 +262,142 @@ public class MainActivity extends AppCompatActivity {
         mUIHandler = new Handler(Looper.getMainLooper());
         mUIHandler.postDelayed(RunnableUpdateUI, 1000);
 
+
         //NativeHelper.getInstance().init();
     }
 
+    /**
+     *
+     */
+    private void initLogs() {
+        fragmentManager = getSupportFragmentManager();
+
+        //Adapters in order: DJI, Outbound to GCS, Inbound to GCS
+//        logPagerAdapter = new LogPagerAdapter(fragmentManager,
+//                new LogFragment(), new LogFragment(), new LogFragment());
+
+        logDJI = new LogFragment();
+        logOutbound = new LogFragment();
+        logInbound = new LogFragment();
+
+
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+
+        fragmentTransaction.add(R.id.fragment_container, logDJI);
+        fragmentTransaction.add(R.id.fragment_container, logOutbound);
+        fragmentTransaction.add(R.id.fragment_container, logInbound);
+
+//        Log.d(TAG, "initLOGS navState : " + navState);
+        switch (navState) {
+            case R.id.action_gcs_up:
+                fragmentTransaction.hide(logDJI);
+                fragmentTransaction.hide(logInbound);
+                break;
+            case R.id.action_gcs_down:
+                fragmentTransaction.hide(logDJI);
+                fragmentTransaction.hide(logOutbound);
+                break;
+            default:
+                fragmentTransaction.hide(logOutbound);
+                fragmentTransaction.hide(logInbound);
+                break;
+        }
+        fragmentTransaction.commit();
+
+
+    }
+
+    /**
+     *
+     */
+    private void initBottomNav() {
+        bottomNavigationView = findViewById(R.id.navigationView);
+
+//        /**
+//         * Added two lines
+//         */
+//        bottomNavigationView.setItemIconTintList(null);
+//        bottomNavigationView.setItemBackgroundResource(R.drawable.menubackground);
+
+
+        bottomNavigationView.setOnNavigationItemSelectedListener(
+                new BottomNavigationView.OnNavigationItemSelectedListener() {
+                    @Override
+                    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+                        switch (item.getItemId()) {
+                            case R.id.action_dji:
+                                fragmentTransaction.show(logDJI);
+                                fragmentTransaction.hide(logOutbound);
+                                fragmentTransaction.hide(logInbound);
+                                break;
+                            case R.id.action_gcs_up:
+                                fragmentTransaction.hide(logDJI);
+                                fragmentTransaction.show(logOutbound);
+                                fragmentTransaction.hide(logInbound);
+                                break;
+                            case R.id.action_gcs_down:
+                                fragmentTransaction.hide(logDJI);
+                                fragmentTransaction.hide(logOutbound);
+                                fragmentTransaction.show(logInbound);
+                                break;
+                        }
+                        fragmentTransaction.commit();
+                        return true;
+                    }
+                }
+        );
+
+        ViewGroup navigationMenuView = (ViewGroup) bottomNavigationView.getChildAt(0);
+        ViewGroup gcsUpMenuItem = (ViewGroup) navigationMenuView.getChildAt(1);
+        ViewGroup gcsDownMenuItem = (ViewGroup) navigationMenuView.getChildAt(2);
+
+
+        gcsUpMenuItem.setLongClickable(true);
+        gcsUpMenuItem.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                onLongClickGCSUp();
+                return true;
+            }
+        });
+
+        gcsDownMenuItem.setLongClickable(true);
+        gcsDownMenuItem.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                onLongClickGCSDown();
+                return true;
+            }
+        });
+
+
+        if (navState != -1) {
+            bottomNavigationView.setSelectedItemId(navState);
+        }
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        navState = bottomNavigationView.getSelectedItemId();
+        outState.putInt("navigation_state", navState);
+//        Log.d(TAG, "SAVED NAVSTATE: " + navState);
+
+    }
+
     private void deleteApplicationDirectory() {
-        Log.d("RosettaDrone", "deleteApplicationDirectory()");
+//        Log.d("RosettaDrone", "deleteApplicationDirectory()");
         try {
             PackageInfo p = getPackageManager().getPackageInfo(getPackageName(), 0);
             String s = p.applicationInfo.dataDir;
             Log.d(TAG, s);
             File dir = new File(s);
             if (dir.isDirectory()) {
-                Log.d("RosettaDrone", "yes, is directory");
+//                Log.d("RosettaDrone", "yes, is directory");
                 String[] children = dir.list();
-                for (int i = 0; i < children.length; i++) {
-                    new File(dir, children[i]).delete();
+                for (String aChildren : children) {
+                    new File(dir, aChildren).delete();
                 }
             }
         } catch (PackageManager.NameNotFoundException e) {
@@ -388,56 +431,38 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onResume() {
-        Log.d(TAG, "onResume()");
+//        Log.d(TAG, "onResume()");
         super.onResume();
+
     }
 
     @Override
     protected void onPause() {
-        Log.d(TAG, "onPause()");
+//        Log.d(TAG, "onPause()");
         super.onPause();
-        // We have to save text when onPause is called or it will be erased
-//        mNewOutbound = logToGCS.getLogText() + mNewOutbound;
-//        mNewInbound = logFromGCS.getLogText() + mNewInbound;
-//        mNewDJI = logDJI.getLogText() + mNewDJI;
     }
 
     @Override
     protected void onStop() {
-        Log.i(TAG, "onStop");
+//        Log.i(TAG, "onStop");
         super.onStop();
     }
 
     @Override
     protected void onDestroy() {
-        Log.i(TAG, "onDestroy");
-        logMessageDJI("onDestroy()");
+//        Log.i(TAG, "onDestroy");
+//        logMessageDJI("onDestroy()");
         closeGCSCommunicator();
 
         mUIHandler.removeCallbacksAndMessages(null);
         mDJIHandler.removeCallbacksAndMessages(null);
-
-//        if(VideoFeeder.getInstance() != null) {
-//            if(VideoFeeder.getInstance().getPrimaryVideoFeed() != null)
-//                VideoFeeder.getInstance().getPrimaryVideoFeed().setCallback(null);
-//        }
-//        mModel = null;
-
-//        try { mModel.getDjiAircraft().getRemoteController().setHardwareStateCallback(null); }
-//        catch(Exception e) {}
-//        try { mModel.getDjiAircraft().getBattery().setStateCallback(null); }
-//        catch(Exception e) {}
-//        try { Battery.setAggregationStateCallback(null); }
-//        catch(Exception e) {}
-//        try { mModel.getDjiAircraft().getBattery().getCellVoltages(null); }
-//        catch(Exception e) {}
 
         super.onDestroy();
     }
 
     @Override
     protected void onActivityResult(int reqCode, int resCode, Intent data) {
-        Log.d(TAG, "onActivityResult");
+//        Log.d(TAG, "onActivityResult");
         super.onActivityResult(reqCode, resCode, data);
         if (reqCode == RESULT_SETTINGS && mGCSCommunicator != null) {
             mGCSCommunicator.renewDatalinks();
@@ -447,66 +472,94 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+        super.onCreateOptionsMenu(menu);
         MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.menu_toolbar, menu);
+        inflater.inflate(R.menu.toolbar_menu, menu);
+
+        MenuItem item = menu.findItem(R.id.action_safety);
+
+        mSafety = (SwitchCompat) item.getActionView();
+
+        //Make sure default is safety enabled
+        mModel.setSafetyEnabled(true);
+        mSafety.setChecked(true);
+
+        mSafety.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                mModel.setSafetyEnabled(isChecked);
+                NotificationHandler.notifySnackbar(findViewById(R.id.snack),
+                        (mModel.isSafetyEnabled()) ? R.string.safety_on : R.string.safety_off, LENGTH_LONG);
+            }
+        });
 
         return true;
     }
 
-    @Override
-    public boolean onPrepareOptionsMenu(Menu menu) {
-        boolean result = super.onPrepareOptionsMenu(menu);
-
-        View view_status_dji = findViewById(R.id.action_dji);
-        View view_status_gcs = findViewById(R.id.action_gcs);
-
-        if (view_status_dji != null && view_status_dji instanceof TextView) {
-            if (mProduct instanceof Aircraft)
-                ((TextView) view_status_dji).setTextColor(Color.GREEN);
-            else
-                ((TextView) view_status_dji).setTextColor(Color.RED);
-        }
-
-        if (view_status_gcs != null && view_status_gcs instanceof TextView) {
-            if (System.currentTimeMillis() - mMavlinkReceiver.getTimestampLastGCSHeartbeat() <= GCS_TIMEOUT_mSEC)
-                ((TextView) view_status_gcs).setTextColor(Color.GREEN);
-            else
-                ((TextView) view_status_gcs).setTextColor(Color.RED);
-        }
-        return result;
-    }
+//    @Override
+//    public boolean onPrepareOptionsMenu(Menu menu) {
+//        boolean result = super.onPrepareOptionsMenu(menu);
+//
+//        Menu bottomNavMenu = bottomNavigationView.getMenu();
+//        MenuItem dji = bottomNavMenu.findItem(R.id.action_dji);
+//        MenuItem gcsDown = bottomNavMenu.findItem(R.id.action_gcs_down);
+//        MenuItem gcsUp = bottomNavMenu.findItem(R.id.action_gcs_up);
+//
+//        if (dji != null) {
+//            if (mProduct instanceof Aircraft) {
+//                dji.setIcon(R.drawable.ic_drone_green_24dp);
+//            }
+//            else {
+//                dji.setIcon(R.drawable.ic_drone_red_24dp);
+//            }
+//        }
+//
+//        if (gcsDown != null) {
+//            if (System.currentTimeMillis() - mMavlinkReceiver.getTimestampLastGCSHeartbeat() <= GCS_TIMEOUT_mSEC) {
+//                gcsUp.setIcon(R.drawable.ic_up_arrow_green_24dp);
+//                gcsDown.setIcon(R.drawable.ic_down_arrow_green_24dp);
+//            }
+//            else {
+//                gcsUp.setIcon(R.drawable.ic_up_arrow_red_24dp);
+//                gcsDown.setIcon(R.drawable.ic_down_arrow_red_24dp);
+//            }
+//        }
+//
+//        return result;
+//    }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        Log.d(TAG, "menu item selected");
+//        Log.d(TAG, "menu item selected");
         // Handle item selection
         switch (item.getItemId()) {
-            case R.id.action_dji:
-                onClickDJIStatus();
+            case R.id.action_safety_switch:
+//                Log.d(TAG, "ACTION_SAFETY_SWITCH");
                 return true;
-            case R.id.action_gcs:
-                onClickGCSStatus();
+            case R.id.action_safety:
+//                Log.d(TAG, "ACTION_SAFETY");
+//                NotificationHandler.notifySnackbar(bottomNavigationView, R.string.safety, LENGTH_LONG);
                 return true;
             case R.id.action_settings:
                 onClickSettings();
             default:
+//                Log.d(TAG, String.valueOf(item.getItemId()));
                 return super.onOptionsItemSelected(item);
         }
     }
 
-    private void onClickDJIStatus() {
-
-        Log.d(TAG, "onClickDJIStatus()");
+    @SuppressLint("ResourceAsColor")
+    private void onLongClickGCSUp() {
+//        Log.d(TAG, "onLongClickGCSUp()");
         mModel.startWaypointMission();
     }
 
-    private void onClickGCSStatus() {
-        Log.d(TAG, "onClickGCSStatus()");
+    private void onLongClickGCSDown() {
+//        Log.d(TAG, "onLongClickGCSDown()");
         mModel.echoLoadedMission();
     }
 
     private void onClickSettings() {
-        Log.d(TAG, "onClickSettings()");
+//        Log.d(TAG, "onClickSettings()");
         Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
         startActivityForResult(intent, RESULT_SETTINGS);
     }
@@ -537,7 +590,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void onDroneDisconnected() {
-        logMessageDJI("onDroneDisconnected()");
+        logMessageDJI("Drone disconnected");
         mModel.setDjiAircraft(null);
         closeGCSCommunicator();
 
@@ -553,7 +606,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void notifyStatusChange() {
         mDJIHandler.removeCallbacks(djiUpdateRunnable);
-        Log.d(TAG, "notifyStatusChange()");
+//        Log.d(TAG, "notifyStatusChange()");
         mDJIHandler.postDelayed(djiUpdateRunnable, 500);
     }
 
@@ -672,8 +725,8 @@ public class MainActivity extends AppCompatActivity {
 
         return videoIP;
     }
+
     /**
-     *
      * @param action
      * @param extras
      * @return
@@ -682,19 +735,18 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(this, VideoService.class);
         intent.setAction(action);
 
-        for (Object extra: extras) {
-//            intent.putExtra()
-        }
+//        for (Object extra : extras) {
+//            intent.putExtra(extra);
+//        }
 
         return intent;
     }
 
     /**
-     *
      * @param intent
      */
     private void sendIntent(Intent intent) {
-        Log.d(TAG, "sendIntent");
+//        Log.d(TAG, "sendIntent");
         if (intent != null) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 try {
@@ -741,19 +793,19 @@ public class MainActivity extends AppCompatActivity {
         }
 
         public void renewDatalinks() {
-            Log.d(TAG, "renewDataLinks");
+//            Log.d(TAG, "renewDataLinks");
             request_renew_datalinks = true;
         }
 
         private void onRenewDatalinks() {
-            Log.d(TAG, "onRenewDataLinks");
+//            Log.d(TAG, "onRenewDataLinks");
             createTelemetrySocket();
 //            mainActivityWeakReference.get().sendRestartVideoService();
         }
 
         @Override
         protected Integer doInBackground(Integer... ints2) {
-            Log.d("RDTHREADS", "doInBackground()");
+//            Log.d("RDTHREADS", "doInBackground()");
 
             try {
                 createTelemetrySocket();
@@ -804,7 +856,7 @@ public class MainActivity extends AppCompatActivity {
                 if (timer != null) {
                     timer.cancel();
                 }
-                Log.d("RDTHREADS", "doInBackground() complete");
+//                Log.d("RDTHREADS", "doInBackground() complete");
 
             }
             return 0;
@@ -859,10 +911,10 @@ public class MainActivity extends AppCompatActivity {
                 mainActivityWeakReference.get().logMessageDJI("Unknown telemetry host: " + gcsIPString + ":" + String.valueOf(telemIPPort));
             } // TODO
 
-            Log.d(TAG, mainActivityWeakReference.get().socket.getInetAddress().toString());
-            Log.d(TAG, mainActivityWeakReference.get().socket.getLocalAddress().toString());
-            Log.d(TAG, String.valueOf(mainActivityWeakReference.get().socket.getPort()));
-            Log.d(TAG, String.valueOf(mainActivityWeakReference.get().socket.getLocalPort()));
+//            Log.d(TAG, mainActivityWeakReference.get().socket.getInetAddress().toString());
+//            Log.d(TAG, mainActivityWeakReference.get().socket.getLocalAddress().toString());
+//            Log.d(TAG, String.valueOf(mainActivityWeakReference.get().socket.getPort()));
+//            Log.d(TAG, String.valueOf(mainActivityWeakReference.get().socket.getLocalPort()));
 
             if (mainActivityWeakReference.get() != null) {
                 mainActivityWeakReference.get().mModel.setSocket(mainActivityWeakReference.get().socket);

@@ -15,7 +15,6 @@ import com.MAVLink.enums.MAV_CMD;
 import com.MAVLink.enums.MAV_RESULT;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import dji.common.mission.waypoint.Waypoint;
 import dji.common.mission.waypoint.WaypointAction;
@@ -288,26 +287,26 @@ public class MAVLinkReceiver {
         parent.logMessageDJI("Waypoint Mission Uploaded");
         parent.logMessageDJI("==============================");
 
-        for(msg_mission_item m : this.mMissionItemList) {
-            switch(m.command) {
+        for (msg_mission_item m : this.mMissionItemList) {
+            switch (m.command) {
                 case MAV_CMD_NAV_TAKEOFF:
                 case MAV_CMD.MAV_CMD_NAV_WAYPOINT:
                     currentWP = new Waypoint(m.x, m.y, m.z); // TODO check altitude conversion
-                    if(m.param1 > 0)
-                        currentWP.addAction(new WaypointAction(WaypointActionType.STAY, (int)m.param1*1000));
+                    if (m.param1 > 0)
+                        currentWP.addAction(new WaypointAction(WaypointActionType.STAY, (int) m.param1 * 1000));
                     dji_wps.add(currentWP);
                     parent.logMessageDJI("Waypoint: " + m.x + ", " + m.y + " at " + m.z + "m");
                     break;
                 case MAV_CMD.MAV_CMD_DO_CHANGE_SPEED:
-                    if(m.param2 > 0)
-                    mBuilder.autoFlightSpeed(m.param2);
+                    if (m.param2 > 0)
+                        mBuilder.autoFlightSpeed(m.param2);
                     break;
                 case MAV_CMD.MAV_CMD_DO_MOUNT_CONTROL:
-                    currentWP.addAction(new WaypointAction(WaypointActionType.GIMBAL_PITCH, (int)m.param1));
+                    currentWP.addAction(new WaypointAction(WaypointActionType.GIMBAL_PITCH, (int) m.param1));
                     parent.logMessageDJI("Set gimbal pitch: " + m.param1);
                     break;
                 case MAV_CMD.MAV_CMD_IMAGE_START_CAPTURE:
-                    if(currentWP != null)
+                    if (currentWP != null)
                         currentWP.addAction(new WaypointAction(WaypointActionType.START_TAKE_PHOTO, 0));
                     parent.logMessageDJI("Take photo");
                     break;

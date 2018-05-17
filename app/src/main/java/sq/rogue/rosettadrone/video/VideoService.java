@@ -166,8 +166,11 @@ public class VideoService extends Service implements DJIVideoStreamDecoder.IYuvD
     private void setActionDroneDisconnected() {
         stopForeground(true);
         isRunning = false;
-        mPacketizer.getRtpSocket().close();
-        mPacketizer.stop();
+        if (mPacketizer != null) {
+            mPacketizer.getRtpSocket().close();
+            mPacketizer.stop();
+        }
+
 
         DJIVideoStreamDecoder.getInstance().stop();
 

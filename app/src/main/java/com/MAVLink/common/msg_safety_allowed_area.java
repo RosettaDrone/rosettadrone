@@ -12,7 +12,7 @@ import com.MAVLink.Messages.MAVLinkMessage;
 import com.MAVLink.Messages.MAVLinkPayload;
 
 /**
- * Read out the safety zone the MAV currently assumes.
+ * Read out the safety_layout zone the MAV currently assumes.
  */
 public class msg_safety_allowed_area extends MAVLinkMessage {
 

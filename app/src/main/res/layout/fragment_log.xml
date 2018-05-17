@@ -4,27 +4,11 @@
               android:layout_width="match_parent"
               android:layout_height="match_parent">
 
-    <!--<ScrollView-->
-        <!--android:id="@+id/textAreaScrollerTraffic"-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="0dp"-->
-        <!--android:layout_weight="1"-->
-        <!--android:scrollbars="vertical">-->
-
-        <!--<HorizontalScrollView-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="match_parent">-->
-
-    <!--Can set android:maxLines for overflow control here-->
-    <!--android:gravity-->
-            <TextView
-                android:id="@+id/textView_traffic"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scrollbars="vertical"
-                android:text=""
-                />
-        <!--</HorizontalScrollView>-->
-    <!--</ScrollView>-->
-
+    <TextView
+        android:id="@+id/log"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scrollbars="vertical"
+        android:text=""
+        />
 </LinearLayout>
