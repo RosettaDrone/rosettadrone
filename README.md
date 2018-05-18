@@ -100,6 +100,9 @@ The use of an ArduPilot dialect over PX4 is not intended to be a statement of pr
 
 Rosetta Drone was brought to you by developers from Rogue Squadron, a UAS/C-UAS red team at the Defense Innovation Unit Experimental.
 
+## Icons
+Icons made by Pixel Perfect & Freepik at flaticon
+
 # Licensing
 
 Rosetta Drone is licensed under BSD3. For particularities related to U.S. federal government code release, please read Intent.MD. For more information, visit [code.mil](https://code.mil) or [code.gov](https://code.gov).
