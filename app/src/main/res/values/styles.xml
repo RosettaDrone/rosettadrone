@@ -1,8 +1,13 @@
 <resources>
 
-    <style name="AppDialog" parent="Theme.AppCompat.Dialog">
+    <style name="AppDialog" parent="Theme.AppCompat.Light.Dialog">
         <item name="windowActionBar">false</item>
         <item name="android:windowNoTitle">true</item>
+
+        <item name="colorAccent">@color/secondary</item>
+        <!--item RadioButton or CheckBox color-->
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryDark">@color/primary_dark</item>
     </style>
 
     <style name="AppTheme.Dark" parent="Theme.AppCompat">

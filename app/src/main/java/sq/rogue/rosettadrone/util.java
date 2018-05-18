@@ -2,6 +2,11 @@ package sq.rogue.rosettadrone;
 
 public class util {
 
+    public static final int TYPE_GCS_IP = 0x00;
+    public static final int TYPE_GCS_PORT = 0x01;
+    public static final int TYPE_VIDEO_IP = 0x02;
+    public static final int TYPE_VIDEO_PORT = 0x03;
+
     public static long getTimestampMicroseconds() {
         return System.currentTimeMillis() / 10;
     }
