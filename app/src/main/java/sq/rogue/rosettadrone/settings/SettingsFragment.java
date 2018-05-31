@@ -9,7 +9,13 @@ import android.support.v7.preference.PreferenceFragmentCompat;
 import android.support.v7.preference.PreferenceGroup;
 import android.util.Patterns;
 
+import sq.rogue.rosettadrone.NotificationHandler;
 import sq.rogue.rosettadrone.R;
+
+import static sq.rogue.rosettadrone.util.TYPE_GCS_IP;
+import static sq.rogue.rosettadrone.util.TYPE_GCS_PORT;
+import static sq.rogue.rosettadrone.util.TYPE_VIDEO_IP;
+import static sq.rogue.rosettadrone.util.TYPE_VIDEO_PORT;
 
 // Display value of preference in summary field
 
@@ -49,14 +55,25 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Shared
         findPreference("pref_gcs_ip").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
             @Override
             public boolean onPreferenceChange(Preference preference, Object newValue) {
-                return Patterns.IP_ADDRESS.matcher((String) newValue).matches();
+
+                if (Patterns.IP_ADDRESS.matcher((String) newValue).matches()) {
+                    return true;
+                } else {
+                    NotificationHandler.notifyAlert(SettingsFragment.this.getActivity(), TYPE_GCS_IP);
+                    return false;
+                }
             }
         });
 
         findPreference("pref_video_ip").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
             @Override
             public boolean onPreferenceChange(Preference preference, Object newValue) {
-                return Patterns.IP_ADDRESS.matcher((String) newValue).matches();
+                if (Patterns.IP_ADDRESS.matcher((String) newValue).matches()) {
+                    return true;
+                } else {
+                    NotificationHandler.notifyAlert(SettingsFragment.this.getActivity(), TYPE_VIDEO_IP);
+                    return false;
+                }
             }
         });
 
@@ -64,10 +81,13 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Shared
             @Override
             public boolean onPreferenceChange(Preference preference, Object newValue) {
                 try {
-                    return Integer.parseInt((String) newValue) >= 1 && Integer.parseInt((String) newValue) <= 65535;
-                } catch (NumberFormatException e) {
-                    return false;
+                    if (Integer.parseInt((String) newValue) >= 1 && Integer.parseInt((String) newValue) <= 65535) {
+                        return true;
+                    }
+                } catch (NumberFormatException ignored) {
                 }
+                NotificationHandler.notifyAlert(SettingsFragment.this.getActivity(), TYPE_GCS_PORT);
+                return false;
             }
         });
 
@@ -75,10 +95,13 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Shared
             @Override
             public boolean onPreferenceChange(Preference preference, Object newValue) {
                 try {
-                    return Integer.parseInt((String) newValue) >= 1 && Integer.parseInt((String) newValue) <= 65535;
-                } catch (NumberFormatException e) {
-                    return false;
+                    if (Integer.parseInt((String) newValue) >= 1 && Integer.parseInt((String) newValue) <= 65535) {
+                        return true;
+                    }
+                } catch (NumberFormatException ignored) {
                 }
+                NotificationHandler.notifyAlert(SettingsFragment.this.getActivity(), TYPE_VIDEO_PORT);
+                return false;
             }
         });
     }
