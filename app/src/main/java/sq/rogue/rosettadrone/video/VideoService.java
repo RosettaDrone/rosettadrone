@@ -1,8 +1,12 @@
 package sq.rogue.rosettadrone.video;
 
+import android.annotation.TargetApi;
 import android.app.IntentService;
 import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.icu.util.Output;
@@ -13,6 +17,7 @@ import android.os.Build;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
+import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
 import java.io.BufferedInputStream;
@@ -33,6 +38,8 @@ import dji.sdk.base.BaseProduct;
 import dji.sdk.camera.VideoFeeder;
 import dji.thirdparty.sanselan.util.IOUtils;
 import sq.rogue.rosettadrone.DroneModel;
+
+import static android.support.v4.app.NotificationCompat.PRIORITY_MIN;
 
 public class VideoService extends Service implements DJIVideoStreamDecoder.IYuvDataListener, DJIVideoStreamDecoder.IFrameDataListener {
 
@@ -139,7 +146,17 @@ public class VideoService extends Service implements DJIVideoStreamDecoder.IYuvD
     }
 
     public void setActionDroneConnected() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+            String chan_ID = createNotificationChannel();
+
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(this, chan_ID);
+            Notification notif = builder.setOngoing(true)
+                    .setPriority(PRIORITY_MIN)
+                    .setCategory(Notification.CATEGORY_SERVICE)
+                    .build();
+
+            startForeground(1, notif);
+        } else {
             startForeground(1, new Notification());
         }
         initVideoStreamDecoder();
@@ -161,6 +178,18 @@ public class VideoService extends Service implements DJIVideoStreamDecoder.IYuvD
         }
 
         isRunning = true;
+    }
+
+    @TargetApi(Build.VERSION_CODES.O_MR1)
+    private String createNotificationChannel() {
+        String mChannel_ID = "my_channel";
+        String mChannel_Name = "My Foreground Service";
+
+        NotificationChannel chan = new NotificationChannel(mChannel_ID, mChannel_Name, NotificationManager.IMPORTANCE_DEFAULT);
+        NotificationManager mgr = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+
+        mgr.createNotificationChannel(chan);
+        return mChannel_ID;
     }
 
     private void setActionDroneDisconnected() {
