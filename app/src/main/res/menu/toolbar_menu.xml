@@ -7,14 +7,15 @@
         android:id="@+id/action_safety"
         android:orderInCategory="200"
         android:title="@string/safety"
-        android:actionLayout="@layout/safety_layout"
+        android:icon="@color/safety"
+        android:checkable="true"
         app:showAsAction="ifRoom"
-        app:actionViewClass="android.support.v7.widget.SwitchCompat" />
+        app:actionViewClass="android.widget.CheckBox"/>
     <item
         android:id="@+id/action_settings"
         android:orderInCategory="400"
         app:showAsAction="ifRoom"
         android:title="@string/settings"
-        android:icon="@drawable/ic_settings_black_24dp" />
+        android:icon="@drawable/ic_outline_settings_24dp" />
 
 </menu>

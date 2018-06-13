@@ -1,9 +1,10 @@
 package sq.rogue.rosettadrone;
 
 import android.content.Context;
+import android.content.DialogInterface;
+import android.os.Process;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
-import android.view.ContextThemeWrapper;
 import android.view.View;
 
 import static sq.rogue.rosettadrone.util.TYPE_GCS_IP;
@@ -17,10 +18,12 @@ public class NotificationHandler {
         snackbar.show();
     }
 
-    public static void notifyAlert(Context context, int input) {
+    public static void notifyAlert(Context context, int input, DialogInterface.OnClickListener clickListener,
+                                   DialogInterface.OnCancelListener cancelListener) {
         AlertDialog.Builder builder;
-        builder = new AlertDialog.Builder(new ContextThemeWrapper(context, R.style.AppDialog));
-        builder.setPositiveButton(android.R.string.ok, null);
+        builder = new AlertDialog.Builder(context, R.style.AppDialog);
+        builder.setPositiveButton(android.R.string.ok, clickListener);
+        builder.setOnCancelListener(cancelListener);
         switch (input) {
             case TYPE_GCS_IP:
                 builder.setMessage("Invalid IP address entered for GCS IP.");

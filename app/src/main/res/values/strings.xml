@@ -16,7 +16,7 @@
 
     <string name="safety">SAFETY</string>
     <string name="safety_on">SAFETY ENABLED</string>
-    <string name="safety_off">SAFETY DISABLED</string>
+    <string name="safety_off">SAFETY DISABLED - Ready to fly</string>
 
     <string name="settings">Settings</string>
 </resources>

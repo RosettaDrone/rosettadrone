@@ -9,6 +9,7 @@ import android.support.v7.preference.PreferenceFragmentCompat;
 import android.support.v7.preference.PreferenceGroup;
 import android.util.Patterns;
 
+import sq.rogue.rosettadrone.MainActivity;
 import sq.rogue.rosettadrone.NotificationHandler;
 import sq.rogue.rosettadrone.R;
 
@@ -52,14 +53,34 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Shared
     }
 
     public void setListeners() {
+        findPreference("pref_external_gcs").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object newValue) {
+
+                MainActivity.FLAG_PREFS_CHANGED = true;
+                return true;
+            }
+        });
+
+        findPreference("pref_combined_gcs").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object newValue) {
+
+                MainActivity.FLAG_PREFS_CHANGED = true;
+                return true;
+            }
+        });
+
         findPreference("pref_gcs_ip").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
             @Override
             public boolean onPreferenceChange(Preference preference, Object newValue) {
 
                 if (Patterns.IP_ADDRESS.matcher((String) newValue).matches()) {
+                    MainActivity.FLAG_PREFS_CHANGED = true;
                     return true;
                 } else {
-                    NotificationHandler.notifyAlert(SettingsFragment.this.getActivity(), TYPE_GCS_IP);
+                    NotificationHandler.notifyAlert(SettingsFragment.this.getActivity(), TYPE_GCS_IP,
+                            null, null);
                     return false;
                 }
             }
@@ -69,9 +90,11 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Shared
             @Override
             public boolean onPreferenceChange(Preference preference, Object newValue) {
                 if (Patterns.IP_ADDRESS.matcher((String) newValue).matches()) {
+                    MainActivity.FLAG_PREFS_CHANGED = true;
                     return true;
                 } else {
-                    NotificationHandler.notifyAlert(SettingsFragment.this.getActivity(), TYPE_VIDEO_IP);
+                    NotificationHandler.notifyAlert(SettingsFragment.this.getActivity(), TYPE_VIDEO_IP,
+                            null, null);
                     return false;
                 }
             }
@@ -82,11 +105,13 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Shared
             public boolean onPreferenceChange(Preference preference, Object newValue) {
                 try {
                     if (Integer.parseInt((String) newValue) >= 1 && Integer.parseInt((String) newValue) <= 65535) {
+                        MainActivity.FLAG_PREFS_CHANGED = true;
                         return true;
                     }
                 } catch (NumberFormatException ignored) {
                 }
-                NotificationHandler.notifyAlert(SettingsFragment.this.getActivity(), TYPE_GCS_PORT);
+                NotificationHandler.notifyAlert(SettingsFragment.this.getActivity(), TYPE_GCS_PORT,
+                        null, null);
                 return false;
             }
         });
@@ -96,11 +121,13 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Shared
             public boolean onPreferenceChange(Preference preference, Object newValue) {
                 try {
                     if (Integer.parseInt((String) newValue) >= 1 && Integer.parseInt((String) newValue) <= 65535) {
+                        MainActivity.FLAG_PREFS_CHANGED = true;
                         return true;
                     }
                 } catch (NumberFormatException ignored) {
                 }
-                NotificationHandler.notifyAlert(SettingsFragment.this.getActivity(), TYPE_VIDEO_PORT);
+                NotificationHandler.notifyAlert(SettingsFragment.this.getActivity(), TYPE_VIDEO_PORT,
+                        null, null);
                 return false;
             }
         });

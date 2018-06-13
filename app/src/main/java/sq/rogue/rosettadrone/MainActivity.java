@@ -7,18 +7,22 @@ package sq.rogue.rosettadrone;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
+import android.hardware.usb.UsbManager;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
@@ -31,6 +35,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.Toast;
 
@@ -39,16 +44,23 @@ import com.MAVLink.Messages.MAVLinkMessage;
 import com.MAVLink.Parser;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.lang.ref.WeakReference;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -75,20 +87,23 @@ public class MainActivity extends AppCompatActivity {
 
     public static final String FLAG_CONNECTION_CHANGE = "dji_sdk_connection_change";
     private final static int RESULT_SETTINGS = 1001;
+    public static boolean FLAG_PREFS_CHANGED = false;
+
     private static BaseProduct mProduct;
     private final String TAG = "RosettaDrone";
     private final int GCS_TIMEOUT_mSEC = 2000;
     private Handler mDJIHandler;
     private Handler mUIHandler;
-    private SwitchCompat mSafety;
+    private CheckBox mSafety;
 
     private FragmentManager fragmentManager;
     private LogFragment logDJI;
     private LogFragment logOutbound;
     private LogFragment logInbound;
 
-    private BottomNavigationView bottomNavigationView;
+    private BottomNavigationView mBottomNavigation;
     private int navState = -1;
+    private FloatingActionButton mFab;
 
     private SharedPreferences prefs;
 
@@ -252,6 +267,7 @@ public class MainActivity extends AppCompatActivity {
         }
         initLogs();
         initBottomNav();
+        initFab();
 
 
         mModel = new DroneModel(this, null);
@@ -262,8 +278,16 @@ public class MainActivity extends AppCompatActivity {
         mUIHandler = new Handler(Looper.getMainLooper());
         mUIHandler.postDelayed(RunnableUpdateUI, 1000);
 
+        Intent aoaIntent = getIntent();
+        if (aoaIntent != null) {
+            String action = aoaIntent.getAction();
+            if (action == (UsbManager.ACTION_USB_ACCESSORY_ATTACHED)) {
+                Intent attachedIntent = new Intent();
 
-        //NativeHelper.getInstance().init();
+                attachedIntent.setAction(DJISDKManager.USB_ACCESSORY_ATTACHED);
+                sendBroadcast(attachedIntent);
+            }
+        }
     }
 
     /**
@@ -311,7 +335,7 @@ public class MainActivity extends AppCompatActivity {
      *
      */
     private void initBottomNav() {
-        bottomNavigationView = findViewById(R.id.navigationView);
+        mBottomNavigation = findViewById(R.id.navigationView);
 
 //        /**
 //         * Added two lines
@@ -320,7 +344,7 @@ public class MainActivity extends AppCompatActivity {
 //        bottomNavigationView.setItemBackgroundResource(R.drawable.menubackground);
 
 
-        bottomNavigationView.setOnNavigationItemSelectedListener(
+        mBottomNavigation.setOnNavigationItemSelectedListener(
                 new BottomNavigationView.OnNavigationItemSelectedListener() {
                     @Override
                     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
@@ -348,7 +372,7 @@ public class MainActivity extends AppCompatActivity {
                 }
         );
 
-        ViewGroup navigationMenuView = (ViewGroup) bottomNavigationView.getChildAt(0);
+        ViewGroup navigationMenuView = (ViewGroup) mBottomNavigation.getChildAt(0);
         ViewGroup gcsUpMenuItem = (ViewGroup) navigationMenuView.getChildAt(1);
         ViewGroup gcsDownMenuItem = (ViewGroup) navigationMenuView.getChildAt(2);
 
@@ -373,14 +397,87 @@ public class MainActivity extends AppCompatActivity {
 
 
         if (navState != -1) {
-            bottomNavigationView.setSelectedItemId(navState);
+            mBottomNavigation.setSelectedItemId(navState);
         }
+    }
+
+    private void initFab() {
+        mFab = findViewById(R.id.fab);
+
+        mFab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String fileName;
+                int dataID;
+                switch (mBottomNavigation.getSelectedItemId()) {
+                    case R.id.action_gcs_up:
+                        fileName = android.text.format.DateFormat.format("yyyy-MM-dd-hh:mm:ss", new java.util.Date())
+                        + "_gcs_up.txt";
+                        dataID = 1;
+                        break;
+                    case R.id.action_gcs_down:
+                        fileName = android.text.format.DateFormat.format("yyyy-MM-dd-hh:mm:ss", new java.util.Date())
+                                + "_gcs_down.txt";
+                        dataID = 2;
+                        break;
+                    default:
+                        fileName = android.text.format.DateFormat.format("yyyy-MM-dd-hh:mm:ss", new java.util.Date())
+                                + "_dji.txt";
+                        dataID = 0;
+                        break;
+                }
+
+                File directory = new File(Environment.getExternalStorageDirectory().getPath()
+                        + File.separator + "rosettadrone");
+                File dataFile = new File(directory, fileName);
+
+                if (!directory.exists()) {
+                    directory.mkdir();
+                }
+
+                BufferedWriter bufferedWriter = null;
+                try {
+                    bufferedWriter = new BufferedWriter(new FileWriter(dataFile, false));
+                    switch (dataID) {
+                        case 0:
+                            bufferedWriter.write(logDJI.getLogText());
+                            Log.d(TAG, "LOG DJI");
+                            break;
+                        case 1:
+                            bufferedWriter.write(logOutbound.getLogText());
+                            Log.d(TAG, "LOG UP");
+
+                            break;
+                        case 2:
+                            bufferedWriter.write(logInbound.getLogText());
+                            Log.d(TAG, "LOG DOWN");
+
+                            break;
+                        default:
+                            break;
+                    }
+                    Log.d(TAG, logDJI.getLogText());
+                    Log.d(TAG, directory.getAbsolutePath());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } finally {
+                    try {
+                        if (bufferedWriter != null) {
+                            bufferedWriter.flush();
+                            bufferedWriter.close();
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        navState = bottomNavigationView.getSelectedItemId();
+        navState = mBottomNavigation.getSelectedItemId();
         outState.putInt("navigation_state", navState);
 //        Log.d(TAG, "SAVED NAVSTATE: " + navState);
 
@@ -464,9 +561,10 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int reqCode, int resCode, Intent data) {
 //        Log.d(TAG, "onActivityResult");
         super.onActivityResult(reqCode, resCode, data);
-        if (reqCode == RESULT_SETTINGS && mGCSCommunicator != null) {
+        if (reqCode == RESULT_SETTINGS && mGCSCommunicator != null && FLAG_PREFS_CHANGED) {
             mGCSCommunicator.renewDatalinks();
             sendRestartVideoService();
+            FLAG_PREFS_CHANGED = false;
         }
     }
 
@@ -476,9 +574,13 @@ public class MainActivity extends AppCompatActivity {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.toolbar_menu, menu);
 
-        MenuItem item = menu.findItem(R.id.action_safety);
-
-        mSafety = (SwitchCompat) item.getActionView();
+        MenuItem safetyItem = menu.findItem(R.id.action_safety);
+        mSafety = (CheckBox) safetyItem.getActionView();
+        mSafety.setButtonDrawable(R.color.safety);
+        mSafety.setPadding(mSafety.getPaddingLeft(),
+                mSafety.getPaddingTop(),
+                mSafety.getPaddingLeft() + (int)(10.0f * getResources().getDisplayMetrics().density + 0.5f),
+                mSafety.getPaddingBottom());
 
         //Make sure default is safety enabled
         mModel.setSafetyEnabled(true);
