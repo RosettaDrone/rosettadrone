@@ -107,6 +107,13 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         this.socket = socket;
     }
 
+    public void setSystemId(int id) {
+        mSystemId = id;
+    }
+
+    public int getSystemId() {
+        return mSystemId;
+    }
     public boolean isMotorsArmed() {
         return mMotorsArmed;
     }

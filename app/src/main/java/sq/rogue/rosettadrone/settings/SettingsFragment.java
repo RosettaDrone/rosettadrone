@@ -13,6 +13,7 @@ import sq.rogue.rosettadrone.MainActivity;
 import sq.rogue.rosettadrone.NotificationHandler;
 import sq.rogue.rosettadrone.R;
 
+import static sq.rogue.rosettadrone.util.TYPE_DRONE_ID;
 import static sq.rogue.rosettadrone.util.TYPE_GCS_IP;
 import static sq.rogue.rosettadrone.util.TYPE_GCS_PORT;
 import static sq.rogue.rosettadrone.util.TYPE_VIDEO_IP;
@@ -53,6 +54,22 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Shared
     }
 
     public void setListeners() {
+        findPreference("pref_drone_id").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object newValue) {
+
+                try {
+                    if (Integer.parseInt((String) newValue) >= 1 && Integer.parseInt((String) newValue) <= 254) {
+                        MainActivity.FLAG_PREFS_CHANGED = true;
+                        return true;
+                    }
+                } catch (NumberFormatException ignored) {
+                }
+                NotificationHandler.notifyAlert(SettingsFragment.this.getActivity(), TYPE_DRONE_ID,
+                        null, null);
+                return false;
+            }
+        });
         findPreference("pref_external_gcs").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
             @Override
             public boolean onPreferenceChange(Preference preference, Object newValue) {

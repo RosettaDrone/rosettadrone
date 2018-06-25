@@ -271,6 +271,8 @@ public class MainActivity extends AppCompatActivity {
 
 
         mModel = new DroneModel(this, null);
+        mModel.setSystemId(Integer.parseInt(prefs.getString("pref_drone_id", "1")));
+
         mMavlinkReceiver = new MAVLinkReceiver(this, mModel);
         loadMockParamFile();
 
@@ -564,6 +566,7 @@ public class MainActivity extends AppCompatActivity {
         if (reqCode == RESULT_SETTINGS && mGCSCommunicator != null && FLAG_PREFS_CHANGED) {
             mGCSCommunicator.renewDatalinks();
             sendRestartVideoService();
+            mModel.setSystemId(Integer.parseInt(prefs.getString("pref_drone_id", "1")));
             FLAG_PREFS_CHANGED = false;
         }
     }
