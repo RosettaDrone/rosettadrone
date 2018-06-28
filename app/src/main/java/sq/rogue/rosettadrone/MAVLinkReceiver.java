@@ -85,6 +85,11 @@ public class MAVLinkReceiver {
 
             case MAVLINK_MSG_ID_COMMAND_LONG:
                 msg_command_long msg_cmd = (msg_command_long) msg;
+
+                if (mModel.getSystemId() != msg_cmd.target_system) {
+                    return;
+                }
+
                 switch (msg_cmd.command) {
                     case MAV_CMD_COMPONENT_ARM_DISARM:
                         if (msg_cmd.param1 == 1)
@@ -100,6 +105,8 @@ public class MAVLinkReceiver {
                         mModel.set_flight_mode(ATTI);
                         break;
                     case MAV_CMD_NAV_TAKEOFF:
+                        parent.logMessageDJI("TAKEOFF TARGET = " + msg_cmd.target_system);
+                        parent.logMessageDJI("TAKEOFF SYSID = " + msg.sysid);
                         mModel.do_takeoff();
                         break;
                     case MAV_CMD_NAV_LAND:
