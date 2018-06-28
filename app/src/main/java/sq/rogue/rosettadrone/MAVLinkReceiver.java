@@ -211,6 +211,11 @@ public class MAVLinkReceiver {
                 generateNewMission();
                 //mModel.getMissionControl().getWaypointMissionOperator().getLoadedMission().getWaypointList().clear();
                 msg_mission_count msg_count = (msg_mission_count) msg;
+
+                if (mModel.getSystemId() != msg_count.target_system) {
+                    return;
+                }
+
                 mNumGCSWaypoints = msg_count.count;
                 wpState = WP_STATE_REQ_WP;
                 mMissionItemList = new ArrayList<msg_mission_item>();
@@ -219,6 +224,10 @@ public class MAVLinkReceiver {
 
             case MAVLINK_MSG_ID_MISSION_ITEM:
                 msg_mission_item msg_item = (msg_mission_item) msg;
+
+                if (mModel.getSystemId() != msg_item.target_system) {
+                    return;
+                }
                 mMissionItemList.add(msg_item);
 
                 // We are done fetching a complete mission from the GCS...
