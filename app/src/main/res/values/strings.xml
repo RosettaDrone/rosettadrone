@@ -4,6 +4,7 @@
     <string name="pref_remote_gcs">Use GCS on an external device</string>
     <string name="pref_combined_gcs">Send video to separate IP"</string>
 
+    <string name="pref_drone_id">Drone ID</string>
     <string name="pref_gcs_ip">GCS IP Address</string>
     <string name="pref_video_ip">Video IP Address</string>
     <string name="pref_telem_port">Telemetry Port</string>
@@ -16,7 +17,7 @@
 
     <string name="safety">SAFETY</string>
     <string name="safety_on">SAFETY ENABLED</string>
-    <string name="safety_off">SAFETY DISABLED</string>
+    <string name="safety_off">SAFETY DISABLED - Ready to fly</string>
 
     <string name="settings">Settings</string>
 </resources>

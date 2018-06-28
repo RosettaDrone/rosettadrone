@@ -150,7 +150,7 @@ public class LogFragment extends Fragment {
         if (mTextViewTraffic != null && mTextViewTraffic.getLayout() != null) {
             final int scrollAmt = mTextViewTraffic.getLayout().getLineTop(mTextViewTraffic.getLineCount())
                     - mTextViewTraffic.getHeight();
-            if (scrollAmt > 0 && scrollAmt < 1000) {
+            if (scrollAmt > 0 && scrollAmt < 1200) {
                 mTextViewTraffic.scrollTo(0, scrollAmt);
             }
         }

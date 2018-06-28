@@ -1,10 +1,15 @@
 package sq.rogue.rosettadrone.video;
 
+import android.annotation.TargetApi;
 import android.app.IntentService;
 import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.icu.util.Output;
 import android.net.LocalSocket;
 import android.net.LocalSocketAddress;
@@ -13,6 +18,8 @@ import android.os.Build;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
+import android.support.annotation.RequiresApi;
+import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
 import java.io.BufferedInputStream;
@@ -33,6 +40,9 @@ import dji.sdk.base.BaseProduct;
 import dji.sdk.camera.VideoFeeder;
 import dji.thirdparty.sanselan.util.IOUtils;
 import sq.rogue.rosettadrone.DroneModel;
+import sq.rogue.rosettadrone.R;
+
+import static android.support.v4.app.NotificationCompat.PRIORITY_MIN;
 
 public class VideoService extends Service implements DJIVideoStreamDecoder.IYuvDataListener, DJIVideoStreamDecoder.IFrameDataListener {
 
@@ -140,7 +150,13 @@ public class VideoService extends Service implements DJIVideoStreamDecoder.IYuvD
 
     public void setActionDroneConnected() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForeground(1, new Notification());
+            String channelID = createNotificationChannel();
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(this, channelID);
+            Notification notification = builder.setOngoing(true)
+                    .setSmallIcon(R.mipmap.ic_launcher)
+                    .setPriority(PRIORITY_MIN)
+                    .build();
+            startForeground(1, notification);
         }
         initVideoStreamDecoder();
         initPacketizer();
@@ -161,6 +177,19 @@ public class VideoService extends Service implements DJIVideoStreamDecoder.IYuvD
         }
 
         isRunning = true;
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private String createNotificationChannel() {
+        String channelID = "video_service";
+        String channelName = "RosettaDrone Video Service";
+        NotificationChannel chan = new NotificationChannel(channelID,
+                channelName, NotificationManager.IMPORTANCE_DEFAULT);
+        chan.setLightColor(Color.BLUE);
+        chan.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
+        NotificationManager service = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        service.createNotificationChannel(chan);
+        return channelID;
     }
 
     private void setActionDroneDisconnected() {

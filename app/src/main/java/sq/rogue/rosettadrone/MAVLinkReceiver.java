@@ -85,6 +85,11 @@ public class MAVLinkReceiver {
 
             case MAVLINK_MSG_ID_COMMAND_LONG:
                 msg_command_long msg_cmd = (msg_command_long) msg;
+
+                if (mModel.getSystemId() != msg_cmd.target_system) {
+                    return;
+                }
+
                 switch (msg_cmd.command) {
                     case MAV_CMD_COMPONENT_ARM_DISARM:
                         if (msg_cmd.param1 == 1)
@@ -100,6 +105,8 @@ public class MAVLinkReceiver {
                         mModel.set_flight_mode(ATTI);
                         break;
                     case MAV_CMD_NAV_TAKEOFF:
+                        parent.logMessageDJI("TAKEOFF TARGET = " + msg_cmd.target_system);
+                        parent.logMessageDJI("TAKEOFF SYSID = " + msg.sysid);
                         mModel.do_takeoff();
                         break;
                     case MAV_CMD_NAV_LAND:
@@ -204,6 +211,11 @@ public class MAVLinkReceiver {
                 generateNewMission();
                 //mModel.getMissionControl().getWaypointMissionOperator().getLoadedMission().getWaypointList().clear();
                 msg_mission_count msg_count = (msg_mission_count) msg;
+
+                if (mModel.getSystemId() != msg_count.target_system) {
+                    return;
+                }
+
                 mNumGCSWaypoints = msg_count.count;
                 wpState = WP_STATE_REQ_WP;
                 mMissionItemList = new ArrayList<msg_mission_item>();
@@ -212,6 +224,10 @@ public class MAVLinkReceiver {
 
             case MAVLINK_MSG_ID_MISSION_ITEM:
                 msg_mission_item msg_item = (msg_mission_item) msg;
+
+                if (mModel.getSystemId() != msg_item.target_system) {
+                    return;
+                }
                 mMissionItemList.add(msg_item);
 
                 // We are done fetching a complete mission from the GCS...
