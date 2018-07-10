@@ -302,8 +302,10 @@ public class MAVLinkReceiver {
         parent.logMessageDJI("==============================");
         parent.logMessageDJI("Waypoint Mission Uploaded");
         parent.logMessageDJI("==============================");
+        parent.logMessageDJI("LEN = " + this.mMissionItemList.size());
 
         for (msg_mission_item m : this.mMissionItemList) {
+            parent.logMessageDJI(String.valueOf(m.command));
             switch (m.command) {
                 case MAV_CMD_NAV_TAKEOFF:
                 case MAV_CMD.MAV_CMD_NAV_WAYPOINT:
@@ -325,6 +327,10 @@ public class MAVLinkReceiver {
                     if (currentWP != null)
                         currentWP.addAction(new WaypointAction(WaypointActionType.START_TAKE_PHOTO, 0));
                     parent.logMessageDJI("Take photo");
+                    break;
+                case MAV_CMD_NAV_RETURN_TO_LAUNCH:
+                    mBuilder.finishedAction(WaypointMissionFinishedAction.GO_HOME);
+                    parent.logMessageDJI("Waypoint RTL");
                     break;
             }
         }
