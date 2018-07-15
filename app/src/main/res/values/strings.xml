@@ -1,16 +1,24 @@
 <resources>
     <string name="app_name">Rosetta Drone</string>
 
-    <string name="pref_remote_gcs">Use GCS on an external device</string>
-    <string name="pref_combined_gcs">Send video to separate IP"</string>
+    <string name="pref_remote_gcs">Use external device for GCS</string>
+    <string name="pref_combined_gcs">Separate video address from GCS</string>
 
-    <string name="pref_drone_id">Drone ID</string>
-    <string name="pref_gcs_ip">GCS IP Address</string>
-    <string name="pref_video_ip">Video IP Address</string>
-    <string name="pref_telem_port">Telemetry Port</string>
-    <string name="pref_video_port">Video Port</string>
+    <string name="pref_drone_id">ID</string>
+    <string name="pref_drone_rtl_altitude">RTL altitude (meters)</string>
+    <string name="pref_drone_smart_rtl">Enable smart RTL</string>
+    <string name="pref_drone_leds">Enable forward LEDs</string>
+    <string name="pref_drone_collision_avoidance">Enable collision avoidance</string>
+    <string name="pref_drone_upward_avoidance">Enable upward collision avoidance</string>
+    <string name="pref_drone_landing_protection">Enable landing protection</string>
 
-    <string name="pref_log_messages">Log Mavlink Messages</string>
+
+    <string name="pref_gcs_ip">GCS IP address</string>
+    <string name="pref_video_ip">Video IP address</string>
+    <string name="pref_telem_port">Telemetry port</string>
+    <string name="pref_video_port">Video port</string>
+
+    <string name="pref_log_messages">Log MAVLink messages</string>
 
     <string name="dji">DJI</string>
     <string name="gcs">GCS</string>
@@ -20,4 +28,10 @@
     <string name="safety_off">SAFETY DISABLED - Ready to fly</string>
 
     <string name="settings">Settings</string>
+    <string name="drone_settings">Drone</string>
+    <string name="telemetry_settings">Telemetry</string>
+    <string name="video_settings">Video</string>
+    <string name="log_settings">Logs</string>
+
+
 </resources>

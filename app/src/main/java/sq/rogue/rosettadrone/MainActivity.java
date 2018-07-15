@@ -7,7 +7,6 @@ package sq.rogue.rosettadrone;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
@@ -28,7 +27,6 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.preference.PreferenceManager;
-import android.support.v7.widget.SwitchCompat;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -46,21 +44,16 @@ import com.MAVLink.Parser;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.lang.ref.WeakReference;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -567,6 +560,7 @@ public class MainActivity extends AppCompatActivity {
             mGCSCommunicator.renewDatalinks();
             sendRestartVideoService();
             mModel.setSystemId(Integer.parseInt(prefs.getString("pref_drone_id", "1")));
+            mModel.setRTLAltitude(Integer.parseInt(prefs.getString("pref_drone_rtl_altitude", "60")));
             FLAG_PREFS_CHANGED = false;
         }
     }
@@ -801,6 +795,8 @@ public class MainActivity extends AppCompatActivity {
         String videoIP = getVideoIP();
 
         int videoPort = Integer.parseInt(prefs.getString("pref_video_port", "5600"));
+
+        mModel.setRTLAltitude(Integer.parseInt(prefs.getString("pref_drone_rtl_altitude", "60")));
 
         logMessageDJI("Starting Video link to " + videoIP + ":" + videoPort);
 

@@ -302,7 +302,6 @@ public class MAVLinkReceiver {
         parent.logMessageDJI("==============================");
         parent.logMessageDJI("Waypoint Mission Uploaded");
         parent.logMessageDJI("==============================");
-        parent.logMessageDJI("LEN = " + this.mMissionItemList.size());
 
         for (msg_mission_item m : this.mMissionItemList) {
             parent.logMessageDJI(String.valueOf(m.command));

@@ -114,6 +114,52 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     public int getSystemId() {
         return mSystemId;
     }
+
+    public void setRTLAltitude(int altitude) {
+        djiAircraft.getFlightController().setGoHomeHeightInMeters(altitude, new CommonCallbacks.CompletionCallback() {
+            @Override
+            public void onResult(DJIError djiError) {
+                if (djiError == null) {
+//                    parent.logMessageDJI("RTL Altitude set");
+
+                } else {
+                    parent.logMessageDJI("Error setting RTL altitude " + djiError.getDescription());
+                }
+            }
+        });
+    }
+
+    public void setSmartRTLEnabled(boolean enabled) {
+        djiAircraft.getFlightController().setSmartReturnToHomeEnabled(enabled, new CommonCallbacks.CompletionCallback() {
+            @Override
+            public void onResult(DJIError djiError) {
+                if (djiError == null) {
+//                    parent.logMessageDJI("Smart RTL set");
+
+                } else {
+                    parent.logMessageDJI("Error setting smart RTL " + djiError.getDescription());
+                }
+            }
+        });
+    }
+
+    public void setForwardLEDsEnabled(boolean enabled) {
+        djiAircraft.getFlightController().setLEDsEnabled(enabled, new CommonCallbacks.CompletionCallback() {
+            @Override
+            public void onResult(DJIError djiError) {
+                if (djiError == null) {
+//                    parent.logMessageDJI("Forward LEDs set");
+
+                } else {
+                    parent.logMessageDJI("Error setting forward LEDs " + djiError.getDescription());
+                }
+            }
+        });
+    }
+
+
+
+
     public boolean isMotorsArmed() {
         return mMotorsArmed;
     }
