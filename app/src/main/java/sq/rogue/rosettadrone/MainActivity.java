@@ -664,6 +664,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void onDroneConnected() {
+
+        if (mProduct.getModel() == null) {
+            logMessageDJI("Aircraft is not on!");
+            return;
+        }
+
+        if (mProduct.getBattery() == null) {
+            logMessageDJI("Reconnect your android device to the RC for full functionality.");
+            return;
+        }
+
         mGCSCommunicator = new GCSCommunicatorAsyncTask(this);
         mGCSCommunicator.execute();
 
