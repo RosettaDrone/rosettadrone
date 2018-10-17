@@ -51,8 +51,8 @@ public class RtpSocket implements Runnable {
 
     public static final int RTP_HEADER_LENGTH = 12;
     public static final int MTU = 1300;
+    public MulticastSocket mSocket;
     protected OutputStream mOutputStream = null;
-    private MulticastSocket mSocket;
     private DatagramPacket[] mPackets;
     private byte[][] mBuffers;
 
@@ -64,7 +64,7 @@ public class RtpSocket implements Runnable {
     private long mCacheSize;
     private long mClock = 0;
     private long mOldTimestamp = 0;
-    private int mSsrc, mSeq = 0, mPort = -1;
+    private int mSsrc, mSeq = 0, mPort = 5600;
     private int mBufferCount, mBufferIn, mBufferOut;
     private int mCount = 0;
     private byte mTcpHeader[];

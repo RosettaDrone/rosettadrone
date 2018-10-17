@@ -8,10 +8,18 @@ import android.view.View;
 
 import static sq.rogue.rosettadrone.util.TYPE_DRONE_ID;
 import static sq.rogue.rosettadrone.util.TYPE_DRONE_RTL_ALTITUDE;
+import static sq.rogue.rosettadrone.util.TYPE_FLIGHT_PATH_RADIUS;
 import static sq.rogue.rosettadrone.util.TYPE_GCS_IP;
 import static sq.rogue.rosettadrone.util.TYPE_GCS_PORT;
+import static sq.rogue.rosettadrone.util.TYPE_VIDEO_BITRATE;
 import static sq.rogue.rosettadrone.util.TYPE_VIDEO_IP;
 import static sq.rogue.rosettadrone.util.TYPE_VIDEO_PORT;
+import static sq.rogue.rosettadrone.util.TYPE_WAYPOINT_DISTANCE;
+import static sq.rogue.rosettadrone.util.TYPE_WAYPOINT_MAX_ALTITUDE;
+import static sq.rogue.rosettadrone.util.TYPE_WAYPOINT_MAX_SPEED;
+import static sq.rogue.rosettadrone.util.TYPE_WAYPOINT_MIN_ALTITUDE;
+import static sq.rogue.rosettadrone.util.TYPE_WAYPOINT_MIN_SPEED;
+import static sq.rogue.rosettadrone.util.TYPE_WAYPOINT_TOTAL_DISTANCE;
 
 public class NotificationHandler {
     public static void notifySnackbar(View view, int resID, int duration) {
@@ -27,25 +35,46 @@ public class NotificationHandler {
         builder.setOnCancelListener(cancelListener);
         switch (input) {
             case TYPE_GCS_IP:
-                builder.setMessage("Invalid IP address entered for GCS IP. Enter a valid IP " +
-                        "(0.0.0.0 - 255.255.255.255).");
+                builder.setMessage(context.getResources().getString(R.string.error_gcs_ip));
                 break;
             case TYPE_GCS_PORT:
-                builder.setMessage("Invalid port entered for GCS Port.");
+                builder.setMessage(context.getResources().getString(R.string.error_gcs_port));
                 break;
             case TYPE_VIDEO_IP:
-                builder.setMessage("Invalid IP address entered for Video IP. Enter a valid IP " +
-                        "(0.0.0.0 - 255.255.255.255).");
+                builder.setMessage(context.getResources().getString(R.string.error_video_ip));
                 break;
             case TYPE_VIDEO_PORT:
-                builder.setMessage("Invalid port entered for Video Port.");
+                builder.setMessage(context.getResources().getString(R.string.error_video_port));
                 break;
             case TYPE_DRONE_ID:
-                builder.setMessage("Invalid ID entered for the drone. Enter a valid ID (1 - 255).");
+                builder.setMessage(context.getResources().getString(R.string.error_drone_id));
                 break;
             case TYPE_DRONE_RTL_ALTITUDE:
-                builder.setMessage("Invalid altitude entered for the drone RTL altitude. Enter a " +
-                        "valid altitude (20 - 500).");
+                builder.setMessage(context.getResources().getString(R.string.error_rtl_altitude));
+                break;
+            case TYPE_VIDEO_BITRATE:
+                builder.setMessage(context.getResources().getString(R.string.error_video_bitrate));
+                break;
+            case TYPE_FLIGHT_PATH_RADIUS:
+                builder.setMessage(context.getResources().getString(R.string.error_flight_path_radius));
+                break;
+            case TYPE_WAYPOINT_MIN_ALTITUDE:
+                builder.setMessage(context.getResources().getString(R.string.error_waypoint_min_altitude));
+                break;
+            case TYPE_WAYPOINT_MAX_ALTITUDE:
+                builder.setMessage(context.getResources().getString(R.string.error_waypoint_max_altitude));
+                break;
+            case TYPE_WAYPOINT_DISTANCE:
+                builder.setMessage(context.getResources().getString(R.string.error_waypoint_distance));
+                break;
+            case TYPE_WAYPOINT_TOTAL_DISTANCE:
+                builder.setMessage(context.getResources().getString(R.string.error_waypoint_total_distance));
+                break;
+            case TYPE_WAYPOINT_MIN_SPEED:
+                builder.setMessage(context.getResources().getString(R.string.error_waypoint_min_speed));
+                break;
+            case TYPE_WAYPOINT_MAX_SPEED:
+                builder.setMessage(context.getResources().getString(R.string.error_waypoint_max_speed));
                 break;
         }
         builder.show();

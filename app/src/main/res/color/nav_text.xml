@@ -3,9 +3,6 @@
     <!-- selected -->
     <item android:state_checked="true" android:color="@android:color/holo_green_dark"/>
 
-
-
-
     <!-- default -->
     <item android:color="@color/black"/>
 

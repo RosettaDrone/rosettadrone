@@ -1,0 +1,11 @@
+prefix=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7
+exec_prefix=${prefix}
+libdir=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7/lib
+includedir=${prefix}/include
+
+Name: libcroco
+Version: 0.6.12
+Description: a CSS2 Parsing and manipulation Library in C.
+Requires: glib-2.0 libxml-2.0
+Libs: -L${libdir} -lcroco-0.6
+Cflags: -I${includedir}/libcroco-0.6

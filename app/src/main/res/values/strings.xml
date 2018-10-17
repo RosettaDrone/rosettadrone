@@ -1,37 +1,158 @@
 <resources>
     <string name="app_name">Rosetta Drone</string>
 
-    <string name="pref_remote_gcs">Use external device for GCS</string>
-    <string name="pref_combined_gcs">Separate video address from GCS</string>
-
+    <!-- Drone -->
     <string name="pref_drone_id">ID</string>
+
+    <!-- Drone RTL -->
+    <string name="pref_drone_rtl_cat">RTL/RTH</string>
     <string name="pref_drone_rtl_altitude">RTL altitude (meters)</string>
     <string name="pref_drone_smart_rtl">Enable smart RTL</string>
+    <string name="pref_drone_max_height">Maximum height (meters)</string>
+
+    <!-- Drone Heading -->
+    <string name="pref_drone_heading_cat">Heading</string>
+    <string name="pref_drone_heading">Heading mode</string>
+
+    <!-- Drone LED -->
+    <string name="pref_drone_led_cat">Lights</string>
     <string name="pref_drone_leds">Enable forward LEDs</string>
+
+    <!-- Drone Waypoints -->
+    <string name="pref_drone_waypoint_cat">Waypoints</string>
+    <string name="pref_drone_flight_path_mode">Flight path mode</string>
+    <string name="pref_drone_flight_path_radius">Radius</string>
+    <string-array name="drone_waypoint_array">
+        <item>Curved</item>
+        <item>Straight</item>
+    </string-array>
+
+    <string-array name="drone_waypoint_values_array">
+        <item>0</item>
+        <item>1</item>
+    </string-array>
+
+    <!-- Drone Safety -->
+    <string name="pref_drone_safety_cat">Safety</string>
+    <string name="pref_drone_multi_mode">Enable multiple flight modes</string>
     <string name="pref_drone_collision_avoidance">Enable collision avoidance</string>
     <string name="pref_drone_upward_avoidance">Enable upward collision avoidance</string>
     <string name="pref_drone_landing_protection">Enable landing protection</string>
 
+    <string-array name="drone_header_array">
+        <item>Auto</item>
+        <item>Control by RC</item>
+        <item>Toward Point of Interest</item>
+        <item>Initial Direction</item>
+        <item>Waypoint Heading</item>
+    </string-array>
 
+    <string-array name="drone_header_values_array">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+    </string-array>
+
+    <!-- Network Toggles -->
+    <string name="pref_remote_gcs">Use external device for GCS</string>
+    <string name="pref_separate_gcs">Separate video address from GCS</string>
+    <string name="pref_enable_video">Enable video feed</string>
+
+    <!-- Network -->
     <string name="pref_gcs_ip">GCS IP address</string>
-    <string name="pref_video_ip">Video IP address</string>
     <string name="pref_telem_port">Telemetry port</string>
-    <string name="pref_video_port">Video port</string>
+    <string name="pref_secondary_telemetry">Enable secondary telemetry output</string>
+    <string name="pref_secondary_telemetry_ip">Secondary telemetry IP</string>
+    <string name="pref_secondary_telemetry_port">Secondary telemetry port</string>
 
+    <string name="pref_video_ip">Video IP address</string>
+    <string name="pref_video_port">Video port</string>
+    <string name="pref_video_bitrate">Video bitrate</string>
+    <string name="pref_encode_speed">Video encoding speed</string>
+
+    <string-array name="video_encode_array">
+        <item>Ultra Fast</item>
+        <item>Super Fast</item>
+        <item>Very Fast</item>
+        <item>Faster</item>
+        <item>Fast</item>
+        <item>Medium</item>
+        <item>Slow</item>
+        <item>Slower</item>
+        <item>Very Slow</item>
+    </string-array>
+
+    <string-array name="video_encode_values_array">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>6</item>
+        <item>7</item>
+        <item>8</item>
+        <item>9</item>
+    </string-array>
+
+    <!-- Logs -->
     <string name="pref_log_messages">Log MAVLink messages</string>
 
+    <!-- Communication Channels -->
     <string name="dji">DJI</string>
     <string name="gcs">GCS</string>
-
+    <string name="video">VIDEO</string>
+    <!-- Safety -->
     <string name="safety">SAFETY</string>
     <string name="safety_on">SAFETY ENABLED</string>
-    <string name="safety_off">SAFETY DISABLED - Ready to fly</string>
+    <string name="safety_off">SAFETY DISABLED - READY TO FLY</string>
+    <string name="safety_launch">Disable safety to takeoff.</string>
 
+
+    <!-- Preference Menus -->
     <string name="settings">Settings</string>
-    <string name="drone_settings">Drone</string>
+    <string name="drone_settings">Drone Configuration</string>
+
+    <!-- Preference Groupings -->
     <string name="telemetry_settings">Telemetry</string>
     <string name="video_settings">Video</string>
     <string name="log_settings">Logs</string>
+
+    <!-- Options Menu -->
+    <string name="options_clear_log">Clear Logs</string>
+    <string name="options_download_log">Download Logs</string>
+    <string name="options_help">Help &amp; feedback</string>
+
+    <!-- Error Messages -->
+
+    <!-- Waypoint -->
+    <!-- Altitude -->
+    <string name="error_waypoint_min_altitude">A waypoint exists with an altitude below the minimum allowed by DJI (-200m).</string>
+    <string name="error_waypoint_max_altitude">A waypoint exists with an altitude above the maximum allowed by DJI (500m).</string>
+
+    <!-- Speed -->
+    <string name="error_waypoint_min_speed">The waypoint mission speed is below the minimum allowed by DJI (-15m/s).</string>
+    <string name="error_waypoint_max_speed">The waypoint mission speed is above the maximum allowed by DJI (15m/s).</string>
+
+    <!-- Distance -->
+    <string name="error_waypoint_distance">The maximum distance between a pair of waypoints exceeds the maximum allowed by DJI (500m). Intermediary waypoints have been added between these points.</string>
+    <string name="error_waypoint_total_distance">The total waypoint path distance exceeds the maximum allowed by DJI (30,000m).</string>
+
+    <!-- Preferences -->
+    <!-- Video -->
+    <string name="error_video_ip">Invalid IP address entered for Video IP. Enter a valid IP (0.0.0.0 – 255.255.255.255).</string>
+    <string name="error_video_port">Invalid port entered for Video Port (0 – 65535).</string>
+    <string name="error_video_bitrate">Invalid value entered for Video Bitrate (0 – 65535).</string>
+
+    <!-- Telemetry -->
+    <string name="error_gcs_ip">Invalid IP address entered for GCS IP. Enter a valid IP (0.0.0.0 – 255.255.255.255).</string>
+    <string name="error_gcs_port">Invalid port entered for GCS Port (0 – 65535).</string>
+
+    <!-- Drone -->
+    <string name="error_drone_id">Invalid ID entered for the drone. Enter a valid ID (1 – 255).</string>
+    <string name="error_flight_path_radius">Invalid radius entered for the drone flight path radius. Enter a valid radius (.2 – 1000).</string>
+    <string name="error_rtl_altitude">Invalid altitude entered for the drone RTL altitude. Enter a valid altitude (20 – 500).</string>
 
 
 </resources>

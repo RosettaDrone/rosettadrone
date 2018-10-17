@@ -1,0 +1,15 @@
+prefix=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7
+exec_prefix=${prefix}
+libdir=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7/lib
+includedir=${prefix}/include
+sse2_cflags=-mfpmath=sse -msse -msse2
+neon_cflags=-mfpu=neon -mfloat-abi=softfp
+graphene_simd=scalar
+
+Name: Graphene
+Description: Math classes for graphic libraries
+Version: 1.4.0
+Libs: -L${libdir} -lgraphene-1.0
+Libs.private: 
+Cflags: -I${includedir}/graphene-1.0 -I${libdir}/graphene-1.0/include
+Requires.private:  gobject-2.0

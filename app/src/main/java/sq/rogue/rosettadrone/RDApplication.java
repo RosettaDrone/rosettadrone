@@ -25,4 +25,5 @@ public class RDApplication extends Application {
         super.attachBaseContext(paramContext);
         Helper.install(RDApplication.this);
     }
+
 }

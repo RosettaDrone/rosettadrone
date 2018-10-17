@@ -1,0 +1,13 @@
+prefix=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7
+exec_prefix=${prefix}
+libdir=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7/lib
+includedir=${prefix}/include
+
+Name: libass
+Description: LibASS is an SSA/ASS subtitles rendering library
+Version: 0.13.7
+Requires: 
+Requires.private: harfbuzz >= 0.9.5, fontconfig >= 2.10.92, fribidi >= 0.19.0, freetype2 >= 9.10.3
+Libs: -L${libdir} -lass 
+Libs.private: -lm -liconv -liconv
+Cflags: -I${includedir}

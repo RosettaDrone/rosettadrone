@@ -70,7 +70,9 @@ public class H264Packetizer extends AbstractPacketizer implements Runnable {
     public void stop() {
         if (executorService != null) {
             try {
-                is.close();
+                if (is != null) {
+                    is.close();
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }

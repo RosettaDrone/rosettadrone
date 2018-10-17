@@ -3,9 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://$PROJECT_DIR$/mark_rosettadrone.iml" filepath="$PROJECT_DIR$/mark_rosettadrone.iml" />
       <module fileurl="file://$PROJECT_DIR$/rosettadrone.iml" filepath="$PROJECT_DIR$/rosettadrone.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/rosettadrone.iml" filepath="$PROJECT_DIR$/.idea/rosettadrone.iml" />
     </modules>
   </component>
 </project>

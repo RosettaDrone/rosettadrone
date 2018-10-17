@@ -7,10 +7,11 @@ android {
         minSdkVersion 23
         targetSdkVersion 27
         versionCode 1
-        versionName "0.6"
+        versionName "1.2.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         multiDexEnabled true
     }
+
     buildTypes {
         release {
             minifyEnabled false
@@ -23,7 +24,7 @@ android {
 
     sourceSets {
         main {
-            jniLibs.srcDir 'libs'
+            jniLibs.srcDirs = ['src/main/cpp/lib']
         }
     }
 
@@ -39,22 +40,20 @@ android {
         doNotStrip "*/*/libFR.so"
     }
     externalNativeBuild {
-        ndkBuild {
-            path 'src/main/cpp/Android.mk'
+        cmake {
+            path 'CMakeLists.txt'
         }
     }
     defaultConfig {
         ndk {
-            abiFilters 'x86', 'armeabi-v7a' // more could be added
+            abiFilters 'armeabi-v7a' // more could be added
         }
     }
 
 }
-
 dependencies {
-//    debugImplementation 'com.squareup.leakcanary:leakcanary-android:1.5.4'
-//    releaseImplementation 'com.squareup.leakcanary:leakcanary-android-no-op:1.5.4'
-
+    //    debugImplementation 'com.squareup.leakcanary:leakcanary-android:1.5.4'
+    //    releaseImplementation 'com.squareup.leakcanary:leakcanary-android-no-op:1.5.4'
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     androidTestImplementation('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
@@ -62,14 +61,12 @@ dependencies {
     implementation 'com.android.support:appcompat-v7:27.1.1'
     implementation 'com.android.support:preference-v7:27.1.1'
     implementation 'com.android.support:preference-v14:27.1.1'
-    implementation 'com.android.support.constraint:constraint-layout:1.1.0'
+    implementation 'com.android.support.constraint:constraint-layout:1.1.2'
     implementation 'com.android.support:design:27.1.1'
-
     testImplementation 'junit:junit:4.12'
     testImplementation 'org.mockito:mockito-core:2.7.22'
     testImplementation 'org.mockito:mockito-android:2.7.22'
-
-    implementation 'com.dji:dji-sdk:4.5'
-    compileOnly 'com.dji:dji-sdk-provided:4.5'
+    implementation 'com.dji:dji-sdk:4.6'
+    compileOnly 'com.dji:dji-sdk-provided:4.6'
     implementation 'com.android.support:multidex:1.0.3'
 }

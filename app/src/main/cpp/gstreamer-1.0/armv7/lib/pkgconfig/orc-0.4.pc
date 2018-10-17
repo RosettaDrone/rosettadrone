@@ -1,0 +1,16 @@
+prefix=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7
+exec_prefix=${prefix}
+libdir=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7/lib
+includedir=${prefix}/include/orc-0.4
+toolsdir=${exec_prefix}/bin
+
+
+Name: orc-0.4
+Description: Library of Optimized Inner Loops Runtime Compiler
+Version: 0.4.28
+Libs: -L${libdir} -lorc-0.4
+Libs.private: -lm  
+Cflags: -I${includedir}
+
+orcc=${toolsdir}/orcc
+

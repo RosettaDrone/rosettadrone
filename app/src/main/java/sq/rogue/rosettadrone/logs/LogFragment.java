@@ -5,39 +5,38 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewConfiguration;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import sq.rogue.rosettadrone.R;
 
 public class LogFragment extends Fragment {
 
+//    final Handler handler = new Handler();
     private final String TAG = getClass().getSimpleName();
-
+    //    private final String INSTANCE_STATE_KEY = "saved_state";
     private final int DEFAULT_MAX_CHARACTERS = 200000;
-//    private final String INSTANCE_STATE_KEY = "saved_state";
-
+//    GestureDetector gestureDetector;
     private TextView mTextViewTraffic;
+    private ScrollView mScrollView;
+    //    Runnable mLongPressed = new Runnable() {
+//        public void run() {
+//            clearLogText();
+//        }
+//    };
     private boolean mViewAtBottom = true;
-
     private int mMaxCharacters = DEFAULT_MAX_CHARACTERS;
     private int LONG_PRESS_TIMEOUT = 3000;
-
-    GestureDetector gestureDetector;
-
-    final Handler handler = new Handler();
-    Runnable mLongPressed = new Runnable() {
-        public void run() {
-            clearLogText();
-        }
-    };
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -55,37 +54,52 @@ public class LogFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_log, container, false);
         mTextViewTraffic = view.findViewById(R.id.log);
 
-        mTextViewTraffic.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-//                Log.d(TAG, "onTouch");
-                if(event.getAction() == MotionEvent.ACTION_DOWN) {
-                    Log.d(TAG, "ACTION_DOWN");
-                    handler.postDelayed(mLongPressed, LONG_PRESS_TIMEOUT);
-                }
-                if((event.getAction() == MotionEvent.ACTION_UP)) {
-                    if (event.getAction() == MotionEvent.ACTION_UP)
-                        Log.d(TAG, "ACTION_UP");
+        mScrollView = (ScrollView) view.findViewById(R.id.textAreaScrollerTraffic);
 
-                    handler.removeCallbacks(mLongPressed);
+        mTextViewTraffic.addTextChangedListener(new TextWatcher() {
+
+            @Override
+            public void afterTextChanged(Editable arg0) {
+                if (mViewAtBottom) {
+                    mScrollView.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            mScrollView.fullScroll(View.FOCUS_DOWN);
+                        }
+                    });
                 }
-                return false;
+            }
+
+            @Override
+            public void beforeTextChanged(CharSequence arg0, int arg1,
+                                          int arg2, int arg3) {
+                //override stub
+            }
+
+            @Override
+            public void onTextChanged(CharSequence arg0, int arg1, int arg2,
+                                      int arg3) {
+                //override stub
+            }
+        });
+        mScrollView.getViewTreeObserver().addOnScrollChangedListener(new ViewTreeObserver.OnScrollChangedListener() {
+            @Override
+            public void onScrollChanged() {
+                if (mScrollView != null) {
+                    if (mScrollView.getChildAt(0).getBottom() <= (mScrollView.getHeight() + mScrollView.getScrollY()) + 500) {
+                        mViewAtBottom = true;
+
+                    } else {
+                        mViewAtBottom = false;
+                    }
+                }
             }
         });
 
-        mTextViewTraffic.setMovementMethod(new ScrollingMovementMethod());
-        mTextViewTraffic.setHorizontallyScrolling(true);
-//        mTextViewTraffic.setOnLongClickListener(new View.OnLongClickListener() {
-//            @Override
-//            public boolean onLongClick(View v) {
-//                clearLogText();
-//                return true;
-//            }
-//        });
+//        mTextViewTraffic.setHorizontallyScrolling(true);
+
         return view;
     }
-
-
 
 
     /**

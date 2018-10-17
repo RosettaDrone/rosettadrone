@@ -1,0 +1,11 @@
+prefix=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7
+exec_prefix=${prefix}
+libdir=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7/lib
+includedir=${prefix}/include
+
+Name: x264
+Description: H.264 (MPEG4 AVC) encoder library
+Version: 0.148.x
+Libs: -L/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7/lib -lx264 
+Libs.private: -lm -ldl
+Cflags: -I${prefix}/include

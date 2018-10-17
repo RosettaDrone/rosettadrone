@@ -1,0 +1,11 @@
+prefix=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7
+exec_prefix=${prefix}
+libdir=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7/lib
+toolexeclibdir=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7/lib
+includedir=${libdir}/libffi-3.99999/include
+
+Name: libffi
+Description: Library supporting Foreign Function Interfaces
+Version: 3.99999
+Libs: -L${toolexeclibdir} -lffi
+Cflags: -I${includedir}
