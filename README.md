@@ -10,8 +10,6 @@ The user assumes all responsibility for prevention of harm or damage. This is an
 
 Download the Android .APK from the [Releases](https://github.com/jacobsenmd/rosettadrone/releases) tab.
 
-Note: RosettaDrone uses Git LFS for Gstreamer shared objects. You can use the included ones or your own. They are placed in the appropriate cpp/lib/abi folders.
-
 # Features
 
 * Report telemetry in QGC like position, attitude, relative altitude, heading, and battery remaining
