@@ -1,4 +1,4 @@
-# Rosetta Drone
+# Rosetta Drone V2.0 for Android 8.1 and newer, with DJI SDK 4.11.1
 
 Rosetta Drone is a Mavlink wrapper for the DJI SDK, which allows users to fly DJI drones using Mavlink-speaking ground control stations. In theory it should work with any Mavlink GCS, but all testing so far has been done with QGroundControl. 
 
