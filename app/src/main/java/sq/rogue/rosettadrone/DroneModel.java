@@ -55,6 +55,7 @@ import dji.common.flightcontroller.Attitude;
 import dji.common.flightcontroller.ConnectionFailSafeBehavior;
 import dji.common.flightcontroller.ControlMode;
 import dji.common.flightcontroller.GPSSignalLevel;
+import dji.common.flightcontroller.LEDsSettings;
 import dji.common.flightcontroller.LocationCoordinate3D;
 import dji.common.flightcontroller.virtualstick.RollPitchControlMode;
 import dji.common.flightcontroller.virtualstick.VerticalControlMode;
@@ -172,6 +173,11 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     public void setForwardLEDsEnabled(final boolean enabled) {
+        LEDsSettings.Builder Tmp = new LEDsSettings.Builder();
+        Tmp.frontLEDsOn(enabled);
+    }
+/*
+    public void setForwardLEDsEnabled(final boolean enabled) {
         djiAircraft.getFlightController().setLEDsEnabled(enabled, new CommonCallbacks.CompletionCallback() {
             @Override
             public void onResult(DJIError djiError) {
@@ -184,7 +190,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             }
         });
     }
-
+*/
     public void setCollisionAvoidance(final boolean enabled) {
         if (djiAircraft.getFlightController().getFlightAssistant() != null) {
             djiAircraft.getFlightController().getFlightAssistant().setCollisionAvoidanceEnabled(enabled, new CommonCallbacks.CompletionCallback() {
@@ -837,7 +843,8 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
         msg.latitude = (int) (djiAircraft.getFlightController().getState().getHomeLocation().getLatitude() * Math.pow(10, 7));
         msg.longitude = (int) (djiAircraft.getFlightController().getState().getHomeLocation().getLongitude() * Math.pow(10, 7));
-        msg.altitude = (int) (djiAircraft.getFlightController().getState().getHomePointAltitude());
+       // msg.altitude = (int) (djiAircraft.getFlightController().getState().getHomePointAltitude());
+        msg.altitude = (int) (djiAircraft.getFlightController().getState().getGoHomeHeight());
 
         // msg.x = 0;
         // msg.y = 0;

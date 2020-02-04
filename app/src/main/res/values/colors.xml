@@ -15,4 +15,13 @@
     <color name="black">#000000</color>
     <color name="red">#FF0000</color>
     <color name="green">#00FF00</color>
+
+    <color name="colorPrimary">#3F51B5</color>
+    <color name="colorPrimaryDark">#303F9F</color>
+    <color name="colorAccent">#FF4081</color>
+    <color name="title_dark">#212121</color>
+    <color name="colorGrey">#888888</color>
+    <color name="colorBlack">#000000</color>
+    <color name="colorWhite">#ffffff</color>
+    @
 </resources>

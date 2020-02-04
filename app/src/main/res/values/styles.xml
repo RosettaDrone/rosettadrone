@@ -33,8 +33,10 @@
 
     </style>
 
-    <!-- SettingsActivity Theme -->
+    <!-- SettingsActivity Theme  -->
     <style name="AppTheme.Settings" parent="AppTheme">
         <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Material</item>
     </style>
+
+
 </resources>

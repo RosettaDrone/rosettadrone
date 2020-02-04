@@ -96,7 +96,31 @@
         android:layout_marginTop="24dp"
         android:layout_marginBottom="56dp">
 
+
+        <TextureView
+            android:id="@+id/livestream_preview_ttv"
+            android:layout_width="235dp"
+            android:layout_height="134dp"
+            android:layout_below="@id/livestream_preview_sf"
+            android:layout_centerInParent="true"
+            android:layout_centerVertical="false"
+            android:layout_marginTop="489dp"
+            android:alpha="50"
+            android:foregroundGravity="center_horizontal"
+            android:visibility="visible" />
+
+        <SurfaceView
+            android:id="@+id/livestream_preview_sf"
+            android:layout_width="107dp"
+            android:layout_height="54dp"
+            android:layout_below="@id/livestream_preview_ttv"
+            android:layout_centerInParent="true"
+            android:layout_gravity="bottom"
+            android:visibility="invisible" />
+
     </FrameLayout>
+
+
 
     <android.support.design.widget.CoordinatorLayout
         android:id="@+id/snack"

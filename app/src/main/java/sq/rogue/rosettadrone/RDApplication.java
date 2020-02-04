@@ -4,9 +4,21 @@ import android.app.Application;
 import android.content.Context;
 
 import com.secneo.sdk.Helper;
+
+import dji.sdk.base.BaseProduct;
+import dji.sdk.sdkmanager.DJISDKManager;
 //import com.squareup.leakcanary.LeakCanary;
 
 public class RDApplication extends Application {
+
+    private static BaseProduct mProduct;
+
+    public static synchronized BaseProduct getProductInstance() {
+        if (null == mProduct) {
+            mProduct = DJISDKManager.getInstance().getProduct();
+        }
+        return mProduct;
+    }
 
     @Override
     public void onCreate() {
@@ -18,6 +30,10 @@ public class RDApplication extends Application {
 //        }
 //        LeakCanary.install(this);
 //        // Normal app init code...
+    }
+
+    public static synchronized void updateProduct(BaseProduct product) {
+        mProduct = product;
     }
 
     @Override
