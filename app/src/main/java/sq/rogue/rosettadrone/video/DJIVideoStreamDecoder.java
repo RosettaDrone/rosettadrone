@@ -790,6 +790,7 @@ public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
                     yuvDataBuf.position(bufferInfo.offset);
                     yuvDataBuf.limit(bufferInfo.size - bufferInfo.offset);
                     if (yuvDataListener != null) {
+//                        yuvDataListener.onYuvDataReceived(yuvDataBuf, bufferInfo.size - bufferInfo.offset,  width, height);
                         yuvDataListener.onYuvDataReceived(format, yuvDataBuf, bufferInfo.size - bufferInfo.offset,  width, height);
                     }
                 }

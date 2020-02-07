@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<android.support.v7.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     android:key="main_prefs"
     android:title="@string/settings">
 
-    <android.support.v7.preference.PreferenceScreen
+    <androidx.preference.PreferenceScreen
         android:key="drone_prefs"
         android:title="@string/drone_settings">
 
@@ -98,9 +98,9 @@
                 android:defaultValue="true" />
         </PreferenceCategory>
 
-    </android.support.v7.preference.PreferenceScreen>
+    </androidx.preference.PreferenceScreen>
 
-    <android.support.v7.preference.SwitchPreferenceCompat
+    <androidx.preference.SwitchPreferenceCompat
         android:defaultValue="false"
         android:key="pref_external_gcs"
         android:title="@string/pref_remote_gcs" />
@@ -196,5 +196,5 @@
             android:title="@string/pref_log_messages" />
 
     </PreferenceCategory>
-</android.support.v7.preference.PreferenceScreen>
+</androidx.preference.PreferenceScreen>
 

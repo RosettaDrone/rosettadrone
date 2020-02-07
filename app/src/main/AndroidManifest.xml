@@ -3,7 +3,10 @@
     package="sq.rogue.rosettadrone">
 
     <uses-permission android:name="android.permission.VIBRATE"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
@@ -29,7 +32,7 @@
         android:required="true"/>
 
     <application
-        android:name=".RDApplication"
+        android:name="sq.rogue.rosettadrone.RDApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -37,28 +40,13 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
-        <uses-library android:name="org.apache.http.legacy" android:required="false" />
-
-        <activity
-            android:name=".ConnectionActivity"
-            android:launchMode="singleTop"
-            android:screenOrientation="portrait">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
-                <action android:name="android.hardware.usb.action.USB_ACCESSORY_ATTACHED"/>
-            </intent-filter>
-            <meta-data
-                android:name="android.hardware.usb.action.USB_ACCESSORY_ATTACHED"
-                android:resource="@xml/accessory_filter"/>
-        </activity>
-
-        <activity android:name=".MainActivity"
+        <activity android:name="sq.rogue.rosettadrone.MainActivity"
             android:screenOrientation="portrait"
             android:launchMode="singleInstance">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <action android:name="android.hardware.usb.action.USB_ACCESSORY_ATTACHED" />
+
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
             <meta-data
@@ -66,7 +54,9 @@
                 android:resource="@xml/accessory_filter" />
         </activity>
 
-        <activity android:name=".settings.SettingsActivity"
+        <uses-library android:name="org.apache.http.legacy" android:required="false" />
+
+        <activity android:name="sq.rogue.rosettadrone.settings.SettingsActivity"
             android:theme="@style/AppTheme.Settings"
             android:label="Settings">
         </activity>
@@ -80,7 +70,10 @@
 
         <service android:name="dji.sdk.sdkmanager.DJIGlobalService">
         </service>
-
+<!--
+        <service android:name="sq.rogue.rosettadrone.video.VideoService">
+        </service>
+-->
         <!-- DJI SDK -->
     </application>
 
