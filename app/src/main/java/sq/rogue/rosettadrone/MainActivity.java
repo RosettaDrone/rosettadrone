@@ -91,11 +91,11 @@ import dji.sdk.sdkmanager.DJISDKInitEvent;
 import dji.sdk.sdkmanager.DJISDKManager;
 import sq.rogue.rosettadrone.logs.LogFragment;
 import sq.rogue.rosettadrone.settings.SettingsActivity;
+import sq.rogue.rosettadrone.settings.HelpActivity;
 import sq.rogue.rosettadrone.video.DJIVideoStreamDecoder;
 import sq.rogue.rosettadrone.video.H264Packetizer;
 import sq.rogue.rosettadrone.video.NativeHelper;
 
-import static com.google.android.material.snackbar.Snackbar.LENGTH_LONG;
 import static sq.rogue.rosettadrone.util.safeSleep;
 
 
@@ -103,6 +103,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
 
     public static final String FLAG_CONNECTION_CHANGE = "dji_sdk_connection_change";
     private final static int RESULT_SETTINGS = 1001;
+    private final static int RESULT_HELP = 1002;
     public static boolean FLAG_PREFS_CHANGED = false;
     public static boolean FLAG_VIDEO_ADDRESS_CHANGED = false;
     public static boolean FLAG_TELEMETRY_ADDRESS_CHANGED = false;
@@ -415,6 +416,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
             @Override
             public void onReceive(byte[] videoBuffer, int size) {
                 splitNALs(videoBuffer);
+                Log.e(TAG,"Out...");
             }
         };
 
@@ -982,6 +984,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
                 onClickSettings();
                 break;
             case R.id.action_help:
+                onClickHelp();
                 break;
             default:
 //                Log.d(TAG, String.valueOf(item.getItemId()));
@@ -1004,6 +1007,12 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
 //        Log.d(TAG, "onClickSettings()");
         Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
         startActivityForResult(intent, RESULT_SETTINGS);
+    }
+
+    private void onClickHelp() {
+//        Log.d(TAG, "onClickSettings()");
+        Intent intent = new Intent(MainActivity.this, HelpActivity.class);
+        startActivityForResult(intent, RESULT_HELP);
     }
 
     private void onClickClearLogs() {

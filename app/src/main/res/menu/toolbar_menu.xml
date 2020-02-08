@@ -11,12 +11,13 @@
         />
     <item
         android:id="@+id/action_safety"
+        android:checkable="true"
+        android:enabled="true"
+        android:icon="@color/safety"
         android:orderInCategory="200"
         android:title="@string/safety"
-        android:icon="@color/safety"
-        android:checkable="true"
-        app:showAsAction="ifRoom"
-        app:actionViewClass="android.widget.CheckBox"/>
+        app:actionViewClass="android.widget.CheckBox"
+        app:showAsAction="ifRoom" />
 
     <item
         android:id="@+id/action_download_logs"

@@ -99,11 +99,12 @@
 
         <TextureView
             android:id="@+id/livestream_preview_ttv"
-            android:layout_width="235dp"
-            android:layout_height="134dp"
+            android:layout_width="302dp"
+            android:layout_height="191dp"
             android:layout_below="@id/livestream_preview_sf"
             android:layout_centerInParent="true"
             android:layout_centerVertical="false"
+            android:layout_gravity="bottom|center"
             android:layout_marginTop="489dp"
             android:alpha="50"
             android:foregroundGravity="center_horizontal"
@@ -115,7 +116,7 @@
             android:layout_height="54dp"
             android:layout_below="@id/livestream_preview_ttv"
             android:layout_centerInParent="true"
-            android:layout_gravity="bottom"
+            android:layout_gravity="center"
             android:visibility="invisible" />
 
     </FrameLayout>

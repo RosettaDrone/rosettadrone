@@ -10,7 +10,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:text="Status: No Product Connected"
+        android:text="DJI to Mavlink"
         android:textColor="@android:color/black"
         android:textSize="20dp"
         android:textStyle="bold"
@@ -41,18 +41,6 @@
         android:text="@string/model_not_available"
         android:textSize="15dp"/>
 
-    <Button
-        android:id="@+id/btn_open"
-        android:layout_width="150dp"
-        android:layout_height="55dp"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="350dp"
-        android:background="@drawable/round_btn"
-        android:text="Open"
-        android:textColor="@color/colorWhite"
-        android:textSize="20dp"
-        />
-
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -65,7 +53,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceSmall"
-        android:text="DJIVideoDecodingSample"
+        android:text="RosettaDrone"
         android:id="@+id/textView"
         android:layout_marginTop="58dp"
         android:textStyle="bold"

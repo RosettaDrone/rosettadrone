@@ -8,7 +8,7 @@
         android:key="drone_prefs"
         android:title="@string/drone_settings">
 
-        <android.support.v7.preference.EditTextPreference
+        <androidx.preference.EditTextPreference
             android:defaultValue="1"
             android:numeric="integer"
             android:key="pref_drone_id"
@@ -17,17 +17,17 @@
         <PreferenceCategory
             android:key="drone_rtl_prefs"
             android:title="@string/pref_drone_rtl_cat">
-            <android.support.v7.preference.EditTextPreference
+            <androidx.preference.EditTextPreference
                 android:defaultValue="60"
                 android:numeric="integer"
                 android:key="pref_drone_rtl_altitude"
                 android:title="@string/pref_drone_rtl_altitude" />
-            <android.support.v7.preference.EditTextPreference
+            <androidx.preference.EditTextPreference
                 android:defaultValue="500"
                 android:numeric="integer"
                 android:key="pref_drone_max_height"
                 android:title="@string/pref_drone_max_height" />
-            <android.support.v7.preference.SwitchPreferenceCompat
+            <androidx.preference.SwitchPreferenceCompat
                 android:key="pref_drone_smart_rtl"
                 android:title="@string/pref_drone_smart_rtl"
                 android:defaultValue="true" />
@@ -37,7 +37,7 @@
             android:key="drone_heading_prefs"
             android:title="@string/pref_drone_heading_cat">
 
-            <android.support.v7.preference.ListPreference
+            <androidx.preference.ListPreference
                 android:key="pref_heading_mode"
                 android:title="@string/pref_drone_heading"
                 android:entries="@array/drone_header_array"
@@ -50,7 +50,7 @@
         <PreferenceCategory
             android:key="drone_led_prefs"
             android:title="@string/pref_drone_led_cat">
-            <android.support.v7.preference.SwitchPreferenceCompat
+            <androidx.preference.SwitchPreferenceCompat
                 android:key="pref_drone_leds"
                 android:title="@string/pref_drone_leds"
                 android:defaultValue="true" />
@@ -60,14 +60,14 @@
             android:key="drone_waypoint_prefs"
             android:title="@string/pref_drone_waypoint_cat">
 
-            <android.support.v7.preference.ListPreference
+            <androidx.preference.ListPreference
                 android:key="pref_drone_flight_path_mode"
                 android:title="@string/pref_drone_flight_path_mode"
                 android:entries="@array/drone_waypoint_array"
                 android:entryValues="@array/drone_waypoint_values_array"
                 android:defaultValue="0" />
 
-            <android.support.v7.preference.EditTextPreference
+            <androidx.preference.EditTextPreference
                 android:defaultValue=".2"
                 android:digits="0123456789."
                 android:inputType="numberDecimal"
@@ -80,19 +80,19 @@
             android:key="drone_safety_prefs"
             android:title="@string/pref_drone_safety_cat">
 
-            <android.support.v7.preference.SwitchPreferenceCompat
+            <androidx.preference.SwitchPreferenceCompat
                 android:key="pref_drone_multi_mode"
                 android:title="@string/pref_drone_multi_mode"
                 android:defaultValue="false" />
-            <android.support.v7.preference.SwitchPreferenceCompat
+            <androidx.preference.SwitchPreferenceCompat
                 android:key="pref_drone_collision_avoidance"
                 android:title="@string/pref_drone_collision_avoidance"
                 android:defaultValue="true" />
-            <android.support.v7.preference.SwitchPreferenceCompat
+            <androidx.preference.SwitchPreferenceCompat
                 android:key="pref_drone_upward_avoidance"
                 android:title="@string/pref_drone_upward_avoidance"
                 android:defaultValue="true" />
-            <android.support.v7.preference.SwitchPreferenceCompat
+            <androidx.preference.SwitchPreferenceCompat
                 android:key="pref_drone_landing_protection"
                 android:title="@string/pref_drone_landing_protection"
                 android:defaultValue="true" />
@@ -109,31 +109,31 @@
         android:key="telemetry_prefs"
         android:title="@string/telemetry_settings">
 
-        <android.support.v7.preference.EditTextPreference
+        <androidx.preference.EditTextPreference
             android:defaultValue="127.0.0.1"
             android:dependency="pref_external_gcs"
             android:digits="0123456789."
             android:inputType="number"
             android:key="pref_gcs_ip"
             android:title="@string/pref_gcs_ip" />
-        <android.support.v7.preference.EditTextPreference
+        <androidx.preference.EditTextPreference
             android:defaultValue="14550"
             android:key="pref_telem_port"
             android:numeric="integer"
             android:title="@string/pref_telem_port" />
 
-        <android.support.v7.preference.SwitchPreferenceCompat
+        <androidx.preference.SwitchPreferenceCompat
             android:defaultValue="false"
             android:key="pref_secondary_telemetry_enabled"
             android:title="@string/pref_secondary_telemetry" />
-        <android.support.v7.preference.EditTextPreference
+        <androidx.preference.EditTextPreference
             android:defaultValue="127.0.0.1"
             android:dependency="pref_secondary_telemetry_enabled"
             android:digits="0123456789."
             android:inputType="number"
             android:key="pref_secondary_telemetry_ip"
             android:title="@string/pref_secondary_telemetry_ip" />
-        <android.support.v7.preference.EditTextPreference
+        <androidx.preference.EditTextPreference
             android:defaultValue="18990"
             android:dependency="pref_secondary_telemetry_enabled"
             android:key="pref_secondary_telemetry_port"
@@ -146,36 +146,36 @@
         android:key="video_prefs"
         android:title="@string/video_settings">
 
-        <android.support.v7.preference.SwitchPreferenceCompat
+        <androidx.preference.SwitchPreferenceCompat
             android:key="pref_enable_video"
             android:title="@string/pref_enable_video"
             android:defaultValue="true" />
 
-        <android.support.v7.preference.SwitchPreferenceCompat
+        <androidx.preference.SwitchPreferenceCompat
             android:key="pref_separate_gcs"
             android:dependency="pref_enable_video"
             android:title="@string/pref_separate_gcs"
             android:defaultValue="false" />
-        <android.support.v7.preference.EditTextPreference
+        <androidx.preference.EditTextPreference
             android:defaultValue="127.0.0.1"
             android:dependency="pref_separate_gcs"
             android:digits="0123456789."
             android:inputType="number"
             android:key="pref_video_ip"
             android:title="@string/pref_video_ip" />
-        <android.support.v7.preference.EditTextPreference
+        <androidx.preference.EditTextPreference
             android:defaultValue="5600"
             android:dependency="pref_enable_video"
             android:key="pref_video_port"
             android:numeric="integer"
             android:title="@string/pref_video_port" />
-        <android.support.v7.preference.EditTextPreference
+        <androidx.preference.EditTextPreference
             android:defaultValue="2000"
             android:dependency="pref_enable_video"
             android:key="pref_video_bitrate"
             android:numeric="integer"
             android:title="@string/pref_video_bitrate" />
-        <android.support.v7.preference.ListPreference
+        <androidx.preference.ListPreference
             android:key="pref_encode_speed"
             android:dependency="pref_enable_video"
             android:title="@string/pref_encode_speed"
@@ -189,7 +189,7 @@
         android:key="log_prefs"
         android:title="@string/log_settings">
 
-        <android.support.v7.preference.SwitchPreferenceCompat
+        <androidx.preference.SwitchPreferenceCompat
             android:defaultValue="false"
             android:key="pref_log_mavlink"
             android:summary="May decrease performance due to volume of messages"
