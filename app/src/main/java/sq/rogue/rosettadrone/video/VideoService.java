@@ -283,7 +283,7 @@ public class VideoService extends Service implements NativeHelper.NativeDataList
         int videoBitrate = Integer.parseInt(sharedPreferences.getString("pref_video_bitrate", "2000"));
         int encodeSpeed = Integer.parseInt((sharedPreferences.getString("pref_encode_speed", "2")));
 
-
+        Log.e(TAG, "mGstEnabled: "+ mGstEnabled);
         if (mGstEnabled) {
             try {
                 nativeInit(videoIPString, videoPort, videoBitrate, encodeSpeed);
@@ -304,7 +304,6 @@ public class VideoService extends Service implements NativeHelper.NativeDataList
             }
 
         }
-
     }
 
     public boolean isRunning() {

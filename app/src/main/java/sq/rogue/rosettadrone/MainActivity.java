@@ -24,6 +24,8 @@ import android.os.Looper;
 import androidx.annotation.NonNull;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+
+import androidx.core.content.ContextCompat;
 import androidx.preference.PreferenceManager;
 import static com.google.android.material.snackbar.Snackbar.LENGTH_LONG;
 
@@ -117,6 +119,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
     public static boolean FLAG_DRONE_LANDING_PROTECTION_CHANGED = false;
     public static boolean FLAG_DRONE_FLIGHT_PATH_MODE_CHANGED = false;
     public static boolean FLAG_DRONE_MAX_HEIGHT_CHANGED = false;
+
     private static BaseProduct mProduct;
     private final String TAG = "RosettaDrone";
     private final int GCS_TIMEOUT_mSEC = 2000;
@@ -199,102 +202,127 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         }
     };
 
-    private DJISDKManager.SDKManagerCallback mDJISDKManagerCallback = new DJISDKManager.SDKManagerCallback() {
 
-        @Override
-        public void onDatabaseDownloadProgress(long x, long y){
-            Log.e(TAG, "onDatabaseDownloadProgress()");
-        }
-
-        @Override
-        public void onInitProcess(DJISDKInitEvent a, int x){
-            Log.e(TAG, "onInitProcess()");
-
-        }
-
-        @Override
-        public void onProductDisconnect() {
-            notifyStatusChange();
-        }
-
-        @Override
-        public void onProductConnect(BaseProduct newProduct) {
-            mProduct = newProduct;
-
-            if (mProduct == null) {
-                logMessageDJI("No DJI drone detected");
-                onDroneDisconnected();
-            } else {
-                if (mProduct instanceof Aircraft) {
-                    logMessageDJI("DJI aircraft detected");
-                    onDroneConnected();
-                } else {
-                    logMessageDJI("DJI non-aircraft product detected");
-                    onDroneDisconnected();
-                }
-            }
-
-            notifyStatusChange();
-        }
-
-        @Override
-        public void onComponentChange(BaseProduct.ComponentKey componentKey, BaseComponent oldComponent, BaseComponent newComponent) {
-            if (newComponent != null) {
-                newComponent.setComponentListener(new BaseComponent.ComponentListener() {
-                    @Override
-                    public void onConnectivityChange(boolean isConnected) {
-                        Log.d(TAG, "onComponentConnectivityChanged: " + isConnected);
-                        notifyStatusChange();
-                    }
-                });
-            }
-        }
-        @Override
-        public void onRegister(DJIError error) {
-            Log.d(TAG, error == null ? "success" : error.getDescription());
-            if (error == DJISDKError.REGISTRATION_SUCCESS) {
-                DJISDKManager.getInstance().startConnectionToProduct();
-                Handler handler = new Handler(Looper.getMainLooper());
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        //Toast.makeText(getApplicationContext(), "DJI SDK registered", Toast.LENGTH_LONG).show();
-                        logMessageDJI("DJI SDK registered");
-                    }
-                });
-            } else {
-                Handler handler = new Handler(Looper.getMainLooper());
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        logMessageDJI("DJI SDK registration failed");
-                        //Toast.makeText(getApplicationContext(), "DJI SDK registration failed", Toast.LENGTH_LONG).show();
-                    }
-                });
-            }
-            if (error != null) {
-                Log.e(TAG, error.toString());
-            }
-        }
-
-    };
-
+    /**
+     * onResume is called whenever RosettaDrone takes the foreground. This happens if we open the
+     * RosettaDrone application or return from the preferences window. Need to rebind to the AIDL service.
+     */
     @Override
-    protected void onNewIntent(@NonNull Intent intent) {
-        super.onNewIntent(intent);
-        String action = intent.getAction();
-        if (UsbManager.ACTION_USB_ACCESSORY_ATTACHED.equals(action)) {
-            Intent attachedIntent = new Intent();
-            attachedIntent.setAction(DJISDKManager.USB_ACCESSORY_ATTACHED);
-            sendBroadcast(attachedIntent);
+    protected void onResume() {
+        Log.e(TAG, "onResume()");
+
+        if (mDroneDetails != null) {
+            String droneID = prefs.getString("pref_drone_id", "1");
+            String rtlAlt = prefs.getString("pref_drone_rtl_altitude", "60") + "m";
+            String text = "ID:" + "\t" + droneID + System.getProperty("line.separator") + "RTL:" + "\t" + rtlAlt;
+            mDroneDetails.setText(text);
+        }
+
+        super.onResume();
+
+        initPreviewerTextureView();  // Decoded data to UDP...
+        initPreviewerSurfaceView();  // Decode data from camera..
+   //     logMessageDJI("notifyStatusChange ---3----");
+     //   notifyStatusChange();
+    }
+
+    private void initPacketizer() {
+        Log.e(TAG, "initPacketizer");
+
+        String videoIPString = "127.0.0.1";
+
+        sharedPreferences = android.preference.PreferenceManager.getDefaultSharedPreferences(this);
+        if (sharedPreferences.getBoolean("pref_external_gcs", false)) {
+            if (!sharedPreferences.getBoolean("pref_separate_gcs", false)) {
+                videoIPString = sharedPreferences.getString("pref_gcs_ip", "127.0.0.1");
+            } else {
+                videoIPString = sharedPreferences.getString("pref_video_ip", "127.0.0.1");
+            }
+        } else if (sharedPreferences.getBoolean("pref_separate_gcs", false)) {
+            videoIPString = sharedPreferences.getString("pref_video_ip", "127.0.0.1");
+        }
+
+        videoIPString = "10.0.0.104";
+        int videoPort = 5600; //Integer.parseInt(sharedPreferences.getString("pref_video_port", "5600"));
+        int videoBitrate = Integer.parseInt(sharedPreferences.getString("pref_video_bitrate", "2000"));
+        int encodeSpeed = Integer.parseInt((sharedPreferences.getString("pref_encode_speed", "2")));
+
+        //VideoFeeder.getInstance().setTranscodingDataRate(encodeSpeed);
+
+        try {
+            if (mPacketizer != null && mPacketizer.getRtpSocket() != null)
+                mPacketizer.getRtpSocket().close();
+            mPacketizer = new H264Packetizer();
+
+            Log.e(TAG, "Receiver: " + videoIPString + ":"+videoPort);
+            mPacketizer.getRtpSocket().setDestination(InetAddress.getByName(videoIPString), videoPort, 5000);
+        } catch (UnknownHostException e) {
+            Log.e(TAG, "Error setting destination for RTP packetizer", e);
         }
     }
 
+    /**
+     * Called whenever RosettaDrone leaves the foreground, such as when the home button is pressed or
+     * we enter the preferences/settings screen. We unbind the AIDL service since we don't need it if we're not
+     * currently within RosettaDrone.
+     * NOTE: Pressing the back button from the RosettaDrone application also calls onDestroy.
+     */
     @Override
+    protected void onPause() {
+        Log.e(TAG, "onPause()");
+/*
+        if (mCamera != null) {
+            if (VideoFeeder.getInstance().getPrimaryVideoFeed() != null) {
+                VideoFeeder.getInstance().getPrimaryVideoFeed().removeVideoDataListener(mReceivedVideoDataListener);
+            }
+            if (standardVideoFeeder != null) {
+                standardVideoFeeder.removeVideoDataListener(mReceivedVideoDataListener);
+            }
+        }
+*/
+        super.onPause();
+        // We have to save text when onPause is called or it will be erased
+//        mNewOutbound = logToGCS.getLogText() + mNewOutbound;
+//        mNewInbound = logFromGCS.getLogText() + mNewInbound;
+//        mNewDJI = logDJI.getLogText() + mNewDJI;
+    }
+
+    @Override
+    protected void onStop() {
+        Log.e(TAG, "onStop");
+        super.onStop();
+    }
+
+    @Override
+    protected void onDestroy() {
+        Log.e(TAG, "onDestroy");
+//        logMessageDJI("onDestroy()");
+        sendDroneDisconnected();
+        closeGCSCommunicator();
+
+        if (mUIHandler != null) {
+            mUIHandler.removeCallbacksAndMessages(null);
+        }
+
+        if (mDJIHandler != null) {
+            mDJIHandler.removeCallbacksAndMessages(null);
+        }
+
+        if (mCodecManager != null) {
+            mCodecManager.cleanSurface();
+            mCodecManager.destroyCodec();
+        }
+
+        super.onDestroy();
+    }
+
+   @Override
     protected void onCreate(Bundle savedInstanceState) {
-//        Log.d(TAG, "onCreate()");
+        Log.e(TAG, "onCreate()");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        mProduct = RDApplication.getProductInstance(); // Should be set by Connection ...
 
         String versionName = "";
         try {
@@ -305,7 +333,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         }
         getSupportActionBar().setTitle("Rosetta Drone " + versionName);
 
-        requestPermissions();
+   //     requestPermissions();
 
         if (savedInstanceState != null) {
             navState = savedInstanceState.getInt("navigation_state");
@@ -348,6 +376,9 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         initUi();
         initPacketizer();
 
+        DJISDKManager.getInstance().registerApp(this, mDJISDKManagerCallback);
+  //      onDroneConnected();
+  //      notifyStatusChange();
 
     }
 
@@ -360,47 +391,27 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         // The one we must have...
         videostreamPreviewSf = (SurfaceView) findViewById(R.id.livestream_preview_sf);
 
-        //      videostreamPreviewSf.setClickable(true);
-        //       VideoFeeder.getInstance().setTranscodingDataRate(10.0f);
-//        showToast("set rate to 10Mbps");
-        videostreamPreviewSf.setVisibility(View.GONE);
+        VideoFeeder.getInstance().setTranscodingDataRate(10.0f);
+        logMessageDJI("set rate to 10Mbps");
         videostreamPreviewTtView.setVisibility(View.VISIBLE);
+        videostreamPreviewSf.setVisibility(View.GONE);
     }
+    /*
+    @Override
+    protected void onNewIntent(@NonNull Intent intent) {
 
+        super.onNewIntent(intent);
 
-    private void initPacketizer() {
-        Log.e(TAG, "initPacketizer");
-
-        String videoIPString = "127.0.0.1";
-
-        sharedPreferences = android.preference.PreferenceManager.getDefaultSharedPreferences(this);
-        if (sharedPreferences.getBoolean("pref_external_gcs", false)) {
-            if (!sharedPreferences.getBoolean("pref_separate_gcs", false)) {
-                videoIPString = sharedPreferences.getString("pref_gcs_ip", "127.0.0.1");
-            } else {
-                videoIPString = sharedPreferences.getString("pref_video_ip", "127.0.0.1");
-            }
-        } else if (sharedPreferences.getBoolean("pref_separate_gcs", false)) {
-            videoIPString = sharedPreferences.getString("pref_video_ip", "127.0.0.1");
+        String action = intent.getAction();
+        if (UsbManager.ACTION_USB_ACCESSORY_ATTACHED.equals(action)) {
+            Intent attachedIntent = new Intent();
+            attachedIntent.setAction(DJISDKManager.USB_ACCESSORY_ATTACHED);
+            sendBroadcast(attachedIntent);
         }
 
-        int videoPort = Integer.parseInt(sharedPreferences.getString("pref_video_port", "5600"));
-        int videoBitrate = Integer.parseInt(sharedPreferences.getString("pref_video_bitrate", "2000"));
-        int encodeSpeed = Integer.parseInt((sharedPreferences.getString("pref_encode_speed", "2")));
-
-        // VideoFeeder.getInstance().setTranscodingDataRate(10.0f);
-
-        try {
-            if (mPacketizer != null && mPacketizer.getRtpSocket() != null)
-                mPacketizer.getRtpSocket().close();
-            mPacketizer = new H264Packetizer();
-
-            Log.e(TAG, "Receiver: " + videoIPString + ":"+videoPort);
-            mPacketizer.getRtpSocket().setDestination(InetAddress.getByName(videoIPString), videoPort, 5000);
-        } catch (UnknownHostException e) {
-            Log.e(TAG, "Error setting destination for RTP packetizer", e);
-        }
     }
+
+*/
 
     private void notifyStatusChange()
     {
@@ -409,6 +420,12 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         mDJIHandler.postDelayed(djiUpdateRunnable, 500);
 
         final BaseProduct product = RDApplication.getProductInstance();
+
+        if (product != null && product.isConnected() && product.getModel() != null) {
+            logMessageDJI(product.getModel().name() + " Connected " );
+        } else {
+            logMessageDJI("Disconnected");
+        }
 
         // The callback for receiving the raw H264 video data for camera live view
         mReceivedVideoDataListener = new VideoFeeder.VideoDataListener() {
@@ -422,7 +439,6 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
 
         if (null == product || !product.isConnected()) {
             mCamera = null;
-            //   showToast("Disconnected");
         } else {
             if (!product.getModel().equals(Model.UNKNOWN_AIRCRAFT)) {
                 mCamera = product.getCamera();
@@ -430,7 +446,8 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
                     @Override
                     public void onResult(DJIError djiError) {
                         if (djiError != null) {
-                            //       showToast("can't change mode of camera, error:"+djiError.getDescription());
+                            Log.e(TAG, "can't change mode of camera, error: "+djiError.getDescription());
+                            logMessageDJI("can't change mode of camera, error: "+djiError.getDescription());
                         }
                     }
                 });
@@ -438,69 +455,18 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
                 //When calibration is needed or the fetch key frame is required by SDK, should use the provideTranscodedVideoFeed
                 //to receive the transcoded video feed from main camera.
                 if (isTranscodedVideoFeedNeeded()) {
+                    Log.e(TAG, "TranscodedVideoFeedNeeded is needed");
                     standardVideoFeeder = VideoFeeder.getInstance().provideTranscodedVideoFeed();
                     standardVideoFeeder.addVideoDataListener(mReceivedVideoDataListener);
                     return;
                 }
                 if (VideoFeeder.getInstance().getPrimaryVideoFeed() != null) {
+                    Log.e(TAG, "TranscodedVideoFeedNeeded is NOT needed");
                     VideoFeeder.getInstance().getPrimaryVideoFeed().addVideoDataListener(mReceivedVideoDataListener);
                 }
 
             }
         }
-    }
-
-    @Override
-    public void onYuvDataReceived(MediaFormat format, final ByteBuffer yuvFrame, int dataSize, final int width, final int height) {
-//    public void onYuvDataReceived(final ByteBuffer yuvFrame, int dataSize, final int width, final int height) {
-        //In this demo, we test the YUV data by saving it into JPG files.
-        Log.e(TAG, "onYuvDataReceived " + dataSize + "  " + format);
-//        Log.e(TAG, "onYuvDataReceived " + dataSize );
-
-    }
-
-
-    /**
-     * Init a surface view for the DJIVideoStreamDecoder, needed to get video to de system...
-     */
-    private void initPreviewerSurfaceView() {
-        Log.e(TAG, "initPreviewerSurfaceView");
-
-        videostreamPreviewSh = videostreamPreviewSf.getHolder();
-        surfaceCallback = new SurfaceHolder.Callback() {
-            @Override
-            public void surfaceCreated(SurfaceHolder holder) {
-                Log.e(TAG, "surfaceCreated");
-                videoViewWidth  = videostreamPreviewSf.getWidth();
-                videoViewHeight = videostreamPreviewSf.getHeight();
-                Log.d(TAG, "real onSurfaceTextureAvailable3: width " + videoViewWidth + " height " + videoViewHeight);
-
-                // This demo might not work well on P3C and OSMO.
-                NativeHelper.getInstance().init();
-                DJIVideoStreamDecoder.getInstance().init(getApplicationContext(), holder.getSurface());
-                DJIVideoStreamDecoder.getInstance().resume();
-            }
-
-            @Override
-            public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-                Log.e(TAG, "surfaceChanged");
-                videoViewWidth = width;
-                videoViewHeight = height;
-                Log.d(TAG, "real onSurfaceTextureAvailable4: width " + videoViewWidth + " height " + videoViewHeight);
-                DJIVideoStreamDecoder.getInstance().changeSurface(holder.getSurface());
-            }
-
-            @Override
-            public void surfaceDestroyed(SurfaceHolder holder) {
-                Log.e(TAG, "surfaceDestroyed");
-
-                DJIVideoStreamDecoder.getInstance().stop();
-                NativeHelper.getInstance().release();
-            }
-        };
-
-        Log.e(TAG, "videostreamPreviewSh");
-        videostreamPreviewSh.addCallback(surfaceCallback);
     }
 
     /**
@@ -530,6 +496,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
 
             @Override
             public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
+                Log.e(TAG, "onSurfaceTextureDestroyed");
                 if (mCodecManager != null) {
                     mCodecManager.cleanSurface();
                 }
@@ -538,10 +505,188 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
 
             @Override
             public void onSurfaceTextureUpdated(SurfaceTexture surface) {
+                Log.e(TAG, "onSurfaceTextureUpdated");
 
             }
         });
     }
+
+    /**
+     * Init a surface view for the DJIVideoStreamDecoder, needed to get video to de system...
+     */
+    private void initPreviewerSurfaceView() {
+        Log.e(TAG, "initPreviewerSurfaceView");
+        videostreamPreviewSh = videostreamPreviewSf.getHolder();
+        surfaceCallback = new SurfaceHolder.Callback() {
+            @Override
+            public void surfaceCreated(SurfaceHolder holder) {
+                videoViewWidth  = videostreamPreviewSf.getWidth();
+                videoViewHeight = videostreamPreviewSf.getHeight();
+                Log.d(TAG, "real onSurfaceTextureAvailable3: width " + videoViewWidth + " height " + videoViewHeight);
+
+                // This demo might not work well on P3C and OSMO.
+                NativeHelper.getInstance().init();
+                DJIVideoStreamDecoder.getInstance().init(getApplicationContext(), holder.getSurface());
+                DJIVideoStreamDecoder.getInstance().resume();
+            }
+
+            @Override
+            public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+                videoViewWidth = width;
+                videoViewHeight = height;
+                Log.d(TAG, "real onSurfaceTextureAvailable4: width " + videoViewWidth + " height " + videoViewHeight);
+                DJIVideoStreamDecoder.getInstance().changeSurface(holder.getSurface());
+            }
+
+            @Override
+            public void surfaceDestroyed(SurfaceHolder holder) {
+                Log.e(TAG, "surfaceDestroyed");
+                DJIVideoStreamDecoder.getInstance().stop();
+                NativeHelper.getInstance().release();
+            }
+        };
+
+        videostreamPreviewSh.addCallback(surfaceCallback);
+    }
+
+
+    @Override
+    public void onYuvDataReceived(MediaFormat format, final ByteBuffer yuvFrame, int dataSize, final int width, final int height) {
+//    public void onYuvDataReceived(final ByteBuffer yuvFrame, int dataSize, final int width, final int height) {
+        //In this demo, we test the YUV data by saving it into JPG files.
+        Log.e(TAG, "onYuvDataReceived " + dataSize + "  " + format);
+//        Log.e(TAG, "onYuvDataReceived " + dataSize );
+
+    }
+
+
+    //---------------------------------------------------------------------------------------
+    //---------------------------------------------------------------------------------------
+    //---------------------------------------------------------------------------------------
+    //---------------------------------------------------------------------------------------
+
+    private DJISDKManager.SDKManagerCallback mDJISDKManagerCallback = new DJISDKManager.SDKManagerCallback() {
+
+        @Override
+        public void onDatabaseDownloadProgress(long x, long y){
+        }
+
+        @Override
+        public void onInitProcess(DJISDKInitEvent a, int x){
+        }
+
+        @Override
+        public void onProductDisconnect() {
+            //notifyStatusChange();
+        }
+
+        @Override
+        public void onProductConnect(BaseProduct newProduct) {
+            mProduct = newProduct;
+
+            if (mProduct == null) {
+                logMessageDJI("No DJI drone detected");
+                onDroneDisconnected();
+            } else {
+                if (mProduct instanceof Aircraft) {
+                    logMessageDJI("DJI aircraft detected");
+                    onDroneConnected();
+                } else {
+                    logMessageDJI("DJI non-aircraft product detected");
+                    onDroneDisconnected();
+                }
+            }
+
+            logMessageDJI("notifyStatusChange ---1----");
+            notifyStatusChange();
+        }
+
+        @Override
+        public void onComponentChange(BaseProduct.ComponentKey componentKey, BaseComponent oldComponent, BaseComponent newComponent) {
+            if (newComponent != null) {
+                newComponent.setComponentListener(new BaseComponent.ComponentListener() {
+                    @Override
+                    public void onConnectivityChange(boolean isConnected) {
+                        Log.d(TAG, "onComponentConnectivityChanged: " + isConnected);
+                        logMessageDJI("notifyStatusChange ---2----");
+                        notifyStatusChange();
+                    }
+                });
+            }
+        }
+
+        @Override
+        public void onRegister(DJIError error) {
+            Log.d(TAG, error == null ? "success" : error.getDescription());
+            if (error == DJISDKError.REGISTRATION_SUCCESS) {
+                DJISDKManager.getInstance().startConnectionToProduct();
+                Handler handler = new Handler(Looper.getMainLooper());
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        //Toast.makeText(getApplicationContext(), "DJI SDK registered", Toast.LENGTH_LONG).show();
+                        logMessageDJI("DJI SDK registered");
+                    }
+                });
+            } else {
+                Handler handler = new Handler(Looper.getMainLooper());
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        logMessageDJI("DJI SDK registration failed");
+                        //Toast.makeText(getApplicationContext(), "DJI SDK registration failed", Toast.LENGTH_LONG).show();
+                    }
+                });
+            }
+            if (error != null) {
+                Log.e(TAG, error.toString());
+            }
+        }
+
+    };
+/*
+    private void requestPermissions() {
+        // When the compile and target version is higher than 22, please request the following permission at runtime to ensure the SDK works well.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            ActivityCompat.requestPermissions(this, REQUIRED_PERMISSION_LIST, REQUEST_PERMISSION_CODE);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        boolean permissionGrantedForAll = false;
+
+        if (grantResults.length > 0 && permissions.length == grantResults.length) {
+            for (int i = 0; i < permissions.length; i++) {
+                if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
+                    permissionGrantedForAll = true;
+                } else {
+                    permissionGrantedForAll = false;
+                }
+            }
+
+        } else {
+            permissionGrantedForAll = true;
+        }
+        if (permissionGrantedForAll) {
+            permissionGranted = true;
+        } else {
+            permissionGranted = false;
+            finish();
+        }
+
+        DJISDKManager.getInstance().registerApp(this, mDJISDKManagerCallback);
+
+//        invalidateOptionsMenu();
+    }
+
+
+ */
+    //---------------------------------------------------------------------------------------
+    //---------------------------------------------------------------------------------------
+    //endregion
 
     /**
      *
@@ -755,128 +900,6 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         }
         //File dir = new File(Environment.getExternalStorageDirectory()+"DJI/sq.rogue.rosettadrone");
 
-    }
-
-    private void requestPermissions() {
-        // When the compile and target version is higher than 22, please request the following permission at runtime to ensure the SDK works well.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.VIBRATE,
-                            Manifest.permission.INTERNET, Manifest.permission.ACCESS_WIFI_STATE,
-                            Manifest.permission.WAKE_LOCK, Manifest.permission.ACCESS_COARSE_LOCATION,
-                            Manifest.permission.ACCESS_NETWORK_STATE, Manifest.permission.ACCESS_FINE_LOCATION,
-                            Manifest.permission.CHANGE_WIFI_STATE, Manifest.permission.MOUNT_UNMOUNT_FILESYSTEMS,
-                            Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.SYSTEM_ALERT_WINDOW,
-                            Manifest.permission.READ_PHONE_STATE,
-                    }
-                    , 1);
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-
-        boolean permissionGrantedForAll = false;
-        if (grantResults.length > 0 && permissions.length == grantResults.length) {
-            for (int i = 0; i < permissions.length; i++) {
-                if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
-                    permissionGrantedForAll = true;
-                } else {
-                    permissionGrantedForAll = false;
-                }
-            }
-
-        } else {
-            permissionGrantedForAll = true;
-        }
-        if (permissionGrantedForAll) {
-            permissionGranted = true;
-        } else {
-            permissionGranted = false;
-            finish();
-        }
-
-        DJISDKManager.getInstance().registerApp(this, mDJISDKManagerCallback);
-
-//        invalidateOptionsMenu();
-    }
-
-    /**
-     * onResume is called whenever RosettaDrone takes the foreground. This happens if we open the
-     * RosettaDrone application or return from the preferences window. Need to rebind to the AIDL service.
-     */
-    @Override
-    protected void onResume() {
-        Log.d(TAG, "onResume()");
-
-        if (mDroneDetails != null) {
-            String droneID = prefs.getString("pref_drone_id", "1");
-            String rtlAlt = prefs.getString("pref_drone_rtl_altitude", "60") + "m";
-            String text = "ID:" + "\t" + droneID + System.getProperty("line.separator") + "RTL:" + "\t" + rtlAlt;
-            mDroneDetails.setText(text);
-        }
-
-        super.onResume();
-
-        initPreviewerTextureView();  // Decoded data to UDP...
-        initPreviewerSurfaceView();  // Decode data from camera..
-        notifyStatusChange();
-    }
-
-    /**
-     * Called whenever RosettaDrone leaves the foreground, such as when the home button is pressed or
-     * we enter the preferences/settings screen. We unbind the AIDL service since we don't need it if we're not
-     * currently within RosettaDrone.
-     * NOTE: Pressing the back button from the RosettaDrone application also calls onDestroy.
-     */
-    @Override
-    protected void onPause() {
-//        Log.d(TAG, "onPause()");
-
-        if (mCamera != null) {
-            if (VideoFeeder.getInstance().getPrimaryVideoFeed() != null) {
-                VideoFeeder.getInstance().getPrimaryVideoFeed().removeVideoDataListener(mReceivedVideoDataListener);
-            }
-            if (standardVideoFeeder != null) {
-                standardVideoFeeder.removeVideoDataListener(mReceivedVideoDataListener);
-            }
-        }
-
-        super.onPause();
-        // We have to save text when onPause is called or it will be erased
-//        mNewOutbound = logToGCS.getLogText() + mNewOutbound;
-//        mNewInbound = logFromGCS.getLogText() + mNewInbound;
-//        mNewDJI = logDJI.getLogText() + mNewDJI;
-    }
-
-    @Override
-    protected void onStop() {
-//        Log.i(TAG, "onStop");
-        super.onStop();
-    }
-
-    @Override
-    protected void onDestroy() {
-//        Log.i(TAG, "onDestroy");
-//        logMessageDJI("onDestroy()");
-        sendDroneDisconnected();
-        closeGCSCommunicator();
-
-        if (mUIHandler != null) {
-            mUIHandler.removeCallbacksAndMessages(null);
-        }
-
-        if (mDJIHandler != null) {
-            mDJIHandler.removeCallbacksAndMessages(null);
-        }
-
-        if (mCodecManager != null) {
-            mCodecManager.cleanSurface();
-            mCodecManager.destroyCodec();
-        }
-
-        super.onDestroy();
     }
 
     /**

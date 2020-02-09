@@ -15,16 +15,20 @@
         android:layout_width="match_parent"
         android:layout_height="24dp"
         android:fitsSystemWindows="true"
+        android:stateListAnimator="@animator/appbar_elevation"
         android:theme="@style/AppTheme"
-        android:stateListAnimator="@animator/appbar_elevation">
+        app:layout_constraintBottom_toTopOf="@+id/fragment_container"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <com.google.android.material.appbar.CollapsingToolbarLayout
             android:id="@+id/collapsing_toolbar"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            app:layout_scrollFlags="scroll|exitUntilCollapsed"
             android:background="@color/white"
-            android:fitsSystemWindows="true">
+            android:fitsSystemWindows="true"
+            app:layout_scrollFlags="scroll|exitUntilCollapsed">
 
             <androidx.appcompat.widget.Toolbar
                 android:id="@+id/indicator_bar"
@@ -39,17 +43,17 @@
                     android:layout_height="20dp"
                     android:layout_below="@+id/toolbar"
                     android:foreground="@drawable/ic_outline_disconnected_24px"
-                    app:layout_collapseMode="parallax"
                     android:paddingStart="5dp"
-                    android:paddingEnd="15dp" />
+                    android:paddingEnd="15dp"
+                    app:layout_collapseMode="parallax" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
-                    android:text="@string/dji"
-                    android:textColor="@color/black"
                     android:paddingStart="5dp"
-                    android:paddingEnd="20dp" />
+                    android:paddingEnd="20dp"
+                    android:text="@string/dji"
+                    android:textColor="@color/black" />
 
                 <ImageView
                     android:id="@+id/gcs_conn"
@@ -57,28 +61,28 @@
                     android:layout_height="20dp"
                     android:layout_below="@+id/toolbar"
                     android:foreground="@drawable/ic_outline_disconnected_24px"
-                    app:layout_collapseMode="parallax"
                     android:paddingStart="5dp"
-                    android:paddingEnd="15dp" />
+                    android:paddingEnd="15dp"
+                    app:layout_collapseMode="parallax" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
-                    android:text="@string/gcs"
-                    android:textColor="@color/black"
                     android:paddingStart="5dp"
-                    android:paddingEnd="20dp" />
+                    android:paddingEnd="20dp"
+                    android:text="@string/gcs"
+                    android:textColor="@color/black" />
 
                 <ImageView
                     android:id="@+id/indicator_bar_arrow"
                     android:layout_width="20dp"
                     android:layout_height="20dp"
                     android:layout_below="@+id/toolbar"
-                    android:foreground="@drawable/ic_arrow_down_indicator_24dp"
-                    app:layout_collapseMode="parallax"
                     android:layout_gravity="end"
+                    android:foreground="@drawable/ic_arrow_down_indicator_24dp"
                     android:paddingStart="20dp"
-                    android:paddingEnd="5dp" />
+                    android:paddingEnd="5dp"
+                    app:layout_collapseMode="parallax" />
 
             </androidx.appcompat.widget.Toolbar>
 
@@ -99,8 +103,8 @@
 
         <TextureView
             android:id="@+id/livestream_preview_ttv"
-            android:layout_width="302dp"
-            android:layout_height="191dp"
+            android:layout_width="wrap_content"
+            android:layout_height="278dp"
             android:layout_below="@id/livestream_preview_sf"
             android:layout_centerInParent="true"
             android:layout_centerVertical="false"
@@ -112,11 +116,11 @@
 
         <SurfaceView
             android:id="@+id/livestream_preview_sf"
-            android:layout_width="107dp"
-            android:layout_height="54dp"
+            android:layout_width="411dp"
+            android:layout_height="225dp"
             android:layout_below="@id/livestream_preview_ttv"
             android:layout_centerInParent="true"
-            android:layout_gravity="center"
+            android:layout_gravity="bottom"
             android:visibility="invisible" />
 
     </FrameLayout>
