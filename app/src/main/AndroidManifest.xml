@@ -53,16 +53,17 @@
 
         <activity android:name="sq.rogue.rosettadrone.MainActivity"
             android:screenOrientation="portrait">
-<!--            android:launchMode="singleInstance"> -->
+            <!--            android:launchMode="singleInstance"> -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <action android:name="android.hardware.usb.action.USB_ACCESSORY_ATTACHED" />
 
-<!--                <category android:name="android.intent.category.LAUNCHER"/>  -->
+                <!--                <category android:name="android.intent.category.LAUNCHER"/>  -->
             </intent-filter>
-            <meta-data
-                android:name="android.hardware.usb.action.USB_ACCESSORY_ATTACHED"
-                android:resource="@xml/accessory_filter" />
+            <!--          <meta-data
+                          android:name="android.hardware.usb.action.USB_ACCESSORY_ATTACHED"
+                          android:resource="@xml/accessory_filter" />
+                      -->
         </activity>
 
         <uses-library android:name="org.apache.http.legacy" android:required="false" />
@@ -86,10 +87,10 @@
 
         <service android:name="dji.sdk.sdkmanager.DJIGlobalService">
         </service>
-<!--
-        <service android:name="sq.rogue.rosettadrone.video.VideoService">
-        </service>
--->
+        <!--
+                <service android:name="sq.rogue.rosettadrone.video.VideoService">
+                </service>
+        -->
         <!-- DJI SDK -->
     </application>
 

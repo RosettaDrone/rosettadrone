@@ -24,8 +24,10 @@ import android.util.Log;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.net.SocketException;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -52,6 +54,7 @@ public class RtpSocket implements Runnable {
     public static final int RTP_HEADER_LENGTH = 12;
     public static final int MTU = 1300;
     public MulticastSocket mSocket;
+    public DatagramSocket  mSocketUDP;
     protected OutputStream mOutputStream = null;
     private DatagramPacket[] mPackets;
     private byte[][] mBuffers;
@@ -83,6 +86,12 @@ public class RtpSocket implements Runnable {
         mAverageBitrate = new AverageBitrate();
         mTransport = TRANSPORT_UDP;
         mTcpHeader = new byte[]{'$', 0, 0, 0};
+
+        try {
+            mSocketUDP = new DatagramSocket();
+        } catch (SocketException e) {
+            Log.e(TAG, "Error creating Gstreamer datagram socket", e);
+        }
 
         resetFifo();
 
@@ -136,6 +145,7 @@ public class RtpSocket implements Runnable {
      */
     public void close() {
         mSocket.close();
+        mSocketUDP.close();
     }
 
     /**
@@ -184,6 +194,7 @@ public class RtpSocket implements Runnable {
         if (dport != 0 && rtcpPort != 0) {
             mTransport = TRANSPORT_UDP;
             mPort = dport;
+            Log.d(TAG, "setDestination: " +dest +":"+dport );
             for (int i = 0; i < mBufferCount; i++) {
                 mPackets[i].setPort(dport);
                 mPackets[i].setAddress(dest);
@@ -212,7 +223,8 @@ public class RtpSocket implements Runnable {
 
     public int[] getLocalPorts() {
         return new int[]{
-                mSocket.getLocalPort(),
+                mSocketUDP.getLocalPort(),
+//                mSocket.getLocalPort(),
                 //mReport.getLocalPort()
         };
 
@@ -328,7 +340,9 @@ public class RtpSocket implements Runnable {
                 mOldTimestamp = mTimestamps[mBufferOut];
                 if (mCount++ > 30) {
                     if (mTransport == TRANSPORT_UDP) {
-                        mSocket.send(mPackets[mBufferOut]);
+                   //     Log.e(TAG,"sening...");
+ 						mSocketUDP.send(mPackets[mBufferOut]);
+//                        mSocket.send(mPackets[mBufferOut]);
                     } else {
                         sendTCP();
                     }

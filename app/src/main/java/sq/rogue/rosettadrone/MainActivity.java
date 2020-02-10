@@ -150,8 +150,6 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
     private VideoFeeder.VideoFeed standardVideoFeeder;
     protected VideoFeeder.VideoDataListener mReceivedVideoDataListener = null;
     private TextureView videostreamPreviewTtView;
-    private SurfaceView videostreamPreviewSf;
-    private SurfaceHolder videostreamPreviewSh;
     private Camera mCamera;
     private DJICodecManager mCodecManager;
     private int videoViewWidth;
@@ -221,9 +219,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         super.onResume();
 
         initPreviewerTextureView();  // Decoded data to UDP...
-        initPreviewerSurfaceView();  // Decode data from camera..
-   //     logMessageDJI("notifyStatusChange ---3----");
-     //   notifyStatusChange();
+        //notifyStatusChange();
     }
 
     private void initPacketizer() {
@@ -242,12 +238,11 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
             videoIPString = sharedPreferences.getString("pref_video_ip", "127.0.0.1");
         }
 
-        videoIPString = "10.0.0.104";
-        int videoPort = 5600; //Integer.parseInt(sharedPreferences.getString("pref_video_port", "5600"));
+        int videoPort = Integer.parseInt(sharedPreferences.getString("pref_video_port", "5600"));
         int videoBitrate = Integer.parseInt(sharedPreferences.getString("pref_video_bitrate", "2000"));
-        int encodeSpeed = Integer.parseInt((sharedPreferences.getString("pref_encode_speed", "2")));
+        int encodeSpeed = Integer.parseInt((sharedPreferences.getString("pref_encode_speed", "5")));
 
-        //VideoFeeder.getInstance().setTranscodingDataRate(encodeSpeed);
+        VideoFeeder.getInstance().setTranscodingDataRate(encodeSpeed);
 
         try {
             if (mPacketizer != null && mPacketizer.getRtpSocket() != null)
@@ -270,7 +265,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
     @Override
     protected void onPause() {
         Log.e(TAG, "onPause()");
-/*
+
         if (mCamera != null) {
             if (VideoFeeder.getInstance().getPrimaryVideoFeed() != null) {
                 VideoFeeder.getInstance().getPrimaryVideoFeed().removeVideoDataListener(mReceivedVideoDataListener);
@@ -279,7 +274,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
                 standardVideoFeeder.removeVideoDataListener(mReceivedVideoDataListener);
             }
         }
-*/
+
         super.onPause();
         // We have to save text when onPause is called or it will be erased
 //        mNewOutbound = logToGCS.getLogText() + mNewOutbound;
@@ -316,7 +311,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         super.onDestroy();
     }
 
-   @Override
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.e(TAG, "onCreate()");
         super.onCreate(savedInstanceState);
@@ -332,8 +327,6 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
             e.printStackTrace();
         }
         getSupportActionBar().setTitle("Rosetta Drone " + versionName);
-
-   //     requestPermissions();
 
         if (savedInstanceState != null) {
             navState = savedInstanceState.getInt("navigation_state");
@@ -372,13 +365,14 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
                 sendBroadcast(attachedIntent);
             }
         }
+
         // The one we must have...
         initUi();
         initPacketizer();
 
         DJISDKManager.getInstance().registerApp(this, mDJISDKManagerCallback);
-  //      onDroneConnected();
-  //      notifyStatusChange();
+        //      onDroneConnected();
+        //      notifyStatusChange();
 
     }
 
@@ -388,15 +382,12 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         // The one were we get transcoded data...
         videostreamPreviewTtView = (TextureView) findViewById(R.id.livestream_preview_ttv);
 
-        // The one we must have...
-        videostreamPreviewSf = (SurfaceView) findViewById(R.id.livestream_preview_sf);
+        VideoFeeder.getInstance().setTranscodingDataRate(3.0f);
+        //logMessageDJI("set rate to 3Mbps");
 
-        VideoFeeder.getInstance().setTranscodingDataRate(10.0f);
-        logMessageDJI("set rate to 10Mbps");
         videostreamPreviewTtView.setVisibility(View.VISIBLE);
-        videostreamPreviewSf.setVisibility(View.GONE);
     }
-    /*
+
     @Override
     protected void onNewIntent(@NonNull Intent intent) {
 
@@ -411,13 +402,13 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
 
     }
 
-*/
 
     private void notifyStatusChange()
     {
         Log.e(TAG, "notifyStatusChange");
         mDJIHandler.removeCallbacks(djiUpdateRunnable);
         mDJIHandler.postDelayed(djiUpdateRunnable, 500);
+
 
         final BaseProduct product = RDApplication.getProductInstance();
 
@@ -433,7 +424,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
             @Override
             public void onReceive(byte[] videoBuffer, int size) {
                 splitNALs(videoBuffer);
-                Log.e(TAG,"Out...");
+            //    Log.e(TAG,"Out...");
             }
         };
 
@@ -483,6 +474,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
                 videoViewHeight = height;
                 Log.d(TAG, "real onSurfaceTextureAvailable: width " + videoViewWidth + " height " + videoViewHeight);
                 if (mCodecManager == null) {
+                    Log.d(TAG, "Start..." );
                     mCodecManager = new DJICodecManager(getApplicationContext(), surface, width, height);
                 }
             }
@@ -505,7 +497,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
 
             @Override
             public void onSurfaceTextureUpdated(SurfaceTexture surface) {
-                Log.e(TAG, "onSurfaceTextureUpdated");
+         //       Log.e(TAG, "onSurfaceTextureUpdated");
 
             }
         });
@@ -514,6 +506,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
     /**
      * Init a surface view for the DJIVideoStreamDecoder, needed to get video to de system...
      */
+    /*
     private void initPreviewerSurfaceView() {
         Log.e(TAG, "initPreviewerSurfaceView");
         videostreamPreviewSh = videostreamPreviewSf.getHolder();
@@ -522,7 +515,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
             public void surfaceCreated(SurfaceHolder holder) {
                 videoViewWidth  = videostreamPreviewSf.getWidth();
                 videoViewHeight = videostreamPreviewSf.getHeight();
-                Log.d(TAG, "real onSurfaceTextureAvailable3: width " + videoViewWidth + " height " + videoViewHeight);
+                Log.d(TAG, "real surfaceCreated: width " + videoViewWidth + " height " + videoViewHeight);
 
                 // This demo might not work well on P3C and OSMO.
                 NativeHelper.getInstance().init();
@@ -534,7 +527,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
             public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
                 videoViewWidth = width;
                 videoViewHeight = height;
-                Log.d(TAG, "real onSurfaceTextureAvailable4: width " + videoViewWidth + " height " + videoViewHeight);
+                Log.d(TAG, "real surfaceChanged: width " + videoViewWidth + " height " + videoViewHeight);
                 DJIVideoStreamDecoder.getInstance().changeSurface(holder.getSurface());
             }
 
@@ -548,7 +541,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
 
         videostreamPreviewSh.addCallback(surfaceCallback);
     }
-
+*/
 
     @Override
     public void onYuvDataReceived(MediaFormat format, final ByteBuffer yuvFrame, int dataSize, final int width, final int height) {
@@ -644,6 +637,8 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         }
 
     };
+
+
 /*
     private void requestPermissions() {
         // When the compile and target version is higher than 22, please request the following permission at runtime to ensure the SDK works well.
@@ -1616,3 +1611,4 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
     //endregion
 
 }
+

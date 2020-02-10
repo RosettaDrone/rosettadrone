@@ -51,7 +51,7 @@ public class H264Packetizer extends AbstractPacketizer implements Runnable {
         super();
         socket.setClockFrequency(90000);
         try {
-            socket.setDestination(InetAddress.getByName("127.0.0.1"), 5601, 5000);
+            socket.setDestination(InetAddress.getByName("192.168.1.124"), 5600, 5000);
             Log.d(TAG, "socket address configured");
         } catch (IOException e) {
             Log.d(TAG, "error setting socket", e);
@@ -191,6 +191,8 @@ public class H264Packetizer extends AbstractPacketizer implements Runnable {
             socket.updateTimestamp(ts);
             System.arraycopy(stapa, 0, buffer, rtphl, stapa.length);
             super.send(rtphl + stapa.length);
+          //  Log.e(TAG,"-----  NAL unit - len:"+len+" delay: "+delay);
+
         }
 
         //Log.d(TAG,"- Nal unit length: " + naluLength + " delay: "+delay/1000000+" type: "+type);
@@ -203,7 +205,7 @@ public class H264Packetizer extends AbstractPacketizer implements Runnable {
             socket.updateTimestamp(ts);
             socket.markNextPacket();
             super.send(naluLength + rtphl);
-            //Log.d(TAG,"----- Single NAL unit - len:"+len+" delay: "+delay);
+          //  Log.e(TAG,"----- Single NAL unit - len:"+len+" delay: "+delay);
         }
         // Large NAL unit => Split nal unit
         else {
@@ -232,7 +234,7 @@ public class H264Packetizer extends AbstractPacketizer implements Runnable {
                 super.send(len + rtphl + 2);
                 // Switch start bit
                 header[1] = (byte) (header[1] & 0x7F);
-                //Log.d(TAG,"----- FU-A unit, sum:"+sum);
+            //    Log.e(TAG,"----- FU-A unit, sum:"+sum);
             }
         }
     }

@@ -5,11 +5,15 @@ android {
     defaultConfig {
         applicationId "sq.rogue.rosettadrone"
         minSdkVersion 26
-        targetSdkVersion 27
+        targetSdkVersion 28
         versionCode 1
         versionName "4.11.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         multiDexEnabled true
+    }
+
+    dexOptions {
+        javaMaxHeapSize "4g"
     }
 
     buildTypes {
@@ -25,6 +29,13 @@ android {
     sourceSets {
         main {
             jniLibs.srcDirs = ['src/main/cpp/lib']
+        }
+    }
+
+    sourceSets {
+        main {
+            jni.srcDirs=[]
+            jniLibs.srcDirs=['../libs']
         }
     }
 
@@ -60,6 +71,11 @@ android {
         ndk {
             abiFilters 'armeabi-v7a' // more could be added
         }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 
 }
