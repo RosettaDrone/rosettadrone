@@ -96,6 +96,7 @@ The use of an ArduPilot dialect over PX4 is not intended to be a statement of pr
 # Acknowledgements
 
 Rosetta Drone was brought to you by developers from Rogue Squadron, a UAS/C-UAS red team at the Defense Innovation Unit Experimental.
+The updated version was brought to you by eSmartSystems in cooperation with  the Defense Drone depatment at 9Tek.
 
 ## Icons
 Icons made by Pixel Perfect & Freepik at flaticon
