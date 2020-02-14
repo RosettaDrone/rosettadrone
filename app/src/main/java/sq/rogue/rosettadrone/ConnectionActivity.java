@@ -2,7 +2,9 @@ package sq.rogue.rosettadrone;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.hardware.usb.UsbManager;
 import android.os.AsyncTask;
@@ -41,8 +43,9 @@ import dji.sdk.sdkmanager.DJISDKManager;
 import dji.sdk.useraccount.UserAccountManager;
 
 
-
 public class ConnectionActivity extends Activity implements View.OnClickListener {
+
+    private String CustomName = "eSmartSystems";
 
     private static final String TAG = MainActivity.class.getName();
     private static final String[] REQUIRED_PERMISSION_LIST = new String[]{
@@ -260,7 +263,26 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         mBtnOpen.setOnClickListener(this);
         mBtnOpen.setEnabled(false);
         ((TextView)findViewById(R.id.textView2)).setText(getResources().getString(R.string.sdk_version, DJISDKManager.getInstance().getSDKVersion()));
+        Context appContext = this.getBaseContext();
+        String version = "Version: "+getAppVersion(appContext);
+        Log.e(TAG,""+version);
+        ((TextView)findViewById(R.id.textView3)).setText(version);
 
+        if(CustomName.length() > 0)
+            ((TextView)findViewById(R.id.textView)).setText(CustomName);
+    }
+
+    public static String getAppVersion(Context context){
+        PackageManager localPackageManager = context.getPackageManager();
+        try{
+            String str = localPackageManager.getPackageInfo(context.getPackageName(), 0).versionName;
+            return str;
+        }
+        catch (PackageManager.NameNotFoundException e){
+            Log.e(TAG, "getAppVersion error" + e.getMessage());
+            e.printStackTrace();
+        }
+        return "";
     }
 
     private void updateTitleBar() {

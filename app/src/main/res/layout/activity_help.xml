@@ -5,12 +5,13 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
+
     <TextView
         android:id="@+id/text_connection_status"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:text="DJI to Mavlink"
+        android:text="Status:"
         android:textColor="@android:color/black"
         android:textSize="20dp"
         android:textStyle="bold"
@@ -18,48 +19,107 @@
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="89dp" />
 
-    <TextView
-        android:id="@+id/text_product_info"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="270dp"
-        android:text="@string/product_information"
-        android:textColor="@android:color/black"
-        android:textSize="20dp"
-        android:gravity="center"
-        android:textStyle="bold"
-        />
-
-    <TextView
-        android:id="@+id/text_model_available"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:gravity="center"
-        android:layout_marginTop="300dp"
-        android:text="@string/model_not_available"
-        android:textSize="15dp"/>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="430dp"
-        android:textSize="15dp"
-        android:id="@+id/textView2" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceSmall"
-        android:text="RosettaDrone"
+        android:text="This is a Mavlink wrapper for the DJI SDK, "
         android:id="@+id/textView"
         android:layout_marginTop="58dp"
         android:textStyle="bold"
-        android:textSize="20dp"
+        android:textSize="15dp"
         android:textColor="@color/colorBlack"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="which allows users to fly DJI drones using  "
+        android:id="@+id/textView2"
+        android:layout_marginTop="78dp"
+        android:textStyle="bold"
+        android:textSize="15dp"
+        android:textColor="@color/colorBlack"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true" />
+
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="Mavlink-speaking GCS but all testing so far has "
+        android:id="@+id/textView3"
+        android:layout_marginTop="98dp"
+        android:textStyle="bold"
+        android:textSize="15dp"
+        android:textColor="@color/colorBlack"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="been done with QGroundControl. "
+        android:id="@+id/textView4"
+        android:layout_marginTop="118dp"
+        android:textStyle="bold"
+        android:textSize="15dp"
+        android:textColor="@color/colorBlack"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="Also DroneKit and MavProxy is working. "
+        android:id="@+id/textView5"
+        android:layout_marginTop="158dp"
+        android:textStyle="bold"
+        android:textSize="15dp"
+        android:textColor="@color/colorBlack"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="Live Video from the drone can be viewed "
+        android:id="@+id/textView6"
+        android:layout_marginTop="198dp"
+        android:textStyle="bold"
+        android:textSize="15dp"
+        android:textColor="@color/colorBlack"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="with most H264 viewes, only GStream is tested. "
+        android:id="@+id/textView7"
+        android:layout_marginTop="218dp"
+        android:textStyle="bold"
+        android:textSize="15dp"
+        android:textColor="@color/colorBlack"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true" />
+
+    <ImageView
+        android:id="@+id/action_dji"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_gravity="center"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="530dp"
+        android:src="@drawable/ic_drone"/>
+
 
 </RelativeLayout>
