@@ -7,7 +7,7 @@ android {
         minSdkVersion 22
         targetSdkVersion 28
         versionCode 1
-        versionName "4.11.1"
+        versionName "5.0.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         multiDexEnabled true
     }
@@ -112,7 +112,7 @@ dependencies {
     testImplementation 'org.mockito:mockito-android:2.7.22'
     implementation 'androidx.multidex:multidex:2.0.1'
 
-    implementation 'androidx.core:core:1.1.0'
+    implementation 'androidx.core:core:1.2.0'
     implementation 'androidx.recyclerview:recyclerview:1.1.0'
     implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
 

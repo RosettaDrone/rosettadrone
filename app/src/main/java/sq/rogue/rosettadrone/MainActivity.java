@@ -6,7 +6,10 @@ package sq.rogue.rosettadrone;
 // MenuItemTetColor: RPP @ https://stackoverflow.com/questions/31713628/change-menuitem-text-color-programmatically
 
 import android.Manifest;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -81,6 +84,13 @@ import java.util.zip.ZipOutputStream;
 import dji.common.camera.SettingsDefinitions;
 import dji.common.error.DJIError;
 import dji.common.error.DJISDKError;
+import dji.common.flightcontroller.simulator.InitializationData;
+import dji.common.flightcontroller.simulator.SimulatorState;
+import dji.common.flightcontroller.virtualstick.FlightCoordinateSystem;
+import dji.common.flightcontroller.virtualstick.RollPitchControlMode;
+import dji.common.flightcontroller.virtualstick.VerticalControlMode;
+import dji.common.flightcontroller.virtualstick.YawControlMode;
+import dji.common.model.LocationCoordinate2D;
 import dji.common.product.Model;
 import dji.common.util.CommonCallbacks;
 import dji.sdk.base.BaseComponent;
@@ -88,6 +98,7 @@ import dji.sdk.base.BaseProduct;
 import dji.sdk.camera.Camera;
 import dji.sdk.camera.VideoFeeder;
 import dji.sdk.codec.DJICodecManager;
+import dji.sdk.flightcontroller.FlightController;
 import dji.sdk.products.Aircraft;
 import dji.sdk.sdkmanager.DJISDKInitEvent;
 import dji.sdk.sdkmanager.DJISDKManager;
@@ -158,6 +169,8 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
     private SurfaceHolder.Callback surfaceCallback;
     protected SharedPreferences sharedPreferences;
 
+    private FlightController mFlightController;
+
     private Runnable djiUpdateRunnable = new Runnable() {
         @Override
         public void run() {
@@ -220,7 +233,68 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
 
         initPreviewerTextureView();  // Decoded data to UDP...
         //notifyStatusChange();
+        if(RDApplication.getSim() == true) {
+            initFlightController();
+        }
     }
+
+
+
+    private void initFlightController() {
+        logMessageDJI("Starting simulator...");
+        Aircraft aircraft = (Aircraft) RDApplication.getProductInstance(); //DJISimulatorApplication.getAircraftInstance();
+        if (aircraft == null || !aircraft.isConnected()) {
+            logMessageDJI("No target...");
+            mFlightController = null;
+            return;
+        } else {
+            mFlightController = aircraft.getFlightController();
+            mFlightController.setRollPitchControlMode(RollPitchControlMode.VELOCITY);
+            mFlightController.setYawControlMode(YawControlMode.ANGULAR_VELOCITY);
+            mFlightController.setVerticalControlMode(VerticalControlMode.VELOCITY);
+            mFlightController.setRollPitchCoordinateSystem(FlightCoordinateSystem.BODY);
+            mFlightController.getSimulator().setStateCallback(new SimulatorState.Callback() {
+                @Override
+                public void onUpdate(final SimulatorState stateData) {
+                    new Handler(Looper.getMainLooper()).post(new Runnable() {
+                        @Override
+                        public void run() {
+
+                            String yaw = String.format("%.2f", stateData.getYaw());
+                            String pitch = String.format("%.2f", stateData.getPitch());
+                            String roll = String.format("%.2f", stateData.getRoll());
+                            String positionX = String.format("%.2f", stateData.getPositionX());
+                            String positionY = String.format("%.2f", stateData.getPositionY());
+                            String positionZ = String.format("%.2f", stateData.getPositionZ());
+
+                            Log.v("SIM", "Yaw : " + yaw + ", Pitch : " + pitch + ", Roll : " + roll + "\n" + ", PosX : " + positionX +
+                                    ", PosY : " + positionY +
+                                    ", PosZ : " + positionZ);
+                        }
+                    });
+                }
+            });
+        }
+
+        if (mFlightController != null) {
+            logMessageDJI("Target found...");
+
+            mFlightController.getSimulator()
+                    .start(InitializationData.createInstance(new LocationCoordinate2D(23, 113), 10, 10),
+                            new CommonCallbacks.CompletionCallback() {
+                                @Override
+                                public void onResult(DJIError djiError) {
+                                    if (djiError != null) {
+                                        logMessageDJI(djiError.getDescription());
+                                    } else {
+                                        logMessageDJI("Start Simulator Success");
+                                    }
+                                }
+                            });
+        }
+    }
+
+
 
     private void initPacketizer() {
         Log.e(TAG, "initPacketizer");
@@ -371,9 +445,49 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         initPacketizer();
 
         DJISDKManager.getInstance().registerApp(this, mDJISDKManagerCallback);
-        //      onDroneConnected();
-        //      notifyStatusChange();
 
+        // If simulator...
+        if(RDApplication.getSim() == true) {
+            logMessageDJI("Simulation mode......");
+            // Register the broadcast receiver for receiving the device connection's changes.
+            IntentFilter filter = new IntentFilter();
+            filter.addAction(DJISimulatorApplication.FLAG_CONNECTION_CHANGE);
+            registerReceiver(mReceiver, filter);
+        }
+    }
+
+    protected BroadcastReceiver mReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            updateTitleBar();
+            logMessageDJI("Simulator state change...");
+        }
+    };
+
+    private void updateTitleBar() {
+        boolean ret = false;
+        BaseProduct product = DJISimulatorApplication.getProductInstance();
+        if (product != null) {
+            if(product.isConnected()) {
+                //The product is connected
+                logMessageDJI(DJISimulatorApplication.getProductInstance().getModel() + " Connected");
+                ret = true;
+            } else {
+                if(product instanceof Aircraft) {
+                    Aircraft aircraft = (Aircraft)product;
+                    if(aircraft.getRemoteController() != null && aircraft.getRemoteController().isConnected()) {
+                        // The product is not connected, but the remote controller is connected
+                        logMessageDJI("only RC Connected");
+                        ret = true;
+                    }
+                }
+            }
+        }
+
+        if(!ret) {
+            // The product or the remote controller are not connected.
+            logMessageDJI("Disconnected");
+        }
     }
 
     private void initUi() {
@@ -402,13 +516,10 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
 
     }
 
-
-    private void notifyStatusChange()
-    {
+    private void notifyStatusChange() {
         Log.e(TAG, "notifyStatusChange");
         mDJIHandler.removeCallbacks(djiUpdateRunnable);
         mDJIHandler.postDelayed(djiUpdateRunnable, 500);
-
 
         final BaseProduct product = RDApplication.getProductInstance();
 
@@ -502,46 +613,6 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
             }
         });
     }
-
-    /**
-     * Init a surface view for the DJIVideoStreamDecoder, needed to get video to de system...
-     */
-    /*
-    private void initPreviewerSurfaceView() {
-        Log.e(TAG, "initPreviewerSurfaceView");
-        videostreamPreviewSh = videostreamPreviewSf.getHolder();
-        surfaceCallback = new SurfaceHolder.Callback() {
-            @Override
-            public void surfaceCreated(SurfaceHolder holder) {
-                videoViewWidth  = videostreamPreviewSf.getWidth();
-                videoViewHeight = videostreamPreviewSf.getHeight();
-                Log.d(TAG, "real surfaceCreated: width " + videoViewWidth + " height " + videoViewHeight);
-
-                // This demo might not work well on P3C and OSMO.
-                NativeHelper.getInstance().init();
-                DJIVideoStreamDecoder.getInstance().init(getApplicationContext(), holder.getSurface());
-                DJIVideoStreamDecoder.getInstance().resume();
-            }
-
-            @Override
-            public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-                videoViewWidth = width;
-                videoViewHeight = height;
-                Log.d(TAG, "real surfaceChanged: width " + videoViewWidth + " height " + videoViewHeight);
-                DJIVideoStreamDecoder.getInstance().changeSurface(holder.getSurface());
-            }
-
-            @Override
-            public void surfaceDestroyed(SurfaceHolder holder) {
-                Log.e(TAG, "surfaceDestroyed");
-                DJIVideoStreamDecoder.getInstance().stop();
-                NativeHelper.getInstance().release();
-            }
-        };
-
-        videostreamPreviewSh.addCallback(surfaceCallback);
-    }
-*/
 
     @Override
     public void onYuvDataReceived(MediaFormat format, final ByteBuffer yuvFrame, int dataSize, final int width, final int height) {
@@ -638,47 +709,6 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
 
     };
 
-
-/*
-    private void requestPermissions() {
-        // When the compile and target version is higher than 22, please request the following permission at runtime to ensure the SDK works well.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            ActivityCompat.requestPermissions(this, REQUIRED_PERMISSION_LIST, REQUEST_PERMISSION_CODE);
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-
-        boolean permissionGrantedForAll = false;
-
-        if (grantResults.length > 0 && permissions.length == grantResults.length) {
-            for (int i = 0; i < permissions.length; i++) {
-                if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
-                    permissionGrantedForAll = true;
-                } else {
-                    permissionGrantedForAll = false;
-                }
-            }
-
-        } else {
-            permissionGrantedForAll = true;
-        }
-        if (permissionGrantedForAll) {
-            permissionGranted = true;
-        } else {
-            permissionGranted = false;
-            finish();
-        }
-
-        DJISDKManager.getInstance().registerApp(this, mDJISDKManagerCallback);
-
-//        invalidateOptionsMenu();
-    }
-
-
- */
     //---------------------------------------------------------------------------------------
     //---------------------------------------------------------------------------------------
     //endregion

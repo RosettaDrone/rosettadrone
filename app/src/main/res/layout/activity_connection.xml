@@ -54,6 +54,17 @@
         android:textSize="20dp"
         />
 
+    <Button
+        android:id="@+id/btn_sim"
+        android:layout_width="50dp"
+        android:layout_height="55dp"
+        android:layout_marginLeft="50dp"
+        android:layout_marginTop="540dp"
+        android:background="@drawable/round_btn"
+        android:text="Sim"
+        android:textColor="@color/colorWhite"
+        android:textSize="20dp" />
+
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -63,25 +74,25 @@
         android:id="@+id/textView2" />
 
     <TextView
+        android:id="@+id/textView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceSmall"
-        android:text="Project 'Rosettadrone'"
-        android:id="@+id/textView"
-        android:layout_marginTop="58dp"
-        android:textStyle="bold"
-        android:textSize="20dp"
-        android:textColor="@color/colorBlack"
         android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true" />
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="30dp"
+        android:text="Project 'Rosettadrone'"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:textColor="@color/colorBlack"
+        android:textSize="30sp"
+        android:textStyle="bold" />
 
     <TextView
+        android:id="@+id/textView3"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="85dp"
-        android:textSize="15dp"
-        android:id="@+id/textView3" />
+        android:layout_marginTop="90dp"
+        android:textSize="15dp" />
 
     <ImageView
         android:id="@+id/action_dji"
