@@ -11,8 +11,9 @@ import com.MAVLink.common.msg_radio_status;
 
 /**
  * Storage for MAVLink Packet and Error statistics
+ * 
  */
-public class MAVLinkStats /* implements Serializable */ {
+public class MAVLinkStats /* implements Serializable */{
 
     public int receivedPacketCount; // total recieved packet count for all sources
 
@@ -37,8 +38,9 @@ public class MAVLinkStats /* implements Serializable */ {
     /**
      * Check the new received packet to see if has lost someone between this and
      * the last packet
-     *
-     * @param packet Packet that should be checked
+     * 
+     * @param packet
+     *            Packet that should be checked
      */
     public void newPacket(MAVLinkPacket packet) {
         if (ignoreRadioPackets && packet.msgid == msg_radio_status.MAVLINK_MSG_ID_RADIO_STATUS) {
@@ -142,7 +144,7 @@ public class MAVLinkStats /* implements Serializable */ {
         }
 
         private boolean hasLostPackets(MAVLinkPacket packet) {
-            return lastPacketSeq >= 0 && packet.seq != lastPacketSeq;
+            return lastPacketSeq >=  0 && packet.seq != lastPacketSeq;
         }
     }
 

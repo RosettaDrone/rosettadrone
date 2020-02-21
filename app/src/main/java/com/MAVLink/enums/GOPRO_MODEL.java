@@ -6,15 +6,15 @@
 
 package com.MAVLink.enums;
 
-/**
- *
- */
+/** 
+* 
+*/
 public class GOPRO_MODEL {
-    public static final int GOPRO_MODEL_UNKNOWN = 0; /* Unknown gopro model | */
-    public static final int GOPRO_MODEL_HERO_3_PLUS_SILVER = 1; /* Hero 3+ Silver (HeroBus not supported by GoPro) | */
-    public static final int GOPRO_MODEL_HERO_3_PLUS_BLACK = 2; /* Hero 3+ Black | */
-    public static final int GOPRO_MODEL_HERO_4_SILVER = 3; /* Hero 4 Silver | */
-    public static final int GOPRO_MODEL_HERO_4_BLACK = 4; /* Hero 4 Black | */
-    public static final int GOPRO_MODEL_ENUM_END = 5; /*  | */
+   public static final int GOPRO_MODEL_UNKNOWN = 0; /* Unknown gopro model. | */
+   public static final int GOPRO_MODEL_HERO_3_PLUS_SILVER = 1; /* Hero 3+ Silver (HeroBus not supported by GoPro). | */
+   public static final int GOPRO_MODEL_HERO_3_PLUS_BLACK = 2; /* Hero 3+ Black. | */
+   public static final int GOPRO_MODEL_HERO_4_SILVER = 3; /* Hero 4 Silver. | */
+   public static final int GOPRO_MODEL_HERO_4_BLACK = 4; /* Hero 4 Black. | */
+   public static final int GOPRO_MODEL_ENUM_END = 5; /*  | */
 }
             
