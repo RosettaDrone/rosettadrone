@@ -233,12 +233,11 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
 
         initPreviewerTextureView();  // Decoded data to UDP...
         //notifyStatusChange();
+
         if(RDApplication.getSim() == true) {
             initFlightController();
         }
     }
-
-
 
     private void initFlightController() {
         logMessageDJI("Starting simulator...");
@@ -445,7 +444,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         initPacketizer();
 
         DJISDKManager.getInstance().registerApp(this, mDJISDKManagerCallback);
-
+/*
         // If simulator...
         if(RDApplication.getSim() == true) {
             logMessageDJI("Simulation mode......");
@@ -454,6 +453,8 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
             filter.addAction(DJISimulatorApplication.FLAG_CONNECTION_CHANGE);
             registerReceiver(mReceiver, filter);
         }
+
+ */
     }
 
     protected BroadcastReceiver mReceiver = new BroadcastReceiver() {
@@ -516,7 +517,8 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
 
     }
 
-    private void notifyStatusChange() {
+    private void notifyStatusChange()
+    {
         Log.e(TAG, "notifyStatusChange");
         mDJIHandler.removeCallbacks(djiUpdateRunnable);
         mDJIHandler.postDelayed(djiUpdateRunnable, 500);

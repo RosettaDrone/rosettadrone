@@ -7,13 +7,12 @@ import com.secneo.sdk.Helper;
 
 import dji.sdk.base.BaseProduct;
 import dji.sdk.sdkmanager.DJISDKManager;
-//import com.squareup.leakcanary.LeakCanary;
 
 public class RDApplication extends Application {
 
     private static BaseProduct mProduct;
     private static DJISimulatorApplication simulatorApplication;
-    private static boolean m_sim;
+    private static boolean m_sim = true;
 
     // True if simulate...
     public static boolean getSim(){
@@ -25,15 +24,10 @@ public class RDApplication extends Application {
 
     public static synchronized BaseProduct getProductInstance() {
         if (null == mProduct) {
-        //    if( getSim() == false) {
-        //        mProduct = DJISDKManager.getInstance().getProduct();
-        //    }else
-            {
-                if (simulatorApplication == null) {
-                    mProduct = DJISimulatorApplication.getProductInstance();
-                }else{
-                    mProduct = simulatorApplication.getProductInstance();
-                }
+            if( getSim() == false) {
+                mProduct = DJISDKManager.getInstance().getProduct();
+            }else {
+                mProduct = simulatorApplication.getProductInstance();
             }
         }
         return mProduct;
@@ -42,7 +36,7 @@ public class RDApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-        m_sim = false;
+        m_sim = true;
         simulatorApplication.onCreate();
     }
 

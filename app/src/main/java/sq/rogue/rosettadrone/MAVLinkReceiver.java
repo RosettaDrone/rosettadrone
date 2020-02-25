@@ -12,10 +12,14 @@ import com.MAVLink.common.msg_param_request_read;
 import com.MAVLink.common.msg_param_set;
 import com.MAVLink.common.msg_set_mode;
 import com.MAVLink.enums.MAV_CMD;
+import com.MAVLink.enums.MAV_PROTOCOL_CAPABILITY;
 import com.MAVLink.enums.MAV_RESULT;
+import com.MAVLink.common.msg_set_position_target_local_ned;
 
 import java.util.ArrayList;
+import java.util.TimerTask;
 
+import dji.common.error.DJIError;
 import dji.common.mission.waypoint.Waypoint;
 import dji.common.mission.waypoint.WaypointAction;
 import dji.common.mission.waypoint.WaypointActionType;
@@ -25,6 +29,7 @@ import dji.common.mission.waypoint.WaypointMissionFlightPathMode;
 import dji.common.mission.waypoint.WaypointMissionGotoWaypointMode;
 import dji.common.mission.waypoint.WaypointMissionHeadingMode;
 import dji.common.mission.waypoint.WaypointMissionState;
+
 
 import static com.MAVLink.common.msg_command_int.MAVLINK_MSG_ID_COMMAND_INT;
 import static com.MAVLink.common.msg_command_long.MAVLINK_MSG_ID_COMMAND_LONG;
@@ -41,6 +46,7 @@ import static com.MAVLink.common.msg_param_request_list.MAVLINK_MSG_ID_PARAM_REQ
 import static com.MAVLink.common.msg_param_request_read.MAVLINK_MSG_ID_PARAM_REQUEST_READ;
 import static com.MAVLink.common.msg_param_set.MAVLINK_MSG_ID_PARAM_SET;
 import static com.MAVLink.common.msg_set_mode.MAVLINK_MSG_ID_SET_MODE;
+import static com.MAVLink.common.msg_set_position_target_local_ned.MAVLINK_MSG_ID_SET_POSITION_TARGET_LOCAL_NED;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_COMPONENT_ARM_DISARM;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_DO_DIGICAM_CONTROL;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_DO_SET_CAM_TRIGG_DIST;
@@ -61,6 +67,9 @@ import static sq.rogue.rosettadrone.util.TYPE_WAYPOINT_MAX_ALTITUDE;
 import static sq.rogue.rosettadrone.util.TYPE_WAYPOINT_MAX_SPEED;
 import static sq.rogue.rosettadrone.util.TYPE_WAYPOINT_MIN_ALTITUDE;
 import static sq.rogue.rosettadrone.util.TYPE_WAYPOINT_MIN_SPEED;
+
+import dji.common.flightcontroller.virtualstick.FlightControlData;
+import dji.common.util.CommonCallbacks;
 
 public class MAVLinkReceiver {
     private final String TAG = this.getClass().getSimpleName();
@@ -88,7 +97,8 @@ public class MAVLinkReceiver {
     }
 
     public void process(MAVLinkMessage msg) {
-//        parent.logMessageDJI(String.valueOf(msg.msgid));
+        parent.logMessageDJI(String.valueOf(msg.msgid));
+
         switch (msg.msgid) {
             case MAVLINK_MSG_ID_HEARTBEAT:
                 this.mTimeStampLastGCSHeartbeat = System.currentTimeMillis();
@@ -171,6 +181,21 @@ public class MAVLinkReceiver {
                 break;
 
             /**************************************************************
+             * These messages are used when GCS sends Velocity commands  *
+             **************************************************************/
+            case MAVLINK_MSG_ID_SET_POSITION_TARGET_LOCAL_NED:
+                // This command must be sent every second...
+                msg_set_position_target_local_ned msg_param = (msg_set_position_target_local_ned) msg;
+
+                // If position is set to zero then it must be a velocity command...
+                if ((msg_param.x + msg_param.y + msg_param.z) == 0) {
+                    mModel.do_set_motion_velocity(msg_param.vx, msg_param.vy, msg_param.vz, msg_param.yaw_rate);
+                } else{
+                    // We do not support goto local grid position yet...
+                }
+                break;
+
+            /**************************************************************
              * These messages are used when GCS requests params from MAV  *
              **************************************************************/
 
@@ -179,10 +204,10 @@ public class MAVLinkReceiver {
                 break;
 
             case MAVLINK_MSG_ID_PARAM_REQUEST_READ:
-                msg_param_request_read msg_param = (msg_param_request_read) msg;
+                msg_param_request_read msg_param_3 = (msg_param_request_read) msg;
                 //String paramStr = msg_param.getParam_Id();
                 //parent.logMessageFromGCS("***" + paramStr);
-                mModel.send_param(msg_param.param_index);
+                mModel.send_param(msg_param_3.param_index);
                 // TODO I am not able to convert the param_id bytearray into String
 //                for(int i = 0; i < mModel.getParams().size(); i++)
 //                    if(mModel.getParams().get(i).getParamName().equals(msg_param.getParam_Id())) {

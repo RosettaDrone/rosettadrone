@@ -45,6 +45,8 @@ import java.net.DatagramSocket;
 import java.net.PortUnreachableException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import dji.common.airlink.SignalQualityCallback;
 import dji.common.battery.AggregationState;
@@ -54,9 +56,11 @@ import dji.common.error.DJIError;
 import dji.common.flightcontroller.Attitude;
 import dji.common.flightcontroller.ConnectionFailSafeBehavior;
 import dji.common.flightcontroller.ControlMode;
+import dji.common.flightcontroller.FlightOrientationMode;
 import dji.common.flightcontroller.GPSSignalLevel;
 import dji.common.flightcontroller.LEDsSettings;
 import dji.common.flightcontroller.LocationCoordinate3D;
+import dji.common.flightcontroller.virtualstick.FlightControlData;
 import dji.common.flightcontroller.virtualstick.RollPitchControlMode;
 import dji.common.flightcontroller.virtualstick.VerticalControlMode;
 import dji.common.flightcontroller.virtualstick.YawControlMode;
@@ -66,6 +70,7 @@ import dji.common.mission.waypoint.WaypointMissionState;
 import dji.common.remotecontroller.HardwareState;
 import dji.common.util.CommonCallbacks;
 import dji.sdk.battery.Battery;
+import dji.sdk.flightcontroller.FlightController;
 import dji.sdk.mission.MissionControl;
 import dji.sdk.mission.waypoint.WaypointMissionOperator;
 import dji.sdk.products.Aircraft;
@@ -98,6 +103,14 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     private int[] mCellVoltages = new int[10];
     private int mDownlinkQuality = 0;
     private int mUplinkQuality = 0;
+
+    private float mPitch;
+    private float mRoll;
+    private float mYaw;
+    private float mThrottle;
+
+    private SendVelocityDataTask mSendVirtualStickDataTask;
+    private Timer mSendVirtualStickDataTimer;
 
     private boolean mSafetyEnabled = true;
     private boolean mMotorsArmed = false;
@@ -1253,6 +1266,66 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                     parent.logMessageDJI("Go home successful!\n");
             }
         });
+    }
+
+    public void do_set_motion_velocity(float x, float y, float z, float yaw) {
+        parent.logMessageDJI("Initiating move");
+
+        // Set mode to Head forward...
+        djiAircraft.getFlightController().setFlightOrientationMode(FlightOrientationMode.COURSE_LOCK,new CommonCallbacks.CompletionCallback() {
+            @Override
+            public void onResult(DJIError djiError) {
+                if (djiError != null)
+                    parent.logMessageDJI("Error: " + djiError.toString());
+                else
+                    parent.logMessageDJI("Mode set successful!\n");
+            }
+        });
+
+        djiAircraft.getFlightController().setYawControlMode(YawControlMode.ANGULAR_VELOCITY);
+        djiAircraft.getFlightController().setRollPitchControlMode(RollPitchControlMode.VELOCITY);
+        djiAircraft.getFlightController().setVerticalControlMode(VerticalControlMode.VELOCITY);
+
+        mPitch = x;   mRoll = y;   mYaw = yaw;  mThrottle = z;
+
+        if (null == mSendVirtualStickDataTimer) {
+            mSendVirtualStickDataTask = new SendVelocityDataTask();
+            mSendVirtualStickDataTimer = new Timer();
+            mSendVirtualStickDataTimer.schedule(mSendVirtualStickDataTask, 100, 200);
+        }else{
+            mSendVirtualStickDataTask.repeat = 0;
+        }
+
+    }
+
+    // Run the velocity command for 2 seconds...
+    class SendVelocityDataTask extends TimerTask {
+        public int repeat = 0;
+        private final int duration = 10;
+
+        @Override
+        public void run() {
+            FlightController mFlightController = djiAircraft.getFlightController();
+            if (mFlightController != null) {
+                repeat = repeat +1;
+                if(repeat >= duration){
+                    mSendVirtualStickDataTimer.cancel();
+                }
+                mFlightController.sendVirtualStickFlightControlData(
+                        new FlightControlData(
+                                mPitch, mRoll, mYaw, mThrottle
+                        ), new CommonCallbacks.CompletionCallback() {
+                            @Override
+                            public void onResult(DJIError djiError) {
+                                if (djiError != null)
+                                    parent.logMessageDJI("Error: " + djiError.toString());
+                                else
+                                    parent.logMessageDJI("Mode set successful!\n");
+                            }
+                        }
+                );
+            }
+        }
     }
 
 //    public void set_flight_mode(FlightControlState djiMode) {

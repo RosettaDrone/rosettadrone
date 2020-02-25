@@ -49,8 +49,9 @@ import dji.sdk.useraccount.UserAccountManager;
 
 public class ConnectionActivity extends Activity implements View.OnClickListener {
 
-    private String CustomName = "eSmartSystems";
+ //   private String CustomName = "eSmartSystems";
 //    private String CustomName = "9Tek Rosettadrone";
+    private String CustomName = "";
 
     private static final String TAG = MainActivity.class.getName();
     private static final String[] REQUIRED_PERMISSION_LIST = new String[]{
@@ -147,7 +148,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
                             notifyStatusChange();
                             isRegistrationInProgress.set(false);
                             if (baseProduct != null) {
-                                RDApplication.updateProduct(baseProduct);
+                           //     RDApplication.updateProduct(baseProduct);
                             }
                         }
                         @Override
@@ -186,6 +187,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         }
     }
 
+
     private void loginDJIUserAccount() {
 
         UserAccountManager.getInstance().logIntoDJIUserAccount(this,
@@ -207,7 +209,6 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Log.v(TAG,"notifyStatusChange");
                 refreshSDKRelativeUI();
             }
         });
@@ -252,14 +253,15 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         IntentFilter filter = new IntentFilter();
         filter.addAction(DJISimulatorApplication.FLAG_CONNECTION_CHANGE);
         registerReceiver(mReceiver, filter);
-    }
 
+    }
 
     protected BroadcastReceiver mReceiver = new BroadcastReceiver() {
 
         @Override
         public void onReceive(Context context, Intent intent) {
             mTextConnectionStatus.setText(R.string.connection_sim);
+            notifyStatusChange();
         }
     };
 
@@ -269,7 +271,6 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         Log.v(TAG, "onResume");
         super.onResume();
         updateTitleBar();
-
     }
 
     @Override
@@ -302,6 +303,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
 
         if(CustomName.length() > 0)
             ((TextView)findViewById(R.id.textView)).setText(CustomName);
+
     }
 
     public static String getAppVersion(Context context){
@@ -319,12 +321,13 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
 
     private void updateTitleBar() {
         boolean ret = false;
+        BaseProduct product;
 
-      //  BaseProduct product = RDApplication.getProductInstance();
-
-
-        BaseProduct product = DJISimulatorApplication.getAircraftInstance();
-
+        if (RDApplication.getSim() == true) {
+            product = DJISimulatorApplication.getAircraftInstance();
+        }else {
+            product = RDApplication.getProductInstance();
+        }
 
         if (product != null) {
             if (product.isConnected()) {
@@ -389,10 +392,8 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
                     RDApplication.setSim(true);
                     mTextConnectionStatus.setText(R.string.connection_sim);
                 }
-                notifyStatusChange();
                 break;
             }
-
             case R.id.btn_start: {
                 Intent intent = new Intent(this, MainActivity.class);
                 startActivity(intent);
