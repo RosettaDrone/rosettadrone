@@ -4,6 +4,7 @@
 ## The master now works on DJI Mavic Pro 2, with live video to QGroundcontrol!!!!
 
 This version has implemented the new video stream method in DJI SDK that require quite a few modifications. It also includes all the latest libries, and Androidx.
+In the unstabile code there is also the DJI simulator, to enable testing in the lab. Android Studio is now updated to 3.6
 
 Rosetta Drone is a Mavlink wrapper for the DJI SDK, which allows users to fly DJI drones using Mavlink-speaking ground control stations. In theory it should work with any Mavlink GCS, but all testing so far has been done with QGroundControl. 
 
