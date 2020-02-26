@@ -4,7 +4,7 @@ android {
     compileSdkVersion 28
     defaultConfig {
         applicationId "sq.rogue.rosettadrone"
-        minSdkVersion 22
+        minSdkVersion 25
         targetSdkVersion 28
         versionCode 1
         versionName "5.0.1"
@@ -83,6 +83,9 @@ dependencies {
     //    debugImplementation 'com.squareup.leakcanary:leakcanary-android:1.5.4'
     //    releaseImplementation 'com.squareup.leakcanary:leakcanary-android-no-op:1.5.4'
 
+
+
+   // classpath 'com.android.tools.build:gradle:6.2.1'
 
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     androidTestImplementation('androidx.test.espresso:espresso-core:3.2.0', {

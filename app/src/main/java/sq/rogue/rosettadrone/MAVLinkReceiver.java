@@ -4,6 +4,7 @@ import android.util.Log;
 
 import com.MAVLink.Messages.MAVLinkMessage;
 import com.MAVLink.common.msg_command_long;
+import com.MAVLink.common.msg_manual_control;
 import com.MAVLink.common.msg_mission_ack;
 import com.MAVLink.common.msg_mission_count;
 import com.MAVLink.common.msg_mission_item;
@@ -11,6 +12,7 @@ import com.MAVLink.common.msg_mission_request;
 import com.MAVLink.common.msg_param_request_read;
 import com.MAVLink.common.msg_param_set;
 import com.MAVLink.common.msg_set_mode;
+import com.MAVLink.common.msg_set_position_target_global_int;
 import com.MAVLink.enums.MAV_CMD;
 import com.MAVLink.enums.MAV_PROTOCOL_CAPABILITY;
 import com.MAVLink.enums.MAV_RESULT;
@@ -34,6 +36,7 @@ import dji.common.mission.waypoint.WaypointMissionState;
 import static com.MAVLink.common.msg_command_int.MAVLINK_MSG_ID_COMMAND_INT;
 import static com.MAVLink.common.msg_command_long.MAVLINK_MSG_ID_COMMAND_LONG;
 import static com.MAVLink.common.msg_heartbeat.MAVLINK_MSG_ID_HEARTBEAT;
+import static com.MAVLink.common.msg_manual_control.MAVLINK_MSG_ID_MANUAL_CONTROL;
 import static com.MAVLink.common.msg_mission_ack.MAVLINK_MSG_ID_MISSION_ACK;
 import static com.MAVLink.common.msg_mission_clear_all.MAVLINK_MSG_ID_MISSION_CLEAR_ALL;
 import static com.MAVLink.common.msg_mission_count.MAVLINK_MSG_ID_MISSION_COUNT;
@@ -46,6 +49,7 @@ import static com.MAVLink.common.msg_param_request_list.MAVLINK_MSG_ID_PARAM_REQ
 import static com.MAVLink.common.msg_param_request_read.MAVLINK_MSG_ID_PARAM_REQUEST_READ;
 import static com.MAVLink.common.msg_param_set.MAVLINK_MSG_ID_PARAM_SET;
 import static com.MAVLink.common.msg_set_mode.MAVLINK_MSG_ID_SET_MODE;
+import static com.MAVLink.common.msg_set_position_target_global_int.MAVLINK_MSG_ID_SET_POSITION_TARGET_GLOBAL_INT;
 import static com.MAVLink.common.msg_set_position_target_local_ned.MAVLINK_MSG_ID_SET_POSITION_TARGET_LOCAL_NED;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_COMPONENT_ARM_DISARM;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_DO_DIGICAM_CONTROL;
@@ -93,11 +97,13 @@ public class MAVLinkReceiver {
 
         this.parent = parent;
         this.mModel = model;
-
     }
 
     public void process(MAVLinkMessage msg) {
-        parent.logMessageDJI(String.valueOf(msg.msgid));
+        if(msg.msgid != 0) {
+            parent.logMessageDJI(String.valueOf(msg));
+//        parent.logMessageDJI(String.valueOf(msg.msgid));
+        }
 
         switch (msg.msgid) {
             case MAVLINK_MSG_ID_HEARTBEAT:
@@ -156,8 +162,10 @@ public class MAVLinkReceiver {
                         mModel.send_autopilot_version();
                         break;
                     case MAV_CMD_VIDEO_START_CAPTURE:
+                        mModel.startRecordingVideo();
                         break;
                     case MAV_CMD_VIDEO_STOP_CAPTURE:
+                        mModel.stopRecordingVideo();
                         break;
                     case MAV_CMD_DO_DIGICAM_CONTROL:
                         // DEPRECATED but still used by QGC
@@ -186,14 +194,37 @@ public class MAVLinkReceiver {
             case MAVLINK_MSG_ID_SET_POSITION_TARGET_LOCAL_NED:
                 // This command must be sent every second...
                 msg_set_position_target_local_ned msg_param = (msg_set_position_target_local_ned) msg;
+                // If position is set to zero then it must be a velocity command...
+           //     if ((msg_param.x + msg_param.y + msg_param.z) == 0) {
+             //       parent.logMessageDJI("Motion start:");
+                    mModel.do_set_motion_velocity(msg_param.vx, msg_param.vy, -1*msg_param.vz, msg_param.yaw_rate);
+            //    } else{
+                    // We do not support goto local grid position yet...
+           //     }
+                break;
+/*
+            case MAVLINK_MSG_ID_SET_POSITION_TARGET_GLOBAL_INT:
+                // This command must be sent every second...
+                msg_set_position_target_global_int msg_param_4 = (msg_set_position_target_global_int) msg;
 
                 // If position is set to zero then it must be a velocity command...
-                if ((msg_param.x + msg_param.y + msg_param.z) == 0) {
-                    mModel.do_set_motion_velocity(msg_param.vx, msg_param.vy, msg_param.vz, msg_param.yaw_rate);
+                if ((msg_param_4.lat_int + msg_param_4.lon_int + msg_param_4.yaw) == 0) {
+                    mModel.do_set_motion_velocity(msg_param_4.vx, msg_param_4.vy, msg_param_4.vz, msg_param_4.yaw_rate);
                 } else{
-                    // We do not support goto local grid position yet...
+                    mModel.do_set_motion_absolute(msg_param_4.lat_int, msg_param_4.lon_int, msg_param_4.alt, msg_param_4.yaw);
                 }
                 break;
+
+
+                msg_manual_control
+*/
+
+            case MAVLINK_MSG_ID_MANUAL_CONTROL:
+                // This command must be sent every second...
+                msg_manual_control msg_param_5 = (msg_manual_control) msg;
+                mModel.do_set_motion_velocity(msg_param_5.x/(float)100.0, msg_param_5.y/(float)100.0, -1*msg_param_5.z/(float)100.0, msg_param_5.r/(float)100.0);
+                break;
+
 
             /**************************************************************
              * These messages are used when GCS requests params from MAV  *
