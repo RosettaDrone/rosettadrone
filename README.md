@@ -45,6 +45,25 @@ Note that if you are using QGroundControl on the same device as RosettaDrone, th
 
 7. After flight, ensure the safety is enabled before approaching props.
 
+8. Support is added for Pan and Tilt of camera gimbal by using RC channel 8 and 9.
+
+Add this to you're Dronekit python script:
+
+### Set servo output, values are -1 to +1
+def set_servo(servo,val):
+    msg = vehicle.message_factory.command_long_encode(
+            0, # time_boot_ms (not used)
+            0,  # target system, target component
+            mavutil.mavlink.MAV_CMD_DO_SET_SERVO, 
+            0, 
+            servo, # RC channel...
+            1500+(val*5.5), # RC value
+            0, 0, 0, 0, 0)
+    vehicle.send_mavlink(msg)
+    vehicle.flush()
+    
+    And then use: set_servo(8,-45.0) to set the gimbal....
+
     
 # Building from source
 
