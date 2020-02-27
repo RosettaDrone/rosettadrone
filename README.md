@@ -63,6 +63,9 @@ def set_servo(servo,val):
     
     And then use: set_servo(8,-45.0) to set the gimbal....
 
+
+9. Support for joystick is added and tested with QGroundcontrol, using the now built in simulator.
+
     
 # Building from source
 
