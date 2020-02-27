@@ -264,13 +264,25 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         super.onResume();
 
         initPreviewerTextureView();  // Decoded data to UDP...
-        //notifyStatusChange();@
-/*
-        if (prefs.getBoolean("pref_enable_video", true)) {
-            if (mCamera != null) {
+        //notifyStatusChange();
+
+        // If we use a camera... Remove Listeners if needed...
+        if (mCamera != null) {
+            if (!prefs.getBoolean("pref_enable_video", true)) {
                 if (isTranscodedVideoFeedNeeded()) {
-                    standardVideoFeeder = VideoFeeder.getInstance().provideTranscodedVideoFeed();
-                    standardVideoFeeder.addVideoDataListener(mReceivedVideoDataListener);
+                    if (standardVideoFeeder != null) {
+                        standardVideoFeeder.removeVideoDataListener(mReceivedVideoDataListener);
+                    }
+                } else {
+                    if (VideoFeeder.getInstance().getPrimaryVideoFeed() != null) {
+                        VideoFeeder.getInstance().getPrimaryVideoFeed().removeVideoDataListener(mReceivedVideoDataListener);
+                    }
+                }
+            } else {
+                if (isTranscodedVideoFeedNeeded()) {
+                    if (standardVideoFeeder != null) {
+                        standardVideoFeeder.addVideoDataListener(mReceivedVideoDataListener);
+                    }
                     return;
                 }
                 if (VideoFeeder.getInstance().getPrimaryVideoFeed() != null) {
@@ -278,8 +290,6 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
                 }
             }
         }
-        
- */
     }
 
 
@@ -518,14 +528,16 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
                 //When calibration is needed or the fetch key frame is required by SDK, should use the provideTranscodedVideoFeed
                 //to receive the transcoded video feed from main camera.
                 if (isTranscodedVideoFeedNeeded()) {
-                    Log.e(TAG, "TranscodedVideoFeedNeeded is needed");
                     standardVideoFeeder = VideoFeeder.getInstance().provideTranscodedVideoFeed();
-                    standardVideoFeeder.addVideoDataListener(mReceivedVideoDataListener);
+                    if (prefs.getBoolean("pref_enable_video", true)) {
+                        standardVideoFeeder.addVideoDataListener(mReceivedVideoDataListener);
+                    }
                     return;
                 }
                 if (VideoFeeder.getInstance().getPrimaryVideoFeed() != null) {
-                    Log.e(TAG, "TranscodedVideoFeedNeeded is NOT needed");
-                    VideoFeeder.getInstance().getPrimaryVideoFeed().addVideoDataListener(mReceivedVideoDataListener);
+                    if (prefs.getBoolean("pref_enable_video", true)) {
+                        VideoFeeder.getInstance().getPrimaryVideoFeed().addVideoDataListener(mReceivedVideoDataListener);
+                    }
                 }
 
             }

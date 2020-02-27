@@ -70,6 +70,8 @@ import dji.common.flightcontroller.virtualstick.FlightCoordinateSystem;
 import dji.common.flightcontroller.virtualstick.RollPitchControlMode;
 import dji.common.flightcontroller.virtualstick.VerticalControlMode;
 import dji.common.flightcontroller.virtualstick.YawControlMode;
+import dji.common.gimbal.Rotation;
+import dji.common.gimbal.RotationMode;
 import dji.common.mission.MissionState;
 import dji.common.mission.followme.FollowMeHeading;
 import dji.common.mission.followme.FollowMeMission;
@@ -82,6 +84,7 @@ import dji.common.remotecontroller.HardwareState;
 import dji.common.util.CommonCallbacks;
 import dji.sdk.battery.Battery;
 import dji.sdk.flightcontroller.FlightController;
+import dji.sdk.gimbal.Gimbal;
 import dji.sdk.mission.MissionControl;
 import dji.sdk.mission.followme.FollowMeMissionOperator;
 import dji.sdk.mission.waypoint.WaypointMissionOperator;
@@ -138,6 +141,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     private RosettaMissionOperatorListener mMissionOperatorListener;
     private FollowMeMissionOperator fmmo;
     private FlightController mFlightController;
+    private Gimbal mGimbal = null;
 
     public DroneModel(MainActivity parent, DatagramSocket socket, boolean sim) {
         this.parent = parent;
@@ -153,6 +157,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             mFlightController = null;
             return;
         } else {
+            mGimbal = aircraft.getGimbal();
             mFlightController = aircraft.getFlightController();
             mFlightController.setRollPitchControlMode(RollPitchControlMode.VELOCITY);
             mFlightController.setYawControlMode(YawControlMode.ANGULAR_VELOCITY);
@@ -1358,6 +1363,33 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
      * Motion implementation                    *
      ********************************************/
 
+    public void do_set_Gimbal(float channel, float value)
+    {
+        Rotation.Builder builder = new Rotation.Builder().mode(RotationMode.ABSOLUTE_ANGLE).time(2);
+
+        float param = (value-(float)1500.0)/(float)5.5;
+        parent.logMessageDJI("Values: " + param );
+
+        if (channel == 9) {
+            builder.pitch(param);
+        } else if (channel == 8) {
+            builder.yaw(param);
+        }
+        if (mGimbal == null) {
+            return;
+        }
+
+        mGimbal.rotate(builder.build(),new CommonCallbacks.CompletionCallback() {
+            @Override
+            public void onResult(DJIError djiError) {
+                if (djiError != null)
+                    parent.logMessageDJI("Error: " + djiError.toString());
+                else
+                    parent.logMessageDJI("Gimbal set!\n");
+            }
+        });
+    }
+
     public void do_set_velocity_mode() {
         // Set mode to Head-forward...
     //    mFlightController.setFlightOrientationMode(FlightOrientationMode.COURSE_LOCK,null);
@@ -1382,20 +1414,15 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     public void do_set_motion_velocity(float x, float y, float z, float yaw) {
-  //      parent.logMessageDJI("Initiating move");
         mPitch = x;   mRoll = y;   mYaw = yaw;  mThrottle = z;
 
         // If first time...
         if (null == mSendVirtualStickDataTimer) {
-            do_set_velocity_mode();
             mSendVirtualStickDataTask = new SendVelocityDataTask();
             mSendVirtualStickDataTimer = new Timer();
             mSendVirtualStickDataTimer.schedule(mSendVirtualStickDataTask, 100, 150);
-       //     parent.logMessageDJI("Motion started!\n");
-
         }else{
             mSendVirtualStickDataTask.repeat = 14;
-       //     parent.logMessageDJI("Motion continue!\n");
         }
     }
 

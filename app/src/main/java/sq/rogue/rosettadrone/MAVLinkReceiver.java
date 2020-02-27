@@ -56,6 +56,7 @@ import static com.MAVLink.enums.MAV_CMD.MAV_CMD_DO_DIGICAM_CONTROL;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_DO_SET_CAM_TRIGG_DIST;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_DO_SET_HOME;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_DO_SET_MODE;
+import static com.MAVLink.enums.MAV_CMD.MAV_CMD_DO_SET_SERVO;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_GET_HOME_POSITION;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_MISSION_START;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_NAV_LAND;
@@ -173,6 +174,10 @@ public class MAVLinkReceiver {
                         break;
                     case MAV_CMD_MISSION_START:
                         mModel.startWaypointMission();
+                        break;
+
+                    case MAV_CMD_DO_SET_SERVO:
+                        mModel.do_set_Gimbal(msg_cmd.param1,msg_cmd.param2);
                         break;
                 }
                 break;
