@@ -483,17 +483,13 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
             attachedIntent.setAction(DJISDKManager.USB_ACCESSORY_ATTACHED);
             sendBroadcast(attachedIntent);
         }
-
     }
 
     private void notifyStatusChange()
     {
-        Log.e(TAG, "notifyStatusChange");
         mDJIHandler.removeCallbacks(djiUpdateRunnable);
         mDJIHandler.postDelayed(djiUpdateRunnable, 500);
-
         final BaseProduct product = RDApplication.getProductInstance();
-
         if (product != null && product.isConnected() && product.getModel() != null) {
             logMessageDJI(product.getModel().name() + " Connected " );
         } else {
@@ -506,7 +502,6 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
             @Override
             public void onReceive(byte[] videoBuffer, int size) {
                 splitNALs(videoBuffer);
-            //    Log.e(TAG,"Out...");
             }
         };
 
@@ -632,8 +627,6 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
                     onDroneDisconnected();
                 }
             }
-
-            logMessageDJI("notifyStatusChange ---1----");
             notifyStatusChange();
         }
 
@@ -643,8 +636,6 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
                 newComponent.setComponentListener(new BaseComponent.ComponentListener() {
                     @Override
                     public void onConnectivityChange(boolean isConnected) {
-                        Log.d(TAG, "onComponentConnectivityChanged: " + isConnected);
-                        logMessageDJI("notifyStatusChange ---2----");
                         notifyStatusChange();
                     }
                 });
@@ -660,7 +651,6 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
-                        //Toast.makeText(getApplicationContext(), "DJI SDK registered", Toast.LENGTH_LONG).show();
                         logMessageDJI("DJI SDK registered");
                     }
                 });
@@ -670,7 +660,6 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
                     @Override
                     public void run() {
                         logMessageDJI("DJI SDK registration failed");
-                        //Toast.makeText(getApplicationContext(), "DJI SDK registration failed", Toast.LENGTH_LONG).show();
                     }
                 });
             }
@@ -947,11 +936,14 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         MenuItem droneItem = menu.findItem(R.id.drone_details);
         mDroneDetails = (TextView) droneItem.getActionView();
 
-        mDroneDetails.setTextSize(12);
+        mDroneDetails.setTextSize(14);
 
         String droneID = prefs.getString("pref_drone_id", "1");
         String rtlAlt = prefs.getString("pref_drone_rtl_altitude", "60") + "m";
-        String text = "ID:" + "\t" + droneID + System.getProperty("line.separator") + "RTL:" + "\t" + rtlAlt;
+        float dronebattery = mMavlinkReceiver.mModel.get_battery_status();
+
+        String text = "Drone Battery:       " + "\t" + dronebattery + "%"  + "\t" + "ID: " + "\t" + droneID + System.getProperty("line.separator") +
+                      "Controller Battery:  " + "\t" + dronebattery + "%"  + "\t" + "RTL:" + "\t" + rtlAlt;
         mDroneDetails.setText(text);
 
         mDroneDetails.setPadding(mDroneDetails.getPaddingLeft(),
@@ -1084,11 +1076,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
 
         }
 
-        if (prefs.getBoolean("pref_enable_video", false)) {
-            sendDroneConnected();
-        } else {
-            sendDroneDisconnected();
-        }
+        sendDroneConnected();
 
         final Drawable connectedDrawable = getResources().getDrawable(R.drawable.ic_baseline_connected_24px);
 
@@ -1236,6 +1224,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
     }
 
     private void setDroneParameters() {
+        logMessageDJI("setDroneParameters");
 
         if (FLAG_DRONE_FLIGHT_PATH_MODE_CHANGED) {
             if (Integer.parseInt((prefs.getString("pref_drone_flight_path_mode", "2"))) == 0) {

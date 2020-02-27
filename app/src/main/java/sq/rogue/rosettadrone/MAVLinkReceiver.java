@@ -177,7 +177,7 @@ public class MAVLinkReceiver {
                         break;
 
                     case MAV_CMD_DO_SET_SERVO:
-                        mModel.do_set_Gimbal(msg_cmd.param1,msg_cmd.param2);
+                        mModel.do_set_Gimbal(msg_cmd.param1, msg_cmd.param2);
                         break;
                 }
                 break;
@@ -200,12 +200,11 @@ public class MAVLinkReceiver {
                 // This command must be sent every second...
                 msg_set_position_target_local_ned msg_param = (msg_set_position_target_local_ned) msg;
                 // If position is set to zero then it must be a velocity command...
-           //     if ((msg_param.x + msg_param.y + msg_param.z) == 0) {
-             //       parent.logMessageDJI("Motion start:");
-                    mModel.do_set_motion_velocity(msg_param.vx, msg_param.vy, -1*msg_param.vz, msg_param.yaw_rate);
-            //    } else{
-                    // We do not support goto local grid position yet...
-           //     }
+                if ((msg_param.x + msg_param.y + msg_param.z) == 0) {
+                    mModel.do_set_motion_velocity(msg_param.vx, msg_param.vy, -1 * msg_param.vz, msg_param.yaw_rate);
+                } else {
+                    mModel.do_set_motion_absolute(msg_param.x, msg_param.y, -1 * msg_param.z, msg_param.yaw);
+                }
                 break;
 /*
             case MAVLINK_MSG_ID_SET_POSITION_TARGET_GLOBAL_INT:
@@ -227,7 +226,7 @@ public class MAVLinkReceiver {
             case MAVLINK_MSG_ID_MANUAL_CONTROL:
                 // This command must be sent every second...
                 msg_manual_control msg_param_5 = (msg_manual_control) msg;
-                mModel.do_set_motion_velocity(msg_param_5.x/(float)100.0, msg_param_5.y/(float)100.0, -1*msg_param_5.z/(float)100.0, msg_param_5.r/(float)100.0);
+                mModel.do_set_motion_velocity(msg_param_5.x / (float) 100.0, msg_param_5.y / (float) 100.0,  msg_param_5.z / (float) 260.0, msg_param_5.r / (float) 50.0);
                 break;
 
 
@@ -299,7 +298,7 @@ public class MAVLinkReceiver {
                 if (mModel.getSystemId() != msg_count.target_system) {
                     return;
                 }
-
+                parent.logMessageDJI("Mission Counter: " + msg_count.count);
                 mNumGCSWaypoints = msg_count.count;
                 wpState = WP_STATE_REQ_WP;
                 mMissionItemList = new ArrayList<msg_mission_item>();
@@ -312,6 +311,18 @@ public class MAVLinkReceiver {
                 if (mModel.getSystemId() != msg_item.target_system) {
                     return;
                 }
+                parent.logMessageDJI("Add mission: " + msg_item.seq );
+
+                // Somehow the GOTO from QGroundControl does not issue a mission count...
+                if (mMissionItemList == null){
+                    parent.logMessageDJI("Special single point mission!" );
+                    generateNewMission();
+                    mMissionItemList = new ArrayList<msg_mission_item>();
+                    mNumGCSWaypoints = 1;
+                    wpState = WP_STATE_REQ_WP;
+                    mModel.request_mission_item(0);
+                }
+
                 mMissionItemList.add(msg_item);
 
                 // We are done fetching a complete mission from the GCS...
@@ -414,9 +425,11 @@ public class MAVLinkReceiver {
                     break;
                 case MAV_CMD.MAV_CMD_NAV_WAYPOINT:
                     if (isHome) {
+                        parent.logMessageDJI("Is Home...");
 //                        homeValue = m.z;
                         isHome = false;
-                    } else {
+                    } //else
+                        {
                         if ((m.z) > 500) {
 //                            m.z = 500;
                             parent.runOnUiThread(new Runnable() {
@@ -453,7 +466,7 @@ public class MAVLinkReceiver {
                         }
 
                         dji_wps.add(currentWP);
-//                        parent.logMessageDJI("Waypoint: " + m.x + ", " + m.y + " at " + m.z + "m");
+                        parent.logMessageDJI("Waypoint: " + m.x + ", " + m.y + " at " + m.z + "m");
 //                        parent.logMessageDJI("P1 = " + m.param1);
 //                        parent.logMessageDJI("P2 = " + m.param2);
 //                        parent.logMessageDJI("P3 = " + m.param3);
@@ -543,7 +556,7 @@ public class MAVLinkReceiver {
                 correctedWps = addIntermediateWaypoints(dji_wps);
             }
             logWaypointstoRD(correctedWps);
-
+            parent.logMessageDJI("WP size " + correctedWps.size());
             mBuilder.waypointList(correctedWps).waypointCount(correctedWps.size());
             WaypointMission builtMission = mBuilder.build();
             mModel.setWaypointMission(builtMission);

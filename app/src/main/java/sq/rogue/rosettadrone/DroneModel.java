@@ -76,6 +76,8 @@ import dji.common.mission.MissionState;
 import dji.common.mission.followme.FollowMeHeading;
 import dji.common.mission.followme.FollowMeMission;
 import dji.common.mission.followme.FollowMeMissionState;
+import dji.common.mission.tapfly.TapFlyMission;
+import dji.common.mission.tapfly.TapFlyMode;
 import dji.common.mission.waypoint.Waypoint;
 import dji.common.mission.waypoint.WaypointMission;
 import dji.common.mission.waypoint.WaypointMissionState;
@@ -90,8 +92,8 @@ import dji.sdk.mission.followme.FollowMeMissionOperator;
 import dji.sdk.mission.waypoint.WaypointMissionOperator;
 import dji.sdk.products.Aircraft;
 import dji.sdk.mission.timeline.actions.GoToAction;
-import dji.sdk.sdkmanager.DJISDKManager;
 
+import dji.sdk.sdkmanager.DJISDKManager;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_COMPONENT_ARM_DISARM;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_DO_DIGICAM_CONTROL;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_NAV_TAKEOFF;
@@ -149,6 +151,13 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         initFlightController(sim);
     }
 
+    public float get_battery_status(){
+        if(mFullChargeCapacity_mAh > 0) {
+            return (mChargeRemaining_mAh * 100 / mFullChargeCapacity_mAh);
+        }
+        return 0;
+    }
+
     private void initFlightController(boolean sim) {
         parent.logMessageDJI("Starting FlightController...");
         Aircraft aircraft = (Aircraft) RDApplication.getProductInstance(); //DJISimulatorApplication.getAircraftInstance();
@@ -165,6 +174,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             mFlightController.setRollPitchCoordinateSystem(FlightCoordinateSystem.BODY);
             mFlightController.setFlightOrientationMode(FlightOrientationMode.COURSE_LOCK,null);
             if(sim == true) {
+                parent.logMessageDJI("Starting Simulator...");
                 mFlightController.getSimulator().setStateCallback(new SimulatorState.Callback() {
                     @Override
                     public void onUpdate(final SimulatorState stateData) {
@@ -430,6 +440,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
         if (djiAircraft == null || djiAircraft.getRemoteController() == null)
             return false;
+
         this.djiAircraft = djiAircraft;
 
         Arrays.fill(mCellVoltages, 0xffff); // indicates no cell per mavlink definition
@@ -452,6 +463,9 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
 
         if (this.djiAircraft != null) {
+
+            parent.logMessageDJI("setBatteryCallback");
+
             this.djiAircraft.getBattery().setStateCallback(new BatteryState.Callback() {
 
                 @Override
@@ -1363,13 +1377,11 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
      * Motion implementation                    *
      ********************************************/
 
+
     public void do_set_Gimbal(float channel, float value)
     {
         Rotation.Builder builder = new Rotation.Builder().mode(RotationMode.ABSOLUTE_ANGLE).time(2);
-
         float param = (value-(float)1500.0)/(float)5.5;
-        parent.logMessageDJI("Values: " + param );
-
         if (channel == 9) {
             builder.pitch(param);
         } else if (channel == 8) {
@@ -1384,10 +1396,9 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             public void onResult(DJIError djiError) {
                 if (djiError != null)
                     parent.logMessageDJI("Error: " + djiError.toString());
-                else
-                    parent.logMessageDJI("Gimbal set!\n");
             }
         });
+        util.safeSleep(500);
     }
 
     public void do_set_velocity_mode() {
@@ -1414,7 +1425,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     public void do_set_motion_velocity(float x, float y, float z, float yaw) {
-        mPitch = x;   mRoll = y;   mYaw = yaw;  mThrottle = z;
+        mPitch = y;   mRoll = x;   mYaw = yaw;  mThrottle = z;
 
         // If first time...
         if (null == mSendVirtualStickDataTimer) {
@@ -1426,7 +1437,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         }
     }
 
-    public void do_set_motion_absolute(int lat, int lon, float alt, float yaw) {
+    public void do_set_motion_absolute(float lat, float lon, float alt, float yaw) {
         parent.logMessageDJI("Initiating abs move");
 
     }

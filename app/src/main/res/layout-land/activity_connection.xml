@@ -56,7 +56,7 @@
     <Button
         android:id="@+id/btn_sim"
         android:layout_width="50dp"
-        android:layout_height="55dp"
+        android:layout_height="40dp"
         android:layout_marginLeft="130dp"
         android:layout_marginTop="165dp"
         android:background="@drawable/round_btn"

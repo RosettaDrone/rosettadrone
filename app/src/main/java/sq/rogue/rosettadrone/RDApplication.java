@@ -12,7 +12,7 @@ public class RDApplication extends Application {
 
     private static BaseProduct mProduct;
     private static DJISimulatorApplication simulatorApplication;
-    private static boolean m_sim = true;
+    private static boolean m_sim = false;
 
     // True if simulate...
     public static boolean getSim(){
@@ -36,7 +36,7 @@ public class RDApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-        m_sim = true;
+        m_sim = false;
         simulatorApplication.onCreate();
     }
 

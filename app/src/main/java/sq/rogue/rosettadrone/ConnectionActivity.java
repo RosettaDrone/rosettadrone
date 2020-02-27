@@ -49,9 +49,9 @@ import dji.sdk.useraccount.UserAccountManager;
 
 public class ConnectionActivity extends Activity implements View.OnClickListener {
 
- //   private String CustomName = "eSmartSystems";
+    private String CustomName = "eSmartSystems 'Rosetta Drone'";
 //    private String CustomName = "9Tek Rosettadrone";
-    private String CustomName = "";
+ //   private String CustomName = "";
 
     private static final String TAG = MainActivity.class.getName();
     private static final String[] REQUIRED_PERMISSION_LIST = new String[]{
