@@ -47,9 +47,8 @@ Note that if you are using QGroundControl on the same device as RosettaDrone, th
 
 8. Support is added for Pan and Tilt of camera gimbal by using RC channel 8 and 9.
 
-Add this to you're Dronekit python script:
+###Add this to you're Dronekit python script:
 
-### Set servo output, values are -1 to +1
 def set_servo(servo,val):
     msg = vehicle.message_factory.command_long_encode(
             0, # time_boot_ms (not used)
