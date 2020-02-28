@@ -1,6 +1,9 @@
 package sq.rogue.rosettadrone;
 
 import androidx.annotation.NonNull;
+
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 
 import com.MAVLink.MAVLinkPacket;
@@ -45,6 +48,8 @@ import java.net.DatagramSocket;
 import java.net.PortUnreachableException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import dji.common.airlink.SignalQualityCallback;
 import dji.common.battery.AggregationState;
@@ -54,27 +59,49 @@ import dji.common.error.DJIError;
 import dji.common.flightcontroller.Attitude;
 import dji.common.flightcontroller.ConnectionFailSafeBehavior;
 import dji.common.flightcontroller.ControlMode;
+import dji.common.flightcontroller.FlightOrientationMode;
 import dji.common.flightcontroller.GPSSignalLevel;
 import dji.common.flightcontroller.LEDsSettings;
 import dji.common.flightcontroller.LocationCoordinate3D;
+import dji.common.flightcontroller.simulator.InitializationData;
+import dji.common.flightcontroller.simulator.SimulatorState;
+import dji.common.flightcontroller.virtualstick.FlightControlData;
+import dji.common.flightcontroller.virtualstick.FlightCoordinateSystem;
 import dji.common.flightcontroller.virtualstick.RollPitchControlMode;
 import dji.common.flightcontroller.virtualstick.VerticalControlMode;
 import dji.common.flightcontroller.virtualstick.YawControlMode;
+import dji.common.gimbal.Rotation;
+import dji.common.gimbal.RotationMode;
+import dji.common.mission.MissionState;
+import dji.common.mission.followme.FollowMeHeading;
+import dji.common.mission.followme.FollowMeMission;
+import dji.common.mission.followme.FollowMeMissionState;
+import dji.common.mission.tapfly.TapFlyMission;
+import dji.common.mission.tapfly.TapFlyMode;
 import dji.common.mission.waypoint.Waypoint;
 import dji.common.mission.waypoint.WaypointMission;
 import dji.common.mission.waypoint.WaypointMissionState;
+import dji.common.model.LocationCoordinate2D;
 import dji.common.remotecontroller.HardwareState;
 import dji.common.util.CommonCallbacks;
 import dji.sdk.battery.Battery;
+import dji.sdk.flightcontroller.FlightController;
+import dji.sdk.gimbal.Gimbal;
 import dji.sdk.mission.MissionControl;
+import dji.sdk.mission.followme.FollowMeMissionOperator;
 import dji.sdk.mission.waypoint.WaypointMissionOperator;
 import dji.sdk.products.Aircraft;
+import dji.sdk.mission.timeline.actions.GoToAction;
 
+import dji.sdk.sdkmanager.DJISDKManager;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_COMPONENT_ARM_DISARM;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_DO_DIGICAM_CONTROL;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_NAV_TAKEOFF;
+import static com.MAVLink.enums.MAV_CMD.MAV_CMD_VIDEO_START_CAPTURE;
+import static com.MAVLink.enums.MAV_CMD.MAV_CMD_VIDEO_STOP_CAPTURE;
 import static com.MAVLink.enums.MAV_COMPONENT.MAV_COMP_ID_AUTOPILOT1;
 import static sq.rogue.rosettadrone.util.getTimestampMicroseconds;
+import static sq.rogue.rosettadrone.util.safeSleep;
 
 
 public class DroneModel implements CommonCallbacks.CompletionCallback {
@@ -99,14 +126,101 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     private int mDownlinkQuality = 0;
     private int mUplinkQuality = 0;
 
+    private float mPitch;
+    private float mRoll;
+    private float mYaw;
+    private float mThrottle;
+    private double m_Latitude;
+    private double m_Longitude;
+    private double m_head;
+    private float  m_alt;
+
+    private SendVelocityDataTask mSendVirtualStickDataTask = null;;
+    private Timer mSendVirtualStickDataTimer = null;
+
     private boolean mSafetyEnabled = true;
     private boolean mMotorsArmed = false;
     private RosettaMissionOperatorListener mMissionOperatorListener;
+    private FollowMeMissionOperator fmmo;
+    private FlightController mFlightController;
+    private Gimbal mGimbal = null;
 
-    public DroneModel(MainActivity parent, DatagramSocket socket) {
+    public DroneModel(MainActivity parent, DatagramSocket socket, boolean sim) {
         this.parent = parent;
         this.socket = socket;
+        initFlightController(sim);
     }
+
+    public float get_battery_status(){
+        if(mFullChargeCapacity_mAh > 0) {
+            return (mChargeRemaining_mAh * 100 / mFullChargeCapacity_mAh);
+        }
+        return 0;
+    }
+
+    private void initFlightController(boolean sim) {
+        parent.logMessageDJI("Starting FlightController...");
+        Aircraft aircraft = (Aircraft) RDApplication.getProductInstance(); //DJISimulatorApplication.getAircraftInstance();
+        if (aircraft == null || !aircraft.isConnected()) {
+            parent.logMessageDJI("No target...");
+            mFlightController = null;
+            return;
+        } else {
+            mGimbal = aircraft.getGimbal();
+            mFlightController = aircraft.getFlightController();
+            mFlightController.setRollPitchControlMode(RollPitchControlMode.VELOCITY);
+            mFlightController.setYawControlMode(YawControlMode.ANGULAR_VELOCITY);
+            mFlightController.setVerticalControlMode(VerticalControlMode.VELOCITY);
+            mFlightController.setRollPitchCoordinateSystem(FlightCoordinateSystem.BODY);
+            mFlightController.setFlightOrientationMode(FlightOrientationMode.COURSE_LOCK,null);
+            if(sim == true) {
+                parent.logMessageDJI("Starting Simulator...");
+                mFlightController.getSimulator().setStateCallback(new SimulatorState.Callback() {
+                    @Override
+                    public void onUpdate(final SimulatorState stateData) {
+                        new Handler(Looper.getMainLooper()).post(new Runnable() {
+                            @Override
+                            public void run() {
+/*
+                                String yaw = String.format("%.2f", stateData.getYaw());
+                                String pitch = String.format("%.2f", stateData.getPitch());
+                                String roll = String.format("%.2f", stateData.getRoll());
+                                String positionX = String.format("%.2f", stateData.getPositionX());
+                                String positionY = String.format("%.2f", stateData.getPositionY());
+                                String positionZ = String.format("%.2f", stateData.getPositionZ());
+
+                                Log.v("SIM", "Yaw : " + yaw + ", Pitch : " + pitch + ", Roll : " + roll + "\n" + ", PosX : " + positionX +
+                                        ", PosY : " + positionY +
+                                        ", PosZ : " + positionZ);
+
+ */
+                            }
+                        });
+                    }
+                });
+            }
+        }
+
+        if (mFlightController != null) {
+            parent.logMessageDJI("Target found...");
+
+            if(sim == true) {
+                mFlightController.getSimulator()
+                        .start(InitializationData.createInstance(new LocationCoordinate2D(23, 113), 10, 10),
+                                new CommonCallbacks.CompletionCallback() {
+                                    @Override
+                                    public void onResult(DJIError djiError) {
+                                        if (djiError != null) {
+                                            parent.logMessageDJI(djiError.getDescription());
+                                        } else {
+                                            parent.logMessageDJI("Start Simulator Success");
+                                        }
+                                    }
+                                });
+                }
+            }
+    }
+
 
     public int getSystemId() {
         return mSystemId;
@@ -326,6 +440,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
         if (djiAircraft == null || djiAircraft.getRemoteController() == null)
             return false;
+
         this.djiAircraft = djiAircraft;
 
         Arrays.fill(mCellVoltages, 0xffff); // indicates no cell per mavlink definition
@@ -348,6 +463,9 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
 
         if (this.djiAircraft != null) {
+
+            parent.logMessageDJI("setBatteryCallback");
+
             this.djiAircraft.getBattery().setStateCallback(new BatteryState.Callback() {
 
                 @Override
@@ -1255,6 +1373,149 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         });
     }
 
+    /********************************************
+     * Motion implementation                    *
+     ********************************************/
+
+
+    public void do_set_Gimbal(float channel, float value)
+    {
+        Rotation.Builder builder = new Rotation.Builder().mode(RotationMode.ABSOLUTE_ANGLE).time(2);
+        float param = (value-(float)1500.0)/(float)5.5;
+        if (channel == 9) {
+            builder.pitch(param);
+        } else if (channel == 8) {
+            builder.yaw(param);
+        }
+        if (mGimbal == null) {
+            return;
+        }
+
+        mGimbal.rotate(builder.build(),new CommonCallbacks.CompletionCallback() {
+            @Override
+            public void onResult(DJIError djiError) {
+                if (djiError != null)
+                    parent.logMessageDJI("Error: " + djiError.toString());
+            }
+        });
+        util.safeSleep(500);
+    }
+
+    public void do_set_velocity_mode() {
+        // Set mode to Head-forward...
+    //    mFlightController.setFlightOrientationMode(FlightOrientationMode.COURSE_LOCK,null);
+/*        mFlightController.setFlightOrientationMode(FlightOrientationMode.COURSE_LOCK,new CommonCallbacks.CompletionCallback() {
+            @Override
+            public void onResult(DJIError djiError) {
+                if (djiError != null)
+                    parent.logMessageDJI("Error: " + djiError.toString());
+                else
+                    parent.logMessageDJI("Mode set successful!\n");
+            }
+        });
+*/
+/*
+        mFlightController.setYawControlMode(YawControlMode.ANGULAR_VELOCITY);
+        mFlightController.setRollPitchControlMode(RollPitchControlMode.VELOCITY);
+        mFlightController.setVerticalControlMode(VerticalControlMode.VELOCITY);
+
+ */
+ //       parent.logMessageDJI(String.valueOf(djiAircraft.getFlightController().getVerticalControlMode()));
+
+    }
+
+    public void do_set_motion_velocity(float x, float y, float z, float yaw) {
+        mPitch = y;   mRoll = x;   mYaw = yaw;  mThrottle = z;
+
+        // If first time...
+        if (null == mSendVirtualStickDataTimer) {
+            mSendVirtualStickDataTask = new SendVelocityDataTask();
+            mSendVirtualStickDataTimer = new Timer();
+            mSendVirtualStickDataTimer.schedule(mSendVirtualStickDataTask, 100, 150);
+        }else{
+            mSendVirtualStickDataTask.repeat = 14;
+        }
+    }
+
+    public void do_set_motion_absolute(float lat, float lon, float alt, float yaw) {
+        parent.logMessageDJI("Initiating abs move");
+
+    }
+
+    // Run the velocity command for 2 seconds...
+    class SendVelocityDataTask extends TimerTask {
+        public int repeat = 14;
+
+        @Override
+        public void run() {
+            if (mFlightController != null) {
+                if(--repeat <= 0){
+                    mSendVirtualStickDataTimer.cancel();
+                    mSendVirtualStickDataTimer.purge();
+                    mSendVirtualStickDataTimer = null;
+               //     parent.logMessageDJI("Motion done!\n");
+                    return;
+                }
+//                parent.logMessageDJI("X: " + String.valueOf(mPitch) + " Y: " + String.valueOf(mRoll) + " Z: " + String.valueOf(mYaw) + " T: " + String.valueOf(mThrottle));
+                mFlightController.sendVirtualStickFlightControlData(
+                    new FlightControlData(mPitch, mRoll, mYaw, mThrottle)
+                    , new CommonCallbacks.CompletionCallback() {
+                        @Override
+                        public void onResult(DJIError djiError) {
+                            if (djiError != null)
+                                parent.logMessageDJI("Motion Error: " + djiError.toString());
+                      //      else
+                      //          parent.logMessageDJI("Motion OK!");
+                        }
+                    }
+                );
+            }
+        }
+    }
+
+    // Follow me is not used by Mavlink for now, in the DJI implementation it for a
+    // limit to a few meters from current location.
+    public void startSimpleFollowMe()
+    {
+        if(fmmo == null){
+            fmmo = DJISDKManager.getInstance().getMissionControl().getFollowMeMissionOperator();
+        }
+        final FollowMeMissionOperator followMeMissionOperator  = fmmo;
+        if (followMeMissionOperator.getCurrentState().equals(MissionState.READY_TO_EXECUTE)){
+            followMeMissionOperator.startMission(new FollowMeMission(FollowMeHeading.TOWARD_FOLLOW_POSITION,m_Latitude , m_Longitude, m_alt)
+                    , new CommonCallbacks.CompletionCallback() {
+                        @Override
+                        public void onResult(DJIError djiError) {
+                            if(djiError != null){
+                                parent.logMessageDJI(djiError.getDescription());
+                            } else {
+                                parent.logMessageDJI("Mission Start: Successfully");
+                            }
+                        }
+                    });
+        }
+    }
+
+    public void updateSimpleFollowMe(){
+        if(fmmo == null){
+            fmmo = DJISDKManager.getInstance().getMissionControl().getFollowMeMissionOperator();
+        }
+        final FollowMeMissionOperator followMeMissionOperator  = fmmo;
+        if(followMeMissionOperator.getCurrentState().equals(FollowMeMissionState.EXECUTING)) {
+            followMeMissionOperator.updateFollowingTarget(new LocationCoordinate2D(m_Latitude , m_Longitude),
+                    new CommonCallbacks.CompletionCallback() {
+                        @Override
+                        public void onResult(DJIError error) {
+                            if (error != null) {
+                                parent.logMessageDJI(followMeMissionOperator.getCurrentState().getName().toString() + " " + error.getDescription());
+                            } else {
+                                parent.logMessageDJI("Mission Update Successfully");
+                            }
+                        }
+                    });
+        }
+    }
+
 //    public void set_flight_mode(FlightControlState djiMode) {
 //        // TODO
 //        return;
@@ -1438,4 +1699,40 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         }
 
     }
+
+    /********************************************
+     * Start Stop  callbacks                      *
+     ********************************************/
+
+    public void startRecordingVideo() {
+        djiAircraft.getCamera().startRecordVideo(new CommonCallbacks.CompletionCallback() {
+            @Override
+            public void onResult(DJIError djiError) {
+                if (djiError == null) {
+                    parent.logMessageDJI("Started recording video");
+                    send_command_ack(MAV_CMD_VIDEO_START_CAPTURE, MAV_RESULT.MAV_RESULT_ACCEPTED);
+                } else {
+                    parent.logMessageDJI("Error starting video recording: " + djiError.toString());
+                    send_command_ack(MAV_CMD_VIDEO_START_CAPTURE, MAV_RESULT.MAV_RESULT_FAILED);
+                }
+            }
+        });
+    }
+
+    public void stopRecordingVideo() {
+        djiAircraft.getCamera().stopRecordVideo(new CommonCallbacks.CompletionCallback() {
+            @Override
+            public void onResult(DJIError djiError) {
+                if (djiError == null) {
+                    parent.logMessageDJI("Stopped recording video");
+                    send_command_ack(MAV_CMD_VIDEO_STOP_CAPTURE, MAV_RESULT.MAV_RESULT_ACCEPTED);
+                } else {
+                    parent.logMessageDJI("Error stopping video recording: " + djiError.toString());
+                    send_command_ack(MAV_CMD_VIDEO_STOP_CAPTURE, MAV_RESULT.MAV_RESULT_FAILED);
+                }
+            }
+        });
+    }
+
+
 }

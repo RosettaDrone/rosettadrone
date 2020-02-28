@@ -56,11 +56,15 @@ public class MAVLinkPayload {
         index += 1;
         return result;
     }
-
+// TERJE BUGG....
     public short getUnsignedByte(){
         short result = 0;
-        result |= payload.get(index + 0) & 0xFF;
-        index+= 1;
+        if( payload.array().length > index) {
+            result |= payload.get(index + 0) & 0xFF;
+            index += 1;
+        }else{
+            // ERROR::::
+        }
         return result; 
     }
 

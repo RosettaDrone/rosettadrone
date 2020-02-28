@@ -2,9 +2,10 @@ package sq.rogue.rosettadrone;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageInfo;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.hardware.usb.UsbManager;
 import android.os.AsyncTask;
@@ -22,6 +23,9 @@ import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import dji.common.flightcontroller.simulator.InitializationData;
+
+import dji.common.model.LocationCoordinate2D;
 import dji.sdk.sdkmanager.DJISDKInitEvent;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,7 +49,9 @@ import dji.sdk.useraccount.UserAccountManager;
 
 public class ConnectionActivity extends Activity implements View.OnClickListener {
 
-    private String CustomName = "eSmartSystems";
+    private String CustomName = "eSmartSystems 'Rosetta Drone'";
+//    private String CustomName = "9Tek Rosettadrone";
+ //   private String CustomName = "";
 
     private static final String TAG = MainActivity.class.getName();
     private static final String[] REQUIRED_PERMISSION_LIST = new String[]{
@@ -68,6 +74,8 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
     private TextView mTextProduct;
     private TextView mTextModelAvailable;
     private Button mBtnOpen;
+    private Button mBtnSim;
+
     private KeyListener firmVersionListener = new KeyListener() {
         @Override
         public void onValueChange(@Nullable Object oldValue, @Nullable Object newValue) {
@@ -105,6 +113,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
 
     private void startSDKRegistration() {
         if (isRegistrationInProgress.compareAndSet(false, true)) {
+            Log.e(TAG, "startSDKRegistration");
             AsyncTask.execute(new Runnable() {
                 @Override
                 public void run() {
@@ -112,7 +121,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
                         @Override
                         public void onRegister(DJIError djiError) {
                             if (djiError == DJISDKError.REGISTRATION_SUCCESS) {
-                                DJILog.e("App registration", DJISDKError.REGISTRATION_SUCCESS.getDescription());
+                                DJILog.v("App registration", DJISDKError.REGISTRATION_SUCCESS.getDescription());
                                 DJISDKManager.getInstance().startConnectionToProduct();
                                 showToast("Register SDK Success");
                                 runOnUiThread(new Runnable() {
@@ -134,10 +143,12 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
                         }
                         @Override
                         public void onProductConnect(BaseProduct baseProduct) {
+                            Log.e(TAG,"Product Connected");
+
                             notifyStatusChange();
                             isRegistrationInProgress.set(false);
                             if (baseProduct != null) {
-                                RDApplication.updateProduct(baseProduct);
+                           //     RDApplication.updateProduct(baseProduct);
                             }
                         }
                         @Override
@@ -175,6 +186,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
             });
         }
     }
+
 
     private void loginDJIUserAccount() {
 
@@ -236,18 +248,34 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         checkAndRequestPermissions();
         setContentView(R.layout.activity_connection);
         initUI();
+
+        // Register the broadcast receiver for receiving the device connection's changes.
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(DJISimulatorApplication.FLAG_CONNECTION_CHANGE);
+        registerReceiver(mReceiver, filter);
+
     }
+
+    protected BroadcastReceiver mReceiver = new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            mTextConnectionStatus.setText(R.string.connection_sim);
+            notifyStatusChange();
+        }
+    };
+
 
     @Override
     public void onResume() {
-        Log.e(TAG, "onResume");
+        Log.v(TAG, "onResume");
         super.onResume();
         updateTitleBar();
     }
 
     @Override
     protected void onDestroy() {
-        Log.e(TAG, "onDestroy");
+        Log.v(TAG, "onDestroy");
         if (KeyManager.getInstance() != null) {
             KeyManager.getInstance().removeListener(firmVersionListener);
         }
@@ -259,17 +287,23 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         mTextConnectionStatus = (TextView) findViewById(R.id.text_connection_status);
         mTextModelAvailable = (TextView) findViewById(R.id.text_model_available);
         mTextProduct = (TextView) findViewById(R.id.text_product_info);
+
         mBtnOpen = (Button) findViewById(R.id.btn_start);
         mBtnOpen.setOnClickListener(this);
         mBtnOpen.setEnabled(false);
+
+        mBtnSim = (Button) findViewById(R.id.btn_sim);
+        mBtnSim.setOnClickListener(this);
+
         ((TextView)findViewById(R.id.textView2)).setText(getResources().getString(R.string.sdk_version, DJISDKManager.getInstance().getSDKVersion()));
         Context appContext = this.getBaseContext();
         String version = "Version: "+getAppVersion(appContext);
-        Log.e(TAG,""+version);
+        Log.v(TAG,""+version);
         ((TextView)findViewById(R.id.textView3)).setText(version);
 
         if(CustomName.length() > 0)
             ((TextView)findViewById(R.id.textView)).setText(CustomName);
+
     }
 
     public static String getAppVersion(Context context){
@@ -279,7 +313,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
             return str;
         }
         catch (PackageManager.NameNotFoundException e){
-            Log.e(TAG, "getAppVersion error" + e.getMessage());
+            Log.v(TAG, "getAppVersion error" + e.getMessage());
             e.printStackTrace();
         }
         return "";
@@ -287,7 +321,14 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
 
     private void updateTitleBar() {
         boolean ret = false;
-        BaseProduct product = RDApplication.getProductInstance();
+        BaseProduct product;
+
+        if (RDApplication.getSim() == true) {
+            product = DJISimulatorApplication.getAircraftInstance();
+        }else {
+            product = RDApplication.getProductInstance();
+        }
+
         if (product != null) {
             if (product.isConnected()) {
                 //The product is connected
@@ -341,6 +382,18 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
     public void onClick(View v) {
         switch (v.getId()) {
 
+            case R.id.btn_sim: {
+                if (RDApplication.getSim() == true){
+                    showToast("noSimulate...");
+                    RDApplication.setSim(false);
+                    mTextConnectionStatus.setText(R.string.connection_loose);
+                }else{
+                    showToast("Simulate...");
+                    RDApplication.setSim(true);
+                    mTextConnectionStatus.setText(R.string.connection_sim);
+                }
+                break;
+            }
             case R.id.btn_start: {
                 Intent intent = new Intent(this, MainActivity.class);
                 startActivity(intent);
@@ -354,7 +407,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
     private void refreshSDKRelativeUI() {
 
         BaseProduct mProduct = RDApplication.getProductInstance();
-        Log.v(TAG, "refreshSDKRelativeUI");
+        Log.e(TAG, "refreshSDKRelativeUI");
 
         if (null != mProduct && mProduct.isConnected()) {
             Log.v(TAG, "refreshSDK: True");
@@ -371,6 +424,12 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
             if (KeyManager.getInstance() != null) {
                 KeyManager.getInstance().addListener(firmkey, firmVersionListener);
             }
+        } else if (RDApplication.getSim() == true){
+            Log.v(TAG, "refreshSDK: Sim");
+            mBtnOpen.setEnabled(true);
+
+            mTextProduct.setText(R.string.product_information);
+          //  mTextConnectionStatus.setText(R.string.connection_sim);
         } else {
             Log.v(TAG, "refreshSDK: False");
             mBtnOpen.setEnabled(false);

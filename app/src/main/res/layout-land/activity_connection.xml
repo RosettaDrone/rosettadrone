@@ -12,7 +12,7 @@
         android:layout_height="wrap_content"
         android:layout_alignBottom="@+id/text_product_info"
         android:layout_centerHorizontal="true"
-        android:layout_marginBottom="160dp"
+        android:layout_marginBottom="140dp"
         android:gravity="top"
         android:text="Status: No Product Connected"
         android:textColor="@android:color/black"
@@ -53,6 +53,17 @@
         android:textColor="@color/colorWhite"
         android:textSize="20dp" />
 
+    <Button
+        android:id="@+id/btn_sim"
+        android:layout_width="50dp"
+        android:layout_height="40dp"
+        android:layout_marginLeft="130dp"
+        android:layout_marginTop="165dp"
+        android:background="@drawable/round_btn"
+        android:text="Sim"
+        android:textColor="@color/colorWhite"
+        android:textSize="20dp" />
+
     <TextView
         android:id="@+id/textView2"
         android:layout_width="wrap_content"
@@ -72,7 +83,7 @@
         android:text="Project 'Rosettadrone'"
         android:textAppearance="?android:attr/textAppearanceSmall"
         android:textColor="@color/colorBlack"
-        android:textSize="20dp"
+        android:textSize="30sp"
         android:textStyle="bold" />
 
     <TextView
@@ -80,16 +91,15 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="50dp"
+        android:layout_marginTop="60dp"
         android:textSize="15dp" />
 
     <ImageView
         android:id="@+id/action_dji"
         android:layout_width="80dp"
         android:layout_height="80dp"
-        android:layout_centerHorizontal="true"
-        android:layout_gravity="center|center_vertical"
-        android:layout_marginTop="300dp"
+        android:layout_marginLeft="650dp"
+        android:layout_marginTop="150dp"
         android:src="@drawable/ic_drone" />
 
 
