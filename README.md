@@ -3,7 +3,7 @@
 
 ## The project now works on DJI Mavic 2 Pro/Zoom/Enterprise, and got live H.264 video stream out , tested on  QGroundcontrol.
 
-## **Please do create issues or create PR on this fork.** 
+            ### **Please create issues and create PR on this fork.** 
 
 ![Image of Opening screen](images/popen.png)
 Opening screen, requires DJI login first time...
