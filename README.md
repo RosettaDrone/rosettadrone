@@ -1,7 +1,7 @@
-# Rosetta Drone for Mavic Pro 2 
+# Rosetta Drone for **DJI Mavic 2** series 
 ## Supports Android 8.0 and newer, with DJI SDK 4.11.1 and Androidx
 
-## The master now works on DJI Mavic 2 series, with live video to QGroundcontrol.
+## The project now works on DJI Mavic 2 Pro/Zoom/Enterprise, and got live H.264 video stream out , tested on  QGroundcontrol.
 
 ![Image of Opening screen](images/popen.png)
 Opening screen, requires DJI login first time...
