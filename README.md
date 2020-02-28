@@ -66,6 +66,8 @@ def set_servo(servo,val):
 
 9. Support for joystick is added and tested with QGroundcontrol, using the now built in simulator.
 
+10. By taping on the drone icon 5 times, you enable test mode and can open the software with no drone connected. For GUI work.
+
     
 # Building from source
 

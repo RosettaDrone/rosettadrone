@@ -49,9 +49,9 @@ import dji.sdk.useraccount.UserAccountManager;
 
 public class ConnectionActivity extends Activity implements View.OnClickListener {
 
-    private String CustomName = "eSmartSystems";
+//    private String CustomName = "eSmartSystems";
 //    private String CustomName = "9Tek";
- //   private String CustomName = "";
+    private String CustomName = "";
 
     private static final String TAG = MainActivity.class.getName();
     private static final String[] REQUIRED_PERMISSION_LIST = new String[]{
@@ -75,6 +75,9 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
     private TextView mTextModelAvailable;
     private Button mBtnOpen;
     private Button mBtnSim;
+    private Button mBtnTest;
+    private int hiddenkey = 0;
+
 
     private KeyListener firmVersionListener = new KeyListener() {
         @Override
@@ -295,6 +298,9 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         mBtnSim = (Button) findViewById(R.id.btn_sim);
         mBtnSim.setOnClickListener(this);
 
+        mBtnTest = (Button) findViewById(R.id.btn_test);
+        mBtnTest.setOnClickListener(this);
+
         ((TextView)findViewById(R.id.textView2)).setText(getResources().getString(R.string.sdk_version, DJISDKManager.getInstance().getSDKVersion()));
         Context appContext = this.getBaseContext();
         String version = "Version: "+getAppVersion(appContext);
@@ -382,10 +388,20 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
     public void onClick(View v) {
         switch (v.getId()) {
 
+            // For debugging we can tap the drone icon 5 times to be able to open the software without a drone connected.
+            case R.id.btn_test:
+                if (++hiddenkey > 5) {
+                    showToast("TestMode enabled...");
+                    mBtnOpen.setEnabled(true);
+                    TextView lTextConnectionStatus = (TextView) findViewById(R.id.text_model_test);
+                    lTextConnectionStatus.setText("TestMode");
+                }
+                break;
+
             case R.id.btn_sim: {
                 if (RDApplication.getSim() == true){
                     TextView lTextConnectionStatus = (TextView) findViewById(R.id.text_model_simulated);
-                    lTextConnectionStatus.setText("Active");
+                    lTextConnectionStatus.setText("");
 
                     showToast("noSimulate...");
                     RDApplication.setSim(false);
@@ -394,7 +410,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
                     showToast("Simulate...");
                     RDApplication.setSim(true);
                     TextView lTextConnectionStatus = (TextView) findViewById(R.id.text_model_simulated);
-                    lTextConnectionStatus.setText("");
+                    lTextConnectionStatus.setText("Active");
                 }
                 break;
             }

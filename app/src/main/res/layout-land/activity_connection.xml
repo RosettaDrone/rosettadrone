@@ -75,6 +75,15 @@
         android:textSize="15dp" />
 
     <TextView
+        android:id="@+id/text_model_test"
+        android:layout_width="83dp"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="560dp"
+        android:layout_marginTop="180dp"
+        android:text=""
+        android:textSize="15dp" />
+
+    <TextView
         android:id="@+id/textView2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -89,7 +98,7 @@
         android:layout_alignParentTop="true"
         android:layout_marginLeft="120dp"
         android:layout_marginTop="20dp"
-        android:text="Project:"
+        android:text="DIY Project:    "
         android:textAlignment="textEnd"
         android:textAppearance="?android:attr/textAppearanceSmall"
         android:textColor="@color/colorBlack"
@@ -117,13 +126,16 @@
         android:layout_marginTop="60dp"
         android:textSize="15dp" />
 
-    <ImageView
-        android:id="@+id/action_dji"
+    <Button
+        android:id="@+id/btn_test"
         android:layout_width="80dp"
         android:layout_height="80dp"
         android:layout_marginLeft="650dp"
         android:layout_marginTop="150dp"
-        android:src="@drawable/ic_drone" />
+        android:background="@drawable/ic_drone"
+        android:text=""
+        android:textColor="@color/colorWhite"
+        android:textSize="20dp" />
 
 
 </RelativeLayout>
