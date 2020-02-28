@@ -1,7 +1,11 @@
-# Rosetta Drone for Mavic Pro 2 
+# Rosetta Drone for **DJI Mavic 2** series 
 ## Supports Android 8.0 and newer, with DJI SDK 4.11.1 and Androidx
 
-## The master now works on DJI Mavic Pro 2, with live video to QGroundcontrol!!!!
+## The project now works on DJI Mavic 2 Pro/Zoom/Enterprise, and got live H.264 video stream out , tested on  QGroundcontrol.
+
+![Image of Opening screen](images/popen.png)
+Opening screen, requires DJI login first time...
+
 
 This version has implemented the new video stream method in DJI SDK that require quite a few modifications. It also includes all the latest libries, and Androidx.
 In the unstabile code there is also the DJI simulator, to enable testing in the lab. Android Studio is now updated to 3.6
@@ -12,12 +16,23 @@ Rosetta Drone is a Mavlink wrapper for the DJI SDK, which allows users to fly DJ
 
 The user assumes all responsibility for prevention of harm or damage. This is an evolving, experimental app. See "Known issues" below before use.
 
+![Image of Opening screen](images/Screenshot.png)
+Main screen, with live video...
+
+
 # Features
 
 * Report telemetry in QGC like position, attitude, relative altitude, heading, and battery remaining
 * Command Return-to-Launch from QGC
 * View drone video feeds in QGC or forward RTP to an IP address of your choice (currently Mavic Pro 2 only)
 * Create and fly waypoint missions
+* Fly by joystick and QGS
+* Fly from Python in DroneKit
+* Use Mavproxy to connect both QGC and DroneKit at the same time
+* Use Gstreamer/OpenCV/FFMPEG and DroneKit to create complex AI functions
+
+
+
 
 
 # Usage
@@ -64,7 +79,9 @@ def set_servo(servo,val):
     And then use: set_servo(8,-45.0) to set the gimbal....
 
 
-9. Support for joystick is added and tested with QGroundcontrol, using the now built in simulator.
+9. Support for **joystick** is added and tested with QGroundcontrol, using the now built in simulator.
+
+10. By taping on the drone icon 5 times, you enable test mode and can open the software with no drone connected. For GUI work.
 
     
 # Building from source

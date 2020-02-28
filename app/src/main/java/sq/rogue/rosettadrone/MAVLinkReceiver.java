@@ -555,7 +555,7 @@ public class MAVLinkReceiver {
                         }
                     }
                     break;
-                    
+
                 case MAV_CMD.MAV_CMD_NAV_RETURN_TO_LAUNCH:
                     mBuilder.finishedAction(WaypointMissionFinishedAction.GO_HOME);
                     parent.logMessageDJI("Waypoint RTL");

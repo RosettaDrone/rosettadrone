@@ -51,6 +51,15 @@
         android:text=""
         android:textSize="15dp" />
 
+    <TextView
+        android:id="@+id/text_model_test"
+        android:layout_width="105dp"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="270dp"
+        android:layout_marginTop="560dp"
+        android:text=""
+        android:textSize="15dp" />
+
     <Button
         android:id="@+id/btn_start"
         android:layout_width="150dp"
@@ -74,6 +83,18 @@
         android:textColor="@color/colorWhite"
         android:textSize="20dp" />
 
+    <Button
+        android:id="@+id/btn_test"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_gravity="center"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="530dp"
+        android:background="@drawable/ic_drone"
+        android:text=""
+        android:textColor="@color/colorWhite"
+        android:textSize="20dp" />
+
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -89,7 +110,7 @@
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="30dp"
-        android:text="Project:"
+        android:text="DIY Project:"
         android:textAppearance="?android:attr/textAppearanceSmall"
         android:textColor="@color/colorBlack"
         android:textSize="30sp"
@@ -115,15 +136,6 @@
         android:layout_centerHorizontal="true"
         android:layout_marginTop="130dp"
         android:textSize="15dp" />
-
-    <ImageView
-        android:id="@+id/action_dji"
-        android:layout_width="80dp"
-        android:layout_height="80dp"
-        android:layout_gravity="center"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="530dp"
-        android:src="@drawable/ic_drone"/>
 
 
 </RelativeLayout>
