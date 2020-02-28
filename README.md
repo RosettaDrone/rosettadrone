@@ -4,6 +4,7 @@
 ## The master now works on DJI Mavic 2 series, with live video to QGroundcontrol!!!!
 
 ![Image of Opening screen](images/popen.png)
+Opening screen, requires DJI login first time...
 
 
 This version has implemented the new video stream method in DJI SDK that require quite a few modifications. It also includes all the latest libries, and Androidx.
@@ -16,6 +17,8 @@ Rosetta Drone is a Mavlink wrapper for the DJI SDK, which allows users to fly DJ
 The user assumes all responsibility for prevention of harm or damage. This is an evolving, experimental app. See "Known issues" below before use.
 
 ![Image of Opening screen](images/Screenshot.png)
+Main screen, with live video...
+
 
 # Features
 
