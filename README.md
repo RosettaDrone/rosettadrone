@@ -7,7 +7,7 @@
 
 ![Image of Opening screen](images/popen.png)
 Opening screen, requires DJI login first time...
-
+  
 
 This version has implemented the new video stream method in DJI SDK that require quite a few modifications. It also includes all the latest libraries, and Androidx.
 In the unstable code there is also the DJI simulator, to enable testing in the lab. Android Studio is now updated to 3.6
