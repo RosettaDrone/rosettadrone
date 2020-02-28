@@ -3,7 +3,7 @@
 
 ## The master now works on DJI Mavic Pro 2, with live video to QGroundcontrol!!!!
 
-![Image of Opening screen](https://github.com/The1only/rosettadrone/tree/mp_work/images/popen.png)
+![Image of Opening screen](images/popen.png)
 
 
 This version has implemented the new video stream method in DJI SDK that require quite a few modifications. It also includes all the latest libries, and Androidx.
