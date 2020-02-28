@@ -42,6 +42,15 @@
         android:text="@string/model_not_available"
         android:textSize="15dp"/>
 
+    <TextView
+        android:id="@+id/text_model_simulated"
+        android:layout_width="60dp"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="55dp"
+        android:layout_marginTop="600dp"
+        android:text=""
+        android:textSize="15dp" />
+
     <Button
         android:id="@+id/btn_start"
         android:layout_width="150dp"
@@ -80,10 +89,23 @@
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="30dp"
-        android:text="Project 'Rosettadrone'"
+        android:text="Project:"
         android:textAppearance="?android:attr/textAppearanceSmall"
         android:textColor="@color/colorBlack"
         android:textSize="30sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/textView4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="80dp"
+        android:text="Rosetta Drone"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:textColor="@color/colorBlack"
+        android:textSize="24sp"
         android:textStyle="bold" />
 
     <TextView
@@ -91,7 +113,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="90dp"
+        android:layout_marginTop="130dp"
         android:textSize="15dp" />
 
     <ImageView

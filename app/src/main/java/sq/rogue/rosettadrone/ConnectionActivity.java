@@ -49,8 +49,8 @@ import dji.sdk.useraccount.UserAccountManager;
 
 public class ConnectionActivity extends Activity implements View.OnClickListener {
 
-    private String CustomName = "eSmartSystems 'Rosetta Drone'";
-//    private String CustomName = "9Tek Rosettadrone";
+    private String CustomName = "eSmartSystems";
+//    private String CustomName = "9Tek";
  //   private String CustomName = "";
 
     private static final String TAG = MainActivity.class.getName();
@@ -384,13 +384,17 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
 
             case R.id.btn_sim: {
                 if (RDApplication.getSim() == true){
+                    TextView lTextConnectionStatus = (TextView) findViewById(R.id.text_model_simulated);
+                    lTextConnectionStatus.setText("Active");
+
                     showToast("noSimulate...");
                     RDApplication.setSim(false);
                     mTextConnectionStatus.setText(R.string.connection_loose);
                 }else{
                     showToast("Simulate...");
                     RDApplication.setSim(true);
-                    mTextConnectionStatus.setText(R.string.connection_sim);
+                    TextView lTextConnectionStatus = (TextView) findViewById(R.id.text_model_simulated);
+                    lTextConnectionStatus.setText("");
                 }
                 break;
             }
