@@ -1,7 +1,7 @@
 # Rosetta Drone for Mavic Pro 2 
 ## Supports Android 8.0 and newer, with DJI SDK 4.11.1 and Androidx
 
-## The master now works on DJI Mavic Pro 2, with live video to QGroundcontrol!!!!
+## The master now works on DJI Mavic 2 series, with live video to QGroundcontrol!!!!
 
 ![Image of Opening screen](images/popen.png)
 
@@ -23,6 +23,13 @@ The user assumes all responsibility for prevention of harm or damage. This is an
 * Command Return-to-Launch from QGC
 * View drone video feeds in QGC or forward RTP to an IP address of your choice (currently Mavic Pro 2 only)
 * Create and fly waypoint missions
+* Fly by joystick and QGS
+* Fly from Python in DroneKit
+* Use Mavproxy to connect both QGC and DroneKit at the same time
+* Use Gstreamer/OpenCV/FFMPEG and DroneKit to create complex AI functions
+
+
+
 
 
 # Usage
@@ -69,7 +76,7 @@ def set_servo(servo,val):
     And then use: set_servo(8,-45.0) to set the gimbal....
 
 
-9. Support for joystick is added and tested with QGroundcontrol, using the now built in simulator.
+9. Support for **joystick** is added and tested with QGroundcontrol, using the now built in simulator.
 
 10. By taping on the drone icon 5 times, you enable test mode and can open the software with no drone connected. For GUI work.
 
