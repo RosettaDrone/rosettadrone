@@ -289,10 +289,8 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     public void setForwardLEDsEnabled(final boolean enabled) {
         LEDsSettings.Builder Tmp = new LEDsSettings.Builder();
         Tmp.frontLEDsOn(enabled);
-    }
-/*
-    public void setForwardLEDsEnabled(final boolean enabled) {
-        djiAircraft.getFlightController().setLEDsEnabled(enabled, new CommonCallbacks.CompletionCallback() {
+
+        djiAircraft.getFlightController().setLEDsEnabledSettings(Tmp.build(), new CommonCallbacks.CompletionCallback() {
             @Override
             public void onResult(DJIError djiError) {
                 if (djiError == null) {
@@ -304,7 +302,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             }
         });
     }
-*/
+
     public void setCollisionAvoidance(final boolean enabled) {
         if (djiAircraft.getFlightController().getFlightAssistant() != null) {
             djiAircraft.getFlightController().getFlightAssistant().setCollisionAvoidanceEnabled(enabled, new CommonCallbacks.CompletionCallback() {
@@ -1439,7 +1437,6 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
     public void do_set_motion_absolute(float lat, float lon, float alt, float yaw) {
         parent.logMessageDJI("Initiating abs move");
-
     }
 
     // Run the velocity command for 2 seconds...
