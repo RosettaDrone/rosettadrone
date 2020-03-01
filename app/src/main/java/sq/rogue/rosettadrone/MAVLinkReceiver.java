@@ -135,11 +135,11 @@ public class MAVLinkReceiver {
                         changeFlightMode((int) msg_cmd.param1);
                         break;
                     case MAV_CMD_NAV_LOITER_UNLIM:
-//                        mModel.set_flight_mode(ATTI);
+   //                     mModel.set_flight_mode(ATTI);
                         break;
                     case MAV_CMD_NAV_TAKEOFF:
-//                        parent.logMessageDJI("TAKEOFF TARGET = " + msg_cmd.target_system);
-//                        parent.logMessageDJI("TAKEOFF SYSID = " + msg.sysid);
+                        parent.logMessageDJI("TAKEOFF TARGET = " + msg_cmd.target_system);
+                        parent.logMessageDJI("TAKEOFF SYSID = " + msg.sysid);
                         mModel.do_takeoff();
                         break;
                     case MAV_CMD_NAV_LAND:
