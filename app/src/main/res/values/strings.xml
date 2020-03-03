@@ -72,6 +72,8 @@
     <string name="pref_video_bitrate">Video bitrate</string>
     <string name="pref_encode_speed">Video encoding speed</string>
 
+    <string name="pref_app">App Name</string>
+
     <string-array name="video_encode_array">
         <item>Ultra Fast</item>
         <item>Super Fast</item>

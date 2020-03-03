@@ -32,8 +32,13 @@ public class util {
     //Default waypoint error type
     public static final int TYPE_WAYPOINT_DEFAULT = 0x30;
 
+    public static final int TYPE_APP_NAME = 0x31;
+
+
     public static String getErrorString(int errorCode) {
         switch (errorCode) {
+            case TYPE_APP_NAME:
+                break;
             case TYPE_GCS_IP:
                 break;
             case TYPE_GCS_PORT:

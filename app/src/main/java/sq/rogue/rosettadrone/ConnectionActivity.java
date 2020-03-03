@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.hardware.usb.UsbManager;
 import android.os.AsyncTask;
@@ -23,6 +24,7 @@ import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import androidx.preference.PreferenceManager;
 import dji.common.flightcontroller.simulator.InitializationData;
 
 import dji.common.model.LocationCoordinate2D;
@@ -48,10 +50,6 @@ import dji.sdk.useraccount.UserAccountManager;
 
 
 public class ConnectionActivity extends Activity implements View.OnClickListener {
-
-    private String CustomName = "eSmartSystems";
-//    private String CustomName = "9Tek";
- //   private String CustomName = "";
 
     private static final String TAG = MainActivity.class.getName();
     private static final String[] REQUIRED_PERMISSION_LIST = new String[]{
@@ -89,6 +87,8 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
     private AtomicBoolean isRegistrationInProgress = new AtomicBoolean(false);
     private List<String> missingPermission = new ArrayList<>();
 
+    private SharedPreferences sharedPreferences;
+    private String CustomName;
 
     //region Registration n' Permissions Helpers
 
@@ -307,6 +307,8 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         Log.v(TAG,""+version);
         ((TextView)findViewById(R.id.textView3)).setText(version);
 
+        sharedPreferences = android.preference.PreferenceManager.getDefaultSharedPreferences(this);
+        CustomName = sharedPreferences.getString("pref_app_name", "")+" Rosetta Drone 2";
         if(CustomName.length() > 0)
             ((TextView)findViewById(R.id.textView)).setText(CustomName);
 

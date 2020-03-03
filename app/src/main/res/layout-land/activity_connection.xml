@@ -93,30 +93,18 @@
 
     <TextView
         android:id="@+id/textView"
-        android:layout_width="291dp"
+        android:layout_width="600dp"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
-        android:layout_marginLeft="120dp"
+        android:layout_centerHorizontal="true"
         android:layout_marginTop="20dp"
-        android:text="DIY Project:    "
-        android:textAlignment="textEnd"
+        android:text="Rosetta Drone 2"
+        android:textAlignment="center"
         android:textAppearance="?android:attr/textAppearanceSmall"
         android:textColor="@color/colorBlack"
         android:textSize="30sp"
         android:textStyle="bold" />
 
-    <TextView
-        android:id="@+id/textView4"
-        android:layout_width="230dp"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_marginLeft="430dp"
-        android:layout_marginTop="27dp"
-        android:text="Rosetta Drone"
-        android:textAppearance="?android:attr/textAppearanceSmall"
-        android:textColor="@color/colorBlack"
-        android:textSize="24sp"
-        android:textStyle="bold" />
 
     <TextView
         android:id="@+id/textView3"

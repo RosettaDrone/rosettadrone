@@ -10,7 +10,6 @@
 
         <androidx.preference.EditTextPreference
             android:defaultValue="1"
-            android:numeric="integer"
             android:key="pref_drone_id"
             android:title="@string/pref_drone_id" />
 
@@ -19,12 +18,10 @@
             android:title="@string/pref_drone_rtl_cat">
             <androidx.preference.EditTextPreference
                 android:defaultValue="60"
-                android:numeric="integer"
                 android:key="pref_drone_rtl_altitude"
                 android:title="@string/pref_drone_rtl_altitude" />
             <androidx.preference.EditTextPreference
                 android:defaultValue="500"
-                android:numeric="integer"
                 android:key="pref_drone_max_height"
                 android:title="@string/pref_drone_max_height" />
             <androidx.preference.SwitchPreferenceCompat
@@ -46,6 +43,16 @@
                 android:enabled="false" />
         </PreferenceCategory>
 
+        <PreferenceCategory
+            android:key="drone_name_prefs"
+            android:title="App Name">
+
+            <androidx.preference.EditTextPreference
+                android:defaultValue=" "
+                android:key="pref_app_name"
+                android:title="@string/pref_app" />
+
+        </PreferenceCategory>
 
         <PreferenceCategory
             android:key="drone_led_prefs"
@@ -119,7 +126,6 @@
         <androidx.preference.EditTextPreference
             android:defaultValue="14550"
             android:key="pref_telem_port"
-            android:numeric="integer"
             android:title="@string/pref_telem_port" />
 
         <androidx.preference.SwitchPreferenceCompat
@@ -167,13 +173,11 @@
             android:defaultValue="5600"
             android:dependency="pref_enable_video"
             android:key="pref_video_port"
-            android:numeric="integer"
             android:title="@string/pref_video_port" />
         <androidx.preference.EditTextPreference
             android:defaultValue="2000"
             android:dependency="pref_enable_video"
             android:key="pref_video_bitrate"
-            android:numeric="integer"
             android:title="@string/pref_video_bitrate" />
         <androidx.preference.ListPreference
             android:key="pref_encode_speed"

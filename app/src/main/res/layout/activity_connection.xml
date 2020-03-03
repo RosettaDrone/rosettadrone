@@ -24,7 +24,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="270dp"
+        android:layout_marginTop="250dp"
         android:text="@string/product_information"
         android:textColor="@android:color/black"
         android:textSize="20dp"
@@ -105,36 +105,25 @@
 
     <TextView
         android:id="@+id/textView"
-        android:layout_width="wrap_content"
+        android:layout_width="350dp"
+        android:textAlignment="center"
+        android:layout_centerHorizontal="true"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
         android:layout_marginTop="30dp"
-        android:text="DIY Project:"
+        android:text="Rosetta Drone 2"
         android:textAppearance="?android:attr/textAppearanceSmall"
         android:textColor="@color/colorBlack"
         android:textSize="30sp"
         android:textStyle="bold" />
 
-    <TextView
-        android:id="@+id/textView4"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="80dp"
-        android:text="Rosetta Drone"
-        android:textAppearance="?android:attr/textAppearanceSmall"
-        android:textColor="@color/colorBlack"
-        android:textSize="24sp"
-        android:textStyle="bold" />
 
     <TextView
         android:id="@+id/textView3"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="130dp"
+        android:layout_marginTop="110dp"
         android:textSize="15dp" />
 
 
