@@ -24,7 +24,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceSmall"
-        android:text="This is a Mavlink wrapper for the DJI SDK, "
+        android:text="This is a Mavlink wrapper for the DJI Drones, "
         android:id="@+id/textView"
         android:layout_marginTop="58dp"
         android:textStyle="bold"
@@ -51,7 +51,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceSmall"
-        android:text="Mavlink-speaking GCS but all testing so far has "
+        android:text="Mavlink-speaking GCS, all testing so far has "
         android:id="@+id/textView3"
         android:layout_marginTop="98dp"
         android:textStyle="bold"
@@ -120,6 +120,15 @@
         android:layout_centerHorizontal="true"
         android:layout_marginTop="530dp"
         android:src="@drawable/ic_drone"/>
+
+    <ImageView
+        android:id="@+id/action_logo"
+        android:layout_width="200dp"
+        android:layout_height="100dp"
+        android:layout_gravity="center"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="360dp"
+        android:src="@drawable/logo"/>
 
 
 </RelativeLayout>

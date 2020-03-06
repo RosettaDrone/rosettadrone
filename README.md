@@ -140,13 +140,29 @@ Anyone who speaks multiple languages knows that translations are rarely perfect.
 # Known Issues for Users
 
 
-- If you change the UDP port while QGC is running, you may need to restart QGC
+- If you change the UDP port while QGC is running, you may need to restart QGC.
 
 - If you change the video UDP port while QGC is running, you may need to restart Rosetta drone 2
 
-- Some times the Rosetta drone 2 stopps and restarts, work are in progress to eliminate this. Seems to be related to the Mavlik layer.
+- Some times the Rosetta Drone 2 stopps and restarts, work are in progress to eliminate this. Seems to be related to the Mavlik layer.
 
 - If you takeoff using the QGC, and then sett a point and hit goto, the Rosetta drone 2 enters an error state. Work are in progress. 
+
+
+
+# TODO
+
+- Fix goto position.
+
+- Fix mission plan flight.
+
+- Add more actions to mission waypoint
+
+- Test and prepare official relase, add to play store.
+
+
+
+
 
 # Known Issues for Developers
 

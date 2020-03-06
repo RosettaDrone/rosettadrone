@@ -117,6 +117,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     private ArrayList<MAVParam> params = new ArrayList<MAVParam>();
     private long ticks = 0;
     private MainActivity parent;
+
     private int mSystemId = 1;
     private int mComponentId = MAV_COMP_ID_AUTOPILOT1;
     private int mGCSCommandedMode;
@@ -157,7 +158,6 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     private double m_head=0;
     private float  m_alt=0;
 
-
     private SendVelocityDataTask mSendVirtualStickDataTask = null;;
     private Timer mSendVirtualStickDataTimer = null;
 
@@ -167,7 +167,6 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     private FollowMeMissionOperator fmmo;
     private FlightController mFlightController;
     private Gimbal mGimbal = null;
-
 
 
     public DroneModel(MainActivity parent, DatagramSocket socket, boolean sim) {
@@ -240,7 +239,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
             if(sim == true) {
                 mFlightController.getSimulator()
-                        .start(InitializationData.createInstance(new LocationCoordinate2D(23, 113), 10, 10),
+                        .start(InitializationData.createInstance(new LocationCoordinate2D(60.25, 10.29), 10, 10),
                                 new CommonCallbacks.CompletionCallback() {
                                     @Override
                                     public void onResult(DJIError djiError) {
