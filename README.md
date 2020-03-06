@@ -118,9 +118,23 @@ Anyone who speaks multiple languages knows that translations are rarely perfect.
 
 - Rosetta drone 2 reports groundspeed and airspeed as the same, and does no wind correction
 
-- There is currently no way to turn the video camera on or off in QGC, but DJI controllers will still work fine
+- There is currently no way to turn the video camera on or off in QGC, but DJI controllers will still work fine, Mavlink support for this is now added.
 
 - The only implemented waypoint actions include delaying at a waypoint, taking a photo, or changing the gimbal pitch
+
+- Battery % is now show in the GUI on the main screen.
+
+- Battery Warnings for both Drone and Controller at 20% 10% and 5%. No sound as the moment.
+
+- Controller stick positions and C1, C2 and C3 switch states are now reported as RC RAW messages over Mavlink
+
+- A working DJI simulator is added to testing and training. The simulator is Hardware In the Loop (HIL), and this require both a controller and a drone connected. 
+
+- A test mode is added by hitting 5 times on the drone icon. This will enable GUI testing only. 
+
+
+
+
 
 # Known Issues for Users
 
