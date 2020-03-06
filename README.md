@@ -128,10 +128,11 @@ Anyone who speaks multiple languages knows that translations are rarely perfect.
 
 - Controller stick positions and C1, C2 and C3 switch states are now reported as RC RAW messages over Mavlink
 
-- A working DJI simulator is added to testing and training. The simulator is Hardware In the Loop (HIL), and this require both a controller and a drone connected. 
+- A working DJI simulator is added for testing and training. The simulator is Hardware In the Loop (HIL), and this require both a controller and a drone connected. 
 
 - A test mode is added by hitting 5 times on the drone icon. This will enable GUI testing only. 
 
+- The message on the boot/login screen can now be modified in "settings/drone configuration/App Name" , to make tha app more private. 
 
 
 
