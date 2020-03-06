@@ -2,6 +2,8 @@ package sq.rogue.rosettadrone;
 
 import androidx.annotation.NonNull;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -82,8 +84,10 @@ import dji.common.mission.waypoint.Waypoint;
 import dji.common.mission.waypoint.WaypointMission;
 import dji.common.mission.waypoint.WaypointMissionState;
 import dji.common.model.LocationCoordinate2D;
+import dji.common.remotecontroller.ChargeRemaining;
 import dji.common.remotecontroller.HardwareState;
 import dji.common.util.CommonCallbacks;
+import dji.keysdk.RemoteControllerKey;
 import dji.sdk.battery.Battery;
 import dji.sdk.flightcontroller.FlightController;
 import dji.sdk.gimbal.Gimbal;
@@ -116,24 +120,43 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     private int mSystemId = 1;
     private int mComponentId = MAV_COMP_ID_AUTOPILOT1;
     private int mGCSCommandedMode;
-    private int mThrottleSetting;
-    private int mFullChargeCapacity_mAh;
-    private int mChargeRemaining_mAh;
-    private int mVoltage_mV;
-    private int mCurrent_mA;
-    private float mBatteryTemp_C;
+
+    private int mThrottleSetting=0;
+    private int mLeftStickVertical=0;
+    private int mLeftStickHorisontal=0;
+    private int mRightStickVertical=0;
+    private int mRightStickHorisontal=0;
+    private boolean mC1=false;
+    private boolean mC2=false;
+    private boolean mC3=false;
+
+    private int mCFullChargeCapacity_mAh=0;
+    private int mCChargeRemaining_mAh=0;
+    private int mCVoltage_mV=0;
+    private int mCVoltage_pr=0;
+    private int mCCurrent_mA=0;
+    private float mCBatteryTemp_C=0;
+
+    private int mFullChargeCapacity_mAh=0;
+    private int mChargeRemaining_mAh=0;
+    private int mVoltage_mV=0;
+    private int mVoltage_pr=0;
+    private int mCurrent_mA=0;
+    private float mBatteryTemp_C=0;
     private int[] mCellVoltages = new int[10];
     private int mDownlinkQuality = 0;
     private int mUplinkQuality = 0;
+    private int mControllerVoltage_pr=0;
 
-    private float mPitch;
-    private float mRoll;
-    private float mYaw;
-    private float mThrottle;
-    private double m_Latitude;
-    private double m_Longitude;
-    private double m_head;
-    private float  m_alt;
+    private float mPitch=0;
+    private float mRoll=0;
+    private float mYaw=0;
+    private float mThrottle=0;
+    private double m_Latitude=0;
+    private double m_Longitude=0;
+    private double m_head=0;
+    private float  m_alt=0;
+
 
     private SendVelocityDataTask mSendVirtualStickDataTask = null;;
     private Timer mSendVirtualStickDataTimer = null;
@@ -144,6 +167,8 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     private FollowMeMissionOperator fmmo;
     private FlightController mFlightController;
     private Gimbal mGimbal = null;
+
+
 
     public DroneModel(MainActivity parent, DatagramSocket socket, boolean sim) {
         this.parent = parent;
@@ -157,6 +182,15 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         }
         return 0;
     }
+
+    public float get_drone_battery_prosentage(){
+        return mVoltage_pr;
+    }
+
+    public float get_controller_battery_prosentage(){
+        return mControllerVoltage_pr;
+    }
+
 
     private void initFlightController(boolean sim) {
         parent.logMessageDJI("Starting FlightController...");
@@ -434,6 +468,23 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         mSafetyEnabled = SafetyEnabled;
     }
 
+
+    protected void SetMesasageBox(String msg)
+    {
+        AlertDialog.Builder alertDialog2 = new AlertDialog.Builder(parent);
+        alertDialog2.setTitle(msg);
+        alertDialog2.setMessage("Please Land !!!");
+        alertDialog2.setPositiveButton("Accept",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                        //dismiss the dialog
+                    }
+                });
+
+        alertDialog2.show();
+    }
+
     public boolean setDjiAircraft(Aircraft djiAircraft) {
 
         if (djiAircraft == null || djiAircraft.getRemoteController() == null)
@@ -448,10 +499,54 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
          **************************************************/
 
         this.djiAircraft.getRemoteController().setHardwareStateCallback(new HardwareState.HardwareStateCallback() {
+            boolean lastState = false;
+
             @Override
             public void onUpdate(@NonNull HardwareState rcHardwareState) {
                 // DJI: range [-660,660]
                 mThrottleSetting = (rcHardwareState.getLeftStick().getVerticalPosition() + 660) / 1320;
+
+                // Mavlink: 1000 to 2000 with 1500 = 1.5ms as center...
+                mLeftStickVertical    = (int)(rcHardwareState.getLeftStick().getVerticalPosition() * 0.75 ) + 1500;
+                mLeftStickHorisontal  = (int)(rcHardwareState.getLeftStick().getHorizontalPosition() * 0.75 ) + 1500;
+                mRightStickVertical   = (int)(rcHardwareState.getRightStick().getVerticalPosition() * 0.75 ) + 1500;
+                mRightStickHorisontal = (int)(rcHardwareState.getRightStick().getHorizontalPosition() * 0.75 ) + 1500;
+                mC1 = rcHardwareState.getC1Button().isClicked();
+                mC2 = rcHardwareState.getC2Button().isClicked();
+                mC3 = rcHardwareState.getC3Button().isClicked();
+
+                // If C3 is pressed...
+                if(mC3 == true && !lastState) {
+                    parent.logMessageDJI("DoTakeoff");
+                    do_takeoff();
+                    lastState = true;
+                }
+                else if(mC3 == false && lastState){
+                    lastState = false;
+                }
+            }
+        });
+
+
+        this.djiAircraft.getRemoteController().setChargeRemainingCallback(new ChargeRemaining.Callback() {
+            int lastState = 100;
+
+            @Override
+            public void onUpdate(@NonNull ChargeRemaining rcChargeRemaining) {
+                mControllerVoltage_pr = (rcChargeRemaining.getRemainingChargeInPercent());
+                if(mControllerVoltage_pr > 90) lastState = 100;
+                if(mControllerVoltage_pr < 20 && lastState == 100){
+                    lastState = 20;
+                    SetMesasageBox("Controller Battery Warning 20% !!!!!");
+                }
+                if(mControllerVoltage_pr < 10 && lastState == 20){
+                    lastState = 10;
+                    SetMesasageBox("Controller Battery Warning 10% !!!!!");
+                }
+                if(mControllerVoltage_pr < 5 && lastState == 10){
+                    lastState = 5;
+                    SetMesasageBox("Controller Battery Warning 5% !!!!!");
+                }
             }
         });
 
@@ -459,25 +554,21 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
          * Called whenever battery state changes          *
          **************************************************/
 
-
         if (this.djiAircraft != null) {
-
             parent.logMessageDJI("setBatteryCallback");
-
             this.djiAircraft.getBattery().setStateCallback(new BatteryState.Callback() {
-
                 @Override
                 public void onUpdate(BatteryState batteryState) {
                     Log.d(TAG, "Battery State callback");
-                    mFullChargeCapacity_mAh = batteryState.getFullChargeCapacity();
-                    mChargeRemaining_mAh = batteryState.getChargeRemaining();
-                    mVoltage_mV = batteryState.getVoltage();
-                    mCurrent_mA = Math.abs(batteryState.getCurrent());
-                    mBatteryTemp_C = batteryState.getTemperature();
+                    mCFullChargeCapacity_mAh = batteryState.getFullChargeCapacity();
+                    mCChargeRemaining_mAh = batteryState.getChargeRemaining();
+                    mCVoltage_mV = batteryState.getVoltage();
+                    mCCurrent_mA = Math.abs(batteryState.getCurrent());
+                    mCBatteryTemp_C = batteryState.getTemperature();
+                    mCVoltage_pr = batteryState.getChargeRemainingInPercent();
                     Log.d(TAG, "Current: " + String.valueOf(batteryState.getCurrent()));
                 }
             });
-
             this.djiAircraft.getBattery().getCellVoltages(new CellVoltageCompletionCallback());
         } else {
             Log.e(TAG, "djiAircraft.getBattery() IS NULL");
@@ -485,6 +576,8 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         }
 
         Battery.setAggregationStateCallback(new AggregationState.Callback() {
+            int lastState = 100;
+
             @Override
             public void onUpdate(AggregationState aggregationState) {
                 Log.d(TAG, "Aggregation State callback");
@@ -492,6 +585,22 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                 mChargeRemaining_mAh = aggregationState.getChargeRemaining();
                 mVoltage_mV = aggregationState.getVoltage();
                 mCurrent_mA = aggregationState.getCurrent();
+                mVoltage_pr = aggregationState.getChargeRemainingInPercent();
+
+                if(mVoltage_pr > 90) lastState = 100;
+                if(mVoltage_pr < 20 && lastState == 100){
+                    lastState = 20;
+                    SetMesasageBox("Drone Battery Warning 20% !!!!!");
+                }
+                if(mVoltage_pr < 10 && lastState == 20){
+                    lastState = 10;
+                    SetMesasageBox("Drone Battery Warning 10% !!!!!");
+                }
+                if(mVoltage_pr < 5 && lastState == 10){
+                    lastState = 5;
+                    SetMesasageBox("Drone Battery Warning 5% !!!!!");
+                }
+
                 Log.d(TAG, "Aggregated voltage: " + String.valueOf(aggregationState.getVoltage()));
             }
         });
@@ -899,6 +1008,13 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     public void send_rc_channels() {
         msg_rc_channels msg = new msg_rc_channels();
         msg.rssi = (short) mUplinkQuality;
+        msg.chan1_raw = mLeftStickVertical;
+        msg.chan2_raw = mLeftStickHorisontal;
+        msg.chan3_raw = mRightStickVertical;
+        msg.chan4_raw = mRightStickHorisontal;
+        msg.chan5_raw = mC1==true?1000:2000;
+        msg.chan6_raw = mC2==true?1000:2000;
+        msg.chan7_raw = mC3==true?1000:2000;
         sendMessage(msg);
     }
 

@@ -257,7 +257,14 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         if (mDroneDetails != null) {
             String droneID = prefs.getString("pref_drone_id", "1");
             String rtlAlt = prefs.getString("pref_drone_rtl_altitude", "60") + "m";
-            String text = "ID:" + "\t" + droneID + System.getProperty("line.separator") + "RTL:" + "\t" + rtlAlt;
+
+            float dronebattery = mMavlinkReceiver.mModel.get_drone_battery_prosentage();
+            float controlerbattery = mMavlinkReceiver.mModel.get_controller_battery_prosentage();
+
+            String text = "Drone Battery:       " + "\t\t" + dronebattery + "%"  + "\t" + "ID: " + "\t\t" + droneID + System.getProperty("line.separator") +
+                    "Controller Battery:  " + "\t" + controlerbattery + "%"  + "\t" + "RTL:" + "\t" + rtlAlt;
+
+//            String text = "ID:" + "\t" + droneID + System.getProperty("line.separator") + "RTL:" + "\t" + rtlAlt;
             mDroneDetails.setText(text);
         }
 
@@ -940,10 +947,13 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
 
         String droneID = prefs.getString("pref_drone_id", "1");
         String rtlAlt = prefs.getString("pref_drone_rtl_altitude", "60") + "m";
-        float dronebattery = mMavlinkReceiver.mModel.get_battery_status();
 
-        String text = "Drone Battery:       " + "\t" + dronebattery + "%"  + "\t" + "ID: " + "\t" + droneID + System.getProperty("line.separator") +
-                      "Controller Battery:  " + "\t" + dronebattery + "%"  + "\t" + "RTL:" + "\t" + rtlAlt;
+//        float dronebattery = mMavlinkReceiver.mModel.get_battery_status();
+        float dronebattery = mMavlinkReceiver.mModel.get_drone_battery_prosentage();
+        float controlerbattery = mMavlinkReceiver.mModel.get_controller_battery_prosentage();
+
+        String text = "Drone Battery:       " + "\t\t" + dronebattery + "%"  + "\t" + "ID: " + "\t\t" + droneID + System.getProperty("line.separator") +
+                      "Controller Battery:  " + "\t" + controlerbattery + "%"  + "\t" + "RTL:" + "\t" + rtlAlt;
         mDroneDetails.setText(text);
 
         mDroneDetails.setPadding(mDroneDetails.getPaddingLeft(),

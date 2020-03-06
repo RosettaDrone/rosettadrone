@@ -60,7 +60,7 @@ void invokeFrameDataCallback(JNIEnv *env, jobject obj, uint8_t *buf, int size, i
                              int isKeyFrame, int width, int height) {
     jbyte *buff = (jbyte *) buf;
     jbyteArray jarray = (*env)->NewByteArray(env, size);
-    (*env)->SetByteArrayRegion(env, jarray, 0, size, buf);
+    (*env)->SetByteArrayRegion(env, jarray, 0, size, (const signed char *)buf);
     (*env)->CallVoidMethod(env, obj, dataCallbackMID, jarray, size, frameNum, isKeyFrame != 0,
                            width, height);
 }
