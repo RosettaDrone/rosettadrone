@@ -134,6 +134,9 @@ Anyone who speaks multiple languages knows that translations are rarely perfect.
 
 - The message on the boot/login screen can now be modified in "settings/drone configuration/App Name" , to make tha app more private. 
 
+- The switch C3 is now both reported as switch 3 and also performa a auto takeoff is the system is armed. This to allow flying from Rosetta Drone 2, might be reverted.
+
+
 
 
 
