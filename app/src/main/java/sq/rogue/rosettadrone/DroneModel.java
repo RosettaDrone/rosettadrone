@@ -183,7 +183,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     public float get_drone_battery_prosentage(){
-        return mVoltage_pr;
+        return mCVoltage_pr;
     }
 
     public float get_controller_battery_prosentage(){
@@ -506,10 +506,10 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                 mThrottleSetting = (rcHardwareState.getLeftStick().getVerticalPosition() + 660) / 1320;
 
                 // Mavlink: 1000 to 2000 with 1500 = 1.5ms as center...
-                mLeftStickVertical    = (int)(rcHardwareState.getLeftStick().getVerticalPosition() * 0.75 ) + 1500;
-                mLeftStickHorisontal  = (int)(rcHardwareState.getLeftStick().getHorizontalPosition() * 0.75 ) + 1500;
-                mRightStickVertical   = (int)(rcHardwareState.getRightStick().getVerticalPosition() * 0.75 ) + 1500;
-                mRightStickHorisontal = (int)(rcHardwareState.getRightStick().getHorizontalPosition() * 0.75 ) + 1500;
+                mLeftStickVertical    = (int)(rcHardwareState.getLeftStick().getVerticalPosition() * 0.8 ) + 1500;
+                mLeftStickHorisontal  = (int)(rcHardwareState.getLeftStick().getHorizontalPosition() * 0.8 ) + 1500;
+                mRightStickVertical   = (int)(rcHardwareState.getRightStick().getVerticalPosition() * 0.8 ) + 1500;
+                mRightStickHorisontal = (int)(rcHardwareState.getRightStick().getHorizontalPosition() * 0.8 ) + 1500;
                 mC1 = rcHardwareState.getC1Button().isClicked();
                 mC2 = rcHardwareState.getC2Button().isClicked();
                 mC3 = rcHardwareState.getC3Button().isClicked();
@@ -1014,6 +1014,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         msg.chan5_raw = mC1==true?1000:2000;
         msg.chan6_raw = mC2==true?1000:2000;
         msg.chan7_raw = mC3==true?1000:2000;
+        msg.chancount = 7;
         sendMessage(msg);
     }
 
