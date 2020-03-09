@@ -104,6 +104,8 @@ dependencies {
     })
     compileOnly 'com.dji:dji-sdk-provided:4.11.1'
 
+    implementation 'com.dji:dji-uxsdk:4.11.1'
+
     implementation 'androidx.annotation:annotation:1.1.0'
     implementation 'androidx.appcompat:appcompat:1.1.0'
     implementation 'androidx.preference:preference:1.1.0'

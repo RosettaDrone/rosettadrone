@@ -113,7 +113,6 @@
             android:foregroundGravity="center_horizontal"
             android:visibility="visible" />
 
-
     </FrameLayout>
 
 
