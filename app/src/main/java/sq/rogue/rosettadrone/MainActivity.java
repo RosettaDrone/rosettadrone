@@ -11,6 +11,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
@@ -45,6 +46,9 @@ import android.view.SurfaceView;
 import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
@@ -102,6 +106,7 @@ import dji.sdk.flightcontroller.FlightController;
 import dji.sdk.products.Aircraft;
 import dji.sdk.sdkmanager.DJISDKInitEvent;
 import dji.sdk.sdkmanager.DJISDKManager;
+import dji.ux.base.Widget;
 import sq.rogue.rosettadrone.logs.LogFragment;
 import sq.rogue.rosettadrone.settings.SettingsActivity;
 import sq.rogue.rosettadrone.settings.HelpActivity;
@@ -111,12 +116,14 @@ import sq.rogue.rosettadrone.video.NativeHelper;
 
 import static sq.rogue.rosettadrone.util.safeSleep;
 
-
-public class MainActivity extends AppCompatActivity implements DJICodecManager.YuvDataCallback {
+////public class MainActivity extends Activity implements DJICodecManager.YuvDataCallback{
+public class MainActivity extends AppCompatActivity implements DJICodecManager.YuvDataCallback{
 
     public static final String FLAG_CONNECTION_CHANGE = "dji_sdk_connection_change";
     private final static int RESULT_SETTINGS = 1001;
     private final static int RESULT_HELP = 1002;
+    private final static int RESULT_GUI = 1003;
+
     public static boolean FLAG_PREFS_CHANGED = false;
     public static boolean FLAG_VIDEO_ADDRESS_CHANGED = false;
     public static boolean FLAG_TELEMETRY_ADDRESS_CHANGED = false;
@@ -157,6 +164,8 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
     private boolean connectivityHasChanged = false;
     private boolean shouldConnect = false;
     protected TextureView mVideoSurface  = null;
+    private boolean gui_enabled = true;
+    private Button mBtnSafety;
 
     private VideoFeeder.VideoFeed standardVideoFeeder;
     protected VideoFeeder.VideoDataListener mReceivedVideoDataListener = null;
@@ -184,29 +193,29 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         @Override
         public void run() {
 
-            try {
-                if (!mNewDJI.equals("")) {
-//                    ((LogFragment) logPagerAdapter.getItem(0)).appendLogText(mNewDJI);
-                    logDJI.appendLogText(mNewDJI);
-                    mNewDJI = "";
-                }
-                if (!mNewOutbound.equals("")) {
-//                    ((LogFragment) logPagerAdapter.getItem(1)).appendLogText(mNewOutbound);
-                    logOutbound.appendLogText(mNewOutbound);
+            if(gui_enabled == false) {
+                try {
+                    if (!mNewDJI.equals("")) {
+                        //                    ((LogFragment) logPagerAdapter.getItem(0)).appendLogText(mNewDJI);
+                        logDJI.appendLogText(mNewDJI);
+                        mNewDJI = "";
+                    }
+                    if (!mNewOutbound.equals("")) {
+                        //                    ((LogFragment) logPagerAdapter.getItem(1)).appendLogText(mNewOutbound);
+                        logOutbound.appendLogText(mNewOutbound);
 
-                    mNewOutbound = "";
-                }
-                if (!mNewInbound.equals("")) {
-//                    ((LogFragment) logPagerAdapter.getItem(2)).appendLogText(mNewInbound);
-                    logInbound.appendLogText(mNewInbound);
-                    mNewInbound = "";
-                }
+                        mNewOutbound = "";
+                    }
+                    if (!mNewInbound.equals("")) {
+                        //                    ((LogFragment) logPagerAdapter.getItem(2)).appendLogText(mNewInbound);
+                        logInbound.appendLogText(mNewInbound);
+                        mNewInbound = "";
+                    }
 
-            } catch (Exception e) {
-                Log.d(TAG, "exception", e);
+                } catch (Exception e) {
+                    Log.d(TAG, "exception", e);
+                }
             }
-
-//            invalidateOptionsMenu();
             mUIHandler.postDelayed(this, 500);
         }
     };
@@ -364,7 +373,18 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
     protected void onCreate(Bundle savedInstanceState) {
         Log.e(TAG, "onCreate()");
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+
+        //----------------
+ //       this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+        //----------------
+        requestWindowFeature(Window.FEATURE_NO_TITLE); // for hiding title
+
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        //----------------
+
+//        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_gui);
 
         mProduct = RDApplication.getProductInstance(); // Should be set by Connection ...
 
@@ -384,15 +404,9 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         prefs = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
 
-
         deleteApplicationDirectory();
-
-        if (savedInstanceState != null) {
-            navState = savedInstanceState.getInt("navigation_state");
-        }
-
         initLogs();
-        initBottomNav();
+        //initBottomNav();
 
         mModel = new DroneModel(this, null, RDApplication.getSim());
         mModel.setSystemId(Integer.parseInt(prefs.getString("pref_drone_id", "1")));
@@ -420,17 +434,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         initPacketizer();
 
         DJISDKManager.getInstance().registerApp(this, mDJISDKManagerCallback);
-/*
-        // If simulator...
-        if(RDApplication.getSim() == true) {
-            logMessageDJI("Simulation mode......");
-            // Register the broadcast receiver for receiving the device connection's changes.
-            IntentFilter filter = new IntentFilter();
-            filter.addAction(DJISimulatorApplication.FLAG_CONNECTION_CHANGE);
-            registerReceiver(mReceiver, filter);
-        }
 
- */
     }
 
     protected BroadcastReceiver mReceiver = new BroadcastReceiver() {
@@ -477,6 +481,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         //logMessageDJI("set rate to 3Mbps");
 
         videostreamPreviewTtView.setVisibility(View.VISIBLE);
+
     }
 
     @Override
@@ -592,7 +597,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
     public void onYuvDataReceived(MediaFormat format, final ByteBuffer yuvFrame, int dataSize, final int width, final int height) {
 //    public void onYuvDataReceived(final ByteBuffer yuvFrame, int dataSize, final int width, final int height) {
         //In this demo, we test the YUV data by saving it into JPG files.
-        Log.e(TAG, "onYuvDataReceived " + dataSize + "  " + format);
+ //       Log.e(TAG, "onYuvDataReceived " + dataSize + "  " + format);
 //        Log.e(TAG, "onYuvDataReceived " + dataSize );
 
     }
@@ -693,7 +698,6 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         logOutbound = new LogFragment();
         logInbound = new LogFragment();
 
-
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
 
         fragmentTransaction.add(R.id.fragment_container, logDJI);
@@ -716,16 +720,14 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
                 break;
         }
         fragmentTransaction.commit();
-
-
     }
 
     /**
      *
      */
+    /*
     private void initBottomNav() {
         mBottomNavigation = findViewById(R.id.navigationView);
-
         mBottomNavigation.setOnNavigationItemSelectedListener(
                 new BottomNavigationView.OnNavigationItemSelectedListener() {
                     @Override
@@ -782,7 +784,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
             mBottomNavigation.setSelectedItemId(navState);
         }
     }
-
+*/
     private void downloadLogs() {
         BufferedWriter bufferedWriter = null;
 
@@ -868,8 +870,8 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        navState = mBottomNavigation.getSelectedItemId();
-        outState.putInt("navigation_state", navState);
+//        navState = mBottomNavigation.getSelectedItemId();
+//        outState.putInt("navigation_state", navState);
 //        Log.d(TAG, "SAVED NAVSTATE: " + navState);
 
     }
@@ -937,49 +939,58 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         super.onCreateOptionsMenu(menu);
+
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.toolbar_menu, menu);
 
         MenuItem droneItem = menu.findItem(R.id.drone_details);
         mDroneDetails = (TextView) droneItem.getActionView();
 
-        mDroneDetails.setTextSize(14);
+        if(mDroneDetails != null) {
+            mDroneDetails.setTextSize(14);
 
-        String droneID = prefs.getString("pref_drone_id", "1");
-        String rtlAlt = prefs.getString("pref_drone_rtl_altitude", "60") + "m";
+            String droneID = prefs.getString("pref_drone_id", "1");
+            String rtlAlt = prefs.getString("pref_drone_rtl_altitude", "60") + "m";
 
 //        float dronebattery = mMavlinkReceiver.mModel.get_battery_status();
-        float dronebattery = mMavlinkReceiver.mModel.get_drone_battery_prosentage();
-        float controlerbattery = mMavlinkReceiver.mModel.get_controller_battery_prosentage();
+            float dronebattery = mMavlinkReceiver.mModel.get_drone_battery_prosentage();
+            float controlerbattery = mMavlinkReceiver.mModel.get_controller_battery_prosentage();
 
-        String text = "Drone Battery:       " + "\t\t" + dronebattery + "%"  + "\t" + "ID: " + "\t\t" + droneID + System.getProperty("line.separator") +
-                      "Controller Battery:  " + "\t" + controlerbattery + "%"  + "\t" + "RTL:" + "\t" + rtlAlt;
-        mDroneDetails.setText(text);
+            String text = "Drone Battery:       " + "\t\t" + dronebattery + "%" + "\t" + "ID: " + "\t\t" + droneID + System.getProperty("line.separator") +
+                    "Controller Battery:  " + "\t" + controlerbattery + "%" + "\t" + "RTL:" + "\t" + rtlAlt;
+            mDroneDetails.setText(text);
 
-        mDroneDetails.setPadding(mDroneDetails.getPaddingLeft(),
-                mDroneDetails.getPaddingTop(),
-                mDroneDetails.getPaddingRight() + (int) (15.0f * getResources().getDisplayMetrics().density + 2.0f),
-                mDroneDetails.getPaddingBottom());
+            mDroneDetails.setPadding(mDroneDetails.getPaddingLeft(),
+                    mDroneDetails.getPaddingTop(),
+                    mDroneDetails.getPaddingRight() + (int) (15.0f * getResources().getDisplayMetrics().density + 2.0f),
+                    mDroneDetails.getPaddingBottom());
+        }
 
-        MenuItem safetyItem = menu.findItem(R.id.action_safety);
-        mSafety = (CheckBox) safetyItem.getActionView();
-        mSafety.setButtonDrawable(R.color.safety);
-        mSafety.setPadding(mSafety.getPaddingLeft(),
-                mSafety.getPaddingTop(),
-                mSafety.getPaddingRight() + (int) (10.0f * getResources().getDisplayMetrics().density + 0.5f),
-                mSafety.getPaddingBottom());
+        //--------------------------------------------------------------
+        mBtnSafety = (Button) findViewById(R.id.btn_safety);
+        mBtnSafety.setOnClickListener(new Button.OnClickListener(){
+            boolean stat = true;
 
-        //Make sure default is safety enabled
-        mModel.setSafetyEnabled(true);
-        mSafety.setChecked(true);
-
-        mSafety.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                mModel.setSafetyEnabled(isChecked);
+            @Override
+            public void onClick(View v) {
+                Drawable connectedDrawable;
+                stat = !stat;
+                if(stat) {
+                    connectedDrawable = getResources().getDrawable(R.drawable.ic_lock_outline_secondary_24dp);
+                    findViewById(R.id.Takeoff).setVisibility(View.INVISIBLE);
+                }else {
+                    connectedDrawable = getResources().getDrawable(R.drawable.ic_lock_open_black_24dp);
+                    findViewById(R.id.Takeoff).setVisibility(View.VISIBLE);
+                }
+                mModel.setSafetyEnabled(stat);
                 NotificationHandler.notifySnackbar(findViewById(R.id.snack),
                         (mModel.isSafetyEnabled()) ? R.string.safety_on : R.string.safety_off, LENGTH_LONG);
+
+                mBtnSafety.setForeground(connectedDrawable);
+                logMessageDJI("Click...");
             }
         });
+        //--------------------------------------------------------------
 
         return true;
     }
@@ -989,13 +1000,6 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
 //        Log.d(TAG, "menu item selected");
         // Handle item selection
         switch (item.getItemId()) {
-            case R.id.action_safety_switch:
-//                Log.d(TAG, "ACTION_SAFETY_SWITCH");
-                return true;
-            case R.id.action_safety:
-//                Log.d(TAG, "ACTION_SAFETY");
-//                NotificationHandler.notifySnackbar(bottomNavigationView, R.string.safety, LENGTH_LONG);
-                return true;
             case R.id.action_clear_logs:
                 onClickClearLogs();
                 break;
@@ -1007,6 +1011,9 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
                 break;
             case R.id.action_help:
                 onClickHelp();
+                break;
+            case R.id.action_gui:
+                onClickGUI();
                 break;
             default:
 //                Log.d(TAG, String.valueOf(item.getItemId()));
@@ -1036,6 +1043,19 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         Intent intent = new Intent(MainActivity.this, HelpActivity.class);
         startActivityForResult(intent, RESULT_HELP);
     }
+
+    private void onClickGUI() {
+        if(gui_enabled == false){
+            gui_enabled = true;
+            logDJI.clearLogText();
+            logOutbound.clearLogText();
+            logInbound.clearLogText();
+        }
+        else{
+            gui_enabled = false;
+        }
+    }
+
 
     private void onClickClearLogs() {
         logDJI.clearLogText();

@@ -8,6 +8,7 @@
         android:enabled="true"
         android:icon="@drawable/ic_drone"
         android:title="@string/dji"
+        android:textColor="@color/white"
         app:showAsAction="ifRoom" />
 
     <!-- Icon made by Pixel Perfect at flaticon.com -->
@@ -16,6 +17,7 @@
         android:enabled="true"
         android:icon="@drawable/ic_up_arrow_white_24dp"
         android:title="@string/gcs"
+        android:textColor="@color/white"
         app:showAsAction="ifRoom" />
 
     <!-- Icon made by Pixel Perfect at flaticon.com -->
@@ -24,5 +26,8 @@
         android:enabled="true"
         android:icon="@drawable/ic_down_arrow_white_24dp"
         android:title="@string/gcs"
+        android:textColor="@color/white"
         app:showAsAction="ifRoom" />
+
+
 </menu>

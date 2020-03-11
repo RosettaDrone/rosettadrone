@@ -4,6 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:background="@color/background_blue"
     android:textAlignment="textEnd">
 
 
@@ -16,7 +17,7 @@
         android:layout_marginBottom="140dp"
         android:gravity="top"
         android:text="Status: No Product Connected"
-        android:textColor="@android:color/black"
+        android:textColor="@color/colorWhite"
         android:textSize="20dp"
         android:textStyle="bold" />
 
@@ -28,7 +29,7 @@
         android:layout_marginTop="230dp"
         android:gravity="center"
         android:text="@string/product_information"
-        android:textColor="@android:color/black"
+        android:textColor="@color/colorWhite"
         android:textSize="20dp"
         android:textStyle="bold" />
 
@@ -40,6 +41,7 @@
         android:layout_marginTop="120dp"
         android:gravity="center"
         android:text="@string/model_not_available"
+        android:textColor="@color/colorWhite"
         android:textSize="15dp" />
 
     <Button
@@ -72,6 +74,7 @@
         android:layout_marginLeft="135dp"
         android:layout_marginTop="210dp"
         android:text=""
+        android:textColor="@color/colorWhite"
         android:textSize="15dp" />
 
     <TextView
@@ -79,8 +82,9 @@
         android:layout_width="83dp"
         android:layout_height="wrap_content"
         android:layout_marginLeft="560dp"
-        android:layout_marginTop="180dp"
+        android:layout_marginTop="240dp"
         android:text=""
+        android:textColor="@color/colorWhite"
         android:textSize="15dp" />
 
     <TextView
@@ -89,6 +93,7 @@
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="260dp"
+        android:textColor="@color/colorWhite"
         android:textSize="15dp" />
 
     <TextView
@@ -101,8 +106,8 @@
         android:text="Rosetta Drone 2"
         android:textAlignment="center"
         android:textAppearance="?android:attr/textAppearanceSmall"
-        android:textColor="@color/colorBlack"
-        android:textSize="30sp"
+        android:textColor="@color/colorWhite"
+        android:textSize="24sp"
         android:textStyle="bold" />
 
 
@@ -112,13 +117,14 @@
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="60dp"
+        android:textColor="@color/colorWhite"
         android:textSize="15dp" />
 
     <Button
         android:id="@+id/btn_test"
         android:layout_width="80dp"
         android:layout_height="80dp"
-        android:layout_marginLeft="650dp"
+        android:layout_marginLeft="550dp"
         android:layout_marginTop="150dp"
         android:background="@drawable/ic_drone"
         android:text=""

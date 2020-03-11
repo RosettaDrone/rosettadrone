@@ -40,7 +40,6 @@
         <activity
             android:name="sq.rogue.rosettadrone.ConnectionActivity"
             android:launchMode="singleTop">
-<!--            android:screenOrientation="portrait">  -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
@@ -52,6 +51,7 @@
         </activity>
 
         <activity android:name="sq.rogue.rosettadrone.MainActivity">
+
         <!--            android:screenOrientation="portrait">  -->
             <!--            android:launchMode="singleInstance"> -->
             <intent-filter>
@@ -77,8 +77,13 @@
             android:theme="@style/AppTheme.Settings"
             android:label="Settings">
         </activity>
-
-        <!-- DJI SDK -->
+<!--
+              <activity android:name="sq.rogue.rosettadrone.GUIActivity"
+                  android:theme="@style/AppTheme.Settings"
+                  android:label="Settings">
+              </activity>
+      -->
+                <!-- DJI SDK -->
         <uses-library android:name="com.android.future.usb.accessory"/>
 
         <meta-data

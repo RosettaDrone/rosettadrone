@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Rosetta Drone</string>
+    <string name="app_name">Rosetta Drone 2</string>
 
     <!-- Drone -->
     <string name="pref_drone_id">ID</string>
@@ -125,6 +125,7 @@
     <string name="options_clear_log">Clear Logs</string>
     <string name="options_download_log">Download Logs</string>
     <string name="options_help">Help &amp; feedback</string>
+    <string name="options_gui">Switch Logging</string>
 
     <!-- Error Messages -->
 

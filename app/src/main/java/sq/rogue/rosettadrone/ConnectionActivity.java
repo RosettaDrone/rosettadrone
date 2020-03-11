@@ -251,12 +251,13 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         checkAndRequestPermissions();
         setContentView(R.layout.activity_connection);
         initUI();
-
+/*
         // Register the broadcast receiver for receiving the device connection's changes.
         IntentFilter filter = new IntentFilter();
         filter.addAction(DJISimulatorApplication.FLAG_CONNECTION_CHANGE);
         registerReceiver(mReceiver, filter);
 
+ */
     }
 
     protected BroadcastReceiver mReceiver = new BroadcastReceiver() {
@@ -392,11 +393,12 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
 
             // For debugging we can tap the drone icon 5 times to be able to open the software without a drone connected.
             case R.id.btn_test:
-                if (++hiddenkey > 5) {
+                if (++hiddenkey > 4) {
                     showToast("TestMode enabled...");
                     mBtnOpen.setEnabled(true);
                     TextView lTextConnectionStatus = (TextView) findViewById(R.id.text_model_test);
                     lTextConnectionStatus.setText("TestMode");
+                    hiddenkey = 5;
                 }
                 break;
 
@@ -417,6 +419,12 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
                 break;
             }
             case R.id.btn_start: {
+
+                // Register the broadcast receiver for receiving the device connection's changes.
+                IntentFilter filter = new IntentFilter();
+                filter.addAction(DJISimulatorApplication.FLAG_CONNECTION_CHANGE);
+                registerReceiver(mReceiver, filter);
+
                 Intent intent = new Intent(this, MainActivity.class);
                 startActivity(intent);
                 break;

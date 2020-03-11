@@ -9,14 +9,6 @@
         android:maxLines="2"
         app:actionViewClass="android.widget.TextView"
         />
-    <item
-        android:id="@+id/action_safety"
-        android:orderInCategory="200"
-        android:title="@string/safety"
-        android:icon="@color/safety"
-        android:checkable="true"
-        app:showAsAction="ifRoom"
-        app:actionViewClass="android.widget.CheckBox"/>
 
     <item
         android:id="@+id/action_download_logs"
@@ -40,6 +32,11 @@
         android:orderInCategory="504"
         app:showAsAction="never"
         android:title="@string/options_clear_log" />
+    <item
+        android:id="@+id/action_gui"
+        android:orderInCategory="505"
+        app:showAsAction="never"
+        android:title="@string/options_gui" />
 
 
 </menu>
