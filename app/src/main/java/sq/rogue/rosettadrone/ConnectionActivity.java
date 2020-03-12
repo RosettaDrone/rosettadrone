@@ -454,7 +454,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
             Log.v(TAG, "refreshSDK: True");
 
             mUIHandler = new Handler(Looper.getMainLooper());
-            mUIHandler.postDelayed(startApp, 5000);
+            mUIHandler.postDelayed(startApp, 2000);
 
             String str = mProduct instanceof Aircraft ? "DJIAircraft" : "DJIHandHeld";
             mTextConnectionStatus.setText("Status: " + str + " connected");

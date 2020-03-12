@@ -176,8 +176,8 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     public float get_battery_status(){
-        if(mFullChargeCapacity_mAh > 0) {
-            return (mChargeRemaining_mAh * 100 / mFullChargeCapacity_mAh);
+        if(mCFullChargeCapacity_mAh > 0) {
+            return (mCChargeRemaining_mAh * 100 / mCFullChargeCapacity_mAh);
         }
         return 0;
     }
@@ -976,12 +976,12 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     public void send_sys_status() {
         msg_sys_status msg = new msg_sys_status();
 
-        Log.d(TAG, "Full charge capacity: " + String.valueOf(mFullChargeCapacity_mAh));
-        Log.d(TAG, "Charge remaining: " + String.valueOf(mChargeRemaining_mAh));
-        Log.d(TAG, "Full charge capacity: " + String.valueOf(mFullChargeCapacity_mAh));
+        Log.d(TAG, "Full charge capacity: " + String.valueOf(mCFullChargeCapacity_mAh));
+        Log.d(TAG, "Charge remaining: " + String.valueOf(mCChargeRemaining_mAh));
+        Log.d(TAG, "Full charge capacity: " + String.valueOf(mCFullChargeCapacity_mAh));
 
-        if (mFullChargeCapacity_mAh > 0) {
-            msg.battery_remaining = (byte) ((float) mChargeRemaining_mAh / (float) mFullChargeCapacity_mAh * 100.0);
+        if (mCFullChargeCapacity_mAh > 0) {
+            msg.battery_remaining = (byte) ((float) mCChargeRemaining_mAh / (float) mCFullChargeCapacity_mAh * 100.0);
             Log.d(TAG, "calc'ed bat remain: " + String.valueOf(msg.battery_remaining));
         } else {
             Log.d(TAG, "divide by zero");
@@ -1025,7 +1025,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
     public void send_battery_status() {
         msg_battery_status msg = new msg_battery_status();
-        msg.current_consumed = mFullChargeCapacity_mAh - mChargeRemaining_mAh;
+        msg.current_consumed = mCFullChargeCapacity_mAh - mCChargeRemaining_mAh;
         msg.voltages = mCellVoltages;
         msg.temperature = (short) (mBatteryTemp_C * 100);
         msg.current_battery = (short) (mCurrent_mA * 10);

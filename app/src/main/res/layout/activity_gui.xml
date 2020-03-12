@@ -15,7 +15,9 @@
         android:id="@+id/fragment_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/transparent">
+        android:textColor="@color/centerpoint_green"
+        android:background="@color/background_blue"
+        >
 
         <TextureView
             android:id="@+id/livestream_preview_ttv"
@@ -258,7 +260,7 @@
                     android:layout_width="130dp"
                     android:layout_height="30dp"/>
             </LinearLayout>
-<!--
+
             <dji.ux.widget.ManualFocusWidget
                 android:layout_below="@+id/camera"
                 android:layout_alignRight="@id/camera"
@@ -275,8 +277,6 @@
                 android:layout_width="match_parent"
                 android:background="@color/transparent"
                 android:layout_height="20dp"/>
--->
-
 
             <!--Take off and return home buttons on left -->
             <LinearLayout
