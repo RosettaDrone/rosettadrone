@@ -5,13 +5,11 @@ package sq.rogue.rosettadrone;
 // Hide keyboard: https://stackoverflow.com/questions/16495440/how-to-hide-keyboard-by-default-and-show-only-when-click-on-edittext
 // MenuItemTetColor: RPP @ https://stackoverflow.com/questions/31713628/change-menuitem-text-color-programmatically
 
-import android.Manifest;
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.content.pm.ActivityInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
@@ -20,7 +18,6 @@ import android.graphics.drawable.Drawable;
 import android.hardware.usb.UsbManager;
 import android.media.MediaFormat;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -29,29 +26,26 @@ import androidx.annotation.NonNull;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
-import androidx.core.content.ContextCompat;
 import androidx.preference.PreferenceManager;
 import static com.google.android.material.snackbar.Snackbar.LENGTH_LONG;
 
-import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
+import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.SurfaceHolder;
-import android.view.SurfaceView;
 import android.view.TextureView;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.CompoundButton;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -88,13 +82,6 @@ import java.util.zip.ZipOutputStream;
 import dji.common.camera.SettingsDefinitions;
 import dji.common.error.DJIError;
 import dji.common.error.DJISDKError;
-import dji.common.flightcontroller.simulator.InitializationData;
-import dji.common.flightcontroller.simulator.SimulatorState;
-import dji.common.flightcontroller.virtualstick.FlightCoordinateSystem;
-import dji.common.flightcontroller.virtualstick.RollPitchControlMode;
-import dji.common.flightcontroller.virtualstick.VerticalControlMode;
-import dji.common.flightcontroller.virtualstick.YawControlMode;
-import dji.common.model.LocationCoordinate2D;
 import dji.common.product.Model;
 import dji.common.util.CommonCallbacks;
 import dji.sdk.base.BaseComponent;
@@ -102,21 +89,16 @@ import dji.sdk.base.BaseProduct;
 import dji.sdk.camera.Camera;
 import dji.sdk.camera.VideoFeeder;
 import dji.sdk.codec.DJICodecManager;
-import dji.sdk.flightcontroller.FlightController;
 import dji.sdk.products.Aircraft;
 import dji.sdk.sdkmanager.DJISDKInitEvent;
 import dji.sdk.sdkmanager.DJISDKManager;
-import dji.ux.base.Widget;
 import sq.rogue.rosettadrone.logs.LogFragment;
 import sq.rogue.rosettadrone.settings.SettingsActivity;
 import sq.rogue.rosettadrone.settings.HelpActivity;
-import sq.rogue.rosettadrone.video.DJIVideoStreamDecoder;
 import sq.rogue.rosettadrone.video.H264Packetizer;
-import sq.rogue.rosettadrone.video.NativeHelper;
 
 import static sq.rogue.rosettadrone.util.safeSleep;
 
-////public class MainActivity extends Activity implements DJICodecManager.YuvDataCallback{
 public class MainActivity extends AppCompatActivity implements DJICodecManager.YuvDataCallback{
 
     public static final String FLAG_CONNECTION_CHANGE = "dji_sdk_connection_change";
@@ -219,6 +201,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
             mUIHandler.postDelayed(this, 500);
         }
     };
+    private MenuItem item;
 
 
     private void initPacketizer() {
@@ -241,8 +224,6 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         int videoBitrate = Integer.parseInt(sharedPreferences.getString("pref_video_bitrate", "2000"));
         int encodeSpeed = Integer.parseInt((sharedPreferences.getString("pref_encode_speed", "5")));
 
-        VideoFeeder.getInstance().setTranscodingDataRate(encodeSpeed);
-
         try {
             if (mPacketizer != null && mPacketizer.getRtpSocket() != null)
                 mPacketizer.getRtpSocket().close();
@@ -253,6 +234,14 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         } catch (UnknownHostException e) {
             Log.e(TAG, "Error setting destination for RTP packetizer", e);
         }
+
+        // The one were we get transcoded data...
+        videostreamPreviewTtView = (TextureView) findViewById(R.id.livestream_preview_ttv);
+        VideoFeeder.getInstance().setTranscodingDataRate(encodeSpeed);
+        logMessageDJI("set rate to "+encodeSpeed);
+
+        videostreamPreviewTtView.setVisibility(View.VISIBLE);
+
     }
 
     /**
@@ -262,7 +251,9 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
     @Override
     protected void onResume() {
         Log.e(TAG, "onResume()");
+        super.onResume();
 
+/*
         if (mDroneDetails != null) {
             String droneID = prefs.getString("pref_drone_id", "1");
             String rtlAlt = prefs.getString("pref_drone_rtl_altitude", "60") + "m";
@@ -277,7 +268,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
             mDroneDetails.setText(text);
         }
 
-        super.onResume();
+ */
 
         initPreviewerTextureView();  // Decoded data to UDP...
         //notifyStatusChange();
@@ -374,19 +365,28 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         Log.e(TAG, "onCreate()");
         super.onCreate(savedInstanceState);
 
-        //----------------
+        //---------------- Hide top bar ---
+        getSupportActionBar().hide();
+        //---------------- Force Landscape ether ways...
  //       this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+        //---------------- Hide title (do not know..)
+//        requestWindowFeature(Window.FEATURE_NO_TITLE); // for hiding title
+        //---------------- Make absolutely full screen...
+ //       getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+   //             WindowManager.LayoutParams.FLAG_FULLSCREEN);
         //----------------
-        requestWindowFeature(Window.FEATURE_NO_TITLE); // for hiding title
 
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        //----------------
-
-//        setContentView(R.layout.activity_main);
         setContentView(R.layout.activity_gui);
 
         mProduct = RDApplication.getProductInstance(); // Should be set by Connection ...
+/*
+        FrameLayout wv = findViewById(R.id.compass_container);
+        wv.getLayoutParams().height = FrameLayout.LayoutParams.MATCH_PARENT; // LayoutParams: android.view.ViewGroup.LayoutParams
+// wv.getLayoutParams().height = LayoutParams.WRAP_CONTENT;
+        wv.requestLayout();//It is necesary to refresh the screen
+
+ */
+
 
         String versionName = "";
         try {
@@ -395,7 +395,6 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }
-        getSupportActionBar().setTitle("Rosetta Drone " + versionName);
 
         if (savedInstanceState != null) {
             navState = savedInstanceState.getInt("navigation_state");
@@ -403,10 +402,6 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
 
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         prefs = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
-
-        deleteApplicationDirectory();
-        initLogs();
-        //initBottomNav();
 
         mModel = new DroneModel(this, null, RDApplication.getSim());
         mModel.setSystemId(Integer.parseInt(prefs.getString("pref_drone_id", "1")));
@@ -429,12 +424,38 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
             }
         }
 
-        // The one we must have...
-        initUi();
+        deleteApplicationDirectory();
+        initLogs();
         initPacketizer();
+        initUi();
 
         DJISDKManager.getInstance().registerApp(this, mDJISDKManagerCallback);
 
+        //--------------------------------------------------------------
+        // Make the safety switch....
+        mBtnSafety = (Button) findViewById(R.id.btn_safety);
+        mBtnSafety.setOnClickListener(new Button.OnClickListener(){
+            boolean stat = true;
+
+            @Override
+            public void onClick(View v) {
+                Drawable connectedDrawable;
+                stat = !stat;
+                if(stat) {
+                    connectedDrawable = getResources().getDrawable(R.drawable.ic_lock_outline_secondary_24dp);
+                    findViewById(R.id.Takeoff).setVisibility(View.INVISIBLE);
+                }else {
+                    connectedDrawable = getResources().getDrawable(R.drawable.ic_lock_open_black_24dp);
+                    findViewById(R.id.Takeoff).setVisibility(View.VISIBLE);
+                }
+                mModel.setSafetyEnabled(stat);
+                NotificationHandler.notifySnackbar(findViewById(R.id.snack),
+                        (mModel.isSafetyEnabled()) ? R.string.safety_on : R.string.safety_off, LENGTH_LONG);
+
+                mBtnSafety.setForeground(connectedDrawable);
+            }
+        });
+        //--------------------------------------------------------------
     }
 
     protected BroadcastReceiver mReceiver = new BroadcastReceiver() {
@@ -690,6 +711,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
      *
      */
     private void initLogs() {
+
         fragmentManager = getSupportFragmentManager();
 
         //Adapters in order: DJI, Outbound to GCS, Inbound to GCS
@@ -936,69 +958,16 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         }
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        super.onCreateOptionsMenu(menu);
-
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.toolbar_menu, menu);
-
-        MenuItem droneItem = menu.findItem(R.id.drone_details);
-        mDroneDetails = (TextView) droneItem.getActionView();
-
-        if(mDroneDetails != null) {
-            mDroneDetails.setTextSize(14);
-
-            String droneID = prefs.getString("pref_drone_id", "1");
-            String rtlAlt = prefs.getString("pref_drone_rtl_altitude", "60") + "m";
-
-//        float dronebattery = mMavlinkReceiver.mModel.get_battery_status();
-            float dronebattery = mMavlinkReceiver.mModel.get_drone_battery_prosentage();
-            float controlerbattery = mMavlinkReceiver.mModel.get_controller_battery_prosentage();
-
-            String text = "Drone Battery:       " + "\t\t" + dronebattery + "%" + "\t" + "ID: " + "\t\t" + droneID + System.getProperty("line.separator") +
-                    "Controller Battery:  " + "\t" + controlerbattery + "%" + "\t" + "RTL:" + "\t" + rtlAlt;
-            mDroneDetails.setText(text);
-
-            mDroneDetails.setPadding(mDroneDetails.getPaddingLeft(),
-                    mDroneDetails.getPaddingTop(),
-                    mDroneDetails.getPaddingRight() + (int) (15.0f * getResources().getDisplayMetrics().density + 2.0f),
-                    mDroneDetails.getPaddingBottom());
-        }
-
-        //--------------------------------------------------------------
-        mBtnSafety = (Button) findViewById(R.id.btn_safety);
-        mBtnSafety.setOnClickListener(new Button.OnClickListener(){
-            boolean stat = true;
-
-            @Override
-            public void onClick(View v) {
-                Drawable connectedDrawable;
-                stat = !stat;
-                if(stat) {
-                    connectedDrawable = getResources().getDrawable(R.drawable.ic_lock_outline_secondary_24dp);
-                    findViewById(R.id.Takeoff).setVisibility(View.INVISIBLE);
-                }else {
-                    connectedDrawable = getResources().getDrawable(R.drawable.ic_lock_open_black_24dp);
-                    findViewById(R.id.Takeoff).setVisibility(View.VISIBLE);
-                }
-                mModel.setSafetyEnabled(stat);
-                NotificationHandler.notifySnackbar(findViewById(R.id.snack),
-                        (mModel.isSafetyEnabled()) ? R.string.safety_on : R.string.safety_off, LENGTH_LONG);
-
-                mBtnSafety.setForeground(connectedDrawable);
-                logMessageDJI("Click...");
-            }
-        });
-        //--------------------------------------------------------------
-
-        return true;
+    public void showPopup(View v) {
+        PopupMenu popup = new PopupMenu(this, v);
+        MenuInflater inflater = popup.getMenuInflater();
+        inflater.inflate(R.menu.toolbar_menu, popup.getMenu());
+        logMessageDJI("Config Click...");
+        popup.show();
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-//        Log.d(TAG, "menu item selected");
-        // Handle item selection
+    public boolean onMenuItemClick(MenuItem item) {
+        this.item = item;
         switch (item.getItemId()) {
             case R.id.action_clear_logs:
                 onClickClearLogs();
@@ -1016,11 +985,37 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
                 onClickGUI();
                 break;
             default:
-//                Log.d(TAG, String.valueOf(item.getItemId()));
-                return super.onOptionsItemSelected(item);
+                return false;
         }
         return true;
     }
+
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+        logMessageDJI("Config ..."+item);
+        switch (item.getItemId()) {
+            case R.id.action_clear_logs:
+                onClickClearLogs();
+                break;
+            case R.id.action_download_logs:
+                onClickDownloadLogs();
+                break;
+            case R.id.action_settings:
+                onClickSettings();
+                break;
+            case R.id.action_help:
+                onClickHelp();
+                break;
+            case R.id.action_gui:
+                onClickGUI();
+                break;
+            default:
+                return super.onContextItemSelected(item);
+        }
+        return true;
+    }
+
 
     private void onLongClickGCSUp() {
 //        Log.d(TAG, "onLongClickGCSUp()");

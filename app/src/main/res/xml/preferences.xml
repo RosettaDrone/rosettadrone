@@ -175,7 +175,7 @@
             android:key="pref_video_port"
             android:title="@string/pref_video_port" />
         <androidx.preference.EditTextPreference
-            android:defaultValue="2000"
+            android:defaultValue="5"
             android:dependency="pref_enable_video"
             android:key="pref_video_bitrate"
             android:title="@string/pref_video_bitrate" />

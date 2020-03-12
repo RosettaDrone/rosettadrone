@@ -77,13 +77,8 @@
             android:theme="@style/AppTheme.Settings"
             android:label="Settings">
         </activity>
-<!--
-              <activity android:name="sq.rogue.rosettadrone.GUIActivity"
-                  android:theme="@style/AppTheme.Settings"
-                  android:label="Settings">
-              </activity>
-      -->
-                <!-- DJI SDK -->
+
+        <!-- DJI SDK -->
         <uses-library android:name="com.android.future.usb.accessory"/>
 
         <meta-data

@@ -7,9 +7,9 @@
     xmlns:custom="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
+    android:orientation="horizontal"
     android:keepScreenOn="true"
-    tools:context="sq.rogue.rosettadrone.GUIActivity">
+    tools:context="sq.rogue.rosettadrone.MainActivity">
 
     <FrameLayout
         android:id="@+id/fragment_container"
@@ -27,16 +27,22 @@
             android:visibility="visible" />
     </FrameLayout>
 
+    <FrameLayout
+        android:id="@+id/compass_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/background_blue">
+        
+        <!-- "240dp" -->
     <dji.ux.widget.dashboard.DashboardWidget
-        android:layout_marginBottom="10dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
         android:layout_marginStart="5dp"
         android:id="@+id/Compass"
+        android:layout_marginTop="300dp"
         android:layout_width="500dp"
         android:layout_height="130dp"
+        android:gravity="bottom"
         tools:ignore="RtlHardcoded" />
-
+    </FrameLayout>
 
     <LinearLayout
         android:layout_width="500dp"
@@ -179,11 +185,26 @@
 
                 <Button
                     android:id="@+id/btn_safety"
+                    android:layout_marginTop="2dp"
+                    android:layout_width="25dp"
+                    android:layout_height="20dp"
+                    android:background="@color/transparent"
+                    android:foreground="@drawable/ic_lock_outline_secondary_24dp"/>
+
+                <TextView
                     android:layout_marginTop="3dp"
                     android:layout_width="25dp"
                     android:layout_height="20dp"
-                    android:background="@color/black"
-                    android:foreground="@drawable/ic_lock_outline_secondary_24dp"/>
+                    android:text="" />
+
+                <Button
+                    android:id="@+id/btn_config"
+                    android:layout_width="25dp"
+                    android:layout_height="20dp"
+                    android:layout_marginTop="3dp"
+                    android:background="@color/transparent"
+                    android:foreground="@drawable/ic_settings_white_24dp"
+                    android:onClick="showPopup" />
             </LinearLayout>
 
 

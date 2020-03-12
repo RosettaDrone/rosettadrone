@@ -134,7 +134,7 @@
     <ImageView
         android:id="@+id/action_logo"
         android:layout_width="120dp"
-        android:layout_height="100dp"
+        android:layout_height="80dp"
         android:layout_marginLeft="5dp"
         android:layout_marginTop="0dp"
         android:src="@drawable/logo" />
