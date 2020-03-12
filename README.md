@@ -23,7 +23,7 @@ Rosetta Drone is a Mavlink wrapper for the DJI SDK, which allows users to fly DJ
 
 The user assumes all responsibility for prevention of harm or damage. This is an evolving, experimental app. See "Known issues" below before use.
 
-![Image of Opening screen](images/IMG_4175.jpg)
+![Image of Opening screen](images/IMG_4175.png)
 Main screen, with live video...
 
 
