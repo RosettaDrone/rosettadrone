@@ -153,6 +153,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
 
                             notifyStatusChange();
                             isRegistrationInProgress.set(false);
+                            updateVersion();
                             if (baseProduct != null) {
                            //     RDApplication.updateProduct(baseProduct);
                             }
@@ -316,6 +317,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
             ((TextView)findViewById(R.id.textView)).setText(CustomName);
 
         ((TextView)findViewById(R.id.textView2)).setText(getResources().getString(R.string.sdk_version, DJISDKManager.getInstance().getSDKVersion()));
+
     }
 
     public static String getAppVersion(Context context){
@@ -377,16 +379,11 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
 
         if (RDApplication.getProductInstance() != null) {
             final String version = RDApplication.getProductInstance().getFirmwarePackageVersion();
-            this.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    if (TextUtils.isEmpty(version)) {
-                        mTextModelAvailable.setText("N/A"); //Firmware version:
-                    } else {
-                        mTextModelAvailable.setText(version); //"Firmware version: " +
-                    }
-                }
-            });
+            if (TextUtils.isEmpty(version)) {
+                mTextModelAvailable.setText("Model Not Available"); //Firmware version:
+            } else {
+                mTextModelAvailable.setText(version); //"Firmware version: " +
+            }
         }
     }
 
