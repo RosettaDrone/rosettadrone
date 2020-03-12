@@ -9,37 +9,39 @@
         android:maxLines="2"
         app:actionViewClass="android.widget.TextView"
         />
-    <item
-        android:id="@+id/action_safety"
-        android:orderInCategory="200"
-        android:title="@string/safety"
-        android:icon="@color/safety"
-        android:checkable="true"
-        app:showAsAction="ifRoom"
-        app:actionViewClass="android.widget.CheckBox"/>
 
     <item
         android:id="@+id/action_download_logs"
         android:orderInCategory="501"
         app:showAsAction="never"
+        android:onClick="onMenuItemClick"
         android:title="@string/options_download_log" />
 
     <item
         android:id="@+id/action_settings"
         android:orderInCategory="502"
         app:showAsAction="never"
+        android:onClick="onMenuItemClick"
         android:title="@string/settings" />
 
     <item
         android:id="@+id/action_help"
         android:orderInCategory="503"
         app:showAsAction="never"
+        android:onClick="onMenuItemClick"
         android:title="@string/options_help" />
     <item
         android:id="@+id/action_clear_logs"
         android:orderInCategory="504"
         app:showAsAction="never"
+        android:onClick="onMenuItemClick"
         android:title="@string/options_clear_log" />
+    <item
+        android:id="@+id/action_gui"
+        android:orderInCategory="505"
+        app:showAsAction="never"
+        android:onClick="onMenuItemClick"
+        android:title="@string/options_gui" />
 
 
 </menu>

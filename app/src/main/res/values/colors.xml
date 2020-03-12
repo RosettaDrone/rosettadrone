@@ -23,5 +23,8 @@
     <color name="colorGrey">#888888</color>
     <color name="colorBlack">#000000</color>
     <color name="colorWhite">#ffffff</color>
-    @
+
+    <color name="background_blue">#242d34</color>
+    <color name="transparent">#00000000</color>
+    <color name="dark_gray">#80000000</color>
 </resources>

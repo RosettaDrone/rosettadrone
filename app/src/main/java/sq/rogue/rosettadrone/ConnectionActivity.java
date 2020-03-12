@@ -12,6 +12,8 @@ import android.hardware.usb.UsbManager;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -24,6 +26,7 @@ import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import androidx.fragment.app.FragmentManager;
 import androidx.preference.PreferenceManager;
 import dji.common.flightcontroller.simulator.InitializationData;
 
@@ -75,7 +78,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
     private Button mBtnSim;
     private Button mBtnTest;
     private int hiddenkey = 0;
-
+    private Handler mUIHandler;
 
     private KeyListener firmVersionListener = new KeyListener() {
         @Override
@@ -150,6 +153,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
 
                             notifyStatusChange();
                             isRegistrationInProgress.set(false);
+                            updateVersion();
                             if (baseProduct != null) {
                            //     RDApplication.updateProduct(baseProduct);
                             }
@@ -251,12 +255,13 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         checkAndRequestPermissions();
         setContentView(R.layout.activity_connection);
         initUI();
-
+/*
         // Register the broadcast receiver for receiving the device connection's changes.
         IntentFilter filter = new IntentFilter();
         filter.addAction(DJISimulatorApplication.FLAG_CONNECTION_CHANGE);
         registerReceiver(mReceiver, filter);
 
+ */
     }
 
     protected BroadcastReceiver mReceiver = new BroadcastReceiver() {
@@ -301,7 +306,6 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         mBtnTest = (Button) findViewById(R.id.btn_test);
         mBtnTest.setOnClickListener(this);
 
-        ((TextView)findViewById(R.id.textView2)).setText(getResources().getString(R.string.sdk_version, DJISDKManager.getInstance().getSDKVersion()));
         Context appContext = this.getBaseContext();
         String version = "Version: "+getAppVersion(appContext);
         Log.v(TAG,""+version);
@@ -311,6 +315,8 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         CustomName = sharedPreferences.getString("pref_app_name", "")+" Rosetta Drone 2";
         if(CustomName.length() > 0)
             ((TextView)findViewById(R.id.textView)).setText(CustomName);
+
+        ((TextView)findViewById(R.id.textView2)).setText(getResources().getString(R.string.sdk_version, DJISDKManager.getInstance().getSDKVersion()));
 
     }
 
@@ -377,7 +383,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
                 @Override
                 public void run() {
                     if (TextUtils.isEmpty(version)) {
-                        mTextModelAvailable.setText("N/A"); //Firmware version:
+                        mTextModelAvailable.setText("Model Not Available"); //Firmware version:
                     } else {
                         mTextModelAvailable.setText(version); //"Firmware version: " +
                     }
@@ -392,11 +398,12 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
 
             // For debugging we can tap the drone icon 5 times to be able to open the software without a drone connected.
             case R.id.btn_test:
-                if (++hiddenkey > 5) {
+                if (++hiddenkey > 4) {
                     showToast("TestMode enabled...");
                     mBtnOpen.setEnabled(true);
                     TextView lTextConnectionStatus = (TextView) findViewById(R.id.text_model_test);
                     lTextConnectionStatus.setText("TestMode");
+                    hiddenkey = 5;
                 }
                 break;
 
@@ -417,6 +424,11 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
                 break;
             }
             case R.id.btn_start: {
+                // Register the broadcast receiver for receiving the device connection's changes.
+                IntentFilter filter = new IntentFilter();
+                filter.addAction(DJISimulatorApplication.FLAG_CONNECTION_CHANGE);
+                registerReceiver(mReceiver, filter);
+
                 Intent intent = new Intent(this, MainActivity.class);
                 startActivity(intent);
                 break;
@@ -426,6 +438,13 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         }
     }
 
+    private Runnable startApp = new Runnable() {
+        @Override
+        public void run() {
+            mBtnOpen.setEnabled(true);
+        }
+    };
+
     private void refreshSDKRelativeUI() {
 
         BaseProduct mProduct = RDApplication.getProductInstance();
@@ -433,7 +452,9 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
 
         if (null != mProduct && mProduct.isConnected()) {
             Log.v(TAG, "refreshSDK: True");
-            mBtnOpen.setEnabled(true);
+
+            mUIHandler = new Handler(Looper.getMainLooper());
+            mUIHandler.postDelayed(startApp, 5000);
 
             String str = mProduct instanceof Aircraft ? "DJIAircraft" : "DJIHandHeld";
             mTextConnectionStatus.setText("Status: " + str + " connected");
@@ -448,7 +469,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
             }
         } else if (RDApplication.getSim() == true){
             Log.v(TAG, "refreshSDK: Sim");
-            mBtnOpen.setEnabled(true);
+//            mBtnOpen.setEnabled(true);
 
             mTextProduct.setText(R.string.product_information);
           //  mTextConnectionStatus.setText(R.string.connection_sim);

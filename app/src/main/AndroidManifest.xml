@@ -40,7 +40,6 @@
         <activity
             android:name="sq.rogue.rosettadrone.ConnectionActivity"
             android:launchMode="singleTop">
-<!--            android:screenOrientation="portrait">  -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
@@ -52,6 +51,7 @@
         </activity>
 
         <activity android:name="sq.rogue.rosettadrone.MainActivity">
+
         <!--            android:screenOrientation="portrait">  -->
             <!--            android:launchMode="singleInstance"> -->
             <intent-filter>

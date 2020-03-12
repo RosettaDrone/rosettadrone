@@ -25,6 +25,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:fillViewport="true"
+                android:background="@color/transparent"
+                android:textColor="@color/gray"
                 android:text=""
                 />
         </HorizontalScrollView>

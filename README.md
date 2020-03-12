@@ -1,12 +1,16 @@
 # Rosetta Drone 2 for **DJI Air and Mavic 2** series 
 ## Supports Android 8.0 and newer, with DJI SDK 4.11.1 and Androidx
 
-## The project now works on DJI Mavic 2 Pro/Zoom/Enterprise, and all got live H.264 video stream out, tested on  QGroundcontrol.
+=======
+###In this face lift project we will move to UX widget inside the Rosetta Drone 2, to compensate for that we can not run GO4.####
+
+## The project now works on DJI Mavic 2 Pro/Zoom/Enterprise & Mavic Air (and possibly more), and all got live H.264 video stream out, tested on  QGroundcontrol.
 ## No Video on the Air at the moment, but working on it...
+
 
             ### **Please create issues and create PR on this fork.** 
 
-![Image of Opening screen](images/popen.png)
+![Image of Opening screen](images/IMG_4176.png)
 Opening screen, requires DJI login first time...
   
 
@@ -19,9 +23,17 @@ Rosetta Drone is a Mavlink wrapper for the DJI SDK, which allows users to fly DJ
 
 The user assumes all responsibility for prevention of harm or damage. This is an evolving, experimental app. See "Known issues" below before use.
 
-![Image of Opening screen](images/Screenshot.png)
-Main screen, with live video...
+![Image of Opening screen](images/IMG_4175.png)
+Main screen, with live video on Mavic AIR (from my office)...
 
+![Image of Opening screen](images/Screenshot_ArduPilot_Video.png)
+Main screen on QGroundControl with live video and telemetry... (from inside my office)
+
+![Image of Opening screen](images/IMG_4178.png)
+Rosetta Drone 2 on the big screen from DJI Smart Controller
+
+![Image of Opening screen](images/IMG_4179.png)
+Rosetta Drone 2 on the DJI Smart Controller
 
 # Features
 
