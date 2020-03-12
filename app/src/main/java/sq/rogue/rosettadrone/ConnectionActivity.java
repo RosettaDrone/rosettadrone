@@ -379,11 +379,16 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
 
         if (RDApplication.getProductInstance() != null) {
             final String version = RDApplication.getProductInstance().getFirmwarePackageVersion();
-            if (TextUtils.isEmpty(version)) {
-                mTextModelAvailable.setText("Model Not Available"); //Firmware version:
-            } else {
-                mTextModelAvailable.setText(version); //"Firmware version: " +
-            }
+            this.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (TextUtils.isEmpty(version)) {
+                        mTextModelAvailable.setText("Model Not Available"); //Firmware version:
+                    } else {
+                        mTextModelAvailable.setText(version); //"Firmware version: " +
+                    }
+                }
+            });
         }
     }
 
