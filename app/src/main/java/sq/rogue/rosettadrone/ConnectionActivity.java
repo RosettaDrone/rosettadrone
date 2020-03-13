@@ -9,6 +9,9 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.hardware.usb.UsbManager;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -255,6 +258,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         checkAndRequestPermissions();
         setContentView(R.layout.activity_connection);
         initUI();
+
 /*
         // Register the broadcast receiver for receiving the device connection's changes.
         IntentFilter filter = new IntentFilter();
@@ -398,12 +402,13 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
 
             // For debugging we can tap the drone icon 5 times to be able to open the software without a drone connected.
             case R.id.btn_test:
-                if (++hiddenkey > 4) {
+                if (++hiddenkey == 5) {
                     showToast("TestMode enabled...");
-                    mBtnOpen.setEnabled(true);
                     TextView lTextConnectionStatus = (TextView) findViewById(R.id.text_model_test);
                     lTextConnectionStatus.setText("TestMode");
-                    hiddenkey = 5;
+                    mUIHandler = new Handler(Looper.getMainLooper());
+                    mUIHandler.postDelayed(startApp, 50);
+                    hiddenkey = 6;
                 }
                 break;
 
@@ -439,8 +444,13 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
     }
 
     private Runnable startApp = new Runnable() {
+
         @Override
         public void run() {
+            Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+            Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), notification);
+            r.play();
+
             mBtnOpen.setEnabled(true);
         }
     };

@@ -581,6 +581,8 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         // The callback for receiving the raw H264 video data for camera live view
         // For newer drones...
         mReceivedVideoDataListener = new VideoFeeder.VideoDataListener() {
+            int desimate = 0;
+
             @Override
             public void onReceive(byte[] videoBuffer, int size) {
                 if (mGstEnabled) {
@@ -590,11 +592,20 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
                     try {
                         DatagramPacket packet = new DatagramPacket(videoBuffer, size, videoIPString, videoPort);
                         mGstSocket.send(packet);
+                        if(++desimate >= 30) {
+                            logMessageDJI( "Sending: " + size);
+//                            Log.e(TAG, "Sending: " + size);
+                            desimate = 0;
+                        }
                     } catch (Exception e) {
                         Log.e(TAG, "Error sending packet to Gstreamer", e);
                     }
                 } else {
-                    splitNALs(videoBuffer);
+                    // Wait 5 sec.
+                    if(++desimate >= 30*3) {
+                        splitNALs(videoBuffer);
+                        desimate = 30*100;
+                    }
                 }
             }
         };
