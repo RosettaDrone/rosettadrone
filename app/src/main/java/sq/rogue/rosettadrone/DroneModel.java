@@ -910,6 +910,14 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         sendMessage(msg);
     }
 
+    public void send_AI_Function(int num) {
+        msg_statustext msg = new msg_statustext();
+        String data = "Message from Remote Controller:: AI Fuction "+num+" Activated";
+        byte[] txt = data.getBytes();
+        msg.text = txt;
+        sendMessage(msg);
+    }
+
     public void send_command_ack(int message_id, int result) {
         msg_command_ack msg = new msg_command_ack();
         msg.command = message_id;

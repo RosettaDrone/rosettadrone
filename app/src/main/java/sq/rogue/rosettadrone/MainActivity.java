@@ -6,18 +6,26 @@ package sq.rogue.rosettadrone;
 // MenuItemTetColor: RPP @ https://stackoverflow.com/questions/31713628/change-menuitem-text-color-programmatically
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
+import android.graphics.LightingColorFilter;
 import android.graphics.SurfaceTexture;
 import android.graphics.drawable.Drawable;
 import android.hardware.usb.UsbManager;
 import android.media.MediaFormat;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -26,6 +34,7 @@ import androidx.annotation.NonNull;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
+import androidx.annotation.RequiresApi;
 import androidx.preference.PreferenceManager;
 import static com.google.android.material.snackbar.Snackbar.LENGTH_LONG;
 
@@ -98,6 +107,7 @@ import sq.rogue.rosettadrone.settings.SettingsActivity;
 import sq.rogue.rosettadrone.settings.HelpActivity;
 import sq.rogue.rosettadrone.video.H264Packetizer;
 
+import static com.mapbox.mapboxsdk.Mapbox.getApplicationContext;
 import static sq.rogue.rosettadrone.util.safeSleep;
 
 import org.freedesktop.gstreamer.GStreamer;
@@ -153,6 +163,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
     protected TextureView mVideoSurface    = null;
     private boolean gui_enabled            = true;
     private Button mBtnSafety;
+    private Button mBtnAI;
     private boolean stat                   = false; // Is it safe to takeoff....
     private int encodeSpeed                = 2;
     private boolean mGstEnabled            = true;
@@ -414,7 +425,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         //---------------- Hide top bar ---
         getSupportActionBar().hide();
         //---------------- Force Landscape ether ways...
- //       this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+        this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
         //---------------- Hide title (do not know..)
 //        requestWindowFeature(Window.FEATURE_NO_TITLE); // for hiding title
         //---------------- Make absolutely full screen...
@@ -490,17 +501,30 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
                 Drawable connectedDrawable;
                 stat = !stat;
                 if(stat) {
-                    connectedDrawable = getResources().getDrawable(R.drawable.ic_lock_outline_secondary_24dp);
+                    connectedDrawable = getResources().getDrawable(R.drawable.ic_lock_outline_secondary_24dp,null);
+                    mBtnSafety.setBackground(connectedDrawable);
                     findViewById(R.id.Takeoff).setVisibility(View.INVISIBLE);
                 }else {
-                    connectedDrawable = getResources().getDrawable(R.drawable.ic_lock_open_black_24dp);
+                    connectedDrawable = getResources().getDrawable(R.drawable.ic_lock_open_black_24dp,null);
+                    mBtnSafety.setBackground(connectedDrawable);
                     findViewById(R.id.Takeoff).setVisibility(View.VISIBLE);
                 }
                 mModel.setSafetyEnabled(stat);
                 NotificationHandler.notifySnackbar(findViewById(R.id.snack),
                         (mModel.isSafetyEnabled()) ? R.string.safety_on : R.string.safety_off, LENGTH_LONG);
+            }
 
-                mBtnSafety.setForeground(connectedDrawable);
+        });
+
+
+        //--------------------------------------------------------------
+        // Make the AI button....
+        mBtnAI = (Button) findViewById(R.id.btn_AI_start);
+        mBtnAI.setOnClickListener(new Button.OnClickListener(){
+
+            @Override
+            public void onClick(View v) {
+                SetMesasageBox("Hit A to go Left and B to go right...");
             }
         });
         //--------------------------------------------------------------
@@ -509,6 +533,49 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         mTimerHandler.postDelayed(enablesafety, 3000);
         //--------------------------------------------------------------
     }
+
+    protected void SetMesasageBox(String msg) {
+        Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
+        Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), notification);
+
+        AlertDialog.Builder alertDialog2 = new AlertDialog.Builder(this);
+        alertDialog2.setIcon(R.mipmap.track_right);
+        alertDialog2.setTitle("AI Mavlink/Python function selector!");
+        alertDialog2.setMessage(msg);
+        alertDialog2.setNegativeButton("Function B",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        mModel.send_AI_Function(2);
+                        r.stop();
+                        dialog.cancel();
+                    }
+                });
+        alertDialog2.setNeutralButton ("Function A",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        mModel.send_AI_Function(1);
+                        r.stop();
+                        dialog.cancel();
+                    }
+                });
+        alertDialog2.setPositiveButton("Cancel",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        mModel.send_AI_Function(0);
+                        r.stop();
+                        dialog.cancel();
+                    }
+                });
+
+        this.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                r.play();
+                alertDialog2.show();
+            }
+        });
+    }
+
 
     // By default disable takeoff...
     private Runnable enablesafety = new Runnable() {
@@ -1177,14 +1244,13 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
 
         sendDroneConnected();
 
-        final Drawable connectedDrawable = getResources().getDrawable(R.drawable.ic_baseline_connected_24px);
+        final Drawable connectedDrawable = getResources().getDrawable(R.drawable.ic_baseline_connected_24px,null);
 
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 ImageView djiImageView = findViewById(R.id.dji_conn);
-//                imageView.setImageResource(R.drawable.ic_baseline_connected_24px);
-                djiImageView.setForeground(connectedDrawable);
+                djiImageView.setBackground(connectedDrawable);
                 djiImageView.invalidate();
             }
         });
@@ -1192,14 +1258,13 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
     }
 
     private void onDroneDisconnected() {
-        final Drawable disconnectedDrawable = getResources().getDrawable(R.drawable.ic_outline_disconnected_24px);
+        final Drawable disconnectedDrawable = getResources().getDrawable(R.drawable.ic_outline_disconnected_24px,null);
 
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 ImageView imageView = findViewById(R.id.dji_conn);
-//                imageView.setImageResource(R.drawable.ic_baseline_connected_24px);
-                imageView.setForeground(disconnectedDrawable);
+                imageView.setBackground(disconnectedDrawable);
                 imageView.invalidate();
             }
         });
@@ -1485,24 +1550,24 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
                         if (mainActivityWeakReference.get().connectivityHasChanged) {
 
                             if (mainActivityWeakReference.get().shouldConnect) {
-                                final Drawable connectedDrawable = mainActivityWeakReference.get().getResources().getDrawable(R.drawable.ic_baseline_connected_24px);
+                                final Drawable connectedDrawable = mainActivityWeakReference.get().getResources().getDrawable(R.drawable.ic_baseline_connected_24px,null);
 
                                 mainActivityWeakReference.get().runOnUiThread(new Runnable() {
                                     @Override
                                     public void run() {
                                         ImageView imageView = mainActivityWeakReference.get().findViewById(R.id.gcs_conn);
-                                        imageView.setForeground(connectedDrawable);
+                                        imageView.setBackground(connectedDrawable);
                                         imageView.invalidate();
                                     }
                                 });
                             } else {
-                                final Drawable disconnectedDrawable = mainActivityWeakReference.get().getResources().getDrawable(R.drawable.ic_outline_disconnected_24px);
+                                final Drawable disconnectedDrawable = mainActivityWeakReference.get().getResources().getDrawable(R.drawable.ic_outline_disconnected_24px,null);
 
                                 mainActivityWeakReference.get().runOnUiThread(new Runnable() {
                                     @Override
                                     public void run() {
                                         ImageView imageView = mainActivityWeakReference.get().findViewById(R.id.gcs_conn);
-                                        imageView.setForeground(disconnectedDrawable);
+                                        imageView.setBackground(disconnectedDrawable);
                                         imageView.invalidate();
                                     }
                                 });
@@ -1574,7 +1639,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
                 @Override
                 public void run() {
                     ImageView imageView = mainActivityWeakReference.get().findViewById(R.id.gcs_conn);
-                    imageView.setForeground(disconnectedDrawable);
+                    imageView.setBackground(disconnectedDrawable);
                     imageView.invalidate();
                 }
             });
