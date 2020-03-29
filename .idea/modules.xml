@@ -4,6 +4,8 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/9TekAS-work_9_all_teni-rosettadrone.iml" filepath="$PROJECT_DIR$/9TekAS-work_9_all_teni-rosettadrone.iml" group="rosettadrone" />
       <module fileurl="file://$PROJECT_DIR$/Documents-9TekAS-work_9_all_teni-rosettadrone.iml" filepath="$PROJECT_DIR$/Documents-9TekAS-work_9_all_teni-rosettadrone.iml" group="rosettadrone" />
+      <module fileurl="file://$PROJECT_DIR$/Linux-rosettadrone.iml" filepath="$PROJECT_DIR$/Linux-rosettadrone.iml" group="rosettadrone" />
+      <module fileurl="file://$PROJECT_DIR$/app/Linux-rosettadrone-app.iml" filepath="$PROJECT_DIR$/app/Linux-rosettadrone-app.iml" group="rosettadrone/app" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" group="rosettadrone/app" />
       <module fileurl="file://$PROJECT_DIR$/rosettadrone.iml" filepath="$PROJECT_DIR$/rosettadrone.iml" group="rosettadrone" />
       <module fileurl="file://$PROJECT_DIR$/app/rosettadrone-app.iml" filepath="$PROJECT_DIR$/app/rosettadrone-app.iml" group="rosettadrone/app" />
