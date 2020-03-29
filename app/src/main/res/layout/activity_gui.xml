@@ -323,6 +323,7 @@
                     android:layout_height="40dp"
                     android:layout_marginTop="12dp"
                     android:background="@mipmap/track_right"
+                    android:alpha="0.50"
                     android:text=""
                     android:textColor="@color/colorWhite"
                     android:textSize="12sp" />
