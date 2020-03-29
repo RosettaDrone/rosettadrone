@@ -5,11 +5,10 @@ package sq.rogue.rosettadrone;
 // Hide keyboard: https://stackoverflow.com/questions/16495440/how-to-hide-keyboard-by-default-and-show-only-when-click-on-edittext
 // MenuItemTetColor: RPP @ https://stackoverflow.com/questions/31713628/change-menuitem-text-color-programmatically
 
-import android.app.Activity;
-import android.content.BroadcastReceiver;
-import android.content.Context;
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
@@ -17,14 +16,15 @@ import android.graphics.SurfaceTexture;
 import android.graphics.drawable.Drawable;
 import android.hardware.usb.UsbManager;
 import android.media.MediaFormat;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import androidx.annotation.NonNull;
-
-import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import androidx.preference.PreferenceManager;
 import static com.google.android.material.snackbar.Snackbar.LENGTH_LONG;
@@ -33,26 +33,17 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
-import android.view.ContextMenu;
-import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.SurfaceHolder;
 import android.view.TextureView;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.Button;
-import android.widget.CheckBox;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.PopupMenu;
-import android.widget.TextView;
 import android.widget.Toast;
-
 import com.MAVLink.MAVLinkPacket;
 import com.MAVLink.Messages.MAVLinkMessage;
 import com.MAVLink.Parser;
-
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
@@ -74,6 +65,7 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.zip.ZipEntry;
@@ -83,7 +75,6 @@ import dji.common.camera.SettingsDefinitions;
 import dji.common.error.DJIError;
 import dji.common.error.DJISDKError;
 import dji.common.product.Model;
-import dji.common.util.CommonCallbacks;
 import dji.sdk.base.BaseComponent;
 import dji.sdk.base.BaseProduct;
 import dji.sdk.camera.Camera;
@@ -92,7 +83,6 @@ import dji.sdk.codec.DJICodecManager;
 import dji.sdk.products.Aircraft;
 import dji.sdk.sdkmanager.DJISDKInitEvent;
 import dji.sdk.sdkmanager.DJISDKManager;
-import dji.ux.widget.TakeOffWidget;
 import sq.rogue.rosettadrone.logs.LogFragment;
 import sq.rogue.rosettadrone.settings.SettingsActivity;
 import sq.rogue.rosettadrone.settings.HelpActivity;
@@ -100,15 +90,11 @@ import sq.rogue.rosettadrone.video.H264Packetizer;
 
 import static sq.rogue.rosettadrone.util.safeSleep;
 
-import org.freedesktop.gstreamer.GStreamer;
-
-
 public class MainActivity extends AppCompatActivity implements DJICodecManager.YuvDataCallback{
 
     public static final String FLAG_CONNECTION_CHANGE = "dji_sdk_connection_change";
     private final static int RESULT_SETTINGS = 1001;
     private final static int RESULT_HELP = 1002;
-    private final static int RESULT_GUI = 1003;
 
     public static boolean FLAG_PREFS_CHANGED = false;
     public static boolean FLAG_VIDEO_ADDRESS_CHANGED = false;
@@ -127,17 +113,11 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
     private static BaseProduct mProduct;
     private final String TAG = "RosettaDrone";
     private final int GCS_TIMEOUT_mSEC    = 2000;
-    private boolean permissionGranted     = false;
     private Handler mDJIHandler;
     private Handler mUIHandler;
-    private Handler mTimerHandler;
-    private CheckBox mSafety;
-    private TextView mDroneDetails;
-    private FragmentManager fragmentManager;
     private LogFragment logDJI;
     private LogFragment logOutbound;
     private LogFragment logInbound;
-    private BottomNavigationView mBottomNavigation;
     private int navState                   = -1;
     private SharedPreferences prefs;
     private String mNewOutbound            = "";
@@ -150,16 +130,13 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
     private GCSCommunicatorAsyncTask mGCSCommunicator;
     private boolean connectivityHasChanged = false;
     private boolean shouldConnect          = false;
-    protected TextureView mVideoSurface    = null;
     private boolean gui_enabled            = true;
     private Button mBtnSafety;
     private boolean stat                   = false; // Is it safe to takeoff....
-    private int encodeSpeed                = 2;
     private boolean mGstEnabled            = true;
     private DatagramSocket mGstSocket;
     private InetAddress videoIPString;
     private int videoPort;
-    private int videoBitrate;
 
     private VideoFeeder.VideoFeed standardVideoFeeder;
     protected VideoFeeder.VideoDataListener mReceivedVideoDataListener = null;
@@ -169,31 +146,11 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
     private int videoViewWidth;
     private int videoViewHeight;
     protected H264Packetizer mPacketizer;
-    private SurfaceHolder.Callback surfaceCallback;
     protected SharedPreferences sharedPreferences;
-/*
-    static {
-        System.loadLibrary("gstreamer_android");
-        System.loadLibrary("VideoEncoderJNI");
-        nativeClassInit();
-    }
 
-    private static native boolean nativeClassInit(); // Initialize native class: cache Method IDs for callbacks
-    private native void nativeInit(String ip, int port, int bitrate, int encodeSpeed);     // Initialize native code, build pipeline, etc
-    private native void nativeFinalize(); // Destroy pipeline and shutdown native code
-    private native void nativePlay();     // Set pipeline to PLAYING
-    private native void nativePause();    // Set pipeline to PAUSED
-    private native void nativeSetDestination(String ip, int port);
-    private native void nativeSetBitrate(int bitrate);
-
-
- */
-    private Runnable djiUpdateRunnable = new Runnable() {
-        @Override
-        public void run() {
-            Intent intent = new Intent(FLAG_CONNECTION_CHANGE);
-            sendBroadcast(intent);
-        }
+    private Runnable djiUpdateRunnable = () -> {
+        Intent intent = new Intent(FLAG_CONNECTION_CHANGE);
+        sendBroadcast(intent);
     };
 
     private Runnable RunnableUpdateUI = new Runnable() {
@@ -203,7 +160,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         @Override
         public void run() {
 
-            if(gui_enabled == false) {
+            if(!gui_enabled) {
                 try {
                     if (!mNewDJI.equals("")) {
                         //                    ((LogFragment) logPagerAdapter.getItem(0)).appendLogText(mNewDJI);
@@ -229,10 +186,9 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
             mUIHandler.postDelayed(this, 500);
         }
     };
-    private MenuItem item;
 
 
-    private void initPacketizer() throws UnknownHostException {
+    private void initPacketizer(){
         Log.e(TAG, "initPacketizer");
 
         String address = "127.0.0.1";
@@ -255,14 +211,14 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         }catch (Exception e) {
             Log.e(TAG, "Ip Address error...", e);
         }
-        videoPort = Integer.parseInt(sharedPreferences.getString("pref_video_port", "5600"));
-        videoBitrate = Integer.parseInt(sharedPreferences.getString("pref_video_bitrate", "2000"));
-        encodeSpeed = Integer.parseInt((sharedPreferences.getString("pref_encode_speed", "5")));
+        videoPort        = Integer.parseInt(Objects.requireNonNull(sharedPreferences.getString("pref_video_port", "5600")));
+        int videoBitrate = Integer.parseInt(Objects.requireNonNull(sharedPreferences.getString("pref_video_bitrate", "2000")));
+        int encodeSpeed  = Integer.parseInt(Objects.requireNonNull(sharedPreferences.getString("pref_encode_speed", "5")));
 
         //------------------------------------------------------------
         if (!isTranscodedVideoFeedNeeded()) {
             try {
-   //             nativeInit(videoIPString, videoPort, videoBitrate, encodeSpeed);
+                //             nativeInit(videoIPString, videoPort, videoBitrate, encodeSpeed);
                 mGstSocket = new DatagramSocket();
             } catch (SocketException e) {
                 Log.e(TAG, "Error creating Gstreamer datagram socket", e);
@@ -281,11 +237,11 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
             }
             // The one were we get transcode data...
             VideoFeeder.getInstance().setTranscodingDataRate(encodeSpeed);
-            logMessageDJI("set rate to "+encodeSpeed);
+            logMessageDJI("set rate to "+ encodeSpeed);
         }
 
         //------------------------------------------------------------
-        videostreamPreviewTtView = (TextureView) findViewById(R.id.livestream_preview_ttv);
+        videostreamPreviewTtView = findViewById(R.id.livestream_preview_ttv);
         videostreamPreviewTtView.setVisibility(View.VISIBLE);
     }
 
@@ -327,9 +283,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
                         standardVideoFeeder.removeVideoDataListener(mReceivedVideoDataListener);
                     }
                 } else {
-                    if (VideoFeeder.getInstance().getPrimaryVideoFeed() != null) {
-                        VideoFeeder.getInstance().getPrimaryVideoFeed().removeVideoDataListener(mReceivedVideoDataListener);
-                    }
+                    VideoFeeder.getInstance().getPrimaryVideoFeed().removeVideoDataListener(mReceivedVideoDataListener);
                 }
             } else {
                 if (isTranscodedVideoFeedNeeded()) {
@@ -337,9 +291,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
                         standardVideoFeeder.addVideoDataListener(mReceivedVideoDataListener);
                     }
                 } else {
-                    if (VideoFeeder.getInstance().getPrimaryVideoFeed() != null) {
-                        VideoFeeder.getInstance().getPrimaryVideoFeed().addVideoDataListener(mReceivedVideoDataListener);
-                    }
+                    VideoFeeder.getInstance().getPrimaryVideoFeed().addVideoDataListener(mReceivedVideoDataListener);
                 }
             }
         }
@@ -412,14 +364,14 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         super.onCreate(savedInstanceState);
 
         //---------------- Hide top bar ---
-        getSupportActionBar().hide();
+        Objects.requireNonNull(getSupportActionBar()).hide();
         //---------------- Force Landscape ether ways...
- //       this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+        this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
         //---------------- Hide title (do not know..)
 //        requestWindowFeature(Window.FEATURE_NO_TITLE); // for hiding title
         //---------------- Make absolutely full screen...
- //       getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-   //             WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        //       getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+        //             WindowManager.LayoutParams.FLAG_FULLSCREEN);
         //----------------
 
         setContentView(R.layout.activity_gui);
@@ -433,15 +385,6 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
 
  */
 
-
-        String versionName = "";
-        try {
-            PackageInfo pInfo = this.getPackageManager().getPackageInfo(getPackageName(), 0);
-            versionName = pInfo.versionName;
-        } catch (PackageManager.NameNotFoundException e) {
-            e.printStackTrace();
-        }
-
         if (savedInstanceState != null) {
             navState = savedInstanceState.getInt("navigation_state");
         }
@@ -450,7 +393,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         prefs = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
 
         mModel = new DroneModel(this, null, RDApplication.getSim());
-        mModel.setSystemId(Integer.parseInt(prefs.getString("pref_drone_id", "1")));
+        mModel.setSystemId(Integer.parseInt(Objects.requireNonNull(prefs.getString("pref_drone_id", "1"))));
 
         mMavlinkReceiver = new MAVLinkReceiver(this, mModel);
         loadMockParamFile();
@@ -462,6 +405,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         Intent aoaIntent = getIntent();
         if (aoaIntent != null) {
             String action = aoaIntent.getAction();
+            assert action != null;
             if (action == (UsbManager.ACTION_USB_ACCESSORY_ATTACHED)) {
                 Intent attachedIntent = new Intent();
 
@@ -472,43 +416,75 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
 
         deleteApplicationDirectory();
         initLogs();
-        try {
-            initPacketizer();
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-        }
+        initPacketizer();
 
         DJISDKManager.getInstance().registerApp(this, mDJISDKManagerCallback);
 
         //--------------------------------------------------------------
         // Make the safety switch....
-        mBtnSafety = (Button) findViewById(R.id.btn_safety);
-        mBtnSafety.setOnClickListener(new Button.OnClickListener(){
-
-            @Override
-            public void onClick(View v) {
-                Drawable connectedDrawable;
-                stat = !stat;
-                if(stat) {
-                    connectedDrawable = getResources().getDrawable(R.drawable.ic_lock_outline_secondary_24dp);
-                    findViewById(R.id.Takeoff).setVisibility(View.INVISIBLE);
-                }else {
-                    connectedDrawable = getResources().getDrawable(R.drawable.ic_lock_open_black_24dp);
-                    findViewById(R.id.Takeoff).setVisibility(View.VISIBLE);
-                }
-                mModel.setSafetyEnabled(stat);
-                NotificationHandler.notifySnackbar(findViewById(R.id.snack),
-                        (mModel.isSafetyEnabled()) ? R.string.safety_on : R.string.safety_off, LENGTH_LONG);
-
-                mBtnSafety.setForeground(connectedDrawable);
+        mBtnSafety = findViewById(R.id.btn_safety);
+        mBtnSafety.setOnClickListener(v -> {
+            Drawable connectedDrawable;
+            stat = !stat;
+            if(stat) {
+                connectedDrawable = getResources().getDrawable(R.drawable.ic_lock_outline_secondary_24dp,null);
+                mBtnSafety.setBackground(connectedDrawable);
+                findViewById(R.id.Takeoff).setVisibility(View.INVISIBLE);
+            }else {
+                connectedDrawable = getResources().getDrawable(R.drawable.ic_lock_open_black_24dp,null);
+                mBtnSafety.setBackground(connectedDrawable);
+                findViewById(R.id.Takeoff).setVisibility(View.VISIBLE);
             }
+            mModel.setSafetyEnabled(stat);
+            NotificationHandler.notifySnackbar(findViewById(R.id.snack),
+                    (mModel.isSafetyEnabled()) ? R.string.safety_on : R.string.safety_off, LENGTH_LONG);
         });
+
+
+        //--------------------------------------------------------------
+        // Make the AI button....
+        Button mBtnAI = findViewById(R.id.btn_AI_start);
+        mBtnAI.setOnClickListener(v -> SetMesasageBox("Hit A to go Left and B to go right..."));
         //--------------------------------------------------------------
         // Disable takeoff by default... This however it not how DJI does it, so we must delay this action...
-        mTimerHandler = new Handler(Looper.getMainLooper());
+        Handler mTimerHandler = new Handler(Looper.getMainLooper());
         mTimerHandler.postDelayed(enablesafety, 3000);
         //--------------------------------------------------------------
     }
+
+    protected void SetMesasageBox(String msg) {
+        Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
+        Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), notification);
+
+        AlertDialog.Builder alertDialog2 = new AlertDialog.Builder(this);
+        alertDialog2.setIcon(R.mipmap.track_right);
+        alertDialog2.setTitle("AI Mavlink/Python function selector!");
+        alertDialog2.setMessage(msg);
+        alertDialog2.setNegativeButton("Function B",
+                (dialog, which) -> {
+                    mModel.setAIfunction(2);
+                    r.stop();
+                    dialog.cancel();
+                });
+        alertDialog2.setNeutralButton ("Function A",
+                (dialog, which) -> {
+                    mModel.setAIfunction(1);
+                    r.stop();
+                    dialog.cancel();
+                });
+        alertDialog2.setPositiveButton("Cancel",
+                (dialog, which) -> {
+                    mModel.setAIfunction(0);
+                    r.stop();
+                    dialog.cancel();
+                });
+
+        this.runOnUiThread(() -> {
+            r.play();
+            alertDialog2.show();
+        });
+    }
+
 
     // By default disable takeoff...
     private Runnable enablesafety = new Runnable() {
@@ -519,6 +495,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         }
     };
 
+    /*
     protected BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -526,33 +503,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
             logMessageDJI("Simulator state change...");
         }
     };
-
-    private void updateTitleBar() {
-        boolean ret = false;
-        BaseProduct product = DJISimulatorApplication.getProductInstance();
-        if (product != null) {
-            if(product.isConnected()) {
-                //The product is connected
-                logMessageDJI(DJISimulatorApplication.getProductInstance().getModel() + " Connected");
-                ret = true;
-            } else {
-                if(product instanceof Aircraft) {
-                    Aircraft aircraft = (Aircraft)product;
-                    if(aircraft.getRemoteController() != null && aircraft.getRemoteController().isConnected()) {
-                        // The product is not connected, but the remote controller is connected
-                        logMessageDJI("only RC Connected");
-                        ret = true;
-                    }
-                }
-            }
-        }
-
-        if(!ret) {
-            // The product or the remote controller are not connected.
-            logMessageDJI("Disconnected");
-        }
-    }
-
+     */
 
     @Override
     protected void onNewIntent(@NonNull Intent intent) {
@@ -615,13 +566,10 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         } else {
             if (!product.getModel().equals(Model.UNKNOWN_AIRCRAFT)) {
                 mCamera = product.getCamera();
-                mCamera.setMode(SettingsDefinitions.CameraMode.SHOOT_PHOTO, new CommonCallbacks.CompletionCallback() {
-                    @Override
-                    public void onResult(DJIError djiError) {
-                        if (djiError != null) {
-                            Log.e(TAG, "can't change mode of camera, error: "+djiError.getDescription());
-                            logMessageDJI("can't change mode of camera, error: "+djiError.getDescription());
-                        }
+                mCamera.setMode(SettingsDefinitions.CameraMode.SHOOT_PHOTO, djiError -> {
+                    if (djiError != null) {
+                        Log.e(TAG, "can't change mode of camera, error: "+djiError.getDescription());
+                        logMessageDJI("can't change mode of camera, error: "+djiError.getDescription());
                     }
                 });
 
@@ -635,12 +583,11 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
                         logMessageDJI("Transcode Video !!!!!!!");
                     }
                 }else{
-                    if (VideoFeeder.getInstance().getPrimaryVideoFeed() != null) {
-                        if (prefs.getBoolean("pref_enable_video", true)) {
-                            VideoFeeder.getInstance().getPrimaryVideoFeed().addVideoDataListener(mReceivedVideoDataListener);
-                            mGstEnabled = true;
-                            logMessageDJI("Do NOT Transcode Video !!!!!!!");
-                        }
+                    VideoFeeder.getInstance().getPrimaryVideoFeed();
+                    if (prefs.getBoolean("pref_enable_video", true)) {
+                        VideoFeeder.getInstance().getPrimaryVideoFeed().addVideoDataListener(mReceivedVideoDataListener);
+                        mGstEnabled = true;
+                        logMessageDJI("Do NOT Transcode Video !!!!!!!");
                     }
                 }
             }
@@ -740,12 +687,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         @Override
         public void onComponentChange(BaseProduct.ComponentKey componentKey, BaseComponent oldComponent, BaseComponent newComponent) {
             if (newComponent != null) {
-                newComponent.setComponentListener(new BaseComponent.ComponentListener() {
-                    @Override
-                    public void onConnectivityChange(boolean isConnected) {
-                        notifyStatusChange();
-                    }
-                });
+                newComponent.setComponentListener(isConnected -> notifyStatusChange());
             }
         }
 
@@ -755,20 +697,10 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
             if (error == DJISDKError.REGISTRATION_SUCCESS) {
                 DJISDKManager.getInstance().startConnectionToProduct();
                 Handler handler = new Handler(Looper.getMainLooper());
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        logMessageDJI("DJI SDK registered");
-                    }
-                });
+                handler.post(() -> logMessageDJI("DJI SDK registered"));
             } else {
                 Handler handler = new Handler(Looper.getMainLooper());
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        logMessageDJI("DJI SDK registration failed");
-                    }
-                });
+                handler.post(() -> logMessageDJI("DJI SDK registration failed"));
             }
             if (error != null) {
                 Log.e(TAG, error.toString());
@@ -786,7 +718,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
      */
     private void initLogs() {
 
-        fragmentManager = getSupportFragmentManager();
+        FragmentManager fragmentManager = getSupportFragmentManager();
 
         //Adapters in order: DJI, Outbound to GCS, Inbound to GCS
 
@@ -818,69 +750,6 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         fragmentTransaction.commit();
     }
 
-    /**
-     *
-     */
-    /*
-    private void initBottomNav() {
-        mBottomNavigation = findViewById(R.id.navigationView);
-        mBottomNavigation.setOnNavigationItemSelectedListener(
-                new BottomNavigationView.OnNavigationItemSelectedListener() {
-                    @Override
-                    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-                        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-                        switch (item.getItemId()) {
-                            case R.id.action_dji:
-                                fragmentTransaction.show(logDJI);
-                                fragmentTransaction.hide(logOutbound);
-                                fragmentTransaction.hide(logInbound);
-                                break;
-                            case R.id.action_gcs_up:
-                                fragmentTransaction.hide(logDJI);
-                                fragmentTransaction.show(logOutbound);
-                                fragmentTransaction.hide(logInbound);
-                                break;
-                            case R.id.action_gcs_down:
-                                fragmentTransaction.hide(logDJI);
-                                fragmentTransaction.hide(logOutbound);
-                                fragmentTransaction.show(logInbound);
-                                break;
-                        }
-                        fragmentTransaction.commit();
-                        return true;
-                    }
-                }
-        );
-
-        ViewGroup navigationMenuView = (ViewGroup) mBottomNavigation.getChildAt(0);
-        ViewGroup gcsUpMenuItem = (ViewGroup) navigationMenuView.getChildAt(1);
-        ViewGroup gcsDownMenuItem = (ViewGroup) navigationMenuView.getChildAt(2);
-
-
-        gcsUpMenuItem.setLongClickable(true);
-        gcsUpMenuItem.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                onLongClickGCSUp();
-                return true;
-            }
-        });
-
-        gcsDownMenuItem.setLongClickable(true);
-        gcsDownMenuItem.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                onLongClickGCSDown();
-                return true;
-            }
-        });
-
-
-        if (navState != -1) {
-            mBottomNavigation.setSelectedItemId(navState);
-        }
-    }
-*/
     private void downloadLogs() {
         BufferedWriter bufferedWriter = null;
 
@@ -938,7 +807,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
                 Log.v("Compress", "Adding: " + files.get(i));
                 FileInputStream fi = new FileInputStream(files.get(i));
                 origin = new BufferedInputStream(fi, BUF_LEN);
-                ZipEntry entry = null;
+                ZipEntry entry;
                 if (i == 0) {
                     entry = new ZipEntry("DJI_LOG");
                 } else if (i == 1) {
@@ -964,7 +833,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
     }
 
     @Override
-    protected void onSaveInstanceState(Bundle outState) {
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
 //        navState = mBottomNavigation.getSelectedItemId();
 //        outState.putInt("navigation_state", navState);
@@ -982,8 +851,8 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
             if (dir.isDirectory()) {
                 Log.d("RosettaDrone", "yes, is directory");
                 String[] children = dir.list();
-                for (int i = 0; i < children.length; i++) {
-                    new File(dir, children[i]).delete();
+                for (String child : children) {
+                    new File(dir, child).delete();
                 }
             }
         } catch (PackageManager.NameNotFoundException e) {
@@ -1041,7 +910,6 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
     }
 
     public boolean onMenuItemClick(MenuItem item) {
-        this.item = item;
         switch (item.getItemId()) {
             case R.id.action_clear_logs:
                 onClickClearLogs();
@@ -1066,7 +934,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
 
     @Override
     public boolean onContextItemSelected(MenuItem item) {
-        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+        //     AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
         logMessageDJI("Config ..."+item);
         switch (item.getItemId()) {
             case R.id.action_clear_logs:
@@ -1090,31 +958,18 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         return true;
     }
 
-
-    private void onLongClickGCSUp() {
-//        Log.d(TAG, "onLongClickGCSUp()");
-        mModel.startWaypointMission();
-    }
-
-    private void onLongClickGCSDown() {
-//        Log.d(TAG, "onLongClickGCSDown()");
-        mModel.echoLoadedMission();
-    }
-
     private void onClickSettings() {
-//        Log.d(TAG, "onClickSettings()");
         Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
         startActivityForResult(intent, RESULT_SETTINGS);
     }
 
     private void onClickHelp() {
-//        Log.d(TAG, "onClickSettings()");
         Intent intent = new Intent(MainActivity.this, HelpActivity.class);
         startActivityForResult(intent, RESULT_HELP);
     }
 
     private void onClickGUI() {
-        if(gui_enabled == false){
+        if(!gui_enabled){
             gui_enabled = true;
             logDJI.clearLogText();
             logOutbound.clearLogText();
@@ -1136,9 +991,6 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         downloadLogs();
     }
 
-    /**
-     *
-     */
     private void onDroneConnected() {
 
         if (mProduct.getModel() == null) {
@@ -1172,36 +1024,28 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
             }
         }
         while (!mModel.loadParamsFromDJI()) {
-
+            safeSleep(100);
         }
 
         sendDroneConnected();
 
-        final Drawable connectedDrawable = getResources().getDrawable(R.drawable.ic_baseline_connected_24px);
+        final Drawable connectedDrawable = getResources().getDrawable(R.drawable.ic_baseline_connected_24px,null);
 
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                ImageView djiImageView = findViewById(R.id.dji_conn);
-//                imageView.setImageResource(R.drawable.ic_baseline_connected_24px);
-                djiImageView.setForeground(connectedDrawable);
-                djiImageView.invalidate();
-            }
+        runOnUiThread(() -> {
+            ImageView djiImageView = findViewById(R.id.dji_conn);
+            djiImageView.setBackground(connectedDrawable);
+            djiImageView.invalidate();
         });
 
     }
 
     private void onDroneDisconnected() {
-        final Drawable disconnectedDrawable = getResources().getDrawable(R.drawable.ic_outline_disconnected_24px);
+        final Drawable disconnectedDrawable = getResources().getDrawable(R.drawable.ic_outline_disconnected_24px,null);
 
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                ImageView imageView = findViewById(R.id.dji_conn);
-//                imageView.setImageResource(R.drawable.ic_baseline_connected_24px);
-                imageView.setForeground(disconnectedDrawable);
-                imageView.invalidate();
-            }
+        runOnUiThread(() -> {
+            ImageView imageView = findViewById(R.id.dji_conn);
+            imageView.setBackground(disconnectedDrawable);
+            imageView.invalidate();
         });
 
 
@@ -1235,8 +1079,8 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
                     continue;
                 String[] paramData = line.split("\t");
                 String paramName = paramData[2];
-                Float paramValue = Float.valueOf(paramData[3]);
-                short paramType = Short.valueOf(paramData[4]);
+                float paramValue = Float.parseFloat(paramData[3]);
+                short paramType = Short.parseShort(paramData[4]);
 
                 mModel.getParams().add(new MAVParam(paramName, paramValue, paramType));
             }
@@ -1267,7 +1111,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
      */
     private void sendRestartVideoService() {
         String videoIP = getVideoIP();
-        int videoPort = Integer.parseInt(prefs.getString("pref_video_port", "5600"));
+        int videoPort = Integer.parseInt(Objects.requireNonNull(prefs.getString("pref_video_port", "5600")));
         logMessageDJI("Restarting Video link to " + videoIP + ":" + videoPort);
     }
 
@@ -1277,7 +1121,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
     private void sendDroneConnected() {
         String videoIP = getVideoIP();
 
-        int videoPort = Integer.parseInt(prefs.getString("pref_video_port", "5600"));
+        int videoPort = Integer.parseInt(Objects.requireNonNull(prefs.getString("pref_video_port", "5600")));
 
         // Going to reset all the flags so everything is set.
         // Assume its a new drone.
@@ -1326,27 +1170,22 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         logMessageDJI("setDroneParameters");
 
         if (FLAG_DRONE_FLIGHT_PATH_MODE_CHANGED) {
-            if (Integer.parseInt((prefs.getString("pref_drone_flight_path_mode", "2"))) == 0) {
-                mMavlinkReceiver.curvedFlightPath = true;
-            } else {
-                mMavlinkReceiver.curvedFlightPath = false;
-            }
-
-            mMavlinkReceiver.flightPathRadius = Float.parseFloat(prefs.getString("pref_drone_flight_path_radius", ".2"));
+            mMavlinkReceiver.curvedFlightPath = Integer.parseInt((Objects.requireNonNull(prefs.getString("pref_drone_flight_path_mode", "2")))) == 0;
+            mMavlinkReceiver.flightPathRadius = Float.parseFloat(Objects.requireNonNull(prefs.getString("pref_drone_flight_path_radius", ".2")));
         }
 
         if (FLAG_DRONE_ID_CHANGED) {
-            mModel.setSystemId(Integer.parseInt(prefs.getString("pref_drone_id", "1")));
+            mModel.setSystemId(Integer.parseInt(Objects.requireNonNull(prefs.getString("pref_drone_id", "1"))));
             FLAG_DRONE_ID_CHANGED = false;
         }
 
         if (FLAG_DRONE_RTL_ALTITUDE_CHANGED) {
-            mModel.setRTLAltitude(Integer.parseInt(prefs.getString("pref_drone_rtl_altitude", "60")));
+            mModel.setRTLAltitude(Integer.parseInt(Objects.requireNonNull(prefs.getString("pref_drone_rtl_altitude", "60"))));
             FLAG_DRONE_RTL_ALTITUDE_CHANGED = false;
         }
 
         if (FLAG_DRONE_MAX_HEIGHT_CHANGED) {
-            mModel.setMaxHeight(Integer.parseInt(prefs.getString("pref_drone_max_height", "500")));
+            mModel.setMaxHeight(Integer.parseInt(Objects.requireNonNull(prefs.getString("pref_drone_max_height", "500"))));
             FLAG_DRONE_MAX_HEIGHT_CHANGED = false;
         }
 
@@ -1430,7 +1269,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
     private static class GCSCommunicatorAsyncTask extends AsyncTask<Integer, Integer, Integer> {
 
         private static final String TAG = GCSSenderTimerTask.class.getSimpleName();
-        public boolean request_renew_datalinks = false;
+        boolean request_renew_datalinks = false;
         private Timer timer;
         private WeakReference<MainActivity> mainActivityWeakReference;
 
@@ -1438,7 +1277,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
             mainActivityWeakReference = new WeakReference<>(mainActivity);
         }
 
-        public void renewDatalinks() {
+        void renewDatalinks() {
 //            Log.d(TAG, "renewDataLinks");
             request_renew_datalinks = true;
             FLAG_TELEMETRY_ADDRESS_CHANGED = false;
@@ -1485,26 +1324,20 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
                         if (mainActivityWeakReference.get().connectivityHasChanged) {
 
                             if (mainActivityWeakReference.get().shouldConnect) {
-                                final Drawable connectedDrawable = mainActivityWeakReference.get().getResources().getDrawable(R.drawable.ic_baseline_connected_24px);
+                                final Drawable connectedDrawable = mainActivityWeakReference.get().getResources().getDrawable(R.drawable.ic_baseline_connected_24px,null);
 
-                                mainActivityWeakReference.get().runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        ImageView imageView = mainActivityWeakReference.get().findViewById(R.id.gcs_conn);
-                                        imageView.setForeground(connectedDrawable);
-                                        imageView.invalidate();
-                                    }
+                                mainActivityWeakReference.get().runOnUiThread(() -> {
+                                    ImageView imageView = mainActivityWeakReference.get().findViewById(R.id.gcs_conn);
+                                    imageView.setBackground(connectedDrawable);
+                                    imageView.invalidate();
                                 });
                             } else {
-                                final Drawable disconnectedDrawable = mainActivityWeakReference.get().getResources().getDrawable(R.drawable.ic_outline_disconnected_24px);
+                                final Drawable disconnectedDrawable = mainActivityWeakReference.get().getResources().getDrawable(R.drawable.ic_outline_disconnected_24px,null);
 
-                                mainActivityWeakReference.get().runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        ImageView imageView = mainActivityWeakReference.get().findViewById(R.id.gcs_conn);
-                                        imageView.setForeground(disconnectedDrawable);
-                                        imageView.invalidate();
-                                    }
+                                mainActivityWeakReference.get().runOnUiThread(() -> {
+                                    ImageView imageView = mainActivityWeakReference.get().findViewById(R.id.gcs_conn);
+                                    imageView.setBackground(disconnectedDrawable);
+                                    imageView.invalidate();
                                 });
                             }
 
@@ -1568,15 +1401,12 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
 
             close();
 
-            final Drawable disconnectedDrawable = mainActivityWeakReference.get().getResources().getDrawable(R.drawable.ic_outline_disconnected_24px);
+            final Drawable disconnectedDrawable = mainActivityWeakReference.get().getResources().getDrawable(R.drawable.ic_outline_disconnected_24px,null);
 
-            mainActivityWeakReference.get().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    ImageView imageView = mainActivityWeakReference.get().findViewById(R.id.gcs_conn);
-                    imageView.setForeground(disconnectedDrawable);
-                    imageView.invalidate();
-                }
+            mainActivityWeakReference.get().runOnUiThread(() -> {
+                ImageView imageView = mainActivityWeakReference.get().findViewById(R.id.gcs_conn);
+                imageView.setBackground(disconnectedDrawable);
+                imageView.invalidate();
             });
         }
 
@@ -1594,39 +1424,34 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
                 gcsIPString = mainActivityWeakReference.get().prefs.getString("pref_gcs_ip", "127.0.0.1");
 
 
-            int telemIPPort = Integer.parseInt(mainActivityWeakReference.get().prefs.getString("pref_telem_port", "14550"));
+            int telemIPPort = Integer.parseInt(Objects.requireNonNull(mainActivityWeakReference.get().prefs.getString("pref_telem_port", "14550")));
 
             try {
                 mainActivityWeakReference.get().socket = new DatagramSocket();
                 mainActivityWeakReference.get().socket.connect(InetAddress.getByName(gcsIPString), telemIPPort);
                 mainActivityWeakReference.get().socket.setSoTimeout(10);
 
-                mainActivityWeakReference.get().logMessageDJI("Starting GCS telemetry link: " + gcsIPString + ":" + String.valueOf(telemIPPort));
+                mainActivityWeakReference.get().logMessageDJI("Starting GCS telemetry link: " + gcsIPString + ":" + telemIPPort);
             } catch (SocketException e) {
                 Log.d(TAG, "createTelemetrySocket() - socket exception");
                 Log.d(TAG, "exception", e);
-                mainActivityWeakReference.get().logMessageDJI("Telemetry socket exception: " + gcsIPString + ":" + String.valueOf(telemIPPort));
+                mainActivityWeakReference.get().logMessageDJI("Telemetry socket exception: " + gcsIPString + ":" + telemIPPort);
             } // TODO
             catch (UnknownHostException e) {
                 Log.d(TAG, "createTelemetrySocket() - unknown host exception");
                 Log.d(TAG, "exception", e);
-                mainActivityWeakReference.get().logMessageDJI("Unknown telemetry host: " + gcsIPString + ":" + String.valueOf(telemIPPort));
+                mainActivityWeakReference.get().logMessageDJI("Unknown telemetry host: " + gcsIPString + ":" + telemIPPort);
             } // TODO
-
-//            Log.d(TAG, mainActivityWeakReference.get().socket.getInetAddress().toString());
-//            Log.d(TAG, mainActivityWeakReference.get().socket.getLocalAddress().toString());
-//            Log.d(TAG, String.valueOf(mainActivityWeakReference.get().socket.getPort()));
-//            Log.d(TAG, String.valueOf(mainActivityWeakReference.get().socket.getLocalPort()));
 
             if (mainActivityWeakReference.get() != null) {
                 mainActivityWeakReference.get().mModel.setSocket(mainActivityWeakReference.get().socket);
                 if (mainActivityWeakReference.get().prefs.getBoolean("pref_secondary_telemetry_enabled", false)) {
                     String secondaryIP = mainActivityWeakReference.get().prefs.getString("pref_secondary_telemetry_ip", "127.0.0.1");
-                    int secondaryPort = Integer.parseInt(mainActivityWeakReference.get().prefs.getString("pref_secondary_telemetry_port", "18990"));
+                    int secondaryPort = Integer.parseInt(Objects.requireNonNull(mainActivityWeakReference.get().prefs.getString("pref_secondary_telemetry_port", "18990")));
                     try {
                         DatagramSocket secondarySocket = new DatagramSocket();
                         secondarySocket.connect(InetAddress.getByName(secondaryIP), secondaryPort);
-                        mainActivityWeakReference.get().logMessageDJI("Starting secondary telemetry link: " + secondaryIP + ":" + String.valueOf(secondaryPort));
+                        mainActivityWeakReference.get().logMessageDJI("Starting secondary telemetry link: " + secondaryIP + ":" + secondaryPort);
 
 //                        mainActivityWeakReference.get().logMessageDJI(secondaryIP + ":" + secondaryPort);
                         mainActivityWeakReference.get().mModel.setSecondarySocket(secondarySocket);
@@ -1644,12 +1469,9 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
             }
             if (mainActivityWeakReference.get().mModel != null) {
                 if (mainActivityWeakReference.get().mModel.secondarySocket != null) {
-                    Thread thread = new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            mainActivityWeakReference.get().mModel.secondarySocket.disconnect();
-                            mainActivityWeakReference.get().mModel.secondarySocket.close();
-                        }
+                    Thread thread = new Thread(() -> {
+                        mainActivityWeakReference.get().mModel.secondarySocket.disconnect();
+                        mainActivityWeakReference.get().mModel.secondarySocket.close();
                     });
                     thread.start();
 
@@ -1709,4 +1531,3 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
     //endregion
 
 }
-

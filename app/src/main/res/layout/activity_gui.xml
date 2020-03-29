@@ -68,7 +68,6 @@
             tools:ignore="RtlHardcoded"/>
 
         <dji.ux.widget.RemainingFlightTimeWidget
-            android:layout_alignParentTop="true"
             android:layout_marginTop="25dp"
             android:layout_width="match_parent"
             android:background="@color/transparent"
@@ -81,13 +80,13 @@
             android:elevation="10dp"
             android:visibility="gone" />
 
-<!--
-        <dji.ux.panel.PreFlightStatusWidget
-            android:layout_width="350dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="23dp"
-            android:visibility="visible" />
--->
+        <!--
+                <dji.ux.panel.PreFlightStatusWidget
+                    android:layout_width="350dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="23dp"
+                    android:visibility="visible" />
+        -->
     </FrameLayout>
 
 
@@ -163,9 +162,8 @@
                     android:id="@+id/dji_conn"
                     android:layout_width="18dp"
                     android:layout_height="18dp"
-                    android:foreground="@drawable/ic_outline_disconnected_24px"
-                    app:layout_collapseMode="parallax"
-                    android:contentDescription="TODO" />
+                    android:background="@drawable/ic_outline_disconnected_24px"
+                    app:layout_collapseMode="parallax"/>
 
                 <TextView
                     android:layout_marginTop="3dp"
@@ -179,9 +177,8 @@
                     android:id="@+id/gcs_conn"
                     android:layout_width="18dp"
                     android:layout_height="18dp"
-                    android:foreground="@drawable/ic_outline_disconnected_24px"
-                    app:layout_collapseMode="parallax"
-                    android:contentDescription="TODO" />
+                    android:background="@drawable/ic_outline_disconnected_24px"
+                    app:layout_collapseMode="parallax"/>
 
                 <TextView
                     android:layout_marginTop="3dp"
@@ -189,7 +186,7 @@
                     android:layout_height="20dp"
                     android:text="@string/gcs"
                     android:textColor="@color/white" />
-@
+                @
                 <dji.ux.widget.FlightModeWidget
                     android:layout_marginTop="2dp"
                     android:layout_width="103dp"
@@ -230,8 +227,7 @@
                     android:layout_marginTop="2dp"
                     android:layout_width="25dp"
                     android:layout_height="20dp"
-                    android:background="@color/transparent"
-                    android:foreground="@drawable/ic_lock_outline_secondary_24dp"/>
+                    android:background="@drawable/ic_lock_outline_secondary_24dp"/>
 
                 <TextView
                     android:layout_marginTop="3dp"
@@ -244,8 +240,7 @@
                     android:layout_width="25dp"
                     android:layout_height="20dp"
                     android:layout_marginTop="3dp"
-                    android:background="@color/transparent"
-                    android:foreground="@drawable/ic_settings_white_24dp"
+                    android:background="@drawable/ic_settings_white_24dp"
                     android:onClick="showPopup" />
             </LinearLayout>
 
@@ -321,6 +316,17 @@
                     android:layout_width="40dp"
                     android:layout_height="40dp"
                     android:layout_marginTop="12dp"/>
+
+                <Button
+                    android:id="@+id/btn_AI_start"
+                    android:layout_width="46dp"
+                    android:layout_height="40dp"
+                    android:layout_marginTop="12dp"
+                    android:background="@mipmap/track_right"
+                    android:text=""
+                    android:textColor="@color/colorWhite"
+                    android:textSize="12sp" />
+
             </LinearLayout>
 
 
@@ -329,6 +335,5 @@
     </RelativeLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
-
 
 
