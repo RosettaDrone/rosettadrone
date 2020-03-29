@@ -1,11 +1,10 @@
-# Rosetta Drone 2 for **DJI Air and Mavic 2** series 
-## Supports Android 8.0 and newer, with DJI SDK 4.11.1 and Androidx
+# Rosetta Drone 2 tested on **DJI Air and Mavic 2** series 
+## Supports Android 8.0 and newer, with DJI SDK 4.11.2 and Androidx lib
 
 =======
-###In this face lift project we will move to UX widget inside the Rosetta Drone 2, to compensate for that we can not run GO4.####
 
 ## The project now works on DJI Mavic 2 Pro/Zoom/Enterprise & Mavic Air (and possibly more), and all got live H.264 video stream out, tested on  QGroundcontrol.
-## No Video on the Air at the moment, but working on it...
+## No Video on the Mavic-Air at the moment, but working on it...
 
 
             ### **Please create issues and create PR on this fork.** 
