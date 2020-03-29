@@ -87,6 +87,10 @@
 
         <service android:name="dji.sdk.sdkmanager.DJIGlobalService">
         </service>
+        <!--
+                <service android:name="sq.rogue.rosettadrone.video.VideoService">
+                </service>
+        -->
         <!-- DJI SDK -->
     </application>
 
