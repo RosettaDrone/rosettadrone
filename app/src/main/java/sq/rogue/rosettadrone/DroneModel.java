@@ -443,11 +443,12 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                 });
 
         parent.runOnUiThread(() -> {
-            Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-            Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), notification);
-            r.play();
+  //          Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+  //          Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), notification);
+  //          r.play();
             alertDialog2.show();
         });
+
     }
 
     boolean setDjiAircraft(Aircraft djiAircraft) {

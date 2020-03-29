@@ -456,10 +456,12 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
         Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), notification);
 
+//        AlertDialog.Builder alertDialog2 = new AlertDialog.Builder(this, R.style.CustomDialog);
         AlertDialog.Builder alertDialog2 = new AlertDialog.Builder(this);
         alertDialog2.setIcon(R.mipmap.track_right);
         alertDialog2.setTitle("AI Mavlink/Python function selector!");
         alertDialog2.setMessage(msg);
+//        alertDialog2.setBackgroundDrawableResource(android.R.color.transparent);
         alertDialog2.setNegativeButton("Function B",
                 (dialog, which) -> {
                     mModel.setAIfunction(2);

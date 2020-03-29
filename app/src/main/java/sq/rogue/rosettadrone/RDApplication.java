@@ -2,6 +2,8 @@ package sq.rogue.rosettadrone;
 
 import android.app.Application;
 import android.content.Context;
+import android.media.Ringtone;
+
 import com.secneo.sdk.Helper;
 
 
