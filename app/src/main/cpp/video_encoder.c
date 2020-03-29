@@ -153,8 +153,7 @@ static void *app_function(void *userdata) {
 
     char buf[256];
     g_snprintf(buf, sizeof(buf), "udpsrc port=56994 ! queue ! h264parse ! amcviddec-omxgoogleh264decoder ! queue ! videoconvert ! videoscale ! videorate ! x264enc bitrate=%d speed-preset=%d key-int-max=90 tune=zerolatency ! rtph264pay ! queue ! udpsink host=%s port=%d", data->bitrate, data->encode_speed, data->ip, data->port);
-
-//    g_snprintf(buf, sizeof(buf), "udpsrc port=56994 ! h264parse ! amcviddec-omxgoogleh264decoder ! queue ! videoconvert ! videorate ! amcvidenc-omxgoogleh264encoder ! rtph264pay ! udpsink host=%s port=%d sync=false", data->ip, data->port);
+//  g_snprintf(buf, sizeof(buf), "udpsrc port=56994 ! h264parse ! amcviddec-omxgoogleh264decoder ! queue ! videoconvert ! videorate ! amcvidenc-omxgoogleh264encoder ! rtph264pay ! udpsink host=%s port=%d sync=false", data->ip, data->port);
 
     __android_log_print(ANDROID_LOG_ERROR, "video_encoder", "%s", buf);
 
