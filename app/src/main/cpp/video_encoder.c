@@ -292,7 +292,6 @@ static void gst_native_destination(JNIEnv *env, jobject thiz, jstring ip, jint p
     gint desired_port = (gint) port;
     data->port = desired_port;
     GST_DEBUG ("Port SET");
-
 }
 
 static void gst_native_bitrate(JNIEnv *env, jobject thiz, jint bitrate) {
@@ -302,8 +301,6 @@ static void gst_native_bitrate(JNIEnv *env, jobject thiz, jint bitrate) {
 
     guint desired_bitrate = (guint) bitrate;
     data->bitrate = desired_bitrate;
-
-
 }
 
 /* List of implemented native methods */
@@ -320,7 +317,6 @@ static JNINativeMethod native_methods[] = {
 /* Library initializer */
 jint JNI_OnLoad(JavaVM *vm, void *reserved) {
     JNIEnv *env = NULL;
-
     java_vm = vm;
 
     if ((*vm)->GetEnv(vm, (void **) &env, JNI_VERSION_1_4) != JNI_OK) {
@@ -329,9 +325,7 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved) {
     }
     jclass klass = (*env)->FindClass(env, "sq/rogue/rosettadrone/video/VideoService");
     (*env)->RegisterNatives(env, klass, native_methods, G_N_ELEMENTS(native_methods));
-
     pthread_key_create(&current_jni_env, detach_current_thread);
-
     return JNI_VERSION_1_4;
 }
 

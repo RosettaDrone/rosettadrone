@@ -95,7 +95,6 @@
         <item>6</item>
         <item>4</item>
         <item>2</item>
-        <item>1</item>
     </string-array>
 
     <!-- Logs -->
@@ -125,6 +124,7 @@
     <string name="options_clear_log">Clear Logs</string>
     <string name="options_download_log">Download Logs</string>
     <string name="options_help">Help &amp; feedback</string>
+    <string name="options_map">Map and Control</string>
     <string name="options_gui">Switch Logging</string>
 
     <!-- Error Messages -->
@@ -164,5 +164,8 @@
     <string name="connection_sim">Status: Simulator Connected</string>
     <string name="model_not_available">Model Not Available</string>
     <string name="sdk_version">DJI SDK Version: %1$s</string>
+
+    <string name="title_activity_demo">GSDemoActivity</string>
+    <string name="google_app_id">Google_App_ID_String</string>
 
 </resources>

@@ -212,8 +212,8 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
             Log.e(TAG, "Ip Address error...", e);
         }
         videoPort        = Integer.parseInt(Objects.requireNonNull(sharedPreferences.getString("pref_video_port", "5600")));
-        int videoBitrate = Integer.parseInt(Objects.requireNonNull(sharedPreferences.getString("pref_video_bitrate", "2000")));
-        int encodeSpeed  = Integer.parseInt(Objects.requireNonNull(sharedPreferences.getString("pref_encode_speed", "5")));
+        int videoBitrate = Integer.parseInt(Objects.requireNonNull(sharedPreferences.getString("pref_video_bitrate", "2")));
+        int encodeSpeed  = Integer.parseInt(Objects.requireNonNull(sharedPreferences.getString("pref_encode_speed", "2")));
 
         //------------------------------------------------------------
         if (!isTranscodedVideoFeedNeeded()) {
@@ -236,8 +236,8 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
                 Log.e(TAG, "Error setting destination for RTP packetizer", e);
             }
             // The one were we get transcode data...
-            VideoFeeder.getInstance().setTranscodingDataRate(encodeSpeed);
-            logMessageDJI("set rate to "+ encodeSpeed);
+            VideoFeeder.getInstance().setTranscodingDataRate(videoBitrate);
+            logMessageDJI("set rate to "+ videoBitrate);
         }
 
         //------------------------------------------------------------
@@ -534,7 +534,6 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         // The callback for receiving the raw H264 video data for camera live view
         // For newer drones...
         mReceivedVideoDataListener = new VideoFeeder.VideoDataListener() {
-            int desimate = 0;
 
             @Override
             public void onReceive(byte[] videoBuffer, int size) {
@@ -543,22 +542,20 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
                         mCodecManager.sendDataToDecoder(videoBuffer, size);
                     }
                     try {
-                        DatagramPacket packet = new DatagramPacket(videoBuffer, size, videoIPString, videoPort);
-                        mGstSocket.send(packet);
-                        if(++desimate >= 30) {
-                            logMessageDJI( "Sending: " + size);
-//                            Log.e(TAG, "Sending: " + size);
-                            desimate = 0;
-                        }
+//                          splitNALs(videoBuffer);
+
+//                        InetAddress address = InetAddress.getByName("127.0.0.1");
+//                        DatagramPacket packet = new DatagramPacket(videoBuffer, videoBuffer.length, address, 56994);
+//                        mGstSocket.send(packet);
+
+                        DatagramPacket packet2 = new DatagramPacket(videoBuffer, size, videoIPString, videoPort);
+                        mGstSocket.send(packet2);
+
                     } catch (Exception e) {
                         Log.e(TAG, "Error sending packet to Gstreamer", e);
                     }
                 } else {
-                    // Wait 5 sec.
-                    if(++desimate >= 30*3) {
-                        splitNALs(videoBuffer);
-                        desimate = 30*100;
-                    }
+                    splitNALs(videoBuffer);
                 }
             }
         };

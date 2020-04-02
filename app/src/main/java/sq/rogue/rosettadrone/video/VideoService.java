@@ -172,6 +172,7 @@ public class VideoService extends Service implements NativeHelper.NativeDataList
             case MATRICE_100:
             case MATRICE_600:
             case MATRICE_600_PRO:
+            case MAVIC_AIR:
                 mGstEnabled = true;
                 break;
             default:
@@ -194,7 +195,7 @@ public class VideoService extends Service implements NativeHelper.NativeDataList
         }
         initVideoStreamDecoder();
         initPacketizer();
-
+/*
         mReceivedVideoDataCallBack = new VideoFeeder.VideoDataListener() {
 
             @Override
@@ -202,8 +203,9 @@ public class VideoService extends Service implements NativeHelper.NativeDataList
                 NativeHelper.getInstance().parse(videoBuffer, size);
             }
         };
-
+*/
         //to receive the transcoded video feed from main camera.
+        /*
         if (isTranscodedVideoFeedNeeded()) {
             standardVideoFeeder = VideoFeeder.getInstance().provideTranscodedVideoFeed();
             standardVideoFeeder.addVideoDataListener(mReceivedVideoDataCallBack);
@@ -212,7 +214,7 @@ public class VideoService extends Service implements NativeHelper.NativeDataList
         if (VideoFeeder.getInstance().getPrimaryVideoFeed() != null) {
             VideoFeeder.getInstance().getPrimaryVideoFeed().addVideoDataListener(mReceivedVideoDataCallBack);
         }
-
+*/
 
         isRunning = true;
     }
@@ -220,7 +222,7 @@ public class VideoService extends Service implements NativeHelper.NativeDataList
     @RequiresApi(api = Build.VERSION_CODES.O)
     private String createNotificationChannel() {
         String channelID = "video_service";
-        String channelName = "RosettaDrone Video Service";
+        String channelName = "RosettaDrone 2 Video Service";
         NotificationChannel chan = new NotificationChannel(channelID,
                 channelName, NotificationManager.IMPORTANCE_DEFAULT);
         chan.setLightColor(Color.BLUE);
@@ -280,7 +282,7 @@ public class VideoService extends Service implements NativeHelper.NativeDataList
         }
 
         int videoPort = Integer.parseInt(sharedPreferences.getString("pref_video_port", "5600"));
-        int videoBitrate = Integer.parseInt(sharedPreferences.getString("pref_video_bitrate", "2000"));
+        int videoBitrate = Integer.parseInt(sharedPreferences.getString("pref_video_bitrate", "2"));
         int encodeSpeed = Integer.parseInt((sharedPreferences.getString("pref_encode_speed", "2")));
 
         Log.e(TAG, "mGstEnabled: "+ mGstEnabled);
@@ -376,7 +378,6 @@ public class VideoService extends Service implements NativeHelper.NativeDataList
         if (VideoFeeder.getInstance() == null) {
             return false;
         }
-
         return VideoFeeder.getInstance().isFetchKeyFrameNeeded() || VideoFeeder.getInstance()
                 .isLensDistortionCalibrationNeeded();
     }
