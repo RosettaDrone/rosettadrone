@@ -34,6 +34,9 @@ Rosetta Drone 2 on the big screen from DJI Smart Controller
 ![Image of Opening screen](images/IMG_4179.png)
 Rosetta Drone 2 on the DJI Smart Controller
 
+Latency video: 
+[![](https://youtu.be/HAC5OpQQpDI)](https://youtu.be/HAC5OpQQpDI "Click to play in Youtube.com")
+
 # Features
 
 * Report telemetry in QGC like position, attitude, relative altitude, heading, and battery remaining
