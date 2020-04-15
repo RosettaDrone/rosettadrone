@@ -35,7 +35,8 @@ Rosetta Drone 2 on the big screen from DJI Smart Controller
 Rosetta Drone 2 on the DJI Smart Controller
 
 Latency video: 
-[![](https://youtu.be/HAC5OpQQpDI)](https://youtu.be/HAC5OpQQpDI "Click to play in Youtube.com")
+![Video](https://youtu.be/HAC5OpQQpDI)
+(https://youtu.be/HAC5OpQQpDI "Click to play in Youtube.com")
 
 # Features
 
