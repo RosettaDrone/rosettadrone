@@ -228,10 +228,11 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
             try {
                 if (mPacketizer != null && mPacketizer.getRtpSocket() != null)
                     mPacketizer.getRtpSocket().close();
-                mPacketizer = new H264Packetizer();
 
+                mPacketizer = new H264Packetizer();
                 Log.e(TAG, "Receiver: " + videoIPString + ":" + videoPort);
                 mPacketizer.getRtpSocket().setDestination(InetAddress.getByName(address), videoPort, 5000);
+
             } catch (UnknownHostException e) {
                 Log.e(TAG, "Error setting destination for RTP packetizer", e);
             }

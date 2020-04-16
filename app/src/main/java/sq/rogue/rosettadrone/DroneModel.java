@@ -981,7 +981,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         msg.chan5_raw = mC1 ?1000:2000;
         msg.chan6_raw = mC2 ?1000:2000;
         msg.chan7_raw = mC3 ?1000:2000;
-        msg.chan8_raw = mAIfunction_activation;
+        msg.chan8_raw = (mAIfunction_activation*100)+1000;
         msg.chancount = 8;
         sendMessage(msg);
     }

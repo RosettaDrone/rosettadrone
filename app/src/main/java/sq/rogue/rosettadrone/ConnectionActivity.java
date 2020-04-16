@@ -316,7 +316,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         ((TextView)findViewById(R.id.textView3)).setText(version);
 
         sharedPreferences = android.preference.PreferenceManager.getDefaultSharedPreferences(this);
-        CustomName = sharedPreferences.getString("pref_app_name", "")+" Rosetta Drone 2";
+        CustomName = sharedPreferences.getString("pref_app_name", "RosettaDrone 2"); //+"RosettaDrone 2";
         if(CustomName.length() > 0)
             ((TextView)findViewById(R.id.textView)).setText(CustomName);
 

@@ -17,7 +17,7 @@
     <color name="green">#00FF00</color>
 
     <color name="colorPrimary">#3F51B5</color>
-    <color name="colorPrimaryDark">#303F9F</color>
+    <color name="colorPrimaryDark">#303898</color>
     <color name="colorAccent">#FF4081</color>
     <color name="title_dark">#212121</color>
     <color name="colorGrey">#888888</color>
@@ -25,6 +25,7 @@
     <color name="colorWhite">#ffffff</color>
 
     <color name="background_blue">#242d34</color>
+    <color name="background_black">#101010</color>
     <color name="transparent">#00000000</color>
     <color name="dark_gray">#80000000</color>
 </resources>

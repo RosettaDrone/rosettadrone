@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/background_blue"
+    android:background="@color/background_black"
     android:textAlignment="textEnd">
 
 
@@ -12,9 +12,9 @@
         android:id="@+id/text_connection_status"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignBottom="@+id/text_product_info"
+        android:layout_alignTop="@+id/text_product_info"
         android:layout_centerHorizontal="true"
-        android:layout_marginBottom="140dp"
+        android:layout_marginTop="-128dp"
         android:gravity="top"
         android:text="Status: No Product Connected"
         android:textColor="@color/colorWhite"
@@ -26,7 +26,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="230dp"
+        android:layout_marginTop="192dp"
         android:gravity="center"
         android:text="@string/product_information"
         android:textColor="@color/colorWhite"
@@ -38,7 +38,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="120dp"
+        android:layout_marginTop="95dp"
         android:gravity="center"
         android:text="@string/model_not_available"
         android:textColor="@color/colorWhite"
@@ -47,9 +47,9 @@
     <Button
         android:id="@+id/btn_start"
         android:layout_width="150dp"
-        android:layout_height="55dp"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="160dp"
+        android:layout_height="50dp"
+        android:layout_marginLeft="400dp"
+        android:layout_marginTop="132dp"
         android:background="@drawable/round_btn"
         android:gravity="center|center_vertical"
         android:text="Open"
@@ -58,31 +58,30 @@
 
     <Button
         android:id="@+id/btn_sim"
-        android:layout_width="50dp"
-        android:layout_height="40dp"
-        android:layout_marginLeft="130dp"
-        android:layout_marginTop="165dp"
-        android:background="@drawable/round_btn"
-        android:text="Sim"
+        android:layout_width="160dp"
+        android:layout_height="55dp"
+        android:layout_marginLeft="200dp"
+        android:layout_marginTop="130dp"
+        android:background="@drawable/sim_button"
         android:textColor="@color/colorWhite"
-        android:textSize="20dp" />
+        android:textSize="18dp" />
 
     <TextView
         android:id="@+id/text_model_simulated"
         android:layout_width="60dp"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="135dp"
-        android:layout_marginTop="210dp"
+        android:layout_marginLeft="105dp"
+        android:layout_marginTop="155dp"
         android:text=""
         android:textColor="@color/colorWhite"
         android:textSize="15dp" />
 
     <TextView
         android:id="@+id/text_model_test"
-        android:layout_width="83dp"
+        android:layout_width="93dp"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="560dp"
-        android:layout_marginTop="240dp"
+        android:layout_marginLeft="555dp"
+        android:layout_marginTop="280dp"
         android:text=""
         android:textColor="@color/colorWhite"
         android:textSize="15dp" />
@@ -92,7 +91,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="260dp"
+        android:layout_marginTop="225dp"
         android:textColor="@color/colorWhite"
         android:textSize="15dp" />
 
@@ -102,8 +101,8 @@
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="20dp"
-        android:text="Rosetta Drone 2"
+        android:layout_marginTop="5dp"
+        android:text="RosettaDrone 2"
         android:textAlignment="center"
         android:textAppearance="?android:attr/textAppearanceSmall"
         android:textColor="@color/colorWhite"
@@ -116,28 +115,30 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="60dp"
+        android:layout_marginTop="35dp"
         android:textColor="@color/colorWhite"
         android:textSize="15dp" />
 
     <Button
         android:id="@+id/btn_test"
-        android:layout_width="80dp"
-        android:layout_height="80dp"
-        android:layout_marginLeft="550dp"
-        android:layout_marginTop="150dp"
-        android:background="@drawable/ic_drone"
+        android:layout_width="220dp"
+        android:layout_height="60dp"
+        android:layout_marginTop="260dp"
+        android:background="@drawable/esmart"
+        android:gravity="center_horizontal"
+        android:layout_centerHorizontal="true"
         android:text=""
         android:textColor="@color/colorWhite"
         android:textSize="20dp" />
 
-    <ImageView
-        android:id="@+id/action_logo"
-        android:layout_width="120dp"
-        android:layout_height="80dp"
-        android:layout_marginLeft="5dp"
-        android:layout_marginTop="0dp"
-        android:src="@drawable/logo" />
-
+    <TextView
+        android:id="@+id/nitek_logo"
+        android:layout_width="250dp"
+        android:layout_height="20dp"
+        android:layout_marginTop="300dp"
+        android:layout_marginLeft="10dp"
+        android:text="9Tek AS - One pice of the system"
+        android:textColor="@color/colorGrey"
+        android:textSize="12dp" />
 
 </RelativeLayout>
