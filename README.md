@@ -1,4 +1,4 @@
-# Rosetta Drone 2 tested on **DJI Air and Mavic 2** series 
+# Rosetta Drone 2 tested on **DJI Air, Mavic 2 and Matrice 210 V2 with X7 camera** series 
 ## Supports Android 8.0 and newer, with DJI SDK 4.11.2 and Androidx lib
 
 =======
