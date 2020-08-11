@@ -88,17 +88,17 @@
         android:textSize="20dp" />
 
 
-    <!-- android:background="@drawable/logo" -->
+    <!-- android:background="@drawable/logo"
+         android:background="@drawable/esmart" -->
 
     <Button
         android:id="@+id/btn_test"
         android:layout_width="220dp"
-        android:layout_height="60dp"
+        android:layout_height="100dp"
         android:layout_gravity="center"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="530dp"
-        android:background="@drawable/esmart"
-
+        android:layout_marginTop="480dp"
+        android:background="@drawable/logo"
 
     android:text=""
         android:textColor="@color/colorWhite"

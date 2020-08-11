@@ -119,14 +119,15 @@
         android:textColor="@color/colorWhite"
         android:textSize="15dp" />
 
-    <!--android:background="@drawable/logo"-->
+    <!-- android:background="@drawable/logo"
+         android:background="@drawable/esmart" -->
 
       <Button
           android:id="@+id/btn_test"
           android:layout_width="220dp"
-          android:layout_height="60dp"
+          android:layout_height="100dp"
           android:layout_marginTop="260dp"
-          android:background="@drawable/esmart"
+          android:background="@drawable/logo"
           android:gravity="center_horizontal"
           android:layout_centerHorizontal="true"
           android:text=""
