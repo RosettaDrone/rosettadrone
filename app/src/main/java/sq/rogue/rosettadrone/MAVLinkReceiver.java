@@ -4,6 +4,7 @@ import android.util.Log;
 
 import com.MAVLink.Messages.MAVLinkMessage;
 import com.MAVLink.common.msg_command_long;
+import com.MAVLink.common.msg_global_position_int;
 import com.MAVLink.common.msg_manual_control;
 import com.MAVLink.common.msg_mission_ack;
 import com.MAVLink.common.msg_mission_count;
@@ -14,14 +15,17 @@ import com.MAVLink.common.msg_param_set;
 import com.MAVLink.common.msg_set_mode;
 import com.MAVLink.common.msg_set_position_target_global_int;
 import com.MAVLink.enums.MAV_CMD;
+import com.MAVLink.enums.MAV_MISSION_RESULT;
 import com.MAVLink.enums.MAV_PROTOCOL_CAPABILITY;
 import com.MAVLink.enums.MAV_RESULT;
 import com.MAVLink.common.msg_set_position_target_local_ned;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.TimerTask;
 
 import dji.common.error.DJIError;
+import dji.common.flightcontroller.LocationCoordinate3D;
 import dji.common.mission.waypoint.Waypoint;
 import dji.common.mission.waypoint.WaypointAction;
 import dji.common.mission.waypoint.WaypointActionType;
@@ -72,9 +76,11 @@ import static sq.rogue.rosettadrone.util.TYPE_WAYPOINT_MAX_ALTITUDE;
 import static sq.rogue.rosettadrone.util.TYPE_WAYPOINT_MAX_SPEED;
 import static sq.rogue.rosettadrone.util.TYPE_WAYPOINT_MIN_ALTITUDE;
 import static sq.rogue.rosettadrone.util.TYPE_WAYPOINT_MIN_SPEED;
+import static sq.rogue.rosettadrone.util.safeSleep;
 
 import dji.common.flightcontroller.virtualstick.FlightControlData;
 import dji.common.util.CommonCallbacks;
+import dji.sdk.mission.waypoint.WaypointMissionOperator;
 
 public class MAVLinkReceiver {
     private final String TAG = this.getClass().getSimpleName();
@@ -101,10 +107,13 @@ public class MAVLinkReceiver {
     }
 
     public void process(MAVLinkMessage msg) {
+
         if(msg.msgid != 0) {
             parent.logMessageDJI(String.valueOf(msg));
 //        parent.logMessageDJI(String.valueOf(msg.msgid));
         }
+
+        parent.logMessageDJI("Message: " + msg);
 
         switch (msg.msgid) {
             case MAVLINK_MSG_ID_HEARTBEAT:
@@ -194,7 +203,7 @@ public class MAVLinkReceiver {
                 break;
 
             /**************************************************************
-             * These messages are used when GCS sends Velocity commands  *
+             * These messages are used when GCS sends Velocity commands   *
              **************************************************************/
             case MAVLINK_MSG_ID_SET_POSITION_TARGET_LOCAL_NED:
                 msg_set_position_target_local_ned msg_param = (msg_set_position_target_local_ned) msg;
@@ -209,8 +218,8 @@ public class MAVLinkReceiver {
                     mModel.request_mission_item(0);
 
                     msg_mission_item lmsg = new msg_mission_item();
-                    lmsg.param1 = 0;
-                    lmsg.param2 = 0;
+                    lmsg.param1 = 0;    // set to delay time...
+                    lmsg.param2 = msg_param.yaw;    // set rotation...
                     lmsg.param3 = 0;
                     lmsg.param4 = 0;
                     lmsg.x = msg_param.x;
@@ -222,26 +231,63 @@ public class MAVLinkReceiver {
                     // We are done fetching a complete mission from the GCS...
                     wpState = WP_STATE_INACTIVE;
                     finalizeNewMission();
-                    mModel.send_mission_ack();
-//                    mModel.do_set_motion_absolute(msg_param.x, msg_param.y, -1 * msg_param.z, msg_param.yaw);
+
+                    parent.logMessageDJI("Waiting for mission loading!" );
+                    while( mModel.mission_loaded == -1){
+                        safeSleep(200);
+                    }
+                    if( mModel.mission_loaded == MAV_MISSION_RESULT.MAV_MISSION_ACCEPTED) {
+                        parent.logMessageDJI("Mission Accepted!");
+                        mModel.startWaypointMission();
+                    }else{
+                        parent.logMessageDJI("Mission Fails!");
+                    }
                 }
                 break;
-/*
+
             case MAVLINK_MSG_ID_SET_POSITION_TARGET_GLOBAL_INT:
                 // This command must be sent every second...
                 msg_set_position_target_global_int msg_param_4 = (msg_set_position_target_global_int) msg;
 
-                // If position is set to zero then it must be a velocity command...
+                // If position is set to zero then it must be a velocity command... We should use rather the mask ...
                 if ((msg_param_4.lat_int + msg_param_4.lon_int + msg_param_4.yaw) == 0) {
                     mModel.do_set_motion_velocity(msg_param_4.vx, msg_param_4.vy, msg_param_4.vz, msg_param_4.yaw_rate);
                 } else{
-                    mModel.do_set_motion_absolute(msg_param_4.lat_int, msg_param_4.lon_int, msg_param_4.alt, msg_param_4.yaw);
+//                    mModel.do_set_motion_absolute(msg_param_4.lat_int, msg_param_4.lon_int, msg_param_4.alt, msg_param_4.yaw);
+                    parent.logMessageDJI("Single point mission!" );
+                    generateNewMission();
+                    mMissionItemList = new ArrayList<msg_mission_item>();
+                    mNumGCSWaypoints = 1;
+                    wpState = WP_STATE_REQ_WP;
+                    mModel.request_mission_item(0);
+
+                    msg_mission_item lmsg = new msg_mission_item();
+                    lmsg.param1 = 0;    // set to delay time...
+                    lmsg.param2 = msg_param_4.yaw;    // set rotation...
+                    lmsg.param3 = 0;
+                    lmsg.param4 = 0;
+                    lmsg.x = (float)msg_param_4.lat_int/(float)10000000.0;
+                    lmsg.y = (float)msg_param_4.lon_int/(float)10000000.0;
+                    lmsg.z = msg_param_4.alt;
+                    lmsg.command = MAV_CMD.MAV_CMD_NAV_WAYPOINT;
+                    mMissionItemList.add(lmsg);
+
+                    // We are done fetching a complete mission from the GCS...
+                    wpState = WP_STATE_INACTIVE;
+                    finalizeNewMission();
+
+                    parent.logMessageDJI("Waiting for mission loading!" );
+                    while( mModel.mission_loaded == -1){
+                        safeSleep(200);
+                    }
+                    if( mModel.mission_loaded == MAV_MISSION_RESULT.MAV_MISSION_ACCEPTED) {
+                        parent.logMessageDJI("Mission Accepted!");
+                        mModel.startWaypointMission();
+                    }else{
+                        parent.logMessageDJI("Mission Fails!");
+                    }
                 }
                 break;
-
-
-                msg_manual_control
-*/
 
             // This command must be sent at 1Hz minimum...
             case MAVLINK_MSG_ID_MANUAL_CONTROL:
@@ -349,7 +395,7 @@ public class MAVLinkReceiver {
                 if (msg_item.seq == mNumGCSWaypoints - 1) {
                     wpState = WP_STATE_INACTIVE;
                     finalizeNewMission();
-                    mModel.send_mission_ack();
+              //      mModel.send_mission_ack();
                 } else {
                     mModel.request_mission_item((msg_item.seq + 1));
                 }
@@ -366,7 +412,10 @@ public class MAVLinkReceiver {
 
             case MAVLINK_MSG_ID_MISSION_CLEAR_ALL:
                 parent.logMessageDJI("MSN: received clear_all from GCS");
-                mModel.getWaypointMissionOperator().getLoadedMission().getWaypointList().clear();
+                WaypointMission y = mModel.getWaypointMissionOperator().getLoadedMission();
+                if( y != null){
+                    y.getWaypointList().clear();
+                }
                 break;
         }
 
@@ -399,8 +448,8 @@ public class MAVLinkReceiver {
 
     protected void generateNewMission() {
         mBuilder = new WaypointMission.Builder().
-                autoFlightSpeed(5.0f).
-                maxFlightSpeed(15.0f).
+                autoFlightSpeed(2.0f).
+                maxFlightSpeed(5.0f).
                 setExitMissionOnRCSignalLostEnabled(false).
                 finishedAction(WaypointMissionFinishedAction.NO_ACTION).
                 gotoFirstWaypointMode(WaypointMissionGotoWaypointMode.SAFELY).
@@ -435,6 +484,7 @@ public class MAVLinkReceiver {
 
             switch (m.command) {
                 case MAV_CMD.MAV_CMD_NAV_TAKEOFF:
+                    parent.logMessageDJI("Takeoff...");
 //                    parent.logMessageDJI("P1 = " + m.param1);
 //                    parent.logMessageDJI("P2 = " + m.param2);
 //                    parent.logMessageDJI("P3 = " + m.param3);
@@ -443,13 +493,15 @@ public class MAVLinkReceiver {
 //                    parent.logMessageDJI("y = " + m.y);
 //                    parent.logMessageDJI("z = " + m.z);
                     break;
+
                 case MAV_CMD.MAV_CMD_NAV_WAYPOINT:
-                    // TODO:   It this to handle the first way point being the current location ????
+                    // TODO:   Is this to handle the first way point being the current location ????
                     if (isHome) {
                         parent.logMessageDJI("Is Home...");
 //                        homeValue = m.z;
                         isHome = false;
                     } //else
+
                     {
                         if ((m.z) > 500) {  // TODO:  Shuld reqest max altitude not assume 500...
 //                            m.z = 500;
@@ -477,7 +529,10 @@ public class MAVLinkReceiver {
                         currentWP = new Waypoint(m.x, m.y, m.z); // TODO check altitude conversion
 
                         if (m.param1 > 0)
-                            currentWP.addAction(new WaypointAction(WaypointActionType.STAY, (int) m.param1 * 1000));
+                            currentWP.addAction(new WaypointAction(WaypointActionType.STAY, (int) m.param1 * 1000)); // milliseconds...
+
+                        if (m.param2 > 0)
+                            currentWP.addAction(new WaypointAction(WaypointActionType.ROTATE_AIRCRAFT, (int)(m.param2 * 180.0/3.141592))); // +-180 deg...
 
                         if (curvedFlightPath) {
                             currentWP.cornerRadiusInMeters = flightPathRadius;
@@ -485,7 +540,7 @@ public class MAVLinkReceiver {
 
                         dji_wps.add(currentWP);
 
-                        parent.logMessageDJI("Waypoint: " + m.x + ", " + m.y + " at " + m.z + "m");
+                        parent.logMessageDJI("Waypoint: " + m.x + ", " + m.y + " at " + m.z + " m " + m.param2 + " Yaw " + m.param1 + " Delay ");
 //                        parent.logMessageDJI("P1 = " + m.param1);
 //                        parent.logMessageDJI("P2 = " + m.param2);
 //                        parent.logMessageDJI("P3 = " + m.param3);
@@ -580,13 +635,15 @@ public class MAVLinkReceiver {
             }
             logWaypointstoRD(correctedWps);
             parent.logMessageDJI("WP size " + correctedWps.size());
+            safeSleep(200);
             mBuilder.waypointList(correctedWps).waypointCount(correctedWps.size());
+            safeSleep(200);
             WaypointMission builtMission = mBuilder.build();
+            safeSleep(200);
             mModel.setWaypointMission(builtMission);
+            safeSleep(200);
         }
         isHome = true;
-
-
     }
 
     private void logWaypointstoRD(ArrayList<Waypoint> wps) {
@@ -650,21 +707,38 @@ public class MAVLinkReceiver {
 
     private ArrayList<Waypoint> addIntermediateWaypoints(ArrayList<Waypoint> wpIn) {
 
-        // No need for intermediate waypoints if only 0 or 1 waypoints
-        if (wpIn.size() < 2)
+        // No need for intermediate waypoints if only 0, if 1 then we MUST as a waypoint (min 2 waypoints in DJI)
+        if (wpIn.size() < 1)
             return wpIn;
 
         ArrayList<Waypoint> wpOut = new ArrayList<>();
-        Waypoint wpPrevious = wpIn.get(0);
 
+        // If this is a goto position ... we must add at least one more waypoint (minimum 2 on DJI)
+        if ( wpIn.size() == 1){
+            // Get current position...
+            double lat = mModel.get_current_lat();
+            double lon = mModel.get_current_lon();
+            float  alt = mModel.get_current_alt();
+            Waypoint wpPrevious = new Waypoint(lat,lon,alt);
+
+            Waypoint wpCurrent = wpIn.get(0);
+            parent.logMessageDJI("Single point WP distance: " + String.valueOf(getRangeBetweenWaypoints_m(wpPrevious,  wpCurrent)));
+
+            float waypointIncrement = (wpCurrent.altitude - wpPrevious.altitude) / 2;
+            Waypoint intermediateWaypoint = createIntermediateWaypoint(wpPrevious, wpCurrent, 1, 1, 0, waypointIncrement);
+            // Insert the intermediate wp at the beginning of the list...
+            wpIn.add(0,intermediateWaypoint);
+        }
+
+        Waypoint wpPrevious = wpIn.get(0);
         boolean shouldNotify = false;
 
         for (Waypoint wpCurrent : wpIn) {
+
             if (wpCurrent == wpIn.get(0)) {
                 wpOut.add(wpCurrent);
                 continue;
             }
-
             parent.logMessageDJI("WP dist: " + String.valueOf(getRangeBetweenWaypoints_m(wpCurrent, wpPrevious)));
             if (getRangeBetweenWaypoints_m(wpCurrent, wpPrevious) > MAX_WAYPOINT_DISTANCE) {
                 int numIntermediateWps = (int) getRangeBetweenWaypoints_m(wpCurrent, wpPrevious) / MAX_WAYPOINT_DISTANCE;

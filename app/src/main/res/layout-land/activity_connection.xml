@@ -119,26 +119,28 @@
         android:textColor="@color/colorWhite"
         android:textSize="15dp" />
 
-    <Button
-        android:id="@+id/btn_test"
-        android:layout_width="220dp"
-        android:layout_height="60dp"
-        android:layout_marginTop="260dp"
-        android:background="@drawable/esmart"
-        android:gravity="center_horizontal"
-        android:layout_centerHorizontal="true"
-        android:text=""
-        android:textColor="@color/colorWhite"
-        android:textSize="20dp" />
+    <!--android:background="@drawable/logo"-->
 
-    <TextView
-        android:id="@+id/nitek_logo"
-        android:layout_width="250dp"
-        android:layout_height="20dp"
-        android:layout_marginTop="300dp"
-        android:layout_marginLeft="10dp"
-        android:text="9Tek AS - One pice of the system"
-        android:textColor="@color/colorGrey"
-        android:textSize="12dp" />
+      <Button
+          android:id="@+id/btn_test"
+          android:layout_width="220dp"
+          android:layout_height="60dp"
+          android:layout_marginTop="260dp"
+          android:background="@drawable/esmart"
+          android:gravity="center_horizontal"
+          android:layout_centerHorizontal="true"
+          android:text=""
+          android:textColor="@color/colorWhite"
+          android:textSize="20dp" />
 
-</RelativeLayout>
+      <TextView
+          android:id="@+id/nitek_logo"
+          android:layout_width="250dp"
+          android:layout_height="20dp"
+          android:layout_marginTop="300dp"
+          android:layout_marginLeft="10dp"
+          android:text="9Tek AS - One pice of the system"
+          android:textColor="@color/colorGrey"
+          android:textSize="12dp" />
+
+  </RelativeLayout>

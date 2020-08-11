@@ -87,6 +87,9 @@
         android:textColor="@color/colorWhite"
         android:textSize="20dp" />
 
+
+    <!-- android:background="@drawable/logo" -->
+
     <Button
         android:id="@+id/btn_test"
         android:layout_width="220dp"
@@ -95,9 +98,12 @@
         android:layout_centerHorizontal="true"
         android:layout_marginTop="530dp"
         android:background="@drawable/esmart"
-        android:text=""
+
+
+    android:text=""
         android:textColor="@color/colorWhite"
         android:textSize="20dp" />
+
 
     <TextView
         android:id="@+id/textView2"

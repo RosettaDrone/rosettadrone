@@ -85,7 +85,7 @@ import dji.sdk.sdkmanager.DJISDKInitEvent;
 import dji.sdk.sdkmanager.DJISDKManager;
 import sq.rogue.rosettadrone.logs.LogFragment;
 import sq.rogue.rosettadrone.settings.SettingsActivity;
-import sq.rogue.rosettadrone.settings.HelpActivity;
+import sq.rogue.rosettadrone.settings.MapActivity;
 import sq.rogue.rosettadrone.video.H264Packetizer;
 
 import static sq.rogue.rosettadrone.util.safeSleep;
@@ -964,7 +964,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
     }
 
     private void onClickHelp() {
-        Intent intent = new Intent(MainActivity.this, HelpActivity.class);
+        Intent intent = new Intent(MainActivity.this, MapActivity.class);
         startActivityForResult(intent, RESULT_HELP);
     }
 
