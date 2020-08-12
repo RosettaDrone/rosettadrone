@@ -1591,13 +1591,16 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     // --------------------------------------------------------------------------------
+    // We want to move to a lat,lon,alt position, this has no support by DJI...
     public void do_set_motion_absolute(double Lat, double Lon, float alt, float head) {
 
+        // Set our new destination...
         m_Destination_Lat = Lat;
         m_Destination_Lon = Lon;
         m_Destination_Alt = alt;
         m_Destination_Yaw = head;
 
+        // Start a task to do the job... if not already running...
         if(mAutonomy == false) {
             mMoveToDataTask = new MoveTo();
             mMoveToDataTimer = new Timer();
@@ -1641,16 +1644,18 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                 double brng = getBearingBetweenWaypoints(coord.getAircraftLocation().getLatitude(), coord.getAircraftLocation().getLongitude(),
                         m_Destination_Lat, m_Destination_Lon);
                 // Drone heading - Waypoint bearing... to +-180 deg...
-                double direction = (yaw - brng);
+                double direction = (brng - yaw);
                 if (direction > 180.0) direction = direction - 360.0;
                 if (direction < -180.0) direction = direction + 360.0;
+                direction = direction * Math.PI/180; // Make radians for trigonometry...
 
-                double hypotenus = getRangeBetweenWaypoints_m(coord.getAircraftLocation().getLatitude(), coord.getAircraftLocation().getLongitude(), 0,
+                // The direct distance to the destination...
+                double hypotenuse = getRangeBetweenWaypoints_m(coord.getAircraftLocation().getLatitude(), coord.getAircraftLocation().getLongitude(), 0,
                         m_Destination_Lat, m_Destination_Lon, 0);
 
-                // Fnd the X and Y distance...
-                double fw_dist = Math.sin(direction) * hypotenus;
-                double right_dist = Math.cos(direction) * hypotenus;
+                // Fnd the X and Y distance from the hypotenuse and the direction...
+                double right_dist = Math.sin(direction) * hypotenuse;
+                double fw_dist = Math.cos(direction) * hypotenuse;
 
                 // Make a very simple P controller...
                 final double motion_p = 1.0;
