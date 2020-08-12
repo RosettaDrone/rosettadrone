@@ -43,6 +43,7 @@ import com.MAVLink.enums.MAV_FRAME;
 import com.MAVLink.enums.MAV_MISSION_RESULT;
 import com.MAVLink.enums.MAV_MISSION_TYPE;
 import com.MAVLink.enums.MAV_MODE_FLAG;
+import com.MAVLink.enums.MAV_MODE_FLAG_DECODE_POSITION;
 import com.MAVLink.enums.MAV_PROTOCOL_CAPABILITY;
 import com.MAVLink.enums.MAV_RESULT;
 import com.MAVLink.enums.MAV_STATE;
@@ -66,6 +67,7 @@ import dji.common.error.DJIError;
 import dji.common.flightcontroller.Attitude;
 import dji.common.flightcontroller.ConnectionFailSafeBehavior;
 import dji.common.flightcontroller.ControlMode;
+import dji.common.flightcontroller.FlightControllerState;
 import dji.common.flightcontroller.FlightMode;
 import dji.common.flightcontroller.FlightOrientationMode;
 import dji.common.flightcontroller.GPSSignalLevel;
@@ -161,11 +163,21 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     private double m_Latitude=0;
     private double m_Longitude=0;
     private float  m_alt=0;
+
+    private double m_Destination_Lat = 0;
+    private double m_Destination_Lon = 0;
+    private float m_Destination_Alt = 0;
+    private double m_Destination_Yaw = 0;
+
     private FlightMode lastMode = FlightMode.ATTI_HOVER;
     private HardwareState.FlightModeSwitch rcmode = HardwareState.FlightModeSwitch.POSITION_ONE;
 
     private SendVelocityDataTask mSendVirtualStickDataTask = null;;
     private Timer mSendVirtualStickDataTimer = null;
+
+    private MoveTo mMoveToDataTask = null;;
+    private Timer mMoveToDataTimer = null;
+
 
     private boolean mSafetyEnabled = true;
     private boolean mMotorsArmed = false;
@@ -174,6 +186,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     private Gimbal mGimbal = null;
 
     private int mAIfunction_activation = 0;
+    private boolean mAutonomy = false;
 
     int mission_loaded = -1;
 
@@ -878,6 +891,9 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         if (mMotorsArmed)
             msg.base_mode |= MAV_MODE_FLAG.MAV_MODE_FLAG_SAFETY_ARMED;
 
+        if (mAutonomy)
+            msg.base_mode |= MAV_MODE_FLAG.MAV_MODE_FLAG_AUTO_ENABLED;
+
         // Catches manual landings
         // Automatically disarm motors if aircraft is on the ground and a takeoff is not in progress
         if (!getDjiAircraft().getFlightController().getState().isFlying() && mGCSCommandedMode != ArduCopterFlightModes.GUIDED)
@@ -1384,6 +1400,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     void startWaypointMission() {
+        mAutonomy = false;
         parent.logMessageDJI("start WaypointMission()");
         
         if (getWaypointMissionOperator() == null) {
@@ -1411,50 +1428,9 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             });
         }
     }
-/*
-    void follow_me() {
-
-        FollowMeMissionOperator missionOperator = new FollowMeMissionOperator();
-        FollowMeMission followMeInitSettings = new FollowMeMission(FollowMeHeading.TOWARD_FOLLOW_POSITION, locationCoordinate3D.getLatitude(), locationCoordinate3D.getLongitude(), locationCoordinate3D.getAltitude());
-
-        missionOperator.startMission(followMeInitSettings, new CommonCallbacks.CompletionCallback() {
-            @Override
-            public void onResult(DJIError djiError) {
-
-                if (djiError == null) {
-                    Thread locationUpdateThread = new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            while (!Thread.currentThread().isInterrupted()) {
-                                final Location newLocation = highAccuracyLocationTracker.getLocation();
-                                missionOperator.updateFollowingTarget(new LocationCoordinate2D(newLocation.getLatitude(), newLocation.getLongitude()), new CommonCallbacks.CompletionCallback() {
-                                    @Override
-                                    public void onResult(DJIError djiError) {
-                                        if (djiError != null) {
-                                            parent.logMessageDJI("Follow.updateTarget failed: " + djiError.getDescription());
-                                        }
-                                    }
-                                });
-
-                                try {
-                                    Thread.sleep(100);
-                                } catch (InterruptedException e) {
-                                    // The exception clears the interrupt flag so I'll refresh the flag otherwise the thread keeps running
-                                    Thread.currentThread().interrupt();
-                                }
-                            }
-                        }
-                    });
-
-                    locationUpdateThread.start();
-                }
-            }
-        });
-    }
-
- */
 
     public void stopWaypointMission() {
+        mAutonomy = false;
         if (getWaypointMissionOperator() == null) {
             parent.logMessageDJI("stopWaypointMission() - mWaypointMissionOperator null");
             return;
@@ -1475,6 +1451,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     void pauseWaypointMission() {
+        mAutonomy = false;
         if (getWaypointMissionOperator() == null) {
             parent.logMessageDJI("pauseWaypointMission() - mWaypointMissionOperator null");
             return;
@@ -1495,6 +1472,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     void resumeWaypointMission() {
+        mAutonomy = false;
         if (isSafetyEnabled()) {
             parent.logMessageDJI(parent.getResources().getString(R.string.safety_launch));
             send_command_ack(MAV_CMD_NAV_TAKEOFF, MAV_RESULT.MAV_RESULT_DENIED);
@@ -1523,6 +1501,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     void do_takeoff() {
+        mAutonomy = false;
         if (mSafetyEnabled) {
             parent.logMessageDJI(parent.getResources().getString(R.string.safety_launch));
             send_command_ack(MAV_CMD_NAV_TAKEOFF, MAV_RESULT.MAV_RESULT_DENIED);
@@ -1551,6 +1530,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     void do_land() {
+        mAutonomy = false;
         parent.logMessageDJI("Initiating landing");
         djiAircraft.getFlightController().startLanding(new CommonCallbacks.CompletionCallback() {
             @Override
@@ -1566,6 +1546,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     void do_go_home() {
+        mAutonomy = false;
         parent.logMessageDJI("Initiating Go Home");
         djiAircraft.getFlightController().startGoHome(new CommonCallbacks.CompletionCallback() {
             @Override
@@ -1609,25 +1590,81 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         util.safeSleep(500);
     }
 
-    public void do_set_velocity_mode() {
-        // Set mode to Head-forward...
-        mFlightController.setFlightOrientationMode(FlightOrientationMode.COURSE_LOCK,new CommonCallbacks.CompletionCallback() {
-            @Override
-            public void onResult(DJIError djiError) {
-                if (djiError != null)
-                    parent.logMessageDJI("Error: " + djiError.toString());
-                else
-                    parent.logMessageDJI("Mode set successful!\n");
-            }
-        });
+    // --------------------------------------------------------------------------------
+    public void do_set_motion_absolute(double Lat, double Lon, float alt, float head) {
 
-        mFlightController.setYawControlMode(YawControlMode.ANGULAR_VELOCITY);
-        mFlightController.setRollPitchControlMode(RollPitchControlMode.VELOCITY);
-        mFlightController.setVerticalControlMode(VerticalControlMode.VELOCITY);
+        m_Destination_Lat = Lat;
+        m_Destination_Lon = Lon;
+        m_Destination_Alt = alt;
+        m_Destination_Yaw = head;
 
-        //       parent.logMessageDJI(String.valueOf(djiAircraft.getFlightController().getVerticalControlMode()));
+        if(mAutonomy == false) {
+            mMoveToDataTask = new MoveTo();
+            mMoveToDataTimer = new Timer();
+            mMoveToDataTimer.schedule(mMoveToDataTask, 100, 200);
+            mAutonomy = true;
+        }
     }
 
+    class MoveTo extends TimerTask {
+        int detection = 0;  // Wi might fly past the point se we look for consecutive hits...
+
+        @Override
+        public void run() {
+            while(mAutonomy == true) {
+                FlightControllerState coord = djiAircraft.getFlightController().getState();
+                double dist = getRangeBetweenWaypoints_m(m_Destination_Lat, m_Destination_Lon, m_Destination_Alt,
+                        coord.getAircraftLocation().getLatitude(), coord.getAircraftLocation().getLongitude(), coord.getAircraftLocation().getAltitude());
+
+                // Mavlink uses 0-360 while DJI uses +-180... We use 0-360 for math...
+                double yaw = coord.getAttitude().yaw;
+                if (yaw < 0) yaw = yaw + 360.0;
+
+                // Make the error +-180 deg. error  + is we need to turn more right...
+                double yawerror = (m_Destination_Yaw - yaw);
+                if (yawerror > 180.0) yawerror = yawerror - 360.0;
+                if (yawerror < -180.0) yawerror = yawerror + 360.0;
+
+                // If we are there...
+                if (dist < 0.25 && Math.abs(yawerror) < 5.0) {
+                    do_set_motion_velocity(0, 0, 0, 0);
+                    // If we got 5 (1 sec) consecutive hits at the right spot....
+                    if (++detection > 5) {
+                        mAutonomy = false;
+                        return;
+                    }
+                } else {
+                    detection = 0;
+                }
+
+                // Find the heading difference compared to bearing...
+                double brng = getBearingBetweenWaypoints(coord.getAircraftLocation().getLatitude(), coord.getAircraftLocation().getLongitude(),
+                        m_Destination_Lat, m_Destination_Lon);
+                // Drone heading - Waypoint bearing... to +-180 deg...
+                double direction = (yaw - brng);
+                if (direction > 180.0) direction = direction - 360.0;
+                if (direction < -180.0) direction = direction + 360.0;
+
+                double hypotenus = getRangeBetweenWaypoints_m(coord.getAircraftLocation().getLatitude(), coord.getAircraftLocation().getLongitude(), 0,
+                        m_Destination_Lat, m_Destination_Lon, 0);
+
+                // Fnd the X and Y distance...
+                double fw_dist = Math.sin(direction) * hypotenus;
+                double right_dist = Math.cos(direction) * hypotenus;
+
+                // Make a very simple P controller...
+                final double motion_p = 1.0;
+                float fwmotion = (float) Math.min(fw_dist*motion_p, 2.0); // Positive is forward...
+                float rightmotion = (float) Math.min(right_dist*motion_p, 2.0); // Positive is right ...
+                float upmotion = (float) Math.min(m_Destination_Alt - coord.getAircraftLocation().getAltitude()*motion_p, 1.0); // positive is up ...
+                float clockmotion = (float) Math.min(yawerror*motion_p, 10); // positive is with clock ...
+
+                do_set_motion_velocity(fwmotion, rightmotion, upmotion, clockmotion);
+            }
+        }
+    }
+
+    // --------------------------------------------------------------------------------
     void do_set_motion_velocity(float x, float y, float z, float yaw) {
         mPitch = y;   mRoll = x;   mYaw = yaw;  mThrottle = z;
 
@@ -1654,10 +1691,6 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         }else{
             mSendVirtualStickDataTask.repeat = 14;
         }
-    }
-
-    public void do_set_motion_absolute(float lat, float lon, float alt, float yaw) {
-        parent.logMessageDJI("Initiating abs move");
     }
 
     // Run the velocity command for 2 seconds...
@@ -1730,6 +1763,48 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                     });
         }
     }
+/*
+    void follow_me() {
+
+        FollowMeMissionOperator missionOperator = new FollowMeMissionOperator();
+        FollowMeMission followMeInitSettings = new FollowMeMission(FollowMeHeading.TOWARD_FOLLOW_POSITION, locationCoordinate3D.getLatitude(), locationCoordinate3D.getLongitude(), locationCoordinate3D.getAltitude());
+
+        missionOperator.startMission(followMeInitSettings, new CommonCallbacks.CompletionCallback() {
+            @Override
+            public void onResult(DJIError djiError) {
+
+                if (djiError == null) {
+                    Thread locationUpdateThread = new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            while (!Thread.currentThread().isInterrupted()) {
+                                final Location newLocation = highAccuracyLocationTracker.getLocation();
+                                missionOperator.updateFollowingTarget(new LocationCoordinate2D(newLocation.getLatitude(), newLocation.getLongitude()), new CommonCallbacks.CompletionCallback() {
+                                    @Override
+                                    public void onResult(DJIError djiError) {
+                                        if (djiError != null) {
+                                            parent.logMessageDJI("Follow.updateTarget failed: " + djiError.getDescription());
+                                        }
+                                    }
+                                });
+
+                                try {
+                                    Thread.sleep(100);
+                                } catch (InterruptedException e) {
+                                    // The exception clears the interrupt flag so I'll refresh the flag otherwise the thread keeps running
+                                    Thread.currentThread().interrupt();
+                                }
+                            }
+                        }
+                    });
+
+                    locationUpdateThread.start();
+                }
+            }
+        });
+    }
+
+ */
 
 //    public void set_flight_mode(FlightControlState djiMode) {
 //        // TODO
@@ -1937,5 +2012,34 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         });
     }
 
+    double getBearingBetweenWaypoints(double lat1,double lon1, double lat2,double lon2) {
+        // (all angles in radians)
+        double rad = Math.PI / 180.0;
+        lat1 = lat1*rad;
+        lat2 = lat2*rad;
+        lon1 = lon1*rad;
+        lon2 = lon2*rad;
+        double y = Math.sin(lat2 - lat1) * Math.cos(lon2);
+        double x = Math.cos(lon1) * Math.sin(lon2) -
+                Math.sin(lon1) * Math.cos(lon2) * Math.cos(lat2 - lat1);
+        double z = Math.atan2(y, x);
+        double brng = (z * 180 / Math.PI + 360) % 360; // in degrees
+        return brng;
+    }
+
+    // --------------------------------------------------------------------------------
+    double getRangeBetweenWaypoints_m( double lat1,double lon1, float el1,double lat2,double lon2,float el2) {
+        final int R = 6371; // Radius of the earth
+        double latDistance = Math.toRadians(lat2 - lat1);
+        double lonDistance = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        double distance = R * c * 1000; // convert to meters
+        double height = el1 - el2;
+        distance = Math.pow(distance, 2) + Math.pow(height, 2);
+        return Math.sqrt(distance);
+    }
 
 }

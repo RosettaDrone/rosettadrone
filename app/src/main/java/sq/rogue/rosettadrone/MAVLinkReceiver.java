@@ -253,7 +253,8 @@ public class MAVLinkReceiver {
                 if ((msg_param_4.lat_int + msg_param_4.lon_int + msg_param_4.yaw) == 0) {
                     mModel.do_set_motion_velocity(msg_param_4.vx, msg_param_4.vy, msg_param_4.vz, msg_param_4.yaw_rate);
                 } else{
-//                    mModel.do_set_motion_absolute(msg_param_4.lat_int, msg_param_4.lon_int, msg_param_4.alt, msg_param_4.yaw);
+                    mModel.do_set_motion_absolute((double)msg_param_4.lat_int/10000000, (double)msg_param_4.lon_int/10000000, msg_param_4.alt, msg_param_4.yaw);
+/*
                     parent.logMessageDJI("Single point mission!" );
                     generateNewMission();
                     mMissionItemList = new ArrayList<msg_mission_item>();
@@ -286,6 +287,7 @@ public class MAVLinkReceiver {
                     }else{
                         parent.logMessageDJI("Mission Fails!");
                     }
+ */
                 }
                 break;
 
