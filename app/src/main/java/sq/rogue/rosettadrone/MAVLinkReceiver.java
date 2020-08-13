@@ -250,44 +250,19 @@ public class MAVLinkReceiver {
                 msg_set_position_target_global_int msg_param_4 = (msg_set_position_target_global_int) msg;
 
                 // If position is set to zero then it must be a velocity command... We should use rather the mask ...
-                if ((msg_param_4.lat_int + msg_param_4.lon_int + msg_param_4.yaw) == 0) {
+                if ( (msg_param_4.type_mask & 0b0000000000000111) == 7){
                     mModel.do_set_motion_velocity(msg_param_4.vx, msg_param_4.vy, msg_param_4.vz, msg_param_4.yaw_rate);
                 } else{
-                    mModel.do_set_motion_absolute((double)msg_param_4.lat_int/10000000, (double)msg_param_4.lon_int/10000000, msg_param_4.alt, msg_param_4.yaw);
-/*
-                    parent.logMessageDJI("Single point mission!" );
-                    generateNewMission();
-                    mMissionItemList = new ArrayList<msg_mission_item>();
-                    mNumGCSWaypoints = 1;
-                    wpState = WP_STATE_REQ_WP;
-                    mModel.request_mission_item(0);
-
-                    msg_mission_item lmsg = new msg_mission_item();
-                    lmsg.param1 = 0;    // set to delay time...
-                    lmsg.param2 = msg_param_4.yaw;    // set rotation...
-                    lmsg.param3 = 0;
-                    lmsg.param4 = 0;
-                    lmsg.x = (float)msg_param_4.lat_int/(float)10000000.0;
-                    lmsg.y = (float)msg_param_4.lon_int/(float)10000000.0;
-                    lmsg.z = msg_param_4.alt;
-                    lmsg.command = MAV_CMD.MAV_CMD_NAV_WAYPOINT;
-                    mMissionItemList.add(lmsg);
-
-                    // We are done fetching a complete mission from the GCS...
-                    wpState = WP_STATE_INACTIVE;
-                    finalizeNewMission();
-
-                    parent.logMessageDJI("Waiting for mission loading!" );
-                    while( mModel.mission_loaded == -1){
-                        safeSleep(200);
-                    }
-                    if( mModel.mission_loaded == MAV_MISSION_RESULT.MAV_MISSION_ACCEPTED) {
-                        parent.logMessageDJI("Mission Accepted!");
-                        mModel.startWaypointMission();
-                    }else{
-                        parent.logMessageDJI("Mission Fails!");
-                    }
- */
+                    mModel.do_set_motion_absolute(
+                            (double)msg_param_4.lat_int/10000000,
+                            (double)msg_param_4.lon_int/10000000,
+                            msg_param_4.alt,
+                            msg_param_4.yaw,
+                            msg_param_4.vx,
+                            msg_param_4.vy,
+                            msg_param_4.vz,
+                            msg_param_4.yaw,
+                            msg_param_4.type_mask);
                 }
                 break;
 
