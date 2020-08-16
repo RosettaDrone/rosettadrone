@@ -63,6 +63,7 @@ import static com.MAVLink.enums.MAV_CMD.MAV_CMD_DO_SET_MODE;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_DO_SET_SERVO;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_GET_HOME_POSITION;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_MISSION_START;
+import static com.MAVLink.enums.MAV_CMD.MAV_CMD_CONDITION_YAW;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_NAV_LAND;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_NAV_LOITER_UNLIM;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_NAV_RETURN_TO_LAUNCH;
@@ -184,6 +185,24 @@ public class MAVLinkReceiver {
                     case MAV_CMD_MISSION_START:
                         mModel.startWaypointMission();
                         break;
+
+                    case MAV_CMD_CONDITION_YAW:
+                        parent.logMessageDJI("Yaw = " + msg_cmd.param1);
+                        // If absolut yaw...
+                        if( msg_cmd.param4 == 0) {
+                            mModel.do_set_motion_absolute(
+                                    0,
+                                    0,
+                                    0,
+                                    msg_cmd.param1*(float)(Math.PI/180.0),
+                                    0,
+                                    0,
+                                    0,
+                                    0,
+                                    0b1111101111111111);
+                        }
+                        break;
+
 
                     case MAV_CMD_DO_SET_SERVO:
                         mModel.do_set_Gimbal(msg_cmd.param1, msg_cmd.param2);
@@ -460,6 +479,7 @@ public class MAVLinkReceiver {
             parent.logMessageDJI(String.valueOf(m.command));
 
             switch (m.command) {
+
                 case MAV_CMD.MAV_CMD_NAV_TAKEOFF:
                     parent.logMessageDJI("Takeoff...");
 //                    parent.logMessageDJI("P1 = " + m.param1);

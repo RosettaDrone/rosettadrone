@@ -1656,10 +1656,14 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
             // If yaw is masked then do not change yaw...
             double yawerror;
-            if ( (m_Destination_Mask & 0b0000010000000000) >0) yawerror = 0;
+            if ( (m_Destination_Mask & 0b0000010000000000) > 0) yawerror = 0;
                 // Make the error +-180 deg. error  + is we need to turn more right...
             else  yawerror = distance(m_Destination_Yaw*(180/Math.PI), yaw );
             parent.logMessageDJI("Goto yawerror: " + yawerror);
+            parent.logMessageDJI("Goto mask: " + m_Destination_Mask);
+
+            // Do we move og not...
+            if ( (m_Destination_Mask & 0b0000000000111111) == 0x3F) dist = 0;
 
             // If we are there...
             if ( (dist < 0.25 && Math.abs(yawerror) < 5.0) || mAutonomy == false) {
@@ -1721,7 +1725,10 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
       //      parent.logMessageDJI("Velocity: fw " + fwmotion + " right " + rightmotion + " up " + upmotion + " yaw " + clockmotion);
 
-            do_set_motion_velocity((float)fwmotion, (float)rightmotion, (float)upmotion, (float)clockmotion);
+            if ( (m_Destination_Mask & 0b0000000000111111) == 0x3F)
+                do_set_motion_velocity((float)0, (float)0, (float)0, (float)clockmotion);
+            else
+                do_set_motion_velocity((float)fwmotion, (float)rightmotion, (float)upmotion, (float)clockmotion);
         }
     }
 
