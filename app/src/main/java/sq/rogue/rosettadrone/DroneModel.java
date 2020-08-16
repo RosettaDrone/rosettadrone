@@ -183,6 +183,8 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     private MoveTo mMoveToDataTask = null;;
     private Timer mMoveToDataTimer = null;
 
+    private MiniPID miniPIDSide;
+    private MiniPID miniPIDFwd;
 
     private boolean mSafetyEnabled = true;
     private boolean mMotorsArmed = false;
@@ -219,6 +221,10 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
     private void initFlightController(boolean sim) {
         parent.logMessageDJI("Starting FlightController...");
+
+        // PID for position control...
+        miniPIDSide = new MiniPID(0.25, 0.01, 0.4);
+        miniPIDFwd = new MiniPID(0.25, 0.01, 0.4);
 
         Aircraft aircraft = (Aircraft) RDApplication.getProductInstance(); //DJISimulatorApplication.getAircraftInstance();
         if (aircraft == null || !aircraft.isConnected()) {
@@ -356,6 +362,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     void setUpwardCollisionAvoidance(final boolean enabled) {
+
         if (djiAircraft.getFlightController().getFlightAssistant() != null) {
             djiAircraft.getFlightController().getFlightAssistant().setUpwardsAvoidanceEnabled(enabled, new CommonCallbacks.CompletionCallback() {
                 @Override
@@ -1647,23 +1654,22 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
         //    parent.logMessageDJI("Current yaw: " + yaw);
 
-            // Make the error +-180 deg. error  + is we need to turn more right...
-            double yawerror = ((m_Destination_Yaw*(180/Math.PI)) - yaw);
-            if (yawerror > 180.0) yawerror = yawerror - 360.0;
-            if (yawerror < -180.0) yawerror = yawerror + 360.0;
             // If yaw is masked then do not change yaw...
+            double yawerror;
             if ( (m_Destination_Mask & 0b0000010000000000) >0) yawerror = 0;
-          //  parent.logMessageDJI("Goto yawerror: " + yawerror);
+                // Make the error +-180 deg. error  + is we need to turn more right...
+            else  yawerror = distance(m_Destination_Yaw*(180/Math.PI), yaw );
+            parent.logMessageDJI("Goto yawerror: " + yawerror);
 
             // If we are there...
             if ( (dist < 0.25 && Math.abs(yawerror) < 5.0) || mAutonomy == false) {
-                do_set_motion_velocity(0, 0, 0, 0);
                 // If we got 5 (1 sec) consecutive hits at the right spot....
                 if (++detection > 5 || mAutonomy == false) {
                     mMoveToDataTimer.cancel();
                     mMoveToDataTimer.purge();
                     mMoveToDataTimer = null;
                     setGCSCommandedMode(ArduCopterFlightModes.GUIDED);
+                    do_set_motion_velocity(0, 0, 0, 0);
                     mAutonomy = false;
                     return;
                 }
@@ -1671,43 +1677,37 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                 detection = 0;
             }
 
-            // Find the heading difference compared to bearing...
+            // Find the heading difference compared to bearing... return 0-360 deg.
             double brng = getBearingBetweenWaypoints(coord.getAircraftLocation().getLatitude(), coord.getAircraftLocation().getLongitude(),
                     m_Destination_Lat, m_Destination_Lon);
-            // Drone heading - Waypoint bearing... to +-180 deg...
-            double direction = (brng - yaw);
-            if (direction > 180.0) direction = direction - 360.0;
-            if (direction < -180.0) direction = direction + 360.0;
-            direction = direction * Math.PI/180; // Make radians for trigonometry...
 
-        //    parent.logMessageDJI("Goto Direction: " + direction);
-
-            // The direct distance to the destination...
+            // The direct distance to the destination... return distance in meters...
             double hypotenuse = getRangeBetweenWaypoints_m(coord.getAircraftLocation().getLatitude(), coord.getAircraftLocation().getLongitude(), 0,
                     m_Destination_Lat, m_Destination_Lon, 0);
 
-            // Fnd the X and Y distance from the hypotenuse and the direction...
-            double fw_dist  = Math.sin(direction) * hypotenuse;
-            double right_dist = Math.cos(direction) * hypotenuse;
+            // Drone heading - Waypoint bearing... to 0-360 deg to +-pi rad...
+            double direction = distance(brng, yaw );
+            parent.logMessageDJI("Goto Direction: " + direction);
 
-          //  parent.logMessageDJI("Goto Motion: right " + right_dist + " fw " + fw_dist);
+            // Fnd the X and Y distance from the hypotenuse and the direction...
+            double fw_dist  = Math.sin(direction*Math.PI/180) * hypotenuse;
+            double right_dist = Math.cos(direction*Math.PI/180) * hypotenuse;
+            parent.logMessageDJI("Goto Motion: right " + right_dist + " fw " + fw_dist + " hyp. " + hypotenuse);
 
             // Make a very simple P controller...
-            final double motion_p = 0.5;
-            final double maxspeed = 1.0;  // Default speed ( should be set ...)
+            final double motion_p = 0.7;
+            final double maxspeed = 0.5;  // Default speed ( should be set ...)
             double speed = 0;
 
             if ( (m_Destination_Mask & 0b0000000000001000) == 0) speed = m_Destination_Set_vx;
             else speed = maxspeed;
-            double fwmotion = fw_dist*motion_p;
-            if (fwmotion > speed) fwmotion = speed;
-            if (fwmotion < -speed) fwmotion = -speed;
+            miniPIDFwd.setOutputLimits(speed);
+            double fwmotion = miniPIDFwd.getOutput(-fw_dist,0);
 
             if ( (m_Destination_Mask & 0b0000000000010000) == 0) speed = m_Destination_Set_vy;
             else speed = maxspeed;
-            double rightmotion = right_dist*motion_p;
-            if (rightmotion > speed) rightmotion = speed;
-            if (rightmotion < -speed) rightmotion = -speed;
+            miniPIDSide.setOutputLimits(speed);
+            double rightmotion = miniPIDSide.getOutput(-right_dist,0);
 
             if ( (m_Destination_Mask & 0b0000000000100000) == 0) speed = m_Destination_Set_vz;
             else speed = maxspeed;
@@ -2074,7 +2074,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     double getBearingBetweenWaypoints(double lat1,double lon1, double lat2,double lon2) {
-        // (all angles in radians)
+        // (all angles in degrees 0-360)
         double rad = Math.PI / 180.0;
         lat1 = lat1*rad;
         lat2 = lat2*rad;
@@ -2083,9 +2083,9 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         double y = Math.sin(lat2 - lat1) * Math.cos(lon2);
         double x = Math.cos(lon1) * Math.sin(lon2) -
                 Math.sin(lon1) * Math.cos(lon2) * Math.cos(lat2 - lat1);
-        double z = Math.atan2(y, x);
-        double brng = (z * 180 / Math.PI + 360) % 360; // in degrees
-        return brng;
+        double z = Math.atan2(y, x) * 180.0 / Math.PI;
+        if (z < 0.0) z += 360.0;
+        return z;
     }
 
     // --------------------------------------------------------------------------------
@@ -2101,6 +2101,17 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         double height = el1 - el2;
         distance = Math.pow(distance, 2) + Math.pow(height, 2);
         return Math.sqrt(distance);
+    }
+
+    /**
+     * Shortest distance (angular) between two angles.
+     * It will be in range [0, 180].
+     */
+    private double distance(double alpha, double beta) {
+        double phi = Math.abs(beta - alpha) % 360;       // This is either the distance or 360 - distance
+        double distance = phi > 180 ? 360 - phi : phi;
+        double sign = (alpha - beta >= 0 && alpha - beta <= 180) || (alpha - beta <=-180 && alpha- beta>= -360) ? distance : distance*-1;
+        return sign;
     }
 
 }

@@ -109,8 +109,8 @@ public class MAVLinkReceiver {
     public void process(MAVLinkMessage msg) {
 
         if(msg.msgid != 0) {
-            parent.logMessageDJI(String.valueOf(msg));
-//        parent.logMessageDJI(String.valueOf(msg.msgid));
+  //          parent.logMessageDJI(String.valueOf(msg));
+            parent.logMessageDJI(String.valueOf(msg.msgid));
         }
 
         parent.logMessageDJI("Message: " + msg);

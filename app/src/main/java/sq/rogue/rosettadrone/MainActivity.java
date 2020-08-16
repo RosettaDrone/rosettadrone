@@ -683,7 +683,12 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
             }
             notifyStatusChange();
         }
+/*
+        @Override
+        public void onProductChanged(BaseProduct baseProduct) {
 
+        }
+*/
         @Override
         public void onComponentChange(BaseProduct.ComponentKey componentKey, BaseComponent oldComponent, BaseComponent newComponent) {
             if (newComponent != null) {

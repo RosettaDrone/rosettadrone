@@ -161,6 +161,12 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
                            //     RDApplication.updateProduct(baseProduct);
                             }
                         }
+/*
+                        @Override
+                        public void onProductChanged(BaseProduct baseProduct) {
+
+                        }
+*/
                         @Override
                         public void onComponentChange(BaseProduct.ComponentKey componentKey,
                                                       BaseComponent oldComponent,
