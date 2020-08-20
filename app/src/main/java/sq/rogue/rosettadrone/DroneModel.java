@@ -168,10 +168,10 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     private double m_Destination_Lon = 0;
     private float m_Destination_Alt = 0;
     private double m_Destination_Yaw = 0;
+    private double m_Destination_Yaw_rate = 0;
     private float m_Destination_Set_vx = -1;
     private float m_Destination_Set_vy = -1;
     private float m_Destination_Set_vz = -1;
-    private float m_Destination_Set_yaw = -1;
     private int m_Destination_Mask = 0;
 
     private FlightMode lastMode = FlightMode.ATTI_HOVER;
@@ -182,6 +182,11 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
     private MoveTo mMoveToDataTask = null;;
     private Timer mMoveToDataTimer = null;
+
+    private MoveCameraTo mMoveToCameraTask = null;;
+    private Timer mMoveToCameraTimer = null;
+    private Rotation m_Rot;
+    private float m_pitch=0;
 
     private MiniPID miniPIDSide;
     private MiniPID miniPIDFwd;
@@ -223,8 +228,8 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         parent.logMessageDJI("Starting FlightController...");
 
         // PID for position control...
-        miniPIDSide = new MiniPID(0.25, 0.01, 0.4);
-        miniPIDFwd = new MiniPID(0.25, 0.01, 0.4);
+        miniPIDSide = new MiniPID(0.5, 0.01, 0.4);
+        miniPIDFwd = new MiniPID(0.5, 0.01, 0.4);
 
         Aircraft aircraft = (Aircraft) RDApplication.getProductInstance(); //DJISimulatorApplication.getAircraftInstance();
         if (aircraft == null || !aircraft.isConnected()) {
@@ -264,7 +269,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
             if(sim) {
                 mFlightController.getSimulator()
-                        .start(InitializationData.createInstance(new LocationCoordinate2D(60.25, 10.29), 10, 10),
+                        .start(InitializationData.createInstance(new LocationCoordinate2D(60.4094, 10.4911), 10, 10),
                                 djiError -> {
                                     if (djiError != null) {
                                         parent.logMessageDJI(djiError.getDescription());
@@ -1092,6 +1097,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                 parent.logMessageDJI("AI Mode Canceled...");
                 mAIfunction_activation = 0;
             }
+            mAutonomy = false;
         }
 
         msg.chan8_raw = (mAIfunction_activation*100)+1000;
@@ -1591,54 +1597,123 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         if (mGimbal == null) {
             return;
         }
+        m_Rot = builder.build();
+        m_pitch = param;
 
 
+/*      // We do yaw follow, and then yaw the entire drone rather than the gimbal...
         mGimbal.setMode(GimbalMode.FREE,djiError -> {
             if (djiError != null)
                 parent.logMessageDJI("Error: " + djiError.toString());
-        });
-
-        mGimbal.rotate(builder.build(), djiError -> {
-            if (djiError != null)
-                parent.logMessageDJI("Error: " + djiError.toString());
-        });
-        util.safeSleep(500);
+        });https://developer.dji.com/api-reference/android-api/Components/Gimbal/DJIGimbal_DJIGimbalRotation_Constructor.html
+*/
+        // Got to AUTO mode until completed... Not really needed now that we repeat the commands... but nice any how...
+        if(mMoveToCameraTimer == null) {
+            setGCSCommandedMode(ArduCopterFlightModes.AUTO);
+            mMoveToCameraTask = new MoveCameraTo();
+            mMoveToCameraTimer = new Timer();
+            mMoveToCameraTimer.schedule(mMoveToCameraTask, 100, 250);
+        }
     }
+    class MoveCameraTo extends TimerTask {
 
+        @Override
+        public void run() {
+            mGimbal.rotate(m_Rot, djiError -> {
+                if (djiError != null)
+                    parent.logMessageDJI("Error: " + djiError.toString());
+            });
+
+            float pos = m_Rot.getPitch();
+            if(pos > m_pitch-1 && pos < m_pitch+1) {
+                mMoveToCameraTimer.cancel();
+                mMoveToCameraTimer.purge();
+                mMoveToCameraTimer = null;
+                setGCSCommandedMode(ArduCopterFlightModes.GUIDED);
+            }
+        }
+    }
+        // --------------------------------------------------------------------------------
+    // We want to move to a lat,lon,alt position, this has no support by DJI...
+    public void do_set_motion_relative(double x, double y, float z, float head, float vx, float vy, float vz, float yaw_rate, int mask) {
+
+        // Set our new destination...
+        double[] pos = get_location_metres(x, y) ;
+        m_Destination_Lat = pos[0];
+        m_Destination_Lon = pos[1];
+
+        m_Destination_Alt = -z;
+        m_Destination_Yaw = head;
+        m_Destination_Yaw_rate = yaw_rate;
+
+        m_Destination_Set_vx = vx;
+        m_Destination_Set_vy = vy;
+        m_Destination_Set_vz = vz;
+        m_Destination_Mask = mask;
+
+        parent.logMessageDJI("Goto: X " + x + " Y " + y + " Alt " + -z + " Head "+ head*(180/Math.PI));
+
+        // Start a task to do the job... if not already running...
+        if( mMoveToDataTimer == null) {
+            parent.logMessageDJI("Starting new thread!" );
+
+            miniPIDFwd.reset();
+            miniPIDSide.reset();
+
+            // This is a non standard trick, but we would like to know exactly when we have reached the position...
+            // So we move to AUTO mode while flying to position, and then go back to GUIDED...
+            // If there is another way let me know...
+            setGCSCommandedMode(ArduCopterFlightModes.AUTO);
+            mMoveToDataTask = new MoveTo();
+            mMoveToDataTimer = new Timer();
+            mMoveToDataTimer.schedule(mMoveToDataTask, 200, 190);
+            mAutonomy = true;
+        }
+        else{
+            mMoveToDataTask.detection = 0;
+        }
+    }
     // --------------------------------------------------------------------------------
     // We want to move to a lat,lon,alt position, this has no support by DJI...
-    public void do_set_motion_absolute(double Lat, double Lon, float alt, float head, float vx, float vy, float vz, float yaw, int mask) {
+    public void do_set_motion_absolute(double Lat, double Lon, float alt, float head, float vx, float vy, float vz, float yaw_rate, int mask) {
 
         // Set our new destination...
         m_Destination_Lat = Lat;
         m_Destination_Lon = Lon;
         m_Destination_Alt = alt;
         m_Destination_Yaw = head;
+        m_Destination_Yaw_rate = yaw_rate;
 
         m_Destination_Set_vx = vx;
         m_Destination_Set_vy = vy;
         m_Destination_Set_vz = vz;
-        m_Destination_Set_yaw = yaw;
         m_Destination_Mask = mask;
 
         parent.logMessageDJI("Goto: Lat " + Lat + " Lon " + Lon + " Alt " + alt + " Head "+ head*(180/Math.PI));
 
         // Start a task to do the job... if not already running...
-        if(mAutonomy == false) {
+        if( mMoveToDataTimer == null) {
             parent.logMessageDJI("Starting new thread!" );
 
+            miniPIDFwd.reset();
+            miniPIDSide.reset();
+
             // This is a non standard trick, but we would like to know exactly when we have reached the position...
-            // So we more to AUTO mode while flying to position, and then go back to GUIDED...
+            // So we move to AUTO mode while flying to position, and then go back to GUIDED...
+            // If there is another way let me know...
             setGCSCommandedMode(ArduCopterFlightModes.AUTO);
             mMoveToDataTask = new MoveTo();
             mMoveToDataTimer = new Timer();
-            mMoveToDataTimer.schedule(mMoveToDataTask, 100, 190);
+            mMoveToDataTimer.schedule(mMoveToDataTask, 200, 190);
             mAutonomy = true;
+        }
+        else{
+            mMoveToDataTask.detection = 0;
         }
     }
 
     class MoveTo extends TimerTask {
-        int detection = 0;  // Wi might fly past the point se we look for consecutive hits...
+        public int detection = 0;  // Wi might fly past the point se we look for consecutive hits...
 
         @Override
         public void run() {
@@ -1646,104 +1721,123 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             double dist = getRangeBetweenWaypoints_m(m_Destination_Lat, m_Destination_Lon, m_Destination_Alt,
                     coord.getAircraftLocation().getLatitude(), coord.getAircraftLocation().getLongitude(), coord.getAircraftLocation().getAltitude());
 
-      //      parent.logMessageDJI("Goto distance: " + dist);
-
+            //------------------------------------------------
             // Mavlink uses 0-360 while DJI uses +-180... We use 0-360 for math...
             double yaw = coord.getAttitude().yaw;
             if (yaw < 0) yaw = yaw + 360.0;
 
-        //    parent.logMessageDJI("Current yaw: " + yaw);
-
             // If yaw is masked then do not change yaw...
             double yawerror;
             if ( (m_Destination_Mask & 0b0000010000000000) > 0) yawerror = 0;
-                // Make the error +-180 deg. error  + is we need to turn more right...
-            else  yawerror = distance(m_Destination_Yaw*(180/Math.PI), yaw );
-            parent.logMessageDJI("Goto yawerror: " + yawerror);
-            parent.logMessageDJI("Goto mask: " + m_Destination_Mask);
+            // Make the error +-180 deg. error  + is we need to turn more right...
+            else  yawerror = rotation(m_Destination_Yaw*(180/Math.PI), yaw );
 
             // Do we move og not...
             if ( (m_Destination_Mask & 0b0000000000111111) == 0x3F) dist = 0;
 
             // If we are there...
-            if ( (dist < 0.25 && Math.abs(yawerror) < 5.0) || mAutonomy == false) {
+            if ( (dist < 0.20 && Math.abs(yawerror) < 1.25) || mAutonomy == false) {
                 // If we got 5 (1 sec) consecutive hits at the right spot....
                 if (++detection > 5 || mAutonomy == false) {
                     mMoveToDataTimer.cancel();
                     mMoveToDataTimer.purge();
                     mMoveToDataTimer = null;
                     setGCSCommandedMode(ArduCopterFlightModes.GUIDED);
-                    do_set_motion_velocity(0, 0, 0, 0);
+                    do_set_motion_velocity(0, 0, 0, 0, 0b1111011111000111);
                     mAutonomy = false;
+                    parent.logMessageDJI("At Position...");
                     return;
                 }
             } else {
                 detection = 0;
             }
 
+            //------------------------------------------------
             // Find the heading difference compared to bearing... return 0-360 deg.
-            double brng = getBearingBetweenWaypoints(coord.getAircraftLocation().getLatitude(), coord.getAircraftLocation().getLongitude(),
-                    m_Destination_Lat, m_Destination_Lon);
+            double brng = getBearingBetweenWaypoints(m_Destination_Lat, m_Destination_Lon, coord.getAircraftLocation().getLatitude(), coord.getAircraftLocation().getLongitude());
 
             // The direct distance to the destination... return distance in meters...
-            double hypotenuse = getRangeBetweenWaypoints_m(coord.getAircraftLocation().getLatitude(), coord.getAircraftLocation().getLongitude(), 0,
-                    m_Destination_Lat, m_Destination_Lon, 0);
+            double hypotenuse = getRangeBetweenWaypoints_m( m_Destination_Lat, m_Destination_Lon, 0, coord.getAircraftLocation().getLatitude(), coord.getAircraftLocation().getLongitude(), 0);
 
-            // Drone heading - Waypoint bearing... to 0-360 deg to +-pi rad...
-            double direction = distance(brng, yaw );
-            parent.logMessageDJI("Goto Direction: " + direction);
+            // Drone heading - Waypoint bearing... to 0-360 deg...
+            double direction = rotation(brng, yaw );
 
             // Fnd the X and Y distance from the hypotenuse and the direction...
-            double fw_dist  = Math.sin(direction*Math.PI/180) * hypotenuse;
-            double right_dist = Math.cos(direction*Math.PI/180) * hypotenuse;
-            parent.logMessageDJI("Goto Motion: right " + right_dist + " fw " + fw_dist + " hyp. " + hypotenuse);
+            double right_dist  = Math.sin(direction*Math.PI/180) * hypotenuse;
+            double fw_dist = Math.cos(direction*Math.PI/180) * hypotenuse;
 
             // Make a very simple P controller...
             final double motion_p = 0.7;
-            final double maxspeed = 0.5;  // Default speed ( should be set ...)
+            final double maxspeed = 1.0;  // Default speed ( should be set ...)
             double speed = 0;
 
+            //------------------------------------------------
             if ( (m_Destination_Mask & 0b0000000000001000) == 0) speed = m_Destination_Set_vx;
             else speed = maxspeed;
             miniPIDFwd.setOutputLimits(speed);
             double fwmotion = miniPIDFwd.getOutput(-fw_dist,0);
 
+            //------------------------------------------------
             if ( (m_Destination_Mask & 0b0000000000010000) == 0) speed = m_Destination_Set_vy;
             else speed = maxspeed;
             miniPIDSide.setOutputLimits(speed);
             double rightmotion = miniPIDSide.getOutput(-right_dist,0);
 
+            //------------------------------------------------
             if ( (m_Destination_Mask & 0b0000000000100000) == 0) speed = m_Destination_Set_vz;
             else speed = maxspeed;
             double upmotion = (m_Destination_Alt-coord.getAircraftLocation().getAltitude())*motion_p;
             if (upmotion > speed) upmotion = speed;
             if (upmotion < -speed) upmotion = -speed;
 
+            //------------------------------------------------
+            if ( (m_Destination_Mask & 0b0000100000000000) == 0) speed = m_Destination_Yaw_rate;
+            else speed = maxspeed*10;
             double clockmotion = yawerror*motion_p;
-            if (clockmotion > maxspeed*10) clockmotion = maxspeed*10;
-            if (clockmotion < -maxspeed*10) clockmotion = -maxspeed*10;
+            if (clockmotion > speed) clockmotion = speed;
+            if (clockmotion < -speed) clockmotion = -speed;
 
-      //      parent.logMessageDJI("Velocity: fw " + fwmotion + " right " + rightmotion + " up " + upmotion + " yaw " + clockmotion);
-
-            if ( (m_Destination_Mask & 0b0000000000111111) == 0x3F)
-                do_set_motion_velocity((float)0, (float)0, (float)0, (float)clockmotion);
-            else
-                do_set_motion_velocity((float)fwmotion, (float)rightmotion, (float)upmotion, (float)clockmotion);
+            //------------------------------------------------
+            if ( (m_Destination_Mask & 0b0000000000111111) == 0x3F) {
+                parent.logMessageDJI("To Yaw...");
+                do_set_motion_velocity((float) 0, (float) 0, (float) 0, (float) clockmotion, 0b1111011111111111);
+            }
+            else {
+                parent.logMessageDJI("To Pos... "+fwmotion+" r "+rightmotion+" alt "+upmotion+" y "+clockmotion);
+                do_set_motion_velocity((float) fwmotion, (float) rightmotion, (float) upmotion, (float) clockmotion, 0b1111011111000111);
+            }
         }
+    }
+    // --------------------------------------------------------------------------------
+    void do_set_motion_velocity_NED(float dNorth, float dEast, float D, float yaw, int mask) {
+        // If we use yaw rate...
+
+        parent.logMessageDJI(":Velocity NED" );
+
+        FlightControllerState coord = djiAircraft.getFlightController().getState();
+        double ro = Math.toRadians(coord.getAttitude().yaw);
+        double dForward = dNorth * Math.cos(ro) + dEast*Math.sin(ro);
+        double dRight  = -dNorth * Math.sin(ro) + dEast*Math.cos(ro);
+        do_set_motion_velocity((float)dForward, (float)dRight, D, yaw, mask);
     }
 
     // --------------------------------------------------------------------------------
-    void do_set_motion_velocity(float x, float y, float z, float yaw) {
-        mPitch = y;   mRoll = x;   mYaw = yaw;  mThrottle = z;
+    void do_set_motion_velocity(float y, float x, float z, float yaw, int mask) {
+        // If we use yaw rate...
+        if((mask & 0b0000100000000000) == 0){  mYaw = yaw; }
+        if((mask & 0b0000000000001000) == 0){  mPitch = x; }
+        if((mask & 0b0000000000010000) == 0){  mRoll = y; }
+        if((mask & 0b0000000000100000) == 0){  mThrottle = z;}
 
         // Only allow velocity movement in P mode...
         if( rcmode != avtivemode) {
+            parent.logMessageDJI(":rcmode != avtivemode" );
             return;
         }
+        parent.logMessageDJI(":"+mPitch+" "+ mRoll+" "+ mYaw+" "+ mThrottle);
 
         // If first time...
         if (null == mSendVirtualStickDataTimer) {
-
             // After a manual mode change, we might loose the JOYSTICK mode...
             if (lastMode != FlightMode.JOYSTICK) {
                 mFlightController.setVirtualStickModeEnabled(true, djiError -> {
@@ -1780,10 +1874,10 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                             }
                     );
                     lastMode = FlightMode.GPS_ATTI;
-      //              parent.logMessageDJI("Motion done!\n");
+                    parent.logMessageDJI("Motion done!\n");
                     return;
                 }
-//                parent.logMessageDJI("X: " + String.valueOf(mPitch) + " Y: " + String.valueOf(mRoll) + " Z: " + String.valueOf(mYaw) + " T: " + String.valueOf(mThrottle));
+//                parent.logMessageDJI(":"+mPitch+" "+ mRoll+" "+ mYaw+" "+ mThrottle);
                 mFlightController.sendVirtualStickFlightControlData(
                         new FlightControlData(mPitch, mRoll, mYaw, mThrottle)
                         , djiError -> {
@@ -2080,17 +2174,17 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         });
     }
 
-    double getBearingBetweenWaypoints(double lat1,double lon1, double lat2,double lon2) {
+    double getBearingBetweenWaypoints(double lat2,double lon2, double lat1,double lon1) {
         // (all angles in degrees 0-360)
-        double rad = Math.PI / 180.0;
-        lat1 = lat1*rad;
-        lat2 = lat2*rad;
-        lon1 = lon1*rad;
-        lon2 = lon2*rad;
-        double y = Math.sin(lat2 - lat1) * Math.cos(lon2);
-        double x = Math.cos(lon1) * Math.sin(lon2) -
-                Math.sin(lon1) * Math.cos(lon2) * Math.cos(lat2 - lat1);
-        double z = Math.atan2(y, x) * 180.0 / Math.PI;
+        lat1 = Math.toRadians(lat1);
+        lat2 = Math.toRadians(lat2);
+        lon1 = Math.toRadians(lon1);
+        lon2 = Math.toRadians(lon2);
+
+        double y = Math.sin(lon2 - lon1) * Math.cos(lat2);
+        double x = Math.cos(lat1) * Math.sin(lat2) -
+                Math.sin(lat1) * Math.cos(lat2) * Math.cos(lon2 - lon1);
+        double z = Math.toDegrees(Math.atan2(y,x));
         if (z < 0.0) z += 360.0;
         return z;
     }
@@ -2112,13 +2206,33 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
     /**
      * Shortest distance (angular) between two angles.
-     * It will be in range [0, 180].
+     * It will be in range [0, +-180].
      */
-    private double distance(double alpha, double beta) {
+    private double rotation(double alpha, double beta) {
         double phi = Math.abs(beta - alpha) % 360;       // This is either the distance or 360 - distance
         double distance = phi > 180 ? 360 - phi : phi;
         double sign = (alpha - beta >= 0 && alpha - beta <= 180) || (alpha - beta <=-180 && alpha- beta>= -360) ? distance : distance*-1;
         return sign;
     }
 
+
+    private double[] get_location_metres(double dForward, double dRight) {
+        FlightControllerState coord = djiAircraft.getFlightController().getState();
+        double ro = Math.toRadians(coord.getAttitude().yaw);
+        double lat = coord.getAircraftLocation().getLatitude();
+        double lon = coord.getAircraftLocation().getLongitude();
+
+        double dNorth = dForward * Math.cos(ro) - dRight*Math.sin(ro);
+        double dEast  = dForward * Math.sin(ro) + dRight*Math.cos(ro);
+        double earth_radius=6378137.0;  // Radius of "spherical" earth
+
+        //Coordinate offsets in radians
+        double dLat = dNorth/earth_radius;
+        double dLon = dEast/(earth_radius*Math.cos(Math.PI*lat/180));
+
+        // New position in decimal degrees
+        double newlat = lat + (dLat * 180/Math.PI);
+        double newlon = lon + (dLon * 180/Math.PI);
+        return new double[] {newlat, newlon};
+    }
 }

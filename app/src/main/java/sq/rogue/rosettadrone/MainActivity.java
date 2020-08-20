@@ -1108,6 +1108,9 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
     }
 
     public void logMessageDJI(String msg) {
+        if(mNewDJI.length() > 1000)
+            mNewDJI = mNewDJI.substring(500, 1000);
+
         mNewDJI += "\n" + msg;
     }
 

@@ -111,10 +111,10 @@ public class MAVLinkReceiver {
 
         if(msg.msgid != 0) {
   //          parent.logMessageDJI(String.valueOf(msg));
-            parent.logMessageDJI(String.valueOf(msg.msgid));
+     //       parent.logMessageDJI(String.valueOf(msg.msgid));
         }
 
-        parent.logMessageDJI("Message: " + msg);
+       // parent.logMessageDJI("Message: " + msg);
 
         switch (msg.msgid) {
             case MAVLINK_MSG_ID_HEARTBEAT:
@@ -198,8 +198,8 @@ public class MAVLinkReceiver {
                                     0,
                                     0,
                                     0,
-                                    0,
-                                    0b1111101111111111);
+                                    10,
+                                    0b1111001111111111);
                         }
                         break;
 
@@ -226,41 +226,19 @@ public class MAVLinkReceiver {
              **************************************************************/
             case MAVLINK_MSG_ID_SET_POSITION_TARGET_LOCAL_NED:
                 msg_set_position_target_local_ned msg_param = (msg_set_position_target_local_ned) msg;
-                if ((msg_param.x + msg_param.y + msg_param.z) == 0) {
-                    mModel.do_set_motion_velocity(msg_param.vx, msg_param.vy, -1 * msg_param.vz, msg_param.yaw_rate);
+                if ( ((msg_param.type_mask & 0b0000100000000111) == 0x007) ){  // If no move and we use yaw rate...
+                    mModel.do_set_motion_velocity(msg_param.vx, msg_param.vy, -1 * msg_param.vz, msg_param.yaw_rate, msg_param.type_mask);
                 } else {
-                    parent.logMessageDJI("Single point mission!" );
-                    generateNewMission();
-                    mMissionItemList = new ArrayList<msg_mission_item>();
-                    mNumGCSWaypoints = 1;
-                    wpState = WP_STATE_REQ_WP;
-                    mModel.request_mission_item(0);
-
-                    msg_mission_item lmsg = new msg_mission_item();
-                    lmsg.param1 = 0;    // set to delay time...
-                    lmsg.param2 = msg_param.yaw;    // set rotation...
-                    lmsg.param3 = 0;
-                    lmsg.param4 = 0;
-                    lmsg.x = msg_param.x;
-                    lmsg.y = msg_param.y;
-                    lmsg.z = msg_param.z;
-                    lmsg.command = MAV_CMD.MAV_CMD_NAV_WAYPOINT;
-                    mMissionItemList.add(lmsg);
-
-                    // We are done fetching a complete mission from the GCS...
-                    wpState = WP_STATE_INACTIVE;
-                    finalizeNewMission();
-
-                    parent.logMessageDJI("Waiting for mission loading!" );
-                    while( mModel.mission_loaded == -1){
-                        safeSleep(200);
-                    }
-                    if( mModel.mission_loaded == MAV_MISSION_RESULT.MAV_MISSION_ACCEPTED) {
-                        parent.logMessageDJI("Mission Accepted!");
-                        mModel.startWaypointMission();
-                    }else{
-                        parent.logMessageDJI("Mission Fails!");
-                    }
+                    mModel.do_set_motion_relative(
+                            (double)msg_param.x,
+                            (double)msg_param.y,
+                            msg_param.z,
+                            msg_param.yaw,
+                            msg_param.vx,
+                            msg_param.vy,
+                            msg_param.vz,
+                            msg_param.yaw_rate,
+                            msg_param.type_mask);
                 }
                 break;
 
@@ -269,8 +247,8 @@ public class MAVLinkReceiver {
                 msg_set_position_target_global_int msg_param_4 = (msg_set_position_target_global_int) msg;
 
                 // If position is set to zero then it must be a velocity command... We should use rather the mask ...
-                if ( (msg_param_4.type_mask & 0b0000000000000111) == 7){
-                    mModel.do_set_motion_velocity(msg_param_4.vx, msg_param_4.vy, msg_param_4.vz, msg_param_4.yaw_rate);
+                if ( ((msg_param_4.type_mask & 0b0000100000000111) == 0x007) ){  // If no move and we use yaw rate...
+                    mModel.do_set_motion_velocity_NED(msg_param_4.vx, msg_param_4.vy, msg_param_4.vz, msg_param_4.yaw_rate,msg_param_4.type_mask);
                 } else{
                     mModel.do_set_motion_absolute(
                             (double)msg_param_4.lat_int/10000000,
@@ -280,7 +258,7 @@ public class MAVLinkReceiver {
                             msg_param_4.vx,
                             msg_param_4.vy,
                             msg_param_4.vz,
-                            msg_param_4.yaw,
+                            msg_param_4.yaw_rate,
                             msg_param_4.type_mask);
                 }
                 break;
@@ -288,7 +266,7 @@ public class MAVLinkReceiver {
             // This command must be sent at 1Hz minimum...
             case MAVLINK_MSG_ID_MANUAL_CONTROL:
                 msg_manual_control msg_param_5 = (msg_manual_control) msg;
-                mModel.do_set_motion_velocity(msg_param_5.x / (float) 100.0, msg_param_5.y / (float) 100.0,  msg_param_5.z / (float) 260.0, msg_param_5.r / (float) 50.0);
+                mModel.do_set_motion_velocity(msg_param_5.x / (float) 100.0, msg_param_5.y / (float) 100.0,  msg_param_5.z / (float) 260.0, msg_param_5.r / (float) 50.0, 0b0000100000111000);
                 break;
 
 
