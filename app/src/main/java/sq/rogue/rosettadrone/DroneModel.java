@@ -1088,7 +1088,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         msg.chan6_raw = mC2 ?1000:2000;
         msg.chan7_raw = mC3 ?1000:2000;
 
-        // Cancel all AI modes if stick is moved...
+      // Cancel all AI modes if stick is moved...
         if ((mLeftStickVertical    > 1550 || mLeftStickVertical    < 1450) ||
             (mLeftStickHorisontal  > 1550 || mLeftStickHorisontal  < 1450) ||
             (mRightStickVertical   > 1550 || mRightStickVertical   < 1450) ||
