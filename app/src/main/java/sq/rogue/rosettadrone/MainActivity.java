@@ -85,7 +85,7 @@ import dji.sdk.sdkmanager.DJISDKInitEvent;
 import dji.sdk.sdkmanager.DJISDKManager;
 import sq.rogue.rosettadrone.logs.LogFragment;
 import sq.rogue.rosettadrone.settings.SettingsActivity;
-import sq.rogue.rosettadrone.settings.HelpActivity;
+import sq.rogue.rosettadrone.settings.MapActivity;
 import sq.rogue.rosettadrone.video.H264Packetizer;
 
 import static sq.rogue.rosettadrone.util.safeSleep;
@@ -228,10 +228,11 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
             try {
                 if (mPacketizer != null && mPacketizer.getRtpSocket() != null)
                     mPacketizer.getRtpSocket().close();
-                mPacketizer = new H264Packetizer();
 
+                mPacketizer = new H264Packetizer();
                 Log.e(TAG, "Receiver: " + videoIPString + ":" + videoPort);
                 mPacketizer.getRtpSocket().setDestination(InetAddress.getByName(address), videoPort, 5000);
+
             } catch (UnknownHostException e) {
                 Log.e(TAG, "Error setting destination for RTP packetizer", e);
             }
@@ -682,7 +683,12 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
             }
             notifyStatusChange();
         }
+/*
+        @Override
+        public void onProductChanged(BaseProduct baseProduct) {
 
+        }
+*/
         @Override
         public void onComponentChange(BaseProduct.ComponentKey componentKey, BaseComponent oldComponent, BaseComponent newComponent) {
             if (newComponent != null) {
@@ -963,7 +969,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
     }
 
     private void onClickHelp() {
-        Intent intent = new Intent(MainActivity.this, HelpActivity.class);
+        Intent intent = new Intent(MainActivity.this, MapActivity.class);
         startActivityForResult(intent, RESULT_HELP);
     }
 
@@ -1102,6 +1108,9 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
     }
 
     public void logMessageDJI(String msg) {
+        if(mNewDJI.length() > 1000)
+            mNewDJI = mNewDJI.substring(500, 1000);
+
         mNewDJI += "\n" + msg;
     }
 

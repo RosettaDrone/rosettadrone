@@ -143,7 +143,6 @@
             android:defaultValue="18990"
             android:dependency="pref_secondary_telemetry_enabled"
             android:key="pref_secondary_telemetry_port"
-            android:numeric="integer"
             android:title="@string/pref_secondary_telemetry_port" />
 
     </PreferenceCategory>

@@ -5,7 +5,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -26,10 +25,6 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-import android.os.Bundle;
-
-import androidx.appcompat.app.AppCompatActivity;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -37,14 +32,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentActivity;
-import androidx.fragment.app.FragmentTransaction;
-import androidx.preference.PreferenceFragmentCompat;
-import androidx.preference.PreferenceScreen;
 import dji.common.error.DJIError;
-import dji.common.flightcontroller.FlightControllerState;
 import dji.common.mission.waypoint.Waypoint;
 import dji.common.mission.waypoint.WaypointMission;
 import dji.common.mission.waypoint.WaypointMissionDownloadEvent;
@@ -65,12 +55,11 @@ import dji.sdk.useraccount.UserAccountManager;
 import sq.rogue.rosettadrone.DJISimulatorApplication;
 import sq.rogue.rosettadrone.R;
 import sq.rogue.rosettadrone.RDApplication;
-import sq.rogue.rosettadrone.settings.drone.DroneSettingsFragment;
 
 //public class HelpActivity extends AppCompatActivity implements OnMapReadyCallback{
 //public class HelpActivity extends AppCompatActivity implements PreferenceFragmentCompat.OnPreferenceStartScreenCallback, OnMapReadyCallback{
-public class HelpActivity extends FragmentActivity implements View.OnClickListener, GoogleMap.OnMapClickListener, OnMapReadyCallback {
-    private static final String TAG = HelpActivity.class.getSimpleName();
+public class MapActivity extends FragmentActivity implements View.OnClickListener, GoogleMap.OnMapClickListener, OnMapReadyCallback {
+    private static final String TAG = MapActivity.class.getSimpleName();
 
     private GoogleMap gMap;
 
@@ -122,10 +111,10 @@ public class HelpActivity extends FragmentActivity implements View.OnClickListen
     }
 
     private void setResultToToast(final String string) {
-        HelpActivity.this.runOnUiThread(new Runnable() {
+        MapActivity.this.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Toast.makeText(HelpActivity.this, string, Toast.LENGTH_SHORT).show();
+                Toast.makeText(MapActivity.this, string, Toast.LENGTH_SHORT).show();
             }
         });
     }
