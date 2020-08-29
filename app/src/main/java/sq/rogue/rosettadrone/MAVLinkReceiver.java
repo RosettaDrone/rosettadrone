@@ -227,7 +227,8 @@ public class MAVLinkReceiver {
             case MAVLINK_MSG_ID_SET_POSITION_TARGET_LOCAL_NED:
                 msg_set_position_target_local_ned msg_param = (msg_set_position_target_local_ned) msg;
                 if ( ((msg_param.type_mask & 0b0000100000000111) == 0x007) ){  // If no move and we use yaw rate...
-                    mModel.do_set_motion_velocity(msg_param.vx, msg_param.vy, -1 * msg_param.vz, msg_param.yaw_rate, msg_param.type_mask);
+                    mModel.mAutonomy = false; // Velocity must halt autonomy (as Autonomy tries to reach a point, whule veliciity tries to set a speed)
+                    mModel.do_set_motion_velocity(msg_param.vx, msg_param.vy, msg_param.vz, (float)Math.toDegrees(msg_param.yaw_rate), msg_param.type_mask);
                 } else {
                     mModel.do_set_motion_relative(
                             (double)msg_param.x,
@@ -248,7 +249,8 @@ public class MAVLinkReceiver {
 
                 // If position is set to zero then it must be a velocity command... We should use rather the mask ...
                 if ( ((msg_param_4.type_mask & 0b0000100000000111) == 0x007) ){  // If no move and we use yaw rate...
-                    mModel.do_set_motion_velocity_NED(msg_param_4.vx, msg_param_4.vy, msg_param_4.vz, msg_param_4.yaw_rate,msg_param_4.type_mask);
+                    mModel.mAutonomy = false;
+                    mModel.do_set_motion_velocity_NED(msg_param_4.vx, msg_param_4.vy, msg_param_4.vz, (float)Math.toDegrees(msg_param_4.yaw_rate),msg_param_4.type_mask);
                 } else{
                     mModel.do_set_motion_absolute(
                             (double)msg_param_4.lat_int/10000000,
