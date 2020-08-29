@@ -97,7 +97,8 @@
             android:name="com.dji.sdk.API_KEY"
             android:value="@string/dji_key"/>
 
-        <service android:name="dji.sdk.sdkmanager.DJIGlobalService">
+        <service android:name="dji.sdk.sdkmanager.DJIGlobalService"
+            tools:ignore="Instantiatable">
 
         </service>
         <!--

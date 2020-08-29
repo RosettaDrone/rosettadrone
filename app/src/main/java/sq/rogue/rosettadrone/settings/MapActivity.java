@@ -315,7 +315,7 @@ public class MapActivity extends FragmentActivity implements View.OnClickListene
         //Create MarkerOptions object
         final MarkerOptions markerOptions = new MarkerOptions();
         markerOptions.position(pos);
-        markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.aircraft));
+//        markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.aircraft));
 
         runOnUiThread(new Runnable() {
             @Override
@@ -325,7 +325,7 @@ public class MapActivity extends FragmentActivity implements View.OnClickListene
                 }
 
                 if (checkGpsCoordination(droneLocationLat, droneLocationLng)) {
-                    droneMarker = gMap.addMarker(markerOptions);
+             //       droneMarker = gMap.addMarker(markerOptions);
                 }
             }
         });

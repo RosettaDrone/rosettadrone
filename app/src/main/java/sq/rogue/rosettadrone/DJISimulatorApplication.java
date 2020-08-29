@@ -114,14 +114,20 @@ public class DJISimulatorApplication extends Application {
             public void onProductConnect(BaseProduct baseProduct) {
                 Log.d("TAG", String.format("onProductConnect newProduct:%s", baseProduct));
                 notifyStatusChange();
-
             }
-/*
+
             @Override
             public void onProductChanged(BaseProduct baseProduct) {
-
+                Log.d("TAG", String.format("onProductConnect newProduct:%s", baseProduct));
+                notifyStatusChange();
             }
-*/
+
+            /*
+                        @Override
+                        public void onProductChanged(BaseProduct baseProduct) {
+
+                        }
+            */
             @Override
             public void onComponentChange(BaseProduct.ComponentKey componentKey, BaseComponent oldComponent,
                                           BaseComponent newComponent) {

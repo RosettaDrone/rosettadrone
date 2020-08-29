@@ -533,45 +533,49 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         }
 
         // The callback for receiving the raw H264 video data for camera live view
-        // For newer drones...
-        mReceivedVideoDataListener = new VideoFeeder.VideoDataListener() {
+        // For newer drones... This is AFTER Transcoding and on screen viewing...
+        mReceivedVideoDataListener = (videoBuffer, size) -> {
+            if (mGstEnabled) {
+                if(mCodecManager != null){
+                    mCodecManager.sendDataToDecoder(videoBuffer, size);
+                }
+                try {
 
-            @Override
-            public void onReceive(byte[] videoBuffer, int size) {
-                if (mGstEnabled) {
-                    if(mCodecManager != null){
-                        mCodecManager.sendDataToDecoder(videoBuffer, size);
-                    }
-                    try {
+                    Log.e(TAG, "Error: Wrong path...");
 //                          splitNALs(videoBuffer);
 
 //                        InetAddress address = InetAddress.getByName("127.0.0.1");
 //                        DatagramPacket packet = new DatagramPacket(videoBuffer, videoBuffer.length, address, 56994);
 //                        mGstSocket.send(packet);
 
-                        DatagramPacket packet2 = new DatagramPacket(videoBuffer, size, videoIPString, videoPort);
-                        mGstSocket.send(packet2);
+                    DatagramPacket packet2 = new DatagramPacket(videoBuffer, size, videoIPString, videoPort);
+                    mGstSocket.send(packet2);
 
-                    } catch (Exception e) {
-                        Log.e(TAG, "Error sending packet to Gstreamer", e);
-                    }
-                } else {
-                    splitNALs(videoBuffer);
+                } catch (Exception e) {
+                    Log.e(TAG, "Error sending packet to Gstreamer", e);
                 }
+            } else {
+                splitNALs(videoBuffer);
             }
         };
+        Model x = product.getModel();
+
+        Log.e(TAG, "Model: "+x);
 
         if (null == product || !product.isConnected()) {
             mCamera = null;
         } else {
             if (!product.getModel().equals(Model.UNKNOWN_AIRCRAFT)) {
                 mCamera = product.getCamera();
+                /*
                 mCamera.setMode(SettingsDefinitions.CameraMode.SHOOT_PHOTO, djiError -> {
                     if (djiError != null) {
                         Log.e(TAG, "can't change mode of camera, error: "+djiError.getDescription());
                         logMessageDJI("can't change mode of camera, error: "+djiError.getDescription());
                     }
                 });
+                TENI
+                 */
 
                 //When calibration is needed or the fetch key frame is required by SDK, should use the provideTranscodedVideoFeed
                 //to receive the transcoded video feed from main camera.
@@ -683,12 +687,32 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
             }
             notifyStatusChange();
         }
-/*
+
         @Override
         public void onProductChanged(BaseProduct baseProduct) {
+            mProduct = baseProduct;
 
+            if (mProduct == null) {
+                logMessageDJI("No DJI drone detected");
+                onDroneDisconnected();
+            } else {
+                if (mProduct instanceof Aircraft) {
+                    logMessageDJI("DJI aircraft detected");
+                    onDroneConnected();
+                } else {
+                    logMessageDJI("DJI non-aircraft product detected");
+                    onDroneDisconnected();
+                }
+            }
+            notifyStatusChange();
         }
-*/
+
+        /*
+                @Override
+                public void onProductChanged(BaseProduct baseProduct) {
+
+                }
+        */
         @Override
         public void onComponentChange(BaseProduct.ComponentKey componentKey, BaseComponent oldComponent, BaseComponent newComponent) {
             if (newComponent != null) {

@@ -99,8 +99,7 @@
         android:layout_centerHorizontal="true"
         android:layout_marginTop="480dp"
         android:background="@drawable/logo"
-
-    android:text=""
+        android:text=""
         android:textColor="@color/colorWhite"
         android:textSize="20dp" />
 
