@@ -411,8 +411,6 @@ public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
                 break;
             }
             case MATRICE_200:
-            case MATRICE_210:
-            case MATRICE_210_RTK:
             case INSPIRE_2: //inspire2
                 DataCameraGetPushStateInfo.CameraType cameraType = DataCameraGetPushStateInfo.getInstance().getCameraType(0);
                 if(cameraType == DataCameraGetPushStateInfo.CameraType.DJICameraTypeGD600) {

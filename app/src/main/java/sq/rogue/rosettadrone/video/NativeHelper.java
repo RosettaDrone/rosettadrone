@@ -1,4 +1,10 @@
+/*
+    FFMPEG decoder thread, used by VideoService...
+ */
+
 package sq.rogue.rosettadrone.video;
+
+import android.util.Log;
 
 /**
  * A helper class to invoke native methods
@@ -17,6 +23,7 @@ public class NativeHelper {
     //JNI
 
     private NativeHelper() {
+        Log.e(TAG, "NativeHelper");
     }
 
     public static NativeHelper getInstance() {

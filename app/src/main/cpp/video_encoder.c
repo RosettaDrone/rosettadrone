@@ -43,6 +43,12 @@ static jmethodID on_gstreamer_initialized_method_id;
 /*
  * Private methods
  */
+static jstring gst_native_get_gstreamer_info (JNIEnv* env, jobject thiz) {
+    char *version_utf8 = gst_version_string();
+    jstring *version_jstring = (*env)->NewStringUTF(env, version_utf8);
+    g_free (version_utf8);
+    return version_jstring;
+}
 
 /* Register this thread with the VM */
 static JNIEnv *attach_current_thread(void) {
@@ -99,6 +105,8 @@ static void error_cb(GstBus *bus, GstMessage *msg, CustomData *data) {
     gchar *debug_info;
     gchar *message_string;
 
+    GST_ERROR ("Failed: error_cb");
+
     gst_message_parse_error(msg, &err, &debug_info);
     message_string = g_strdup_printf("Error received from element %s: %s",
                                      GST_OBJECT_NAME (msg->src), err->message);
@@ -111,6 +119,7 @@ static void error_cb(GstBus *bus, GstMessage *msg, CustomData *data) {
 
 /* Notify UI about pipeline state changes */
 static void state_changed_cb(GstBus *bus, GstMessage *msg, CustomData *data) {
+    GST_ERROR ("Failed: state_changed_cb");
     GstState old_state, new_state, pending_state;
     gst_message_parse_state_changed(msg, &old_state, &new_state, &pending_state);
     /* Only pay attention to messages coming from the pipeline, not its children */
@@ -131,6 +140,7 @@ static void check_initialization_complete(CustomData *data) {
         (*env)->CallVoidMethod(env, data->app, on_gstreamer_initialized_method_id);
         if ((*env)->ExceptionCheck(env)) {
             GST_ERROR ("Failed to call Java method");
+            __android_log_print(ANDROID_LOG_ERROR, "video_encoder", "Failed to call Java method");
             (*env)->ExceptionClear(env);
         }
         data->initialized = TRUE;
@@ -153,7 +163,12 @@ static void *app_function(void *userdata) {
 
     char buf[256];
     g_snprintf(buf, sizeof(buf), "udpsrc port=56994 ! queue ! h264parse ! amcviddec-omxgoogleh264decoder ! queue ! videoconvert ! videoscale ! videorate ! x264enc bitrate=%d speed-preset=%d key-int-max=90 tune=zerolatency ! rtph264pay ! queue ! udpsink host=%s port=%d", data->bitrate, data->encode_speed, data->ip, data->port);
-//  g_snprintf(buf, sizeof(buf), "udpsrc port=56994 ! h264parse ! amcviddec-omxgoogleh264decoder ! queue ! videoconvert ! videorate ! amcvidenc-omxgoogleh264encoder ! rtph264pay ! udpsink host=%s port=%d sync=false", data->ip, data->port);
+//    g_snprintf(buf, sizeof(buf), "udpsrc port=56994 ! h264parse ! amcviddec-omxgoogleh264decoder ! queue ! videoconvert ! videorate ! amcvidenc-omxgoogleh264encoder ! rtph264pay ! udpsink host=%s port=%d sync=false", data->ip, data->port);
+
+//    g_snprintf(buf, sizeof(buf), "udpsrc port=56994 ! queue ! h264parse ! amcviddec-omxgoogleh264decoder ! queue ! videoconvert ! videoscale ! videorate ! x264enc bitrate=%d speed-preset=%d key-int-max=90 tune=zerolatency ! rtph264pay ! queue ! udpsink host=%s port=%d", data->bitrate, data->encode_speed, data->ip, data->port);
+//    g_snprintf(buf, sizeof(buf), "udpsrc port=56994 ! udpsink host=192.168.0.174 port=5600 sync=false");
+//     g_snprintf(buf, sizeof(buf), "videotestsrc is-live=true ! video/x-raw,framerate=25/1 ! videoconvert ! x264enc ! h264parse ! rtph264pay pt=96 ! udpsink host=192.168.0.174 port=5602");
+ //   g_snprintf(buf, sizeof(buf), "udpsrc port=5000 ! queue ! h264parse ! amcviddec-omxgoogleh264decoder ! queue ! videoconvert ! videoscale ! videorate ! x264enc bitrate=%d speed-preset=%d key-int-max=90 tune=zerolatency ! rtph264pay ! queue ! udpsink host=%s port=%d", data->bitrate, data->encode_speed, data->ip, data->port);
 
     __android_log_print(ANDROID_LOG_ERROR, "video_encoder", "%s", buf);
 
@@ -161,6 +176,7 @@ static void *app_function(void *userdata) {
     data->pipeline = gst_parse_launch(buf, &error);
     if (error) {
         gchar *message = g_strdup_printf("Unable to build pipeline: %s", error->message);
+        __android_log_print(ANDROID_LOG_ERROR, "video_encoder", "Unable to build pipeline: %s",  error->message);
         g_clear_error(&error);
         set_ui_message(message, data);
         g_free(message);
@@ -179,9 +195,13 @@ static void *app_function(void *userdata) {
 
     /* Create a GLib Main Loop and set it to run */
     GST_DEBUG ("Entering main loop... (CustomData:%p)", data);
+    __android_log_print(ANDROID_LOG_ERROR, "video_encoder", "Entering main loop... (CustomData:%p)", data);
     data->main_loop = g_main_loop_new(data->context, FALSE);
     check_initialization_complete(data);
+
+    GST_DEBUG ("Main loop running ...");
     g_main_loop_run(data->main_loop);
+
     GST_DEBUG ("Exited main loop");
     g_main_loop_unref(data->main_loop);
     data->main_loop = NULL;
@@ -244,14 +264,15 @@ static void gst_native_finalize (JNIEnv* env, jobject thiz) {
     g_free (data);
     SET_CUSTOM_DATA (env, thiz, custom_data_field_id, NULL);
     GST_DEBUG ("Done finalizing");
+    __android_log_print(ANDROID_LOG_ERROR, "video_encoder", "Done finalizing");
 }
-
 
 /* Set pipeline to PLAYING state */
 static void gst_native_play(JNIEnv *env, jobject thiz) {
     CustomData *data = GET_CUSTOM_DATA (env, thiz, custom_data_field_id);
     if (!data) return;
     GST_DEBUG ("Setting state to PLAYING");
+    __android_log_print(ANDROID_LOG_ERROR, "video_encoder", "Setting state to PLAYING");
     gst_element_set_state(data->pipeline, GST_STATE_PLAYING);
 }
 
@@ -260,6 +281,7 @@ static void gst_native_pause(JNIEnv *env, jobject thiz) {
     CustomData *data = GET_CUSTOM_DATA (env, thiz, custom_data_field_id);
     if (!data) return;
     GST_DEBUG ("Setting state to PAUSED");
+    __android_log_print(ANDROID_LOG_ERROR, "video_encoder", "Setting state to PAUSED");
     gst_element_set_state(data->pipeline, GST_STATE_PAUSED);
 }
 
@@ -292,7 +314,6 @@ static void gst_native_destination(JNIEnv *env, jobject thiz, jstring ip, jint p
     gint desired_port = (gint) port;
     data->port = desired_port;
     GST_DEBUG ("Port SET");
-
 }
 
 static void gst_native_bitrate(JNIEnv *env, jobject thiz, jint bitrate) {
@@ -302,8 +323,6 @@ static void gst_native_bitrate(JNIEnv *env, jobject thiz, jint bitrate) {
 
     guint desired_bitrate = (guint) bitrate;
     data->bitrate = desired_bitrate;
-
-
 }
 
 /* List of implemented native methods */
@@ -314,7 +333,8 @@ static JNINativeMethod native_methods[] = {
         {"nativePause",          "()V", (void *) gst_native_pause},
         {"nativeClassInit",      "()Z", (void *) gst_native_class_init},
         {"nativeSetDestination", "(Ljava/lang/String;I)V", (void *) gst_native_destination},
-        {"nativeSetBitrate",     "(I)V", (void *) gst_native_bitrate}
+        {"nativeSetBitrate",     "(I)V", (void *) gst_native_bitrate},
+        {"nativeGetGStreamerInfo", "()Ljava/lang/String;", (void *) gst_native_get_gstreamer_info}
 };
 
 /* Library initializer */

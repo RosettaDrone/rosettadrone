@@ -10,10 +10,13 @@ cmake_minimum_required(VERSION 3.4.1)
 # and CMake builds them for you. When you build your app, Gradle
 # automatically packages shared libraries with your APK.
 
+#set(log-lib /home/smartdrone/Android/Sdk/ndk/21.3.6528147/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/arm-linux-androideabi/22/liblog.so)
+
 include_directories(${CMAKE_SOURCE_DIR}/src/main/cpp/ ${CMAKE_SOURCE_DIR}/src/main/cpp/include
                         ${CMAKE_SOURCE_DIR}/src/main/cpp/gstreamer-1.0/armv7/include/gstreamer-1.0
                         ${CMAKE_SOURCE_DIR}/src/main/cpp/gstreamer-1.0/armv7/include/glib-2.0
-                        ${CMAKE_SOURCE_DIR}/src/main/cpp/gstreamer-1.0/armv7/lib/glib-2.0/include )
+                        ${CMAKE_SOURCE_DIR}/src/main/cpp/gstreamer-1.0/armv7/lib/glib-2.0/include)
+#                        /home/smartdrone/Android/Sdk/ndk/21.3.6528147/sysroot/usr/include)
 
 set(gst_DIR ${CMAKE_SOURCE_DIR}/src/main/cpp/lib)
 

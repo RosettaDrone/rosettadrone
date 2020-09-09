@@ -50,13 +50,14 @@ public class H264Packetizer extends AbstractPacketizer implements Runnable {
     public H264Packetizer() {
         super();
         socket.setClockFrequency(90000);
+/*
         try {
-            socket.setDestination(InetAddress.getByName("192.168.1.124"), 5600, 5000);
+            socket.setDestination(InetAddress.getByName("127.0.0.1"), 5600, 5000);
             Log.d(TAG, "socket address configured");
         } catch (IOException e) {
             Log.d(TAG, "error setting socket", e);
         }
-
+*/
         executorService = Executors.newSingleThreadExecutor();
     }
 
@@ -175,7 +176,7 @@ public class H264Packetizer extends AbstractPacketizer implements Runnable {
         // The stream already contains NAL unit type 7 or 8, we don't need
         // to add them to the stream ourselves
         if (type == 7 || type == 8) {
-            Log.v(TAG, "SPS or PPS present in the stream.");
+      //      Log.v(TAG, "SPS or PPS present in the stream.");
             count++;
             if (count > 4) {
                 sps = null;

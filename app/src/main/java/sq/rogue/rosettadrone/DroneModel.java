@@ -609,7 +609,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                         SetMesasageBox("Drone Battery Warning 5% !!!!!");
                     }
 
-                    Log.d(TAG, "Voltage %: " + mCVoltage_pr);
+             //       Log.d(TAG, "Voltage %: " + mCVoltage_pr);
                 }
             });
             this.djiAircraft.getBattery().getCellVoltages(new CellVoltageCompletionCallback());
@@ -619,13 +619,13 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         }
 
         Battery.setAggregationStateCallback(aggregationState -> {
-            Log.d(TAG, "Aggregation State callback");
+     //       Log.d(TAG, "Aggregation State callback");
             mFullChargeCapacity_mAh = aggregationState.getFullChargeCapacity();
             mChargeRemaining_mAh = aggregationState.getChargeRemaining();
             mVoltage_mV = aggregationState.getVoltage();
             mCurrent_mA = aggregationState.getCurrent();
             mVoltage_pr = aggregationState.getChargeRemainingInPercent();
-            Log.d(TAG, "Aggregated voltage: " + String.valueOf(aggregationState.getVoltage()));
+    //        Log.d(TAG, "Aggregated voltage: " + String.valueOf(aggregationState.getVoltage()));
         });
 
         /**************************************************
@@ -1056,15 +1056,15 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     private void send_sys_status() {
         msg_sys_status msg = new msg_sys_status();
 
-        Log.d(TAG, "Full charge capacity: " + String.valueOf(mCFullChargeCapacity_mAh));
-        Log.d(TAG, "Charge remaining: " + String.valueOf(mCChargeRemaining_mAh));
-        Log.d(TAG, "Full charge capacity: " + String.valueOf(mCFullChargeCapacity_mAh));
+   //     Log.d(TAG, "Full charge capacity: " + String.valueOf(mCFullChargeCapacity_mAh));
+   //     Log.d(TAG, "Charge remaining: " + String.valueOf(mCChargeRemaining_mAh));
+   //     Log.d(TAG, "Full charge capacity: " + String.valueOf(mCFullChargeCapacity_mAh));
 
         if (mCFullChargeCapacity_mAh > 0) {
             msg.battery_remaining = (byte) ((float) mCChargeRemaining_mAh / (float) mCFullChargeCapacity_mAh * 100.0);
-            Log.d(TAG, "calc'ed bat remain: " + String.valueOf(msg.battery_remaining));
+     //       Log.d(TAG, "calc'ed bat remain: " + String.valueOf(msg.battery_remaining));
         } else {
-            Log.d(TAG, "divide by zero");
+            Log.d(TAG, "mCFullChargeCapacity_mAh == 0...");
             msg.battery_remaining = 100; // Prevent divide by zero
         }
         msg.voltage_battery = mVoltage_mV;
@@ -1124,8 +1124,8 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         float mBatteryTemp_C = 0;
         msg.temperature = (short) (mBatteryTemp_C * 100);
         msg.current_battery = (short) (mCurrent_mA * 10);
-        Log.d(TAG, "temp: " + String.valueOf(mBatteryTemp_C));
-        Log.d(TAG, "send_battery_status() complete");
+   //     Log.d(TAG, "temp: " + String.valueOf(mBatteryTemp_C));
+        //      Log.d(TAG, "send_battery_status() complete");
         // TODO cell voltages
         sendMessage(msg);
     }

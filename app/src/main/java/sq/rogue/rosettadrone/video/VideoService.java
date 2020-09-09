@@ -1,3 +1,8 @@
+/*
+    gStreamer interface output, FFMPEG on the input side, is a service, from Native Helper....
+    We send data to UDP port 56994, that is received by the gStreamer module...
+*/
+
 package sq.rogue.rosettadrone.video;
 
 import android.app.Notification;
@@ -6,32 +11,20 @@ import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.os.Binder;
 import android.os.Build;
-import android.os.Handler;
 import android.os.IBinder;
-import android.preference.PreferenceManager;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
-import androidx.core.app.NotificationCompat;
 import android.util.Log;
 
 import org.freedesktop.gstreamer.GStreamer;
 
-import java.io.ByteArrayInputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
-import java.net.UnknownHostException;
-import java.util.Arrays;
-
-import dji.common.product.Model;
-import dji.sdk.camera.VideoFeeder;
-import sq.rogue.rosettadrone.R;
-
-import static androidx.core.app.NotificationCompat.PRIORITY_MIN;
 
 public class VideoService extends Service implements NativeHelper.NativeDataListener {
 
@@ -43,7 +36,9 @@ public class VideoService extends Service implements NativeHelper.NativeDataList
     public static final String ACTION_DRONE_DISCONNECTED = "VIDEO.DRONE_DISCONNECTED";
     public static final String ACTION_SET_MODEL = "VIDEO.SET_MODEL";
     public static final String ACTION_SEND_NAL = "VIDEO.SEND_NAL";
-    private static final String TAG = VideoService.class.getSimpleName();
+    private static final String TAG = "VideoService";  //.class.getSimpleName();
+
+    private native String nativeGetGStreamerInfo();
 
     static {
         System.loadLibrary("gstreamer_android");
@@ -51,18 +46,9 @@ public class VideoService extends Service implements NativeHelper.NativeDataList
         nativeClassInit();
     }
 
-    protected H264Packetizer mPacketizer;
-    private Handler handler;
-    protected VideoFeeder.VideoDataListener mReceivedVideoDataCallBack = null;
-    protected Model mModel;
-    protected SharedPreferences sharedPreferences;
     protected Thread thread;
     private boolean isRunning = false;
-    private VideoFeeder.VideoFeed mVideoFeed;
     private DatagramSocket mGstSocket;
-    private boolean mGstEnabled = true;
-    private long native_custom_data;      // Native code will use this to keep private data
-    private VideoFeeder.VideoFeed standardVideoFeeder;
 
     private static native boolean nativeClassInit(); // Initialize native class: cache Method IDs for callbacks
     private native void nativeInit(String ip, int port, int bitrate, int encodeSpeed);     // Initialize native code, build pipeline, etc
@@ -72,78 +58,53 @@ public class VideoService extends Service implements NativeHelper.NativeDataList
     private native void nativeSetDestination(String ip, int port);
     private native void nativeSetBitrate(int bitrate);
 
+    private long native_custom_data;      // Native code will use this to keep private data
+
+    private String mip = "192.168.0.174";
+    private int mvideoPort = 5600;
+    private int mvideoBitrate = 3000;
+    private int mencodeSpeed = 2;
+
     @Override
     public void onCreate() {
-        Log.d(TAG, "oncreate");
+        Log.e(TAG, "oncreate Video ");
+
         try {
             GStreamer.init(getApplicationContext());
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        try {
+            mGstSocket = new DatagramSocket();
+        } catch (SocketException e) {
+            Log.e(TAG, "Error creating Gstreamer datagram socket", e);
+        }
+        initVideoStreamDecoder();
+        initPacketizer(mip,mvideoPort, mvideoBitrate,mencodeSpeed);
+
+        Log.e(TAG,"Welcome to " + nativeGetGStreamerInfo() + " !");
+
         super.onCreate();
     }
-
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startID) {
-        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        if (intent != null) {
-            if (intent.getAction() != null) {
-                Log.d(TAG, intent.getAction());
-                switch (intent.getAction()) {
-                    case ACTION_START:
-                        break;
-                    case ACTION_STOP:
-                        break;
-                    case ACTION_RESTART:
-                        if (isRunning) {
-                            setActionDroneDisconnected();
-                            spinThread();
-//                            if (mPacketizer != null) {
-//                                if (mPacketizer.getRtpSocket() != null) {
-//                                    mPacketizer.getRtpSocket().close();
-//                                }
-//                                mPacketizer.stop();
-//                            }
-                            initPacketizer();
-                        } else {
-                            spinThread();
-                        }
-                        break;
-                    case ACTION_UPDATE:
-                        break;
-                    case ACTION_DRONE_CONNECTED:
-                        mModel = (Model) intent.getSerializableExtra("model");
-                        spinThread();
-                        break;
-                    case ACTION_DRONE_DISCONNECTED:
-                        setActionDroneDisconnected();
-                        break;
-                    case ACTION_SET_MODEL:
-                        break;
-                    case ACTION_SEND_NAL:
-                        break;
-                    default:
-                        break;
-                }
-            }
-        }
-
-        return START_STICKY;
-    }
-
-    public void spinThread() {
-        thread = new Thread() {
-            @Override
-            public void run() {
-                setActionDroneConnected();
-            }
-        };
-        thread.start();
-    }
-
     @Override
     public void onDestroy() {
-        super.onDestroy();
+        //setActionDroneDisconnected();
+    }
+
+    public class LocalBinder extends Binder {
+        public VideoService getInstance() {
+            return VideoService.this;
+        }
+    }
+
+    public void setParameters(String ip, int videoPort, int videoBitrate, int encodeSpeed){
+        Log.e(TAG, "setParameters");
+        mip = ip;
+        mvideoPort= videoPort;
+        mvideoBitrate = videoBitrate;
+        mencodeSpeed = encodeSpeed;
+        initPacketizer(mip, mvideoPort, mvideoBitrate, mencodeSpeed);
     }
 
     @Nullable
@@ -152,79 +113,11 @@ public class VideoService extends Service implements NativeHelper.NativeDataList
         return null;
     }
 
-    private void validateTranscodingMethod() {
-        switch (mModel) {
-            case UNKNOWN_HANDHELD:
-            case UNKNOWN_AIRCRAFT:
-                return;
-            case PHANTOM_3_STANDARD:
-            case PHANTOM_3_ADVANCED:
-            case PHANTOM_3_PROFESSIONAL:
-            case Phantom_3_4K:
-            case PHANTOM_4:
-            case PHANTOM_4_ADVANCED:
-            case PHANTOM_4_PRO:
-            case INSPIRE_1:
-            case INSPIRE_1_PRO:
-            case INSPIRE_1_RAW:
-            case INSPIRE_2:
-            case Spark:
-            case MATRICE_100:
-            case MATRICE_600:
-            case MATRICE_600_PRO:
-            case MAVIC_AIR:
-                mGstEnabled = true;
-                break;
-            default:
-                mGstEnabled = false;
-                break;
-        }
-    }
-
-    public void setActionDroneConnected() {
-        validateTranscodingMethod();
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            String channelID = createNotificationChannel();
-            NotificationCompat.Builder builder = new NotificationCompat.Builder(this, channelID);
-            Notification notification = builder.setOngoing(true)
-                    .setSmallIcon(R.mipmap.ic_launcher)
-                    .setPriority(PRIORITY_MIN)
-                    .build();
-            startForeground(1, notification);
-        }
-        initVideoStreamDecoder();
-        initPacketizer();
-/*
-        mReceivedVideoDataCallBack = new VideoFeeder.VideoDataListener() {
-
-            @Override
-            public void onReceive(byte[] videoBuffer, int size) {
-                NativeHelper.getInstance().parse(videoBuffer, size);
-            }
-        };
-*/
-        //to receive the transcoded video feed from main camera.
-        /*
-        if (isTranscodedVideoFeedNeeded()) {
-            standardVideoFeeder = VideoFeeder.getInstance().provideTranscodedVideoFeed();
-            standardVideoFeeder.addVideoDataListener(mReceivedVideoDataCallBack);
-            return;
-        }
-        if (VideoFeeder.getInstance().getPrimaryVideoFeed() != null) {
-            VideoFeeder.getInstance().getPrimaryVideoFeed().addVideoDataListener(mReceivedVideoDataCallBack);
-        }
-*/
-
-        isRunning = true;
-    }
-
     @RequiresApi(api = Build.VERSION_CODES.O)
     private String createNotificationChannel() {
         String channelID = "video_service";
         String channelName = "RosettaDrone 2 Video Service";
-        NotificationChannel chan = new NotificationChannel(channelID,
-                channelName, NotificationManager.IMPORTANCE_DEFAULT);
+        NotificationChannel chan = new NotificationChannel(channelID, channelName, NotificationManager.IMPORTANCE_DEFAULT);
         chan.setLightColor(Color.BLUE);
         chan.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
         NotificationManager service = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
@@ -233,15 +126,9 @@ public class VideoService extends Service implements NativeHelper.NativeDataList
     }
 
     private void setActionDroneDisconnected() {
-
-//        Log.d(TAG, "DC");
         nativeFinalize();
-//        Log.d(TAG, "native finalize");
         stopForeground(true);
-//        Log.d(TAG, "stop foreground");
-
         isRunning = false;
-
 
         if (thread != null) {
             thread.interrupt();
@@ -251,13 +138,6 @@ public class VideoService extends Service implements NativeHelper.NativeDataList
         if (mGstSocket != null) {
             mGstSocket.close();
             Log.d(TAG, "socket close");
-
-        }
-        if (mPacketizer != null) {
-            if (mPacketizer.getRtpSocket() != null) {
-                mPacketizer.getRtpSocket().close();
-            }
-            mPacketizer.stop();
         }
     }
 
@@ -266,46 +146,9 @@ public class VideoService extends Service implements NativeHelper.NativeDataList
         NativeHelper.getInstance().setDataListener(this);
     }
 
-    private void initPacketizer() {
-//        if (mPacketizer != null && mPacketizer.getRtpSocket() != null)
-//            mPacketizer.getRtpSocket().close();
-//        mPacketizer = new H264Packetizer();
-        String videoIPString = "127.0.0.1";
-        if (sharedPreferences.getBoolean("pref_external_gcs", false)) {
-            if (!sharedPreferences.getBoolean("pref_separate_gcs", false)) {
-                videoIPString = sharedPreferences.getString("pref_gcs_ip", "127.0.0.1");
-            } else {
-                videoIPString = sharedPreferences.getString("pref_video_ip", "127.0.0.1");
-            }
-        } else if (sharedPreferences.getBoolean("pref_separate_gcs", false)) {
-            videoIPString = sharedPreferences.getString("pref_video_ip", "127.0.0.1");
-        }
-
-        int videoPort = Integer.parseInt(sharedPreferences.getString("pref_video_port", "5600"));
-        int videoBitrate = Integer.parseInt(sharedPreferences.getString("pref_video_bitrate", "2"));
-        int encodeSpeed = Integer.parseInt((sharedPreferences.getString("pref_encode_speed", "2")));
-
-        Log.e(TAG, "mGstEnabled: "+ mGstEnabled);
-        if (mGstEnabled) {
-            try {
-                nativeInit(videoIPString, videoPort, videoBitrate, encodeSpeed);
-                mGstSocket = new DatagramSocket();
-            } catch (SocketException e) {
-                Log.e(TAG, "Error creating Gstreamer datagram socket", e);
-            }
-
-        } else {
-            try {
-                if (mPacketizer != null && mPacketizer.getRtpSocket() != null)
-                    mPacketizer.getRtpSocket().close();
-                mPacketizer = new H264Packetizer();
-
-                mPacketizer.getRtpSocket().setDestination(InetAddress.getByName(videoIPString), videoPort, 5000);
-            } catch (UnknownHostException e) {
-                Log.e(TAG, "Error setting destination for RTP packetizer", e);
-            }
-
-        }
+    private void initPacketizer(String ip, int videoPort, int videoBitrate, int encodeSpeed) {
+        Log.e(TAG, "Video initPacketizer");
+        nativeInit(ip, videoPort, videoBitrate, encodeSpeed);
     }
 
     public boolean isRunning() {
@@ -319,67 +162,31 @@ public class VideoService extends Service implements NativeHelper.NativeDataList
     // Called from native code. Native code calls this once it has created its pipeline and
     // the main loop is running, so it is ready to accept commands.
     private void onGStreamerInitialized() {
-        Log.i("GStreamer", "Gst initialized. ");
-        if (mGstEnabled) {
-            nativePlay();
-        }
+        Log.i(TAG, "Gst initialized. ");
+     //   nativePlay();
     }
-
 
     @Override
     public void onDataRecv(byte[] data, int size, int frameNum, boolean isKeyFrame, int width, int height) {
-
-        if (mGstEnabled) {
+    //    Log.i(TAG, "onDataRecv");
+        if(size > 0) {
+      //      Log.i(TAG, "With->"+width+" Height->"+height);
             try {
-                InetAddress address = InetAddress.getByName("127.0.0.1");
-                DatagramPacket packet = new DatagramPacket(data, data.length, address, 56994);
-                mGstSocket.send(packet);
-//                Log.d(TAG, "PACKET SENT");
-            } catch (Exception e) {
+                // Raw H.264 stream...
+                // Can be decoded with:  sudo gst-launch-1.0 -vvv udpsrc port=5601 ! queue ! h264parse ! decodebin ! videoconvert ! autovideosink
+                // Tested OK....
+                InetAddress address_remote = InetAddress.getByName(mip);
+                DatagramPacket packet_remote = new DatagramPacket(data, size, address_remote, mvideoPort);
+                mGstSocket.send(packet_remote);
+
+                // Add RTP Header...
+//                InetAddress address = InetAddress.getByName("127.0.0.1");
+  //              DatagramPacket packet = new DatagramPacket(data, size, address, 56994);
+    //            mGstSocket.send(packet);
+
+                } catch (Exception e) {
                 Log.e(TAG, "Error sending packet to Gstreamer", e);
             }
-        } else {
-            splitNALs(data);
-        }
-
-    }
-
-    public void splitNALs(byte[] buffer) {
-        // One H264 frame can contain multiple NALs
-        int packet_start_idx = 0;
-        int packet_end_idx = 0;
-        if (buffer.length < 4)
-            return;
-        for (int i = 3; i < buffer.length - 3; i++) {
-            // This block handles all but the last NAL in the frame
-            if ((buffer[i] & 0xff) == 0 && (buffer[i + 1] & 0xff) == 0 && (buffer[i + 2] & 0xff) == 0 && (buffer[i + 3] & 0xff) == 1) {
-                packet_end_idx = i;
-                byte[] packet = Arrays.copyOfRange(buffer, packet_start_idx, packet_end_idx);
-                sendNAL(packet);
-                packet_start_idx = i;
-            }
-
-        }
-        // This block handles the last NAL in the frame, or the single NAL if only one exists
-        packet_end_idx = buffer.length;
-        byte[] packet = Arrays.copyOfRange(buffer, packet_start_idx, packet_end_idx);
-        sendNAL(packet);
-    }
-    //
-    protected void sendNAL(byte[] buffer) {
-        // Pack a single NAL for RTP and send
-        if (mPacketizer != null) {
-            mPacketizer.setInputStream(new ByteArrayInputStream(buffer));
-            mPacketizer.run();
         }
     }
-
-    private boolean isTranscodedVideoFeedNeeded() {
-        if (VideoFeeder.getInstance() == null) {
-            return false;
-        }
-        return VideoFeeder.getInstance().isFetchKeyFrameNeeded() || VideoFeeder.getInstance()
-                .isLensDistortionCalibrationNeeded();
-    }
-
 }

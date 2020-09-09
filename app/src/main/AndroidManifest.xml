@@ -101,10 +101,9 @@
             tools:ignore="Instantiatable">
 
         </service>
-        <!--
-                <service android:name="sq.rogue.rosettadrone.video.VideoService">
-                </service>
-        -->
+            <service android:name="sq.rogue.rosettadrone.video.VideoService">
+        </service>
+
         <!-- DJI SDK -->
 
         <meta-data

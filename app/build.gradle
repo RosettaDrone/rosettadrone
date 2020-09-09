@@ -1,11 +1,11 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion 30
     defaultConfig {
         applicationId "sq.rogue.rosettadrone"
         minSdkVersion 22
-        targetSdkVersion 28
+        targetSdkVersion 27
         versionCode 1
         versionName "5.1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -28,14 +28,9 @@ android {
 
     sourceSets {
         main {
-            jniLibs.srcDirs = ['src/main/cpp/lib']
-        }
-    }
-
-    sourceSets {
-        main {
             jni.srcDirs=[]
-            jniLibs.srcDirs=['../libs']
+//            jniLibs.srcDirs=['../libs']
+            jniLibs.srcDirs = ['src/main/cpp/lib']
         }
     }
 
@@ -75,8 +70,8 @@ android {
     }
     defaultConfig {
         ndk {
-            abiFilters 'armeabi-v7a', 'arm64-v8a'
-//            abiFilters 'armeabi-v7a', 'x86', 'arm64-v8a'
+//            abiFilters 'armeabi-v7a', 'arm64-v8a'
+            abiFilters 'armeabi-v7a', 'x86', 'arm64-v8a'
         }
     }
 
@@ -109,7 +104,7 @@ dependencies {
         exclude module: 'library-anti-distortion'
         //exclude module: 'fly-safe-database'
     })
-    compileOnly 'com.dji:dji-sdk-provided:4.13'
+    compileOnly 'com.dji:dji-sdk-provided:4.13.1'
 
     implementation 'com.dji:dji-uxsdk:4.13'
 

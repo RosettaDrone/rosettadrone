@@ -130,23 +130,24 @@ int parse(JNIEnv *env, jobject obj, uint8_t *pBuff, int videosize, uint64_t pts)
                                     pFrameBuff,
                                     paserLength_In, AV_NOPTS_VALUE, AV_NOPTS_VALUE, AV_NOPTS_VALUE);
 
-        //LOGD("paserLen = %d",paserLen);
+  //      LOGD("paserLen = %d",paserLen);
         paserLength_In -= paserLen;
         pFrameBuff += paserLen;
 
-        if (packet.size > 0) {
-
-            // LOGD(
-            // 	"packet size=%d, pts=%lld, width_in_pixel=%d, height_in_pixel=%d, key_frame=%d, frame_has_sps=%d, frame_has_pps=%d, frame_num=%d",
-            // 	packet.size,
-            // 	pts,
-            // 	m_pCodecPaser->width_in_pixel,
-            // 	m_pCodecPaser->height_in_pixel,
-            // 	m_pCodecPaser->key_frame,
-            // 	m_pCodecPaser->frame_has_sps,
-            // 	m_pCodecPaser->frame_has_pps,
-            // 	m_pCodecPaser->frame_num
-            // 	);
+        if (packet.size > 0 & m_pCodecPaser->width_in_pixel > 10 & m_pCodecPaser->height_in_pixel > 10) {
+/*
+             LOGD(
+             	"packet size=%d, pts=%lld, width_in_pixel=%d, height_in_pixel=%d, key_frame=%d, frame_has_sps=%d, frame_has_pps=%d, frame_num=%d",
+             	packet.size,
+             	pts,
+             	m_pCodecPaser->width_in_pixel,
+             	m_pCodecPaser->height_in_pixel,
+             	m_pCodecPaser->key_frame,
+             	m_pCodecPaser->frame_has_sps,
+             	m_pCodecPaser->frame_has_pps,
+             	m_pCodecPaser->frame_num
+             	);
+*/
             invokeFrameDataCallback(
                     env,
                     obj,
@@ -193,10 +194,10 @@ Java_sq_rogue_rosettadrone_video_NativeHelper_parse(JNIEnv *env, jobject obj, jb
         LOGD("Remove AUD+AUD");
         parse(env, obj, buff, size - audaudsize2, pts);
     } else if (size >= audsize2 && memcmp(audbuffer2, buff + size - audsize2, audsize2) == 0) {
-        LOGD("Remove AUD");
+    //    LOGD("Remove AUD");
         parse(env, obj, buff, size - audsize2, pts);
     } else {
-        // LOGD("Remove Nothing");
+      //  LOGD("Remove Nothing");
         parse(env, obj, buff, size, pts);
     }
     (*env)->ReleaseByteArrayElements(env, pBuff, jBuff, 0);
@@ -221,3 +222,10 @@ Java_sq_rogue_rosettadrone_video_NativeHelper_release(JNIEnv *env, jobject obj) 
 
     return 1;
 }
+/*
+JNIEXPORT void JNICALL
+Java_org_freedesktop_gstreamer_GStreamer_nativeInit(JNIEnv *env, jclass clazz, jobject context) {
+    // TODO: implement nativeInit()
+}
+
+ */
