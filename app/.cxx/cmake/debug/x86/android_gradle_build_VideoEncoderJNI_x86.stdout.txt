@@ -1,0 +1,2 @@
+[1/2] Building C object CMakeFiles/VideoEncoderJNI.dir/src/main/cpp/video_encoder.c.o
+[2/2] Linking C shared library ../../../../build/intermediates/cmake/debug/obj/x86/libVideoEncoderJNI.so

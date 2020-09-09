@@ -1,0 +1,11 @@
+prefix=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7
+exec_prefix=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7
+libdir=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7/lib
+includedir=${prefix}/include
+
+Name: libsrtp
+Version: 1.6.0
+Description: Library for SRTP (Secure Realtime Transport Protocol)
+
+Libs: -L${libdir} -lsrtp 
+Cflags: -I${includedir}

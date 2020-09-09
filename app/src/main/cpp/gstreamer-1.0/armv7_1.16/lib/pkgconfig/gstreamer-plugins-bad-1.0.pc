@@ -1,0 +1,13 @@
+prefix=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7
+exec_prefix=${prefix}
+libdir=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7/lib
+includedir=${prefix}/include/gstreamer-1.0
+pluginsdir=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7/lib/gstreamer-1.0
+
+
+Name: GStreamer Bad Plugin libraries
+Description: Streaming media framework, bad plugins libraries
+Requires: gstreamer-1.0
+Version: 1.14.2
+Libs: -L${libdir}
+Cflags: -I${includedir}

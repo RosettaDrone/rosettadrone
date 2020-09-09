@@ -1,0 +1,13 @@
+# fribidi.pc.  Generated from fribidi.pc.in by configure.
+
+prefix=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7
+exec_prefix=${prefix}
+libdir=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7/lib
+includedir=${prefix}/include
+
+Name: GNU FriBidi
+Description: Unicode Bidirectional Algorithm Library
+Requires: glib-2.0
+Version: 0.19.7
+Libs: -L${libdir} -lfribidi
+Cflags: -I${includedir}/fribidi

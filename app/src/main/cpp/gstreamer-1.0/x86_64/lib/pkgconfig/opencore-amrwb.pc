@@ -1,0 +1,10 @@
+prefix=/home/cerbero/cerbero/build/dist/android_universal/x86_64
+exec_prefix=${prefix}
+libdir=/home/cerbero/cerbero/build/dist/android_universal/x86_64/lib
+includedir=${prefix}/include/opencore-amrwb
+
+Name: OpenCORE AMR-WB
+Description: Adaptive Multi-Rate Wideband speech codec library
+Version: 0.1.5
+Libs: -L${libdir} -lopencore-amrwb
+Cflags: -I${includedir}

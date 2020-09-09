@@ -1,0 +1,13 @@
+prefix=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7
+exec_prefix=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7
+libdir=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7/lib
+includedir=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7/include
+
+Name: harfbuzz
+Description: HarfBuzz text shaping library
+Version: 1.7.5
+
+Libs: -L${libdir} -lharfbuzz
+Libs.private: -lm    
+Requires.private: glib-2.0 >= 2.19.1 
+Cflags: -I${includedir}/harfbuzz

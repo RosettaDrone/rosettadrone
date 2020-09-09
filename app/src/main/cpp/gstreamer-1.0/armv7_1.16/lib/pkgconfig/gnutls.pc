@@ -1,0 +1,24 @@
+# Process this file with autoconf to produce a pkg-config metadata file.
+
+# Copyright (C) 2004-2012 Free Software Foundation, Inc.
+
+# Copying and distribution of this file, with or without modification,
+# are permitted in any medium without royalty provided the copyright
+# notice and this notice are preserved.  This file is offered as-is,
+# without any warranty.
+
+# Author: Simon Josefsson
+
+prefix=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7
+exec_prefix=${prefix}
+libdir=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7/lib
+includedir=${prefix}/include
+
+Name: GnuTLS
+Description: Transport Security Layer implementation for the GNU system
+URL: http://www.gnutls.org/
+Version: 3.5.18
+Libs: -L${libdir} -lgnutls
+Libs.private:  /home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7/lib/libintl.so /home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7/lib/libiconv.so /home/jan/devel/gstreamer/cerbero/build/android-ndk-16/platforms/android-14/arch-arm/usr/lib/libc.so -Wl,-rpath -Wl,/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7/lib -Wl,-rpath -Wl,/home/jan/devel/gstreamer/cerbero/build/android-ndk-16/platforms/android-14/arch-arm/usr/lib      -lgmp  
+Requires.private: nettle, hogweed, libtasn1, zlib
+Cflags: -I${includedir}

@@ -1,0 +1,18 @@
+prefix=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7
+exec_prefix=${prefix}
+libdir=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7/lib
+includedir=${prefix}/include/gstreamer-1.0
+toolsdir=${exec_prefix}/bin
+pluginsdir=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7/lib/gstreamer-1.0
+datarootdir=${prefix}/share
+datadir=${datarootdir}
+girdir=${datadir}/gir-1.0
+typelibdir=${libdir}/girepository-1.0
+
+Name: GStreamer
+Description: Streaming media framework
+Version: 1.14.2
+Requires: glib-2.0, gobject-2.0
+Requires.private: gmodule-no-export-2.0  
+Libs: -L${libdir} -lgstreamer-1.0
+Cflags: -I${includedir}

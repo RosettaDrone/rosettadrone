@@ -1,0 +1,15 @@
+# This is the pkg-config file for libkate
+prefix=/home/cerbero/cerbero/build/dist/android_universal/x86
+exec_prefix=${prefix}
+libdir=/home/cerbero/cerbero/build/dist/android_universal/x86/lib
+includedir=${prefix}/include
+
+Name: Kate
+Description: libkate is a codec library for the Kate bitstream format
+Version: 0.4.1
+URL: http://libkate.googlecode.com/
+Requires: 
+Conflicts: 
+Libs: -L${libdir} -lkate
+Libs.private: 
+Cflags: -I${includedir}

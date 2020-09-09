@@ -1,0 +1,4 @@
+/home/smartdrone/Dropbox (eSmart Systems)/Autonomy/Autonomy_Terje/rosettadrone_work/app/.cxx/cmake/release/armeabi-v7a/CMakeFiles/rebuild_cache.dir
+/home/smartdrone/Dropbox (eSmart Systems)/Autonomy/Autonomy_Terje/rosettadrone_work/app/.cxx/cmake/release/armeabi-v7a/CMakeFiles/VideoEncoderJNI.dir
+/home/smartdrone/Dropbox (eSmart Systems)/Autonomy/Autonomy_Terje/rosettadrone_work/app/.cxx/cmake/release/armeabi-v7a/CMakeFiles/edit_cache.dir
+/home/smartdrone/Dropbox (eSmart Systems)/Autonomy/Autonomy_Terje/rosettadrone_work/app/.cxx/cmake/release/armeabi-v7a/CMakeFiles/djivideojni.dir

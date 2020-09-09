@@ -1,0 +1,11 @@
+prefix=/home/cerbero/cerbero/build/dist/android_universal/x86_64
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+gmodule_supported=true
+
+Name: GModule
+Description: Dynamic module loader for GLib
+Version: 2.56.1
+Requires: gmodule-no-export-2.0, glib-2.0
+Cflags: -I${includedir}

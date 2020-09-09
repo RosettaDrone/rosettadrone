@@ -1,0 +1,14 @@
+prefix=/home/cerbero/cerbero/build/dist/android_universal/armv7
+exec_prefix=${prefix}
+libdir=/home/cerbero/cerbero/build/dist/android_universal/armv7/lib
+includedir=/home/cerbero/cerbero/build/dist/android_universal/armv7/include
+
+Name: libavutil
+Description: FFmpeg utility library
+Version: 56.22.100
+Requires: 
+Requires.private: 
+Conflicts:
+Libs: -L${libdir}  -lavutil 
+Libs.private: -pthread -lm
+Cflags: -I${includedir}

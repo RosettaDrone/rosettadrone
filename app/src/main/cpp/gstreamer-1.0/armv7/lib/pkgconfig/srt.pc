@@ -1,0 +1,12 @@
+prefix=/home/cerbero/cerbero/build/dist/android_universal/armv7
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: srt
+Description: SRT library set
+Version: 1.3.1
+Libs: -L${libdir} -lsrt   
+Libs.private:  gnutls nettle -L/home/cerbero/cerbero/build/dist/android_universal/armv7/lib /home/cerbero/cerbero/build/dist/android_universal/armv7/lib/libc++_shared.so /home/cerbero/cerbero/build/dist/android_universal/armv7/lib/libandroid_support.a /home/cerbero/cerbero/build/dist/android_universal/armv7/lib/libunwind.a
+Cflags: -I${includedir} -I${includedir}/srt
+Requires.private: gnutls nettle

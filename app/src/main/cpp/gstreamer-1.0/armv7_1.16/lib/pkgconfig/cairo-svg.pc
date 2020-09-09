@@ -1,0 +1,12 @@
+prefix=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7
+exec_prefix=${prefix}
+libdir=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7/lib
+includedir=${prefix}/include
+
+Name: cairo-svg
+Description: SVG surface backend for cairo graphics library
+Version: 1.14.12
+
+Requires: cairo 
+Libs:  
+Cflags: -I${includedir}/cairo 

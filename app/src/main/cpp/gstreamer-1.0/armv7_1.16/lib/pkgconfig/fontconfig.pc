@@ -1,0 +1,18 @@
+prefix=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7
+exec_prefix=${prefix}
+libdir=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7/lib
+includedir=${prefix}/include
+sysconfdir=${prefix}/etc
+localstatedir=${prefix}/var
+PACKAGE=fontconfig
+confdir=${sysconfdir}/fonts
+cachedir=${localstatedir}/cache/${PACKAGE}
+
+Name: Fontconfig
+Description: Font configuration and customization library
+Version: 2.12.6
+Requires:  freetype2
+Requires.private:  expat
+Libs: -L${libdir} -lfontconfig
+Libs.private: -L/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7/lib -lexpat -L/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7/lib -lfreetype  
+Cflags: -I${includedir}  -I/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7/include/freetype2 -I/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7/include/libpng16  

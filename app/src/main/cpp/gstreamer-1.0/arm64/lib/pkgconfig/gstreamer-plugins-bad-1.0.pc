@@ -1,0 +1,13 @@
+prefix=/home/cerbero/cerbero/build/dist/android_universal/arm64
+exec_prefix=${prefix}
+libdir=${prefix}/lib
+includedir=${prefix}/include/gstreamer-1.0
+pluginsdir=${prefix}/lib/gstreamer-1.0
+
+
+Name: GStreamer Bad Plugin libraries
+Description: Streaming media framework, bad plugins libraries
+Requires: gstreamer-1.0
+Version: 1.16.2
+Libs: -L${libdir}
+Cflags: -I${includedir}

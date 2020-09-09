@@ -1,0 +1,10 @@
+prefix=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7
+exec_prefix=${prefix}
+libdir=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7/lib
+includedir=${prefix}/include
+
+Name: VisualOn AAC Encoder
+Description: AAC codec library
+Version: 0.1.3
+Libs: -L${libdir} -lvo-aacenc
+Cflags: -I${includedir}

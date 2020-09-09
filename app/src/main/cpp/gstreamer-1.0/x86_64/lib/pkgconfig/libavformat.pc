@@ -1,0 +1,14 @@
+prefix=/home/cerbero/cerbero/build/dist/android_universal/x86_64
+exec_prefix=${prefix}
+libdir=/home/cerbero/cerbero/build/dist/android_universal/x86_64/lib
+includedir=/home/cerbero/cerbero/build/dist/android_universal/x86_64/include
+
+Name: libavformat
+Description: FFmpeg container format library
+Version: 58.20.100
+Requires: 
+Requires.private: libavcodec >= 58.35.100, libswresample >= 3.3.100, libavutil >= 56.22.100
+Conflicts:
+Libs: -L${libdir}  -lavformat 
+Libs.private: -lm -lbz2 -lz
+Cflags: -I${includedir}

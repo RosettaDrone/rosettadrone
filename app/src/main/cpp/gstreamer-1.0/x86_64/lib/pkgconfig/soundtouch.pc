@@ -1,0 +1,12 @@
+prefix=/home/cerbero/cerbero/build/dist/android_universal/x86_64
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+Name: SoundTouch
+Description: SoundTouch is an open-source audio processing library for changing the Tempo, Pitch and Playback Rates of audio streams or files
+URL: https://www.surina.net/soundtouch/
+Version: 2.0.0
+Requires.private: gnustl
+Libs: -L${libdir} -lSoundTouch
+Libs.private: -lm
+Cflags: -I${includedir}/soundtouch

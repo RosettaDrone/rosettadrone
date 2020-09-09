@@ -1,0 +1,11 @@
+prefix=/home/cerbero/cerbero/build/dist/android_universal/x86
+exec_prefix=${prefix}
+libdir=${prefix}/lib
+includedir=${prefix}/include/gstreamer-1.0
+
+Name: gst-validate
+Description: Gstreamer Validate
+Version: 1.16.2
+Requires: gstreamer-1.0
+Libs: -L${libdir} -lgstvalidate-1.0
+Cflags: -I${includedir}

@@ -1,0 +1,11 @@
+prefix=/home/cerbero/cerbero/build/dist/android_universal/x86
+exec_prefix=${prefix}
+libdir=/home/cerbero/cerbero/build/dist/android_universal/x86/lib
+includedir=${prefix}/include/
+
+Name: libmms
+Description: Library implementing the MMS protocol 
+Requires: glib-2.0
+Version: 0.6.4
+Libs: -L${libdir} -lmms -lm
+Cflags: -I${includedir}

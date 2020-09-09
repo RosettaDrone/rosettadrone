@@ -1,0 +1,11 @@
+prefix=/home/cerbero/cerbero/build/dist/android_universal/arm64
+exec_prefix=/home/cerbero/cerbero/build/dist/android_universal/arm64
+libdir=/home/cerbero/cerbero/build/dist/android_universal/arm64/lib
+includedir=${prefix}/include
+
+Name: libsrtp
+Version: 1.6.0
+Description: Library for SRTP (Secure Realtime Transport Protocol)
+
+Libs: -L${libdir} -lsrtp 
+Cflags: -I${includedir}

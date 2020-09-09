@@ -1,0 +1,13 @@
+prefix=/home/cerbero/cerbero/build/dist/android_universal/x86
+exec_prefix=/home/cerbero/cerbero/build/dist/android_universal/x86
+libdir=/home/cerbero/cerbero/build/dist/android_universal/x86/lib
+includedir=/home/cerbero/cerbero/build/dist/android_universal/x86/include
+
+Name: harfbuzz
+Description: HarfBuzz text shaping library
+Version: 1.7.5
+
+Libs: -L${libdir} -lharfbuzz
+Libs.private: -lm    
+Requires.private: glib-2.0 >= 2.19.1 
+Cflags: -I${includedir}/harfbuzz

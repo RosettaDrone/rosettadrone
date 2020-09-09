@@ -1,0 +1,12 @@
+prefix=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7
+exec_prefix=${prefix}
+libdir=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7/lib
+includedir=${prefix}/include/libvisual-0.4
+pluginsbasedir=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7/lib/libvisual-0.4
+
+Name: libvisual
+Version: 0.4.0
+Description: an audio visualisation abstraction library.
+Requires: 
+Libs: -L${libdir} -lm -ldl  -lvisual-0.4
+Cflags: -I${includedir} 

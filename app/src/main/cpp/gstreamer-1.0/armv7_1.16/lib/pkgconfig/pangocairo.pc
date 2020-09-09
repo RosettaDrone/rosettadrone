@@ -1,0 +1,12 @@
+prefix=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7
+exec_prefix=${prefix}
+libdir=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7/lib
+includedir=${prefix}/include
+
+Name: Pango Cairo
+Description: Cairo rendering support for Pango
+Version: 1.40.14
+Requires: pango cairo
+Requires.private:  pangoft2
+Libs: -L${libdir} -lpangocairo-1.0
+Cflags: -I${includedir}/pango-1.0

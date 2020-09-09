@@ -1,0 +1,11 @@
+prefix=/home/cerbero/cerbero/build/dist/android_universal/x86_64
+exec_prefix=/home/cerbero/cerbero/build/dist/android_universal/x86_64
+libdir=/home/cerbero/cerbero/build/dist/android_universal/x86_64/lib
+includedir=/home/cerbero/cerbero/build/dist/android_universal/x86_64/include
+
+Name: TagLib
+Description: Audio meta-data library
+Requires: gnustl
+Version: 1.11.1
+Libs: -L${libdir} -ltag
+Cflags: -I${includedir}/taglib

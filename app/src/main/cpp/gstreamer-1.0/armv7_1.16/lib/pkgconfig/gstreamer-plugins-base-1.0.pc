@@ -1,0 +1,14 @@
+prefix=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7
+exec_prefix=${prefix}
+libdir=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7/lib
+includedir=${prefix}/include/gstreamer-1.0
+pluginsdir=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7/lib/gstreamer-1.0
+
+Name: GStreamer Base Plugins Libraries
+Description: Streaming media framework, base plugins libraries
+Requires: gstreamer-1.0 
+Version: 1.14.2
+Libs: -L${libdir}
+Cflags: -I${includedir}
+
+libraries=allocators app audio fft pbutils riff rtp rtsp sdp tag video gl

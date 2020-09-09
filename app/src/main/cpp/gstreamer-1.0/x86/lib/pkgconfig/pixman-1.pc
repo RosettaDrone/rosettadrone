@@ -1,0 +1,11 @@
+prefix=/home/cerbero/cerbero/build/dist/android_universal/x86
+exec_prefix=${prefix}
+libdir=/home/cerbero/cerbero/build/dist/android_universal/x86/lib
+includedir=${prefix}/include
+
+Name: Pixman
+Description: The pixman library (version 1)
+Version: 0.38.4
+Cflags: -I${includedir}/pixman-1
+Libs: -L${libdir} -lpixman-1
+

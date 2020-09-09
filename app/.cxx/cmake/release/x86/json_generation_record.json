@@ -1,0 +1,14 @@
+[
+  {
+    "level": "INFO",
+    "message": "Start JSON generation. Platform version: 22 min SDK version: x86"
+  },
+  {
+    "level": "INFO",
+    "message": "JSON \u0027/home/smartdrone/Dropbox (eSmart Systems)/Autonomy/Autonomy_Terje/rosettadrone_work/app/.cxx/cmake/release/x86/android_gradle_build.json\u0027 was up-to-date"
+  },
+  {
+    "level": "INFO",
+    "message": "JSON generation completed without problems"
+  }
+]

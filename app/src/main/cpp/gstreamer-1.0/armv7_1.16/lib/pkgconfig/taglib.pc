@@ -1,0 +1,11 @@
+prefix=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7
+exec_prefix=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7
+libdir=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7/lib
+includedir=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7/include
+
+Name: TagLib
+Description: Audio meta-data library
+Requires: gnustl
+Version: 1.11.1
+Libs: -L${libdir} -ltag
+Cflags: -I${includedir}/taglib

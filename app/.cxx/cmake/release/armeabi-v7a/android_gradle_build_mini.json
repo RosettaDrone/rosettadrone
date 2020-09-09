@@ -1,0 +1,32 @@
+{
+  "buildFiles": [
+    "/home/smartdrone/Dropbox (eSmart Systems)/Autonomy/Autonomy_Terje/rosettadrone_work/app/CMakeLists.txt"
+  ],
+  "cleanCommands": [
+    "/home/smartdrone/Android/Sdk/cmake/3.6.4111459/bin/cmake --build /home/smartdrone/Dropbox\\ (eSmart\\ Systems)/Autonomy/Autonomy_Terje/rosettadrone_work/app/.cxx/cmake/release/armeabi-v7a --target clean"
+  ],
+  "libraries": {
+    "djivideojni-Release-armeabi-v7a": {
+      "artifactName": "djivideojni",
+      "buildCommand": "/home/smartdrone/Android/Sdk/cmake/3.6.4111459/bin/cmake --build /home/smartdrone/Dropbox\\ (eSmart\\ Systems)/Autonomy/Autonomy_Terje/rosettadrone_work/app/.cxx/cmake/release/armeabi-v7a --target djivideojni",
+      "abi": "armeabi-v7a",
+      "output": "/home/smartdrone/Dropbox (eSmart Systems)/Autonomy/Autonomy_Terje/rosettadrone_work/app/build/intermediates/cmake/release/obj/armeabi-v7a/libdjivideojni.so"
+    },
+    "ffmpegjni-Release-armeabi-v7a": {
+      "artifactName": "ffmpegjni",
+      "abi": "armeabi-v7a",
+      "output": "/home/smartdrone/Dropbox (eSmart Systems)/Autonomy/Autonomy_Terje/rosettadrone_work/app/src/main/cpp/lib/armeabi-v7a/libffmpeg.so"
+    },
+    "gstreamer_android-Release-armeabi-v7a": {
+      "artifactName": "gstreamer_android",
+      "abi": "armeabi-v7a",
+      "output": "/home/smartdrone/Dropbox (eSmart Systems)/Autonomy/Autonomy_Terje/rosettadrone_work/app/src/main/cpp/lib/armeabi-v7a/libgstreamer_android.so"
+    },
+    "VideoEncoderJNI-Release-armeabi-v7a": {
+      "artifactName": "VideoEncoderJNI",
+      "buildCommand": "/home/smartdrone/Android/Sdk/cmake/3.6.4111459/bin/cmake --build /home/smartdrone/Dropbox\\ (eSmart\\ Systems)/Autonomy/Autonomy_Terje/rosettadrone_work/app/.cxx/cmake/release/armeabi-v7a --target VideoEncoderJNI",
+      "abi": "armeabi-v7a",
+      "output": "/home/smartdrone/Dropbox (eSmart Systems)/Autonomy/Autonomy_Terje/rosettadrone_work/app/build/intermediates/cmake/release/obj/armeabi-v7a/libVideoEncoderJNI.so"
+    }
+  }
+}

@@ -1,0 +1,11 @@
+prefix=/home/cerbero/cerbero/build/dist/android_universal/x86_64
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+Name: GThread
+Description: Thread support for GLib
+Version: 2.56.1
+Requires: glib-2.0
+Libs: -L${libdir} -lgthread-2.0 -pthread
+Libs.private: -lintl
+Cflags: -I${includedir} -pthread

@@ -1,0 +1,9 @@
+# ninja log v5
+0	146	0	CMakeFiles/VideoEncoderJNI.dir/src/main/cpp/video_encoder.c.o	9ab7078309e52ac5
+146	173	0	../../../../build/intermediates/cmake/debug/obj/x86/libVideoEncoderJNI.so	d503444657fbbbeb
+0	57	0	CMakeFiles/djivideojni.dir/src/main/cpp/dji_video_jni.c.o	f910afad80ed5d7e
+57	65	0	../../../../build/intermediates/cmake/debug/obj/x86/libdjivideojni.so	9edf63f68aba8b81
+1	114	0	CMakeFiles/VideoEncoderJNI.dir/src/main/cpp/video_encoder.c.o	9ab7078309e52ac5
+114	138	0	../../../../build/intermediates/cmake/debug/obj/x86/libVideoEncoderJNI.so	d503444657fbbbeb
+0	77	0	CMakeFiles/djivideojni.dir/src/main/cpp/dji_video_jni.c.o	f910afad80ed5d7e
+77	88	0	../../../../build/intermediates/cmake/debug/obj/x86/libdjivideojni.so	9edf63f68aba8b81

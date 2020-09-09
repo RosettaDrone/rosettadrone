@@ -1,0 +1,10 @@
+prefix=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7
+exec_prefix=${prefix}
+libdir=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7/lib
+includedir=${prefix}/include
+
+Name: webrtc-audio-processing
+Description: WebRTC Audio Processing library
+Version: 0.2
+Libs: -L${libdir} -lwebrtc_audio_processing
+Cflags: -DWEBRTC_AUDIO_PROCESSING_ONLY_BUILD -I${includedir}/webrtc_audio_processing -DWEBRTC_POSIX

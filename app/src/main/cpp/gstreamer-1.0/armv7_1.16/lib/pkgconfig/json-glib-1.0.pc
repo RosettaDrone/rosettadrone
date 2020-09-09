@@ -1,0 +1,11 @@
+prefix=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7
+exec_prefix=${prefix}
+libdir=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7/lib
+includedir=${prefix}/include
+
+Name: JSON-GLib
+Description: JSON Parser for GLib
+Version: 1.2.8
+Libs: -L${libdir} -ljson-glib-1.0
+Cflags: -I${includedir}/json-glib-1.0
+Requires: gio-2.0

@@ -1,0 +1,12 @@
+prefix=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7
+exec_prefix=${prefix}
+libdir=/home/jan/devel/gstreamer/cerbero/build/dist/android_universal/armv7/lib
+includedir=${prefix}/include
+
+Name: spandsp
+Description: A DSP library for telephony.
+Requires:
+Version: 0.0.6
+Libs: -L${libdir} -lspandsp
+Libs.private: -ltiff -lm
+Cflags: -I${includedir}

@@ -1,0 +1,12 @@
+prefix=/home/cerbero/cerbero/build/dist/android_universal/x86
+exec_prefix=${prefix}
+libdir=${prefix}/lib
+includedir=${prefix}/include/gstreamer-1.0
+
+Name: GStreamer codec parsers
+Description: Bitstream parsers for GStreamer elements
+Requires: gstreamer-1.0 gstreamer-base-1.0
+Version: 1.16.2
+Libs: -L${libdir} -lgstcodecparsers-1.0
+Cflags: -I${includedir}
+

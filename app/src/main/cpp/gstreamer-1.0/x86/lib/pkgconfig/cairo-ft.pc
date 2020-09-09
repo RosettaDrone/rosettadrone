@@ -1,0 +1,12 @@
+prefix=/home/cerbero/cerbero/build/dist/android_universal/x86
+exec_prefix=${prefix}
+libdir=/home/cerbero/cerbero/build/dist/android_universal/x86/lib
+includedir=${prefix}/include
+
+Name: cairo-ft
+Description: FreeType font backend for cairo graphics library
+Version: 1.14.12
+
+Requires: cairo freetype2 >= 9.7.3 
+Libs:  
+Cflags: -I${includedir}/cairo 
