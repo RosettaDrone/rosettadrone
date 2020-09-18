@@ -222,10 +222,3 @@ Java_sq_rogue_rosettadrone_video_NativeHelper_release(JNIEnv *env, jobject obj) 
 
     return 1;
 }
-/*
-JNIEXPORT void JNICALL
-Java_org_freedesktop_gstreamer_GStreamer_nativeInit(JNIEnv *env, jclass clazz, jobject context) {
-    // TODO: implement nativeInit()
-}
-
- */

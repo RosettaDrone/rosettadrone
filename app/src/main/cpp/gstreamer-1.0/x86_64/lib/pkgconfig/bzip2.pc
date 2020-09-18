@@ -1,9 +1,0 @@
-prefix=/home/cerbero/cerbero/build/dist/android_universal/x86_64
-libdir=${prefix}/lib
-includedir=${prefix}/include
-
-Name: bzip2
-Description: bzip2 data compression library
-Version: 1.0.6
-Libs: -L${libdir} -lbz2
-Cflags: -I${includedir}

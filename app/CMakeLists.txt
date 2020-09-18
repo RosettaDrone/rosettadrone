@@ -24,6 +24,10 @@ add_library(gstreamer_android SHARED IMPORTED)
 set_target_properties(gstreamer_android PROPERTIES IMPORTED_LOCATION
          ${gst_DIR}/${ANDROID_ABI}/libgstreamer_android.so)
 
+add_library(c++_shared SHARED IMPORTED)
+set_target_properties(c++_shared PROPERTIES IMPORTED_LOCATION
+        ${gst_DIR}/${ANDROID_ABI}/libc++_shared.so.27)
+
 
 set(ffmpeg_DIR ${CMAKE_SOURCE_DIR}/src/main/cpp/lib)
 
@@ -44,14 +48,3 @@ add_library( # Specifies the name of the library.
 find_library( log-lib log )
 
 target_link_libraries( djivideojni ffmpegjni ${log-lib} )
-
-add_library( # Specifies the name of the library.
-             VideoEncoderJNI
-
-             # Sets the library as a shared library.
-             SHARED
-
-             # Provides a relative path to your source file(s).
-             src/main/cpp/video_encoder.c )
-
-target_link_libraries( VideoEncoderJNI gstreamer_android ${log-lib} )

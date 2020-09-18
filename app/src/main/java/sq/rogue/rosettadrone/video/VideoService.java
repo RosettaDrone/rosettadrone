@@ -19,48 +19,22 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import android.util.Log;
 
-import org.freedesktop.gstreamer.GStreamer;
-
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
+import java.io.ByteArrayInputStream;
 import java.net.InetAddress;
-import java.net.SocketException;
+import java.net.UnknownHostException;
+import java.util.Arrays;
 
 public class VideoService extends Service implements NativeHelper.NativeDataListener {
 
-    public static final String ACTION_START = "VIDEO.START";
-    public static final String ACTION_STOP = "VIDEO.STOP";
-    public static final String ACTION_RESTART = "VIDEO.RESTART";
-    public static final String ACTION_UPDATE = "VIDEO.UPDATE";
-    public static final String ACTION_DRONE_CONNECTED = "VIDEO.DRONE_CONNECTED";
-    public static final String ACTION_DRONE_DISCONNECTED = "VIDEO.DRONE_DISCONNECTED";
-    public static final String ACTION_SET_MODEL = "VIDEO.SET_MODEL";
-    public static final String ACTION_SEND_NAL = "VIDEO.SEND_NAL";
-    private static final String TAG = "VideoService";  //.class.getSimpleName();
-
-    private native String nativeGetGStreamerInfo();
-
-    static {
-        System.loadLibrary("gstreamer_android");
-        System.loadLibrary("VideoEncoderJNI");
-        nativeClassInit();
-    }
-
+    private static final String TAG = VideoService.class.getSimpleName();
+    protected H264Packetizer mPacketizer;
     protected Thread thread;
     private boolean isRunning = false;
-    private DatagramSocket mGstSocket;
 
-    private static native boolean nativeClassInit(); // Initialize native class: cache Method IDs for callbacks
-    private native void nativeInit(String ip, int port, int bitrate, int encodeSpeed);     // Initialize native code, build pipeline, etc
-    private native void nativeFinalize(); // Destroy pipeline and shutdown native code
-    private native void nativePlay();     // Set pipeline to PLAYING
-    private native void nativePause();    // Set pipeline to PAUSED
-    private native void nativeSetDestination(String ip, int port);
-    private native void nativeSetBitrate(int bitrate);
+    // Binder given to clients
+    private final IBinder binder = new LocalBinder();
 
-    private long native_custom_data;      // Native code will use this to keep private data
-
-    private String mip = "192.168.0.174";
+    private String mip = "127.0.0.1";
     private int mvideoPort = 5600;
     private int mvideoBitrate = 3000;
     private int mencodeSpeed = 2;
@@ -69,27 +43,16 @@ public class VideoService extends Service implements NativeHelper.NativeDataList
     public void onCreate() {
         Log.e(TAG, "oncreate Video ");
 
-        try {
-            GStreamer.init(getApplicationContext());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        if (mPacketizer != null && mPacketizer.getRtpSocket() != null)
+            mPacketizer.getRtpSocket().close();
 
-        try {
-            mGstSocket = new DatagramSocket();
-        } catch (SocketException e) {
-            Log.e(TAG, "Error creating Gstreamer datagram socket", e);
-        }
+        mPacketizer = new H264Packetizer();
         initVideoStreamDecoder();
-        initPacketizer(mip,mvideoPort, mvideoBitrate,mencodeSpeed);
-
-        Log.e(TAG,"Welcome to " + nativeGetGStreamerInfo() + " !");
-
         super.onCreate();
     }
     @Override
     public void onDestroy() {
-        //setActionDroneDisconnected();
+        setActionDroneDisconnected();
     }
 
     public class LocalBinder extends Binder {
@@ -98,19 +61,10 @@ public class VideoService extends Service implements NativeHelper.NativeDataList
         }
     }
 
-    public void setParameters(String ip, int videoPort, int videoBitrate, int encodeSpeed){
-        Log.e(TAG, "setParameters");
-        mip = ip;
-        mvideoPort= videoPort;
-        mvideoBitrate = videoBitrate;
-        mencodeSpeed = encodeSpeed;
-        initPacketizer(mip, mvideoPort, mvideoBitrate, mencodeSpeed);
-    }
-
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
-        return null;
+        return binder;
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
@@ -125,19 +79,23 @@ public class VideoService extends Service implements NativeHelper.NativeDataList
         return channelID;
     }
 
+    public void setParameters(String ip, int videoPort, int videoBitrate, int encodeSpeed){
+        Log.e(TAG, "setParameters");
+        mip = ip;
+        mvideoPort= videoPort;
+        mvideoBitrate = videoBitrate;
+        mencodeSpeed = encodeSpeed;
+
+        initPacketizer(mip, mvideoPort, mvideoBitrate, mencodeSpeed);
+    }
+
     private void setActionDroneDisconnected() {
-        nativeFinalize();
         stopForeground(true);
         isRunning = false;
 
         if (thread != null) {
             thread.interrupt();
             thread = null;
-        }
-
-        if (mGstSocket != null) {
-            mGstSocket.close();
-            Log.d(TAG, "socket close");
         }
     }
 
@@ -147,43 +105,59 @@ public class VideoService extends Service implements NativeHelper.NativeDataList
     }
 
     private void initPacketizer(String ip, int videoPort, int videoBitrate, int encodeSpeed) {
-        Log.e(TAG, "Video initPacketizer");
-        nativeInit(ip, videoPort, videoBitrate, encodeSpeed);
+        Log.i(TAG, "Gst initPacketizer. ");
+
+        try {
+            mPacketizer.getRtpSocket().setDestination(InetAddress.getByName(ip), videoPort, 5000);
+        } catch (UnknownHostException e) {
+            Log.e(TAG, "Error setting destination for RTP packetizer", e);
+        }
+
+        isRunning = true;
     }
 
     public boolean isRunning() {
         return isRunning;
     }
 
-    // Called from native code. This sets the content of the TextView from the UI thread.
-    private void setMessage(final String message) {
+    // --------------------------------------------------------------------------------------------
+    public void splitNALs(byte[] buffer) {
+        // One H264 frame can contain multiple NALs
+        int packet_start_idx = 0;
+        int packet_end_idx = 0;
+        if (buffer.length < 4)
+            return;
+
+        for (int i = 3; i < buffer.length - 3; i++) {
+            // This block handles all but the last NAL in the frame
+            if ((buffer[i] & 0xff) == 0 && (buffer[i + 1] & 0xff) == 0 && (buffer[i + 2] & 0xff) == 0 && (buffer[i + 3] & 0xff) == 1) {
+                packet_end_idx = i;
+                byte[] packet = Arrays.copyOfRange(buffer, packet_start_idx, packet_end_idx);
+                sendNAL(packet);
+                packet_start_idx = i;
+            }
+        }
+        // This block handles the last NAL in the frame, or the single NAL if only one exists
+        packet_end_idx = buffer.length;
+        byte[] packet = Arrays.copyOfRange(buffer, packet_start_idx, packet_end_idx);
+        sendNAL(packet);
     }
 
-    // Called from native code. Native code calls this once it has created its pipeline and
-    // the main loop is running, so it is ready to accept commands.
-    private void onGStreamerInitialized() {
-        Log.i(TAG, "Gst initialized. ");
-     //   nativePlay();
+    protected void sendNAL(byte[] buffer) {
+        // Pack a single NAL for RTP and send
+        if (mPacketizer != null) {
+            mPacketizer.setInputStream(new ByteArrayInputStream(buffer));
+            mPacketizer.run();
+        }
     }
 
+    //---------------------------------------------------------------------------------------
     @Override
     public void onDataRecv(byte[] data, int size, int frameNum, boolean isKeyFrame, int width, int height) {
-    //    Log.i(TAG, "onDataRecv");
-        if(size > 0) {
-      //      Log.i(TAG, "With->"+width+" Height->"+height);
+        if(size > 0 && isRunning) {
             try {
-                // Raw H.264 stream...
-                // Can be decoded with:  sudo gst-launch-1.0 -vvv udpsrc port=5601 ! queue ! h264parse ! decodebin ! videoconvert ! autovideosink
-                // Tested OK....
-                InetAddress address_remote = InetAddress.getByName(mip);
-                DatagramPacket packet_remote = new DatagramPacket(data, size, address_remote, mvideoPort);
-                mGstSocket.send(packet_remote);
-
-                // Add RTP Header...
-//                InetAddress address = InetAddress.getByName("127.0.0.1");
-  //              DatagramPacket packet = new DatagramPacket(data, size, address, 56994);
-    //            mGstSocket.send(packet);
-
+                // Pack the raw H.264 stream...
+                splitNALs(data);
                 } catch (Exception e) {
                 Log.e(TAG, "Error sending packet to Gstreamer", e);
             }

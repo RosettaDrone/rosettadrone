@@ -151,6 +151,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     private int mCVoltage_pr=0;
     private int mCCurrent_mA=0;
     private float mCBatteryTemp_C=0;
+    private int mlastState = 100;
 
     private int mFullChargeCapacity_mAh=0;
     private int mChargeRemaining_mAh=0;
@@ -194,8 +195,9 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
     private MoveCameraTo mMoveToCameraTask = null;;
     private Timer mMoveToCameraTimer = null;
-    private Rotation m_Rot;
-    private float m_pitch=0;
+    private Rotation m_ServoSet;
+    private float m_ServoPos=0;
+    private int m_channel = 0;
 
     private MiniPID miniPIDSide;
     private MiniPID miniPIDFwd;
@@ -205,6 +207,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     private FollowMeMissionOperator fmmo;
     private FlightController mFlightController;
     private Gimbal mGimbal = null;
+    private Rotation mRotation = null;
 
     private int mAIfunction_activation = 0;
     public boolean mAutonomy = false;
@@ -583,7 +586,6 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         if (this.djiAircraft != null) {
             parent.logMessageDJI("setBatteryCallback");
             this.djiAircraft.getBattery().setStateCallback(new BatteryState.Callback() {
-                int lastState = 100;
 
                 @Override
                 public void onUpdate(BatteryState batteryState) {
@@ -595,20 +597,24 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                     mCBatteryTemp_C = batteryState.getTemperature();
                     mCVoltage_pr = batteryState.getChargeRemainingInPercent();
 
-                    if(mCVoltage_pr > 90) lastState = 100;
-                    if(mCVoltage_pr <= 20 && lastState == 100){
-                        lastState = 20;
-                        SetMesasageBox("Drone Battery Warning 20% !!!!!");
-                    }
-                    if(mCVoltage_pr <= 10 && lastState == 20){
-                        lastState = 10;
-                        SetMesasageBox("Drone Battery Warning 10% !!!!!");
-                    }
-                    if(mCVoltage_pr <= 5 && lastState == 10){
-                        lastState = 5;
-                        SetMesasageBox("Drone Battery Warning 5% !!!!!");
-                    }
+                    if(mCVoltage_pr > 0) {
+//                        Log.d(TAG, "Voltage %: " + mCVoltage_pr);
+  //                      Log.d(TAG, "mlastState %: " + mlastState);
 
+                        if (mCVoltage_pr > 90) mlastState = 100;
+                        if (mCVoltage_pr <= 20 && mlastState == 100) {
+                            mlastState = 20;
+                            SetMesasageBox("Drone Battery Warning 20% !!!!!");
+                        }
+                        if (mCVoltage_pr <= 10 && mlastState == 20) {
+                            mlastState = 10;
+                            SetMesasageBox("Drone Battery Warning 10% !!!!!");
+                        }
+                        if (mCVoltage_pr <= 5 && mlastState == 10) {
+                            mlastState = 5;
+                            SetMesasageBox("Drone Battery Warning 5% !!!!!");
+                        }
+                    }
              //       Log.d(TAG, "Voltage %: " + mCVoltage_pr);
                 }
             });
@@ -1596,22 +1602,29 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     {
         Rotation.Builder builder = new Rotation.Builder().mode(RotationMode.ABSOLUTE_ANGLE).time(2);
         float param = (value-(float)1500.0)/(float)5.5;
-        if (channel == 9) {
+        if ((int)channel == 9) {
             builder.pitch(param);
-        } else if (channel == 8) {
+        } else if ((int)channel == 8) {
             builder.yaw(param);
-        }
-        if (mGimbal == null) {
+            builder.mode(RotationMode.ABSOLUTE_ANGLE);
+        }else{
+            send_command_ack(MAV_CMD_DO_SET_SERVO, MAV_RESULT.MAV_RESULT_UNSUPPORTED);
             return;
         }
-        m_Rot = builder.build();
-        m_pitch = param;
+        if (mGimbal == null) {
+            send_command_ack(MAV_CMD_DO_SET_SERVO, MAV_RESULT.MAV_RESULT_TEMPORARILY_REJECTED);
+            return;
+        }
+        m_ServoSet = builder.build();
+        m_ServoPos = param;
+        m_channel = (int)channel;
 
 /*      // We do yaw follow, and then yaw the entire drone rather than the gimbal...
         mGimbal.setMode(GimbalMode.FREE,djiError -> {
             if (djiError != null)
                 parent.logMessageDJI("Error: " + djiError.toString());
-        });https://developer.dji.com/api-reference/android-api/Components/Gimbal/DJIGimbal_DJIGimbalRotation_Constructor.html
+        });
+        https://developer.dji.com/api-reference/android-api/Components/Gimbal/DJIGimbal_DJIGimbalRotation_Constructor.html
 */
         // Got to AUTO mode until completed... Not really needed now that we repeat the commands... but nice any how...
         if(mMoveToCameraTimer == null) {
@@ -1624,13 +1637,23 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
         @Override
         public void run() {
-            mGimbal.rotate(m_Rot, djiError -> {
+            mGimbal.rotate(m_ServoSet, djiError -> {
                 if (djiError != null)
                     parent.logMessageDJI("Error: " + djiError.toString());
             });
 
-            float pos = m_Rot.getPitch();
-            if(pos > m_pitch-1 && pos < m_pitch+1) {
+            float pos = 0;
+            if( m_channel == 9)
+                pos = m_ServoSet.getPitch();
+            if( m_channel == 8)
+                pos = m_ServoSet.getYaw();
+            else{
+                mMoveToCameraTimer.cancel();
+                mMoveToCameraTimer.purge();
+                mMoveToCameraTimer = null;
+                send_command_ack(MAV_CMD_DO_SET_SERVO, MAV_RESULT.MAV_RESULT_UNSUPPORTED);
+            }
+            if(pos > m_ServoPos-1 && pos < m_ServoPos+1) {
                 mMoveToCameraTimer.cancel();
                 mMoveToCameraTimer.purge();
                 mMoveToCameraTimer = null;
