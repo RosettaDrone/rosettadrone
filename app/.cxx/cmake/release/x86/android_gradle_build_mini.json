@@ -6,12 +6,6 @@
     "/home/smartdrone/Android/Sdk/cmake/3.6.4111459/bin/cmake --build /home/smartdrone/Dropbox\\ (eSmart\\ Systems)/Autonomy/Autonomy_Terje/rosettadrone_work/app/.cxx/cmake/release/x86 --target clean"
   ],
   "libraries": {
-    "VideoEncoderJNI-Release-x86": {
-      "artifactName": "VideoEncoderJNI",
-      "buildCommand": "/home/smartdrone/Android/Sdk/cmake/3.6.4111459/bin/cmake --build /home/smartdrone/Dropbox\\ (eSmart\\ Systems)/Autonomy/Autonomy_Terje/rosettadrone_work/app/.cxx/cmake/release/x86 --target VideoEncoderJNI",
-      "abi": "x86",
-      "output": "/home/smartdrone/Dropbox (eSmart Systems)/Autonomy/Autonomy_Terje/rosettadrone_work/app/build/intermediates/cmake/release/obj/x86/libVideoEncoderJNI.so"
-    },
     "djivideojni-Release-x86": {
       "artifactName": "djivideojni",
       "buildCommand": "/home/smartdrone/Android/Sdk/cmake/3.6.4111459/bin/cmake --build /home/smartdrone/Dropbox\\ (eSmart\\ Systems)/Autonomy/Autonomy_Terje/rosettadrone_work/app/.cxx/cmake/release/x86 --target djivideojni",
@@ -22,6 +16,11 @@
       "artifactName": "gstreamer_android",
       "abi": "x86",
       "output": "/home/smartdrone/Dropbox (eSmart Systems)/Autonomy/Autonomy_Terje/rosettadrone_work/app/src/main/cpp/lib/x86/libgstreamer_android.so"
+    },
+    "c++_shared-Release-x86": {
+      "artifactName": "c++_shared",
+      "abi": "x86",
+      "output": "/home/smartdrone/Dropbox (eSmart Systems)/Autonomy/Autonomy_Terje/rosettadrone_work/app/src/main/cpp/lib/x86/libc++_shared.so.27"
     },
     "ffmpegjni-Release-x86": {
       "artifactName": "ffmpegjni",

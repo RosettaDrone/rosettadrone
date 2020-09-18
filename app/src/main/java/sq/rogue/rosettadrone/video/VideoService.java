@@ -155,12 +155,8 @@ public class VideoService extends Service implements NativeHelper.NativeDataList
     @Override
     public void onDataRecv(byte[] data, int size, int frameNum, boolean isKeyFrame, int width, int height) {
         if(size > 0 && isRunning) {
-            try {
-                // Pack the raw H.264 stream...
-                splitNALs(data);
-                } catch (Exception e) {
-                Log.e(TAG, "Error sending packet to Gstreamer", e);
-            }
+            // Pack the raw H.264 stream...
+            splitNALs(data);
         }
     }
 }

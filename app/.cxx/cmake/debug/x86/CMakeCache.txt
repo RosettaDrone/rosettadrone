@@ -193,9 +193,6 @@ Project_BINARY_DIR:STATIC=/home/smartdrone/Dropbox (eSmart Systems)/Autonomy/Aut
 Project_SOURCE_DIR:STATIC=/home/smartdrone/Dropbox (eSmart Systems)/Autonomy/Autonomy_Terje/rosettadrone_work/app
 
 //Dependencies for the target
-VideoEncoderJNI_LIB_DEPENDS:STATIC=general;gstreamer_android;general;/home/smartdrone/Android/Sdk/ndk/21.3.6528147/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/i686-linux-android/22/liblog.so;
-
-//Dependencies for the target
 djivideojni_LIB_DEPENDS:STATIC=general;ffmpegjni;general;/home/smartdrone/Android/Sdk/ndk/21.3.6528147/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/i686-linux-android/22/liblog.so;
 
 //Path to a library.
