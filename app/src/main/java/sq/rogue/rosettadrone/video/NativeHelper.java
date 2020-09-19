@@ -58,7 +58,7 @@ public class NativeHelper {
      * @param size
      * @return
      */
-    public native boolean parse(byte[] buf, int size);
+    public native boolean parse(byte[] buf, int size, int mode);
 
     /**
      * Release the ffmpeg

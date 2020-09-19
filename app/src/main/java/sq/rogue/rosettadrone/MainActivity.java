@@ -91,7 +91,7 @@ import dji.sdk.sdkmanager.DJISDKManager;
 import sq.rogue.rosettadrone.logs.LogFragment;
 import sq.rogue.rosettadrone.settings.SettingsActivity;
 import sq.rogue.rosettadrone.settings.MapActivity;
-//import sq.rogue.rosettadrone.video.H264Packetizer;
+import sq.rogue.rosettadrone.video.H264Packetizer;
 import sq.rogue.rosettadrone.video.NativeHelper;
 import sq.rogue.rosettadrone.video.VideoService;
 
@@ -140,17 +140,19 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
     private boolean gui_enabled            = true;
     private Button mBtnSafety;
     private boolean stat                   = false; // Is it safe to takeoff....
-    private boolean mNoTranscoding = true;
-    // private DatagramSocket mGstSocket;
+    private boolean mGstEnabled            = true;
+    private DatagramSocket mGstSocket;
+    //private InetAddress videoIPString;
 
     private boolean mExternalVideoOut = true;
 
-    private String videoIPString;
+    private String mvideoIPString;
     private int videoPort;
     private int mVideoBitrate = 2;
     private int mEncodeSpeed = 2;
     private VideoService mService = null;
     private boolean mIsBound;
+
 
     private VideoFeeder.VideoFeed standardVideoFeeder;
     protected VideoFeeder.VideoDataListener mReceivedVideoDataListener = null;
@@ -159,7 +161,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
     private DJICodecManager mCodecManager;
     private int videoViewWidth;
     private int videoViewHeight;
- //   protected H264Packetizer mPacketizer;
+    protected H264Packetizer mPacketizer;
     protected SharedPreferences sharedPreferences;
 
     private Runnable djiUpdateRunnable = () -> {
@@ -217,11 +219,13 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         } else if (sharedPreferences.getBoolean("pref_separate_gcs", false)) {
             address = sharedPreferences.getString("pref_video_ip", "127.0.0.1");
         }
-        videoIPString = address;
 
-  //      address.replace("/","");
-        Log.e(TAG, "Ip Address: " + videoIPString);
 
+        //------------------------------------------------------------
+        mvideoIPString = address;
+
+        //      address.replace("/","");
+        Log.e(TAG, "Ip Address: " + mvideoIPString);
         //------------------------------------------------------------
 
         videoPort     = Integer.parseInt(Objects.requireNonNull(sharedPreferences.getString("pref_video_port", "5600")));
@@ -229,34 +233,30 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         mEncodeSpeed  = Integer.parseInt(Objects.requireNonNull(sharedPreferences.getString("pref_encode_speed", "2")));
 
         //------------------------------------------------------------
-   //     if (!isTranscodedVideoFeedNeeded())
-        {
-            // This is an older system , so we must start the old video Service...
+
+  //      if (!isTranscodedVideoFeedNeeded()){
             Intent intent = new Intent(this, VideoService.class);
             this.startService(intent);
             safeSleep(500);
             doBindService();
-            mIsBound = true;
-        }
-        /*
-        else {
-            try {
+    //    }else{
+      /*      try {
                 if (mPacketizer != null && mPacketizer.getRtpSocket() != null)
                     mPacketizer.getRtpSocket().close();
 
                 mPacketizer = new H264Packetizer();
-                mPacketizer.getRtpSocket().setDestination(InetAddress.getByName(videoIPString), videoPort, 5000);
+                Log.e(TAG, "Receiver: " + mvideoIPString + ":" + videoPort);
+                mPacketizer.getRtpSocket().setDestination(InetAddress.getByName(address), videoPort, 5000);
 
             } catch (UnknownHostException e) {
                 Log.e(TAG, "Error setting destination for RTP packetizer", e);
             }
+*/
+        if (isTranscodedVideoFeedNeeded()){
             // The one were we get transcode data...
             VideoFeeder.getInstance().setTranscodingDataRate(mVideoBitrate);
+            logMessageDJI("set rate to "+ mVideoBitrate);
         }
-*/
-        // The one were we get transcode data...
-        if (isTranscodedVideoFeedNeeded())
-            VideoFeeder.getInstance().setTranscodingDataRate((float)2.5); //mVideoBitrate);
 
         //------------------------------------------------------------
         videostreamPreviewTtView = findViewById(R.id.livestream_preview_ttv);
@@ -269,9 +269,9 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder iBinder)
         {
-            Log.e(TAG, "onServiceConnected  "+videoIPString);
+            Log.e(TAG, "onServiceConnected  "+mvideoIPString);
             mService = ((VideoService.LocalBinder)iBinder).getInstance();
-            mService.setParameters(videoIPString,videoPort,mVideoBitrate,mEncodeSpeed);
+            mService.setParameters(mvideoIPString,videoPort,mVideoBitrate,mEncodeSpeed);
         }
 
         @Override
@@ -311,6 +311,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
     protected void onResume() {
         Log.e(TAG, "onResume()");
         super.onResume();
+
 /*
         if (mDroneDetails != null) {
             String droneID = prefs.getString("pref_drone_id", "1");
@@ -322,10 +323,11 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
             String text = "Drone Battery:       " + "\t\t" + dronebattery + "%"  + "\t" + "ID: " + "\t\t" + droneID + System.getProperty("line.separator") +
                     "Controller Battery:  " + "\t" + controlerbattery + "%"  + "\t" + "RTL:" + "\t" + rtlAlt;
 
+//            String text = "ID:" + "\t" + droneID + System.getProperty("line.separator") + "RTL:" + "\t" + rtlAlt;
             mDroneDetails.setText(text);
         }
- */
 
+ */
         if (!prefs.getBoolean("pref_enable_video", true)) {
             mExternalVideoOut=false;
         }else{
@@ -333,18 +335,27 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         }
 
         initPreviewerTextureView();  // Decoded data to UDP...
-        if (isTranscodedVideoFeedNeeded()) {
-            notifyStatusChange();
-        }
+        //notifyStatusChange();
 
         // If we use a camera... Remove Listeners if needed...
+
         if (mCamera != null) {
-            if (isTranscodedVideoFeedNeeded()) {
-                if (standardVideoFeeder != null) {
-                    standardVideoFeeder.addVideoDataListener(mReceivedVideoDataListener);
+            if (!prefs.getBoolean("pref_enable_video", true)) {
+                if (isTranscodedVideoFeedNeeded()) {
+                    if (standardVideoFeeder != null) {
+                        standardVideoFeeder.removeVideoDataListener(mReceivedVideoDataListener);
+                    }
+                } else {
+                    VideoFeeder.getInstance().getPrimaryVideoFeed().removeVideoDataListener(mReceivedVideoDataListener);
                 }
             } else {
-                VideoFeeder.getInstance().getPrimaryVideoFeed().addVideoDataListener(mReceivedVideoDataListener);
+                if (isTranscodedVideoFeedNeeded()) {
+                    if (standardVideoFeeder != null) {
+                        standardVideoFeeder.addVideoDataListener(mReceivedVideoDataListener);
+                    }
+                } else {
+                    VideoFeeder.getInstance().getPrimaryVideoFeed().addVideoDataListener(mReceivedVideoDataListener);
+                }
             }
         }
     }
@@ -418,13 +429,10 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
 
         //---------------- Hide top bar ---
         Objects.requireNonNull(getSupportActionBar()).hide();
-
         //---------------- Force Landscape ether ways...
         this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
-
         //---------------- Hide title (do not know..)
 //        requestWindowFeature(Window.FEATURE_NO_TITLE); // for hiding title
-
         //---------------- Make absolutely full screen...
         //       getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
         //             WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -578,7 +586,6 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
 
     private void notifyStatusChange()
     {
-        Log.e(TAG, "notifyStatusChange():");
         mDJIHandler.removeCallbacks(djiUpdateRunnable);
         mDJIHandler.postDelayed(djiUpdateRunnable, 500);
         final BaseProduct product = RDApplication.getProductInstance();
@@ -589,24 +596,29 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         }
 
         // The callback for receiving the raw H264 video data for camera live view
-        // For newer drones... This is AFTER Transcoding and on screen viewing...
-        mReceivedVideoDataListener = (videoBuffer, size) -> {
-            if (mNoTranscoding) {  // Old Video System...
-                if(mCodecManager != null){
-                    mCodecManager.sendDataToDecoder(videoBuffer, size);
+        // For newer drones...
+        mReceivedVideoDataListener = new VideoFeeder.VideoDataListener() {
+
+            @Override
+            public void onReceive(byte[] videoBuffer, int size) {
+                if (mGstEnabled) {
+                    if(mCodecManager != null){
+                        mCodecManager.sendDataToDecoder(videoBuffer, size);
+                    }
+                    if(mExternalVideoOut == true)
+                        NativeHelper.getInstance().parse(videoBuffer, size,0);
+                } else {
+                    if(mExternalVideoOut == true) // && mService != null)
+                        NativeHelper.getInstance().parse(videoBuffer, size,1);
+    //                    splitNALs(videoBuffer);
                 }
-                if(mExternalVideoOut == true)
-                    NativeHelper.getInstance().parse(videoBuffer, size);
-            } else {
-                if(mExternalVideoOut == true && mService != null)
-                    mService.splitNALs(videoBuffer);  // OcuSync 2.0 path...
             }
         };
+
         if (null == product || !product.isConnected()) {
             mCamera = null;
         } else {
             if (!product.getModel().equals(Model.UNKNOWN_AIRCRAFT)) {
-
                 mCamera = product.getCamera();
                 mCamera.setMode(SettingsDefinitions.CameraMode.SHOOT_PHOTO, djiError -> {
                     if (djiError != null) {
@@ -626,14 +638,18 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
                 //to receive the transcoded video feed from main camera.
                 if (isTranscodedVideoFeedNeeded()) {
                     standardVideoFeeder = VideoFeeder.getInstance().provideTranscodedVideoFeed();
-                    standardVideoFeeder.addVideoDataListener(mReceivedVideoDataListener);
-                    mNoTranscoding = false;
-                    logMessageDJI("Transcode Video !!!!!!!");
+                    if (prefs.getBoolean("pref_enable_video", true)) {
+                        standardVideoFeeder.addVideoDataListener(mReceivedVideoDataListener);
+                        mGstEnabled = false;
+                        logMessageDJI("Transcode Video !!!!!!!");
+                    }
                 }else{
                     VideoFeeder.getInstance().getPrimaryVideoFeed();
-                    VideoFeeder.getInstance().getPrimaryVideoFeed().addVideoDataListener(mReceivedVideoDataListener);
-                    mNoTranscoding = true;
-                    logMessageDJI("Do NOT Transcode Video !!!!!!!");
+                    if (prefs.getBoolean("pref_enable_video", true)) {
+                        VideoFeeder.getInstance().getPrimaryVideoFeed().addVideoDataListener(mReceivedVideoDataListener);
+                        mGstEnabled = true;
+                        logMessageDJI("Do NOT Transcode Video !!!!!!!");
+                    }
                 }
             }
         }
@@ -678,6 +694,17 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
             }
         });
     }
+/*
+    @Override
+    public void onYuvDataReceived(MediaFormat format, final ByteBuffer yuvFrame, int dataSize, final int width, final int height) {
+//    public void onYuvDataReceived(final ByteBuffer yuvFrame, int dataSize, final int width, final int height) {
+        //In this demo, we test the YUV data by saving it into JPG files.
+ //       Log.e(TAG, "onYuvDataReceived " + dataSize + "  " + format);
+//        Log.e(TAG, "onYuvDataReceived " + dataSize );
+        Log.e(TAG, "onYuvDataReceived");
+
+    }
+*/
 
     //---------------------------------------------------------------------------------------
     //---------------------------------------------------------------------------------------
@@ -720,21 +747,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
 
         @Override
         public void onProductChanged(BaseProduct baseProduct) {
-            mProduct = baseProduct;
 
-            if (mProduct == null) {
-                logMessageDJI("No DJI drone detected");
-                onDroneDisconnected();
-            } else {
-                if (mProduct instanceof Aircraft) {
-                    logMessageDJI("DJI aircraft detected");
-                    onDroneConnected();
-                } else {
-                    logMessageDJI("DJI non-aircraft product detected");
-                    onDroneDisconnected();
-                }
-            }
-            notifyStatusChange();
         }
 
         /*
@@ -1558,7 +1571,6 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
 
     //---------------------------------------------------------------------------------------
     // --------------------------------------------------------------------------------------------
-    /*
     public void splitNALs(byte[] buffer) {
 
         // One H264 frame can contain multiple NALs
@@ -1589,7 +1601,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
             mPacketizer.run();
         }
     }
-*/
+
     //---------------------------------------------------------------------------------------
     //endregion
 

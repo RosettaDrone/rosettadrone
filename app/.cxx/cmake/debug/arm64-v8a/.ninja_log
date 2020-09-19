@@ -11,3 +11,7 @@
 50	62	0	../../../../build/intermediates/cmake/debug/obj/arm64-v8a/libdjivideojni.so	313f8512daac0489
 0	49	0	CMakeFiles/djivideojni.dir/src/main/cpp/dji_video_jni.c.o	bfb7984bb116cffd
 49	62	0	../../../../build/intermediates/cmake/debug/obj/arm64-v8a/libdjivideojni.so	313f8512daac0489
+0	48	0	CMakeFiles/djivideojni.dir/src/main/cpp/dji_video_jni.c.o	bfb7984bb116cffd
+48	62	0	../../../../build/intermediates/cmake/debug/obj/arm64-v8a/libdjivideojni.so	313f8512daac0489
+0	51	0	CMakeFiles/djivideojni.dir/src/main/cpp/dji_video_jni.c.o	bfb7984bb116cffd
+51	66	0	../../../../build/intermediates/cmake/debug/obj/arm64-v8a/libdjivideojni.so	313f8512daac0489
