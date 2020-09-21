@@ -3,6 +3,7 @@ package sq.rogue.rosettadrone;
 import android.util.Log;
 
 import com.MAVLink.Messages.MAVLinkMessage;
+import com.MAVLink.common.msg_altitude;
 import com.MAVLink.common.msg_command_long;
 import com.MAVLink.common.msg_global_position_int;
 import com.MAVLink.common.msg_manual_control;
@@ -68,6 +69,7 @@ import static com.MAVLink.enums.MAV_CMD.MAV_CMD_NAV_LAND;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_NAV_LOITER_UNLIM;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_NAV_RETURN_TO_LAUNCH;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_NAV_TAKEOFF;
+import static com.MAVLink.enums.MAV_CMD.MAV_CMD_NAV_WAYPOINT;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_VIDEO_START_CAPTURE;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_VIDEO_STOP_CAPTURE;
@@ -77,6 +79,7 @@ import static sq.rogue.rosettadrone.util.TYPE_WAYPOINT_MAX_ALTITUDE;
 import static sq.rogue.rosettadrone.util.TYPE_WAYPOINT_MAX_SPEED;
 import static sq.rogue.rosettadrone.util.TYPE_WAYPOINT_MIN_ALTITUDE;
 import static sq.rogue.rosettadrone.util.TYPE_WAYPOINT_MIN_SPEED;
+
 import static sq.rogue.rosettadrone.util.safeSleep;
 
 import dji.common.flightcontroller.virtualstick.FlightControlData;
@@ -110,6 +113,7 @@ public class MAVLinkReceiver {
     public void process(MAVLinkMessage msg) {
 
         if(msg.msgid != 0) {
+            Log.d(TAG, msg.toString());
   //          parent.logMessageDJI(String.valueOf(msg));
      //       parent.logMessageDJI(String.valueOf(msg.msgid));
         }
@@ -148,9 +152,26 @@ public class MAVLinkReceiver {
    //                     mModel.set_flight_mode(ATTI);
                         break;
                     case MAV_CMD_NAV_TAKEOFF:
-                        parent.logMessageDJI("TAKEOFF TARGET = " + msg_cmd.target_system);
-                        parent.logMessageDJI("TAKEOFF SYSID = " + msg.sysid);
+                        Log.d(TAG,"ALT = " + msg_cmd.param7);
+                        mModel.mAirBorn = 0;
                         mModel.do_takeoff();
+
+                        // Wait for command to be executed...
+                        while( mModel.mAirBorn == 0)
+                            safeSleep(250);
+
+                        // If we took off, wait for command co complete...
+                        while( mModel.mAirBorn == 2 && mModel.m_alt < 1.0)
+                            safeSleep(250);
+
+                        // We must wait until the takeoff sequence in the DJI module has completed...
+                        Log.d(TAG,"Mode = " + mModel.mAirBorn);
+                        safeSleep(2500);
+
+                        // If we are airborne, or was airborne from the start...
+                        if(mModel.m_alt >= 0.9)
+                            mModel.do_set_motion_relative(0, 0, msg_cmd.param7, 0, 0, 0, 0, 0, 0b00011111111000);
+
                         break;
                     case MAV_CMD_NAV_LAND:
                         mModel.do_land();
@@ -351,29 +372,47 @@ public class MAVLinkReceiver {
                 msg_mission_item msg_item = (msg_mission_item) msg;
 
                 if (mModel.getSystemId() != msg_item.target_system) {
-                    return;
+                    break;
                 }
                 parent.logMessageDJI("Add mission: " + msg_item.seq );
 
-                // Somehow the GOTO from QGroundControl does not issue a mission count...
-                if (mMissionItemList == null){
-                    parent.logMessageDJI("Special single point mission!" );
-                    generateNewMission();
-                    mMissionItemList = new ArrayList<msg_mission_item>();
-                    mNumGCSWaypoints = 1;
-                    wpState = WP_STATE_REQ_WP;
-                    mModel.request_mission_item(0);
+                if(((msg_mission_item) msg).command == MAV_CMD_NAV_WAYPOINT) {
+                    Log.d(TAG, "Lat = " + msg_item.x);
+                    Log.d(TAG, "Lon = " + msg_item.y);
+                    Log.d(TAG, "ALT = " + msg_item.z);
+                    mModel.do_set_motion_absolute(
+                            (double) msg_item.x / 10000000,
+                            (double) msg_item.y / 10000000,
+                            msg_item.z,
+                            msg_item.param4,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0b0000111111111000);
                 }
+                else {
 
-                mMissionItemList.add(msg_item);
+                    // Somehow the GOTO from QGroundControl does not issue a mission count...
+                    if (mMissionItemList == null) {
+                        parent.logMessageDJI("Special single point mission!");
+                        generateNewMission();
+                        mMissionItemList = new ArrayList<msg_mission_item>();
+                        mNumGCSWaypoints = 1;
+                        wpState = WP_STATE_REQ_WP;
+                        mModel.request_mission_item(0);
+                    }
 
-                // We are done fetching a complete mission from the GCS...
-                if (msg_item.seq == mNumGCSWaypoints - 1) {
-                    wpState = WP_STATE_INACTIVE;
-                    finalizeNewMission();
-              //      mModel.send_mission_ack();
-                } else {
-                    mModel.request_mission_item((msg_item.seq + 1));
+                    mMissionItemList.add(msg_item);
+
+                    // We are done fetching a complete mission from the GCS...
+                    if (msg_item.seq == mNumGCSWaypoints - 1) {
+                        wpState = WP_STATE_INACTIVE;
+                        finalizeNewMission();
+                        //      mModel.send_mission_ack();
+                    } else {
+                        mModel.request_mission_item((msg_item.seq + 1));
+                    }
                 }
                 break;
 

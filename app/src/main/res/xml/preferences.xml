@@ -157,10 +157,16 @@
             android:defaultValue="true" />
 
         <androidx.preference.SwitchPreferenceCompat
+            android:key="pref_enable_dualvideo"
+            android:title="@string/pref_enable_dualvideo"
+            android:defaultValue="false" />
+
+        <androidx.preference.SwitchPreferenceCompat
             android:key="pref_separate_gcs"
             android:dependency="pref_enable_video"
             android:title="@string/pref_separate_gcs"
             android:defaultValue="false" />
+
         <androidx.preference.EditTextPreference
             android:defaultValue="127.0.0.1"
             android:dependency="pref_separate_gcs"

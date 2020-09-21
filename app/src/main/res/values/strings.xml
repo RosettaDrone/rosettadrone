@@ -59,6 +59,7 @@
     <string name="pref_remote_gcs">Use external device for GCS</string>
     <string name="pref_separate_gcs">Separate video address from GCS</string>
     <string name="pref_enable_video">Enable video feed</string>
+    <string name="pref_enable_dualvideo">Enable second video feed on port+1</string>
 
     <!-- Network -->
     <string name="pref_gcs_ip">GCS IP address</string>

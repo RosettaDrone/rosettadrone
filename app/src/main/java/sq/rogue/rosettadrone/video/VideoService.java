@@ -85,8 +85,11 @@ public class VideoService extends Service implements NativeHelper.NativeDataList
         mvideoPort= videoPort;
         mvideoBitrate = videoBitrate;
         mencodeSpeed = encodeSpeed;
-
         initPacketizer(mip, mvideoPort, mvideoBitrate, mencodeSpeed);
+    }
+
+    public void setDualVideo(boolean dualVideo){
+        mPacketizer.socket.UseDualVideo(dualVideo);
     }
 
     private void setActionDroneDisconnected() {
