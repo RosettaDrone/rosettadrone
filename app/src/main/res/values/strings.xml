@@ -126,6 +126,7 @@
     <string name="options_download_log">Download Logs</string>
     <string name="options_help">Help &amp; feedback</string>
     <string name="options_map">Map and Control</string>
+    <string name="options_map_new">Map Gaode</string>
     <string name="options_gui">Switch Logging</string>
 
     <!-- Error Messages -->

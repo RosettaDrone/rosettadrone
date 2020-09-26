@@ -18,6 +18,12 @@
         android:title="@string/settings" />
 
     <item
+        android:id="@+id/action_gaode"
+        android:orderInCategory="503"
+        app:showAsAction="never"
+        android:onClick="onMenuItemClick"
+        android:title="@string/options_map_new" />
+    <item
         android:id="@+id/action_help"
         android:orderInCategory="503"
         app:showAsAction="never"

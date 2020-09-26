@@ -42,7 +42,7 @@ rule C_SHARED_LIBRARY_LINKER__djivideojni
 # Rule for re-running cmake.
 
 rule RERUN_CMAKE
-  command = /home/smartdrone/Android/Sdk/cmake/3.6.4111459/bin/cmake -H"/home/smartdrone/Dropbox (eSmart Systems)/Autonomy/Autonomy_Terje/rosettadrone_work/app" -B"/home/smartdrone/Dropbox (eSmart Systems)/Autonomy/Autonomy_Terje/rosettadrone_work/app/.cxx/cmake/debug/armeabi-v7a"
+  command = /home/smartdrone/Android/Sdk/cmake/3.6.4111459/bin/cmake -H/home/smartdrone/Working_Private/rosettadrone_work/app -B/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cmake/debug/armeabi-v7a
   description = Re-running CMake...
   generator = 1
 

@@ -1,7 +1,7 @@
 Executable : /home/smartdrone/Android/Sdk/cmake/3.6.4111459/bin/cmake
 arguments : 
 --build
-/home/smartdrone/Dropbox (eSmart Systems)/Autonomy/Autonomy_Terje/rosettadrone_work/app/.cxx/cmake/debug/arm64-v8a
+/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cmake/debug/arm64-v8a
 --target
 djivideojni
 jvmArgs : 

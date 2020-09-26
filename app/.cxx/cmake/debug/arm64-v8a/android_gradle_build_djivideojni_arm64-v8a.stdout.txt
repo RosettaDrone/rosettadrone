@@ -1,1 +1,21 @@
-ninja: no work to do.
+[1/2] Building C object CMakeFiles/djivideojni.dir/src/main/cpp/dji_video_jni.c.o
+In file included from /home/smartdrone/Working_Private/rosettadrone_work/app/src/main/cpp/dji_video_jni.c:4:
+In file included from ../../../../src/main/cpp/ffmpeg.h:34:
+In file included from ../../../../src/main/cpp/cmdutils.h:28:
+In file included from ../../../../src/main/cpp/include/libavcodec/avcodec.h:31:
+In file included from ../../../../src/main/cpp/include/libavutil/samplefmt.h:24:
+In file included from ../../../../src/main/cpp/include/libavutil/avutil.h:289:
+In file included from ../../../../src/main/cpp/include/libavutil/common.h:401:
+In file included from ../../../../src/main/cpp/include/libavutil/mem.h:33:
+../../../../src/main/cpp/include/libavutil/error.h:121:5: warning: non-constant static local variable in inline function may be different in different files [-Wstatic-local-in-inline]
+    static char str[AV_ERROR_MAX_STRING_SIZE];
+    ^
+../../../../src/main/cpp/include/libavutil/error.h:119:1: note: use 'static' to give inline function 'av_err2str' internal linkage
+av_always_inline char *av_err2str(int errnum) {
+^
+static 
+../../../../src/main/cpp/include/libavutil/attributes.h:37:30: note: expanded from macro 'av_always_inline'
+#    define av_always_inline __attribute__((always_inline)) inline
+                             ^
+1 warning generated.
+[2/2] Linking C shared library ../../../../build/intermediates/cmake/debug/obj/arm64-v8a/libdjivideojni.so

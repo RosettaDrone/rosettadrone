@@ -2,12 +2,12 @@
 {
 	"buildFiles" : 
 	[
-		"/home/smartdrone/Dropbox (eSmart Systems)/Autonomy/Autonomy_Terje/rosettadrone_work/app/CMakeLists.txt"
+		"/home/smartdrone/Working_Private/rosettadrone_work/app/CMakeLists.txt"
 	],
 	"cFileExtensions" : [ "c" ],
 	"cleanCommands" : 
 	[
-		"/home/smartdrone/Android/Sdk/cmake/3.6.4111459/bin/cmake --build /home/smartdrone/Dropbox\\ (eSmart\\ Systems)/Autonomy/Autonomy_Terje/rosettadrone_work/app/.cxx/cmake/debug/armeabi-v7a --target clean"
+		"/home/smartdrone/Android/Sdk/cmake/3.6.4111459/bin/cmake --build /home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cmake/debug/armeabi-v7a --target clean"
 	],
 	"libraries" : 
 	{
@@ -16,25 +16,25 @@
 			"abi" : "armeabi-v7a",
 			"artifactName" : "c++_shared",
 			"buildType" : "debug",
-			"output" : "/home/smartdrone/Dropbox (eSmart Systems)/Autonomy/Autonomy_Terje/rosettadrone_work/app/src/main/cpp/lib/armeabi-v7a/libc++_shared.so.27",
+			"output" : "/home/smartdrone/Working_Private/rosettadrone_work/app/src/main/cpp/lib/armeabi-v7a/libc++_shared.so.27",
 			"toolchain" : "6038786665986016389"
 		},
 		"djivideojni-Debug-armeabi-v7a" : 
 		{
 			"abi" : "armeabi-v7a",
 			"artifactName" : "djivideojni",
-			"buildCommand" : "/home/smartdrone/Android/Sdk/cmake/3.6.4111459/bin/cmake --build /home/smartdrone/Dropbox\\ (eSmart\\ Systems)/Autonomy/Autonomy_Terje/rosettadrone_work/app/.cxx/cmake/debug/armeabi-v7a --target djivideojni",
+			"buildCommand" : "/home/smartdrone/Android/Sdk/cmake/3.6.4111459/bin/cmake --build /home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cmake/debug/armeabi-v7a --target djivideojni",
 			"buildType" : "debug",
 			"files" : 
 			[
 				
 				{
 					"flags" : "  --target=armv7-none-linux-androideabi22 --gcc-toolchain=/home/smartdrone/Android/Sdk/ndk/21.3.6528147/toolchains/llvm/prebuilt/linux-x86_64 --sysroot=/home/smartdrone/Android/Sdk/ndk/21.3.6528147/toolchains/llvm/prebuilt/linux-x86_64/sysroot -Ddjivideojni_EXPORTS -I../../../../src/main/cpp -I../../../../src/main/cpp/include -I../../../../src/main/cpp/gstreamer-1.0/armv7/include/gstreamer-1.0 -I../../../../src/main/cpp/gstreamer-1.0/armv7/include/glib-2.0 -I../../../../src/main/cpp/gstreamer-1.0/armv7/lib/glib-2.0/include  -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -march=armv7-a -mthumb -Wformat -Werror=format-security  -O0 -fno-limit-debug-info  -fPIC      -c ",
-					"src" : "/home/smartdrone/Dropbox (eSmart Systems)/Autonomy/Autonomy_Terje/rosettadrone_work/app/src/main/cpp/dji_video_jni.c",
-					"workingDirectory" : "/home/smartdrone/Dropbox (eSmart Systems)/Autonomy/Autonomy_Terje/rosettadrone_work/app/.cxx/cmake/debug/armeabi-v7a"
+					"src" : "/home/smartdrone/Working_Private/rosettadrone_work/app/src/main/cpp/dji_video_jni.c",
+					"workingDirectory" : "/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cmake/debug/armeabi-v7a"
 				}
 			],
-			"output" : "/home/smartdrone/Dropbox (eSmart Systems)/Autonomy/Autonomy_Terje/rosettadrone_work/app/build/intermediates/cmake/debug/obj/armeabi-v7a/libdjivideojni.so",
+			"output" : "/home/smartdrone/Working_Private/rosettadrone_work/app/build/intermediates/cmake/debug/obj/armeabi-v7a/libdjivideojni.so",
 			"toolchain" : "6038786665986016389"
 		},
 		"ffmpegjni-Debug-armeabi-v7a" : 
@@ -42,7 +42,7 @@
 			"abi" : "armeabi-v7a",
 			"artifactName" : "ffmpegjni",
 			"buildType" : "debug",
-			"output" : "/home/smartdrone/Dropbox (eSmart Systems)/Autonomy/Autonomy_Terje/rosettadrone_work/app/src/main/cpp/lib/armeabi-v7a/libffmpeg.so",
+			"output" : "/home/smartdrone/Working_Private/rosettadrone_work/app/src/main/cpp/lib/armeabi-v7a/libffmpeg.so",
 			"toolchain" : "6038786665986016389"
 		},
 		"gstreamer_android-Debug-armeabi-v7a" : 
@@ -50,7 +50,7 @@
 			"abi" : "armeabi-v7a",
 			"artifactName" : "gstreamer_android",
 			"buildType" : "debug",
-			"output" : "/home/smartdrone/Dropbox (eSmart Systems)/Autonomy/Autonomy_Terje/rosettadrone_work/app/src/main/cpp/lib/armeabi-v7a/libgstreamer_android.so",
+			"output" : "/home/smartdrone/Working_Private/rosettadrone_work/app/src/main/cpp/lib/armeabi-v7a/libgstreamer_android.so",
 			"toolchain" : "6038786665986016389"
 		}
 	},

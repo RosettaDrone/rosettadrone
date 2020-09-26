@@ -36,22 +36,39 @@ import static com.google.android.material.snackbar.Snackbar.LENGTH_LONG;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.appcompat.app.AppCompatActivity;
+
+import android.text.Layout;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.TextureView;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.ViewGroup.LayoutParams;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import android.widget.PopupMenu;
 import android.widget.Toast;
 import com.MAVLink.MAVLinkPacket;
 import com.MAVLink.Messages.MAVLinkMessage;
 import com.MAVLink.Parser;
+import com.amap.api.maps.AMap;
+import com.amap.api.maps.CameraUpdateFactory;
+import com.amap.api.maps.MapView;
+import com.amap.api.maps.model.BitmapDescriptorFactory;
+import com.amap.api.maps.model.LatLng;
+import com.amap.api.maps.model.Marker;
+import com.amap.api.maps.model.MarkerOptions;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -67,6 +84,7 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -77,16 +95,19 @@ import dji.common.camera.ResolutionAndFrameRate;
 import dji.common.camera.SettingsDefinitions;
 import dji.common.error.DJIError;
 import dji.common.error.DJISDKError;
+import dji.common.flightcontroller.FlightControllerState;
 import dji.common.product.Model;
 import dji.sdk.base.BaseComponent;
 import dji.sdk.base.BaseProduct;
 import dji.sdk.camera.Camera;
 import dji.sdk.camera.VideoFeeder;
 import dji.sdk.codec.DJICodecManager;
+import dji.sdk.flightcontroller.FlightController;
 import dji.sdk.products.Aircraft;
 import dji.sdk.sdkmanager.DJISDKInitEvent;
 import dji.sdk.sdkmanager.DJISDKManager;
 import sq.rogue.rosettadrone.logs.LogFragment;
+import sq.rogue.rosettadrone.settings.GaodeActivity;
 import sq.rogue.rosettadrone.settings.SettingsActivity;
 import sq.rogue.rosettadrone.settings.MapActivity;
 import sq.rogue.rosettadrone.video.H264Packetizer;
@@ -100,6 +121,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
     public static final String FLAG_CONNECTION_CHANGE = "dji_sdk_connection_change";
     private final static int RESULT_SETTINGS = 1001;
     private final static int RESULT_HELP = 1002;
+    private static int compare_height = 0;
 
     public static boolean FLAG_PREFS_CHANGED = false;
     public static boolean FLAG_VIDEO_ADDRESS_CHANGED = false;
@@ -114,6 +136,12 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
     public static boolean FLAG_DRONE_LANDING_PROTECTION_CHANGED = false;
     public static boolean FLAG_DRONE_FLIGHT_PATH_MODE_CHANGED = false;
     public static boolean FLAG_DRONE_MAX_HEIGHT_CHANGED = false;
+
+    private MapView mapView;
+    private AMap aMap;
+    private double droneLocationLat, droneLocationLng;
+    private Marker droneMarker = null;
+    private FlightController mFlightController;
 
     private static BaseProduct mProduct;
     private final String TAG =  MainActivity.class.getSimpleName();
@@ -151,6 +179,8 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
     private VideoFeeder.VideoFeed standardVideoFeeder;
     protected VideoFeeder.VideoDataListener mReceivedVideoDataListener = null;
     private TextureView videostreamPreviewTtView;
+    private TextureView videostreamPreviewTtViewSmall;
+    private SurfaceTexture surfaceT;
     private Camera mCamera;
     private DJICodecManager mCodecManager;
     private int videoViewWidth;
@@ -416,6 +446,86 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         super.onDestroy();
     }
 
+
+    private void initMapView() {
+
+        if (aMap == null) {
+            aMap = mapView.getMap();
+            //aMap.setOnMapClickListener(this);// add the listener for click for amap object
+        }
+
+
+        LatLng coordinate = new LatLng(22.5362, 113.9454);
+
+        if (checkGpsCoordination(droneLocationLat, droneLocationLng)) {
+            coordinate = new LatLng(droneLocationLat, droneLocationLng);
+        }
+//        aMap.addMarker(new MarkerOptions().position(coordinate).title("Marker in Shenzhen"));
+        aMap.addMarker(new MarkerOptions().position(coordinate));
+        aMap.getUiSettings().setZoomControlsEnabled(false);
+        aMap.moveCamera(CameraUpdateFactory.newLatLng(coordinate));
+
+    }
+
+    private void initFlightController() {
+//        setResultToToast(droneLocationLat+"----"+droneLocationLng);
+
+        BaseProduct product;
+
+        if (RDApplication.getSim() == true) {
+            product = DJISimulatorApplication.getAircraftInstance();
+        }else {
+            product = RDApplication.getProductInstance();
+        }
+
+        if (product != null && product.isConnected()) {
+            if (product instanceof Aircraft) {
+                mFlightController = ((Aircraft) product).getFlightController();
+            }
+        }
+
+        if (mFlightController != null) {
+            mFlightController.setStateCallback(
+                    new FlightControllerState.Callback() {
+                        @Override
+                        public void onUpdate(FlightControllerState djiFlightControllerCurrentState) {
+                            droneLocationLat = djiFlightControllerCurrentState.getAircraftLocation().getLatitude();
+                            droneLocationLng = djiFlightControllerCurrentState.getAircraftLocation().getLongitude();
+                            updateDroneLocation();
+
+                        }
+                    });
+        }
+    }
+
+    public static boolean checkGpsCoordination(double latitude, double longitude) {
+        return (latitude > -90 && latitude < 90 && longitude > -180 && longitude < 180) && (latitude != 0f && longitude != 0f);
+    }
+
+    private void updateDroneLocation(){
+
+        LatLng pos = new LatLng(droneLocationLat, droneLocationLng);
+        //Create MarkerOptions object
+        final MarkerOptions markerOptions = new MarkerOptions();
+        markerOptions.position(pos);
+        markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.aircraft));
+
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (droneMarker != null) {
+                    droneMarker.remove();
+                }
+
+//                setResultToToast(droneLocationLat+"----"+droneLocationLng);
+                if (checkGpsCoordination(droneLocationLat, droneLocationLng)) {
+//                    setResultToToast("小飞机标识");
+                    droneMarker = aMap.addMarker(markerOptions);
+                }
+            }
+        });
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.e(TAG, "onCreate()");
@@ -475,6 +585,12 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         deleteApplicationDirectory();
         initLogs();
         initPacketizer();
+
+        mapView = (MapView) findViewById(R.id.map);
+        mapView.onCreate(savedInstanceState);
+
+        initMapView();
+        initFlightController();
 
         DJISDKManager.getInstance().registerApp(this, mDJISDKManagerCallback);
 
@@ -643,40 +759,64 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
      * Init a fake texture view to for the codec manager, so that the video raw data can be received
      * by the camera needed to get video to the UDP handler...
      */
+ //   private void initPreviewerTextureView() {
+   //     Log.e(TAG, "initPreviewerTextureView");
+
+    private TextureView.SurfaceTextureListener mSurfaceTextureListener = new TextureView.SurfaceTextureListener() {
+        @Override
+        public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
+            surfaceT = surface;
+            if(compare_height==1){
+                height = ((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 86, getResources().getDisplayMetrics()));
+                width = ((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 164, getResources().getDisplayMetrics()));
+
+            }else if(compare_height==2){
+                width = LayoutParams.WRAP_CONTENT;
+                height = LayoutParams.WRAP_CONTENT;
+            }
+            videoViewWidth = width;
+            videoViewHeight = height;
+
+
+            Log.d(TAG, "real onSurfaceTextureAvailable: width " + videoViewWidth + " height " + videoViewHeight);
+            if (mCodecManager == null) {
+                mCodecManager = new DJICodecManager(getApplicationContext(), surface, width, height);
+            }
+
+        }
+
+        @Override
+        public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
+            videoViewWidth = width;
+            videoViewHeight = height;
+
+            Log.d(TAG, "real onSurfaceTextureAvailable2: width " + videoViewWidth + " height " + videoViewHeight);
+        }
+
+        @Override
+        public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
+            Log.e(TAG, "onSurfaceTextureDestroyed");
+            if (mCodecManager != null) {
+                mCodecManager.cleanSurface();
+            }
+            return false;
+        }
+
+        @Override
+        public void onSurfaceTextureUpdated(SurfaceTexture surface) {
+        }
+    };
+
+
+    /**
+     * Init a fake texture view to for the codec manager, so that the video raw data can be received
+     * by the camera needed to get video to the UDP handler...
+     */
     private void initPreviewerTextureView() {
         Log.e(TAG, "initPreviewerTextureView");
 
-        videostreamPreviewTtView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
-            @Override
-            public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-                videoViewWidth = width;
-                videoViewHeight = height;
-                Log.d(TAG, "real onSurfaceTextureAvailable: width " + videoViewWidth + " height " + videoViewHeight);
-                if (mCodecManager == null) {
-                    mCodecManager = new DJICodecManager(getApplicationContext(), surface, width, height);
-                }
-            }
+        videostreamPreviewTtView.setSurfaceTextureListener(mSurfaceTextureListener);
 
-            @Override
-            public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
-                videoViewWidth = width;
-                videoViewHeight = height;
-                Log.d(TAG, "real onSurfaceTextureAvailable2: width " + videoViewWidth + " height " + videoViewHeight);
-            }
-
-            @Override
-            public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
-                Log.e(TAG, "onSurfaceTextureDestroyed");
-                if (mCodecManager != null) {
-                    mCodecManager.cleanSurface();
-                }
-                return false;
-            }
-
-            @Override
-            public void onSurfaceTextureUpdated(SurfaceTexture surface) {
-            }
-        });
     }
 
     //---------------------------------------------------------------------------------------
@@ -719,8 +859,23 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
 
         @Override
         public void onProductChanged(BaseProduct baseProduct) {
+            mProduct = baseProduct;
 
+            if (mProduct == null) {
+                logMessageDJI("No DJI drone detected");
+                onDroneDisconnected();
+            } else {
+                if (mProduct instanceof Aircraft) {
+                    logMessageDJI("DJI aircraft detected");
+                    onDroneConnected();
+                } else {
+                    logMessageDJI("DJI non-aircraft product detected");
+                    onDroneDisconnected();
+                }
+            }
+            notifyStatusChange();
         }
+
 
         @Override
         public void onComponentChange(BaseProduct.ComponentKey componentKey, BaseComponent oldComponent, BaseComponent newComponent) {
@@ -960,6 +1115,9 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
             case R.id.action_help:
                 onClickHelp();
                 break;
+            case R.id.action_gaode:
+                onClickGaode();
+                break;
             case R.id.action_gui:
                 onClickGUI();
                 break;
@@ -967,6 +1125,62 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
                 return false;
         }
         return true;
+    }
+
+    public void onSmallMapClick(View v){
+
+        LinearLayout map_layout = findViewById(R.id.map_view);
+        FrameLayout video_layout_small = findViewById(R.id.fragment_container_small);
+        TextureView livestream_view = findViewById(R.id.livestream_preview_ttv);
+        TextureView livestream_view_small = findViewById(R.id.livestream_preview_ttv_small);
+
+        ViewGroup.LayoutParams map_para = map_layout.getLayoutParams();
+
+        if (compare_height==0 || compare_height==2){
+
+            logMessageDJI("放大地图，缩小视频");
+            livestream_view.setVisibility(View.GONE);
+            livestream_view_small.setVisibility(View.VISIBLE);
+
+            if (compare_height==0 && mCodecManager != null){
+                mCodecManager.cleanSurface();
+                mCodecManager.destroyCodec();
+                videoViewHeight = ((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 86, getResources().getDisplayMetrics()));
+                videoViewWidth = ((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 164, getResources().getDisplayMetrics()));
+                mCodecManager = new DJICodecManager(getApplicationContext(), surfaceT, videoViewWidth, videoViewHeight);
+                videostreamPreviewTtViewSmall.setSurfaceTexture(surfaceT);
+            }
+
+            video_layout_small.setZ(100.f);
+            map_layout.setZ(0.f);
+
+            map_para.height = LayoutParams.WRAP_CONTENT;
+            map_para.width = LayoutParams.WRAP_CONTENT;
+            map_layout.setLayoutParams(map_para);
+
+            compare_height = 1;
+        }else{
+
+            logMessageDJI("放大视频，缩小地图");
+            livestream_view_small.setVisibility(View.GONE);
+            livestream_view.setVisibility(View.VISIBLE);
+
+            video_layout_small.setZ(0.f);
+            map_layout.setZ(100.f);
+
+            map_para.height = ((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 86, getResources().getDisplayMetrics()));
+            map_para.width = ((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 164, getResources().getDisplayMetrics()));
+            map_layout.setLayoutParams(map_para);
+            map_layout.setBottom(((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 10, getResources().getDisplayMetrics())));
+            map_layout.setLeft(((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 5, getResources().getDisplayMetrics())));
+
+            compare_height = 2;
+        }
+
+//        v.bringToFront();
+        v.setZ(101.f);
+
+
     }
 
     @Override
@@ -986,6 +1200,9 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
             case R.id.action_help:
                 onClickHelp();
                 break;
+            case R.id.action_gaode:
+                onClickGaode();
+                break;
             case R.id.action_gui:
                 onClickGUI();
                 break;
@@ -1004,6 +1221,12 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         Intent intent = new Intent(MainActivity.this, MapActivity.class);
         startActivityForResult(intent, RESULT_HELP);
     }
+
+    private void onClickGaode() {
+        Intent intent = new Intent(MainActivity.this, GaodeActivity.class);
+        startActivityForResult(intent, RESULT_HELP);
+    }
+
 
     private void onClickGUI() {
         if(!gui_enabled){

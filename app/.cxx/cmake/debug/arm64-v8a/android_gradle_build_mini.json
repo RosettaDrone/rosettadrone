@@ -1,31 +1,31 @@
 {
   "buildFiles": [
-    "/home/smartdrone/Dropbox (eSmart Systems)/Autonomy/Autonomy_Terje/rosettadrone_work/app/CMakeLists.txt"
+    "/home/smartdrone/Working_Private/rosettadrone_work/app/CMakeLists.txt"
   ],
   "cleanCommands": [
-    "/home/smartdrone/Android/Sdk/cmake/3.6.4111459/bin/cmake --build /home/smartdrone/Dropbox\\ (eSmart\\ Systems)/Autonomy/Autonomy_Terje/rosettadrone_work/app/.cxx/cmake/debug/arm64-v8a --target clean"
+    "/home/smartdrone/Android/Sdk/cmake/3.6.4111459/bin/cmake --build /home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cmake/debug/arm64-v8a --target clean"
   ],
   "libraries": {
     "djivideojni-Debug-arm64-v8a": {
       "artifactName": "djivideojni",
-      "buildCommand": "/home/smartdrone/Android/Sdk/cmake/3.6.4111459/bin/cmake --build /home/smartdrone/Dropbox\\ (eSmart\\ Systems)/Autonomy/Autonomy_Terje/rosettadrone_work/app/.cxx/cmake/debug/arm64-v8a --target djivideojni",
+      "buildCommand": "/home/smartdrone/Android/Sdk/cmake/3.6.4111459/bin/cmake --build /home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cmake/debug/arm64-v8a --target djivideojni",
       "abi": "arm64-v8a",
-      "output": "/home/smartdrone/Dropbox (eSmart Systems)/Autonomy/Autonomy_Terje/rosettadrone_work/app/build/intermediates/cmake/debug/obj/arm64-v8a/libdjivideojni.so"
+      "output": "/home/smartdrone/Working_Private/rosettadrone_work/app/build/intermediates/cmake/debug/obj/arm64-v8a/libdjivideojni.so"
     },
     "ffmpegjni-Debug-arm64-v8a": {
       "artifactName": "ffmpegjni",
       "abi": "arm64-v8a",
-      "output": "/home/smartdrone/Dropbox (eSmart Systems)/Autonomy/Autonomy_Terje/rosettadrone_work/app/src/main/cpp/lib/arm64-v8a/libffmpeg.so"
+      "output": "/home/smartdrone/Working_Private/rosettadrone_work/app/src/main/cpp/lib/arm64-v8a/libffmpeg.so"
     },
     "gstreamer_android-Debug-arm64-v8a": {
       "artifactName": "gstreamer_android",
       "abi": "arm64-v8a",
-      "output": "/home/smartdrone/Dropbox (eSmart Systems)/Autonomy/Autonomy_Terje/rosettadrone_work/app/src/main/cpp/lib/arm64-v8a/libgstreamer_android.so"
+      "output": "/home/smartdrone/Working_Private/rosettadrone_work/app/src/main/cpp/lib/arm64-v8a/libgstreamer_android.so"
     },
     "c++_shared-Debug-arm64-v8a": {
       "artifactName": "c++_shared",
       "abi": "arm64-v8a",
-      "output": "/home/smartdrone/Dropbox (eSmart Systems)/Autonomy/Autonomy_Terje/rosettadrone_work/app/src/main/cpp/lib/arm64-v8a/libc++_shared.so.27"
+      "output": "/home/smartdrone/Working_Private/rosettadrone_work/app/src/main/cpp/lib/arm64-v8a/libc++_shared.so.27"
     }
   }
 }

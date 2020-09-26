@@ -12,4 +12,4 @@
 -- Detecting CXX compile features - done
 -- Configuring done
 -- Generating done
--- Build files have been written to: /home/smartdrone/Dropbox (eSmart Systems)/Autonomy/Autonomy_Terje/rosettadrone_work/app/.cxx/cmake/debug/x86
+-- Build files have been written to: /home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cmake/debug/x86
