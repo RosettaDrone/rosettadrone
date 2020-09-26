@@ -1,16 +1,10 @@
 package sq.rogue.rosettadrone.settings;
 
-import android.Manifest;
-import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -18,17 +12,9 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
-/* import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
-import com.google.android.gms.maps.CameraUpdate;
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.MapsInitializer;
-import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;*/
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+import androidx.fragment.app.FragmentActivity;
 
 import com.amap.api.maps.AMap;
 import com.amap.api.maps.AMap.OnMapClickListener;
@@ -45,12 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
-import androidx.core.app.ActivityCompat;
-import androidx.fragment.app.FragmentActivity;
 import dji.common.error.DJIError;
-import dji.common.flightcontroller.FlightControllerState;
 import dji.common.mission.waypoint.Waypoint;
 import dji.common.mission.waypoint.WaypointMission;
 import dji.common.mission.waypoint.WaypointMissionDownloadEvent;
@@ -59,19 +40,27 @@ import dji.common.mission.waypoint.WaypointMissionFinishedAction;
 import dji.common.mission.waypoint.WaypointMissionFlightPathMode;
 import dji.common.mission.waypoint.WaypointMissionHeadingMode;
 import dji.common.mission.waypoint.WaypointMissionUploadEvent;
-import dji.common.useraccount.UserAccountState;
-import dji.common.util.CommonCallbacks;
 import dji.sdk.base.BaseProduct;
 import dji.sdk.flightcontroller.FlightController;
 import dji.sdk.mission.waypoint.WaypointMissionOperator;
 import dji.sdk.mission.waypoint.WaypointMissionOperatorListener;
 import dji.sdk.products.Aircraft;
 import dji.sdk.sdkmanager.DJISDKManager;
-import dji.sdk.useraccount.UserAccountManager;
 import sq.rogue.rosettadrone.DJISimulatorApplication;
-import sq.rogue.rosettadrone.MainActivity;
 import sq.rogue.rosettadrone.R;
 import sq.rogue.rosettadrone.RDApplication;
+
+/* import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
+import com.google.android.gms.maps.CameraUpdate;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapsInitializer;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;*/
 
 public class GaodeActivity extends FragmentActivity implements View.OnClickListener, OnMapClickListener  {
     private static final String TAG = GaodeActivity.class.getSimpleName();
@@ -153,7 +142,7 @@ public class GaodeActivity extends FragmentActivity implements View.OnClickListe
         }
 
 
-        LatLng coordinate = new LatLng(22.5362, 113.9454);
+        LatLng coordinate = new LatLng(60.4094, 10.4911);
 
         if (checkGpsCoordination(droneLocationLat, droneLocationLng)) {
             coordinate = new LatLng(droneLocationLat, droneLocationLng);
@@ -222,14 +211,11 @@ public class GaodeActivity extends FragmentActivity implements View.OnClickListe
 
         if (mFlightController != null) {
             mFlightController.setStateCallback(
-                    new FlightControllerState.Callback() {
-                        @Override
-                        public void onUpdate(FlightControllerState djiFlightControllerCurrentState) {
-                            droneLocationLat = djiFlightControllerCurrentState.getAircraftLocation().getLatitude();
-                            droneLocationLng = djiFlightControllerCurrentState.getAircraftLocation().getLongitude();
-                            updateDroneLocation();
+                    djiFlightControllerCurrentState -> {
+                        droneLocationLat = djiFlightControllerCurrentState.getAircraftLocation().getLatitude();
+                        droneLocationLng = djiFlightControllerCurrentState.getAircraftLocation().getLongitude();
+                        updateDroneLocation();
 
-                        }
                     });
         }
     }
@@ -246,18 +232,15 @@ public class GaodeActivity extends FragmentActivity implements View.OnClickListe
         markerOptions.position(pos);
         markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.aircraft));
 
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                if (droneMarker != null) {
-                    droneMarker.remove();
-                }
+        runOnUiThread(() -> {
+            if (droneMarker != null) {
+                droneMarker.remove();
+            }
 
 //                setResultToToast(droneLocationLat+"----"+droneLocationLng);
-                if (checkGpsCoordination(droneLocationLat, droneLocationLng)) {
+            if (checkGpsCoordination(droneLocationLat, droneLocationLng)) {
 //                    setResultToToast("小飞机标识");
-                    droneMarker = aMap.addMarker(markerOptions);
-                }
+                droneMarker = aMap.addMarker(markerOptions);
             }
         });
     }
@@ -275,13 +258,7 @@ public class GaodeActivity extends FragmentActivity implements View.OnClickListe
                 break;
             }
             case R.id.clear: {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        aMap.clear();
-                    }
-
-                });
+                runOnUiThread(() -> aMap.clear());
                 waypointList.clear();
                 waypointMissionBuilder.waypointList(waypointList);
                 updateDroneLocation();
@@ -330,12 +307,7 @@ public class GaodeActivity extends FragmentActivity implements View.OnClickListe
     }
 
     private void setResultToToast(final String string){
-        GaodeActivity.this.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                Toast.makeText(GaodeActivity.this, string, Toast.LENGTH_SHORT).show();
-            }
-        });
+        GaodeActivity.this.runOnUiThread(() -> Toast.makeText(GaodeActivity.this, string, Toast.LENGTH_SHORT).show());
     }
 
     @Override
@@ -360,15 +332,12 @@ public class GaodeActivity extends FragmentActivity implements View.OnClickListe
 
     private void uploadWayPointMission(){
 
-        getWaypointMissionOperator().uploadMission(new CommonCallbacks.CompletionCallback() {
-            @Override
-            public void onResult(DJIError error) {
-                if (error == null) {
-                    setResultToToast("Mission upload successfully!");
-                } else {
-                    setResultToToast("Mission upload failed, error: " + error.getDescription() + " retrying...");
-                    getWaypointMissionOperator().retryUploadMission(null);
-                }
+        getWaypointMissionOperator().uploadMission(error -> {
+            if (error == null) {
+                setResultToToast("Mission upload successfully!");
+            } else {
+                setResultToToast("Mission upload failed, error: " + error.getDescription() + " retrying...");
+                getWaypointMissionOperator().retryUploadMission(null);
             }
         });
 
@@ -391,78 +360,57 @@ public class GaodeActivity extends FragmentActivity implements View.OnClickListe
         RadioGroup actionAfterFinished_RG = (RadioGroup) wayPointSettings.findViewById(R.id.actionAfterFinished);
         RadioGroup heading_RG = (RadioGroup) wayPointSettings.findViewById(R.id.heading);
 
-        speed_RG.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener(){
-
-            @Override
-            public void onCheckedChanged(RadioGroup group, int checkedId) {
-                if (checkedId == R.id.lowSpeed){
-                    mSpeed = 3.0f;
-                } else if (checkedId == R.id.MidSpeed){
-                    mSpeed = 5.0f;
-                } else if (checkedId == R.id.HighSpeed){
-                    mSpeed = 10.0f;
-                }
-            }
-
-        });
-
-        actionAfterFinished_RG.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-
-            @Override
-            public void onCheckedChanged(RadioGroup group, int checkedId) {
-                Log.d(TAG, "Select finish action");
-                if (checkedId == R.id.finishNone){
-                    mFinishedAction = WaypointMissionFinishedAction.NO_ACTION;
-                } else if (checkedId == R.id.finishGoHome){
-                    mFinishedAction = WaypointMissionFinishedAction.GO_HOME;
-                } else if (checkedId == R.id.finishAutoLanding){
-                    mFinishedAction = WaypointMissionFinishedAction.AUTO_LAND;
-                } else if (checkedId == R.id.finishToFirst){
-                    mFinishedAction = WaypointMissionFinishedAction.GO_FIRST_WAYPOINT;
-                }
+        speed_RG.setOnCheckedChangeListener((group, checkedId) -> {
+            if (checkedId == R.id.lowSpeed){
+                mSpeed = 3.0f;
+            } else if (checkedId == R.id.MidSpeed){
+                mSpeed = 5.0f;
+            } else if (checkedId == R.id.HighSpeed){
+                mSpeed = 10.0f;
             }
         });
 
-        heading_RG.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+        actionAfterFinished_RG.setOnCheckedChangeListener((group, checkedId) -> {
+            Log.d(TAG, "Select finish action");
+            if (checkedId == R.id.finishNone){
+                mFinishedAction = WaypointMissionFinishedAction.NO_ACTION;
+            } else if (checkedId == R.id.finishGoHome){
+                mFinishedAction = WaypointMissionFinishedAction.GO_HOME;
+            } else if (checkedId == R.id.finishAutoLanding){
+                mFinishedAction = WaypointMissionFinishedAction.AUTO_LAND;
+            } else if (checkedId == R.id.finishToFirst){
+                mFinishedAction = WaypointMissionFinishedAction.GO_FIRST_WAYPOINT;
+            }
+        });
 
-            @Override
-            public void onCheckedChanged(RadioGroup group, int checkedId) {
-                Log.d(TAG, "Select heading");
+        heading_RG.setOnCheckedChangeListener((group, checkedId) -> {
+            Log.d(TAG, "Select heading");
 
-                if (checkedId == R.id.headingNext) {
-                    mHeadingMode = WaypointMissionHeadingMode.AUTO;
-                } else if (checkedId == R.id.headingInitDirec) {
-                    mHeadingMode = WaypointMissionHeadingMode.USING_INITIAL_DIRECTION;
-                } else if (checkedId == R.id.headingRC) {
-                    mHeadingMode = WaypointMissionHeadingMode.CONTROL_BY_REMOTE_CONTROLLER;
-                } else if (checkedId == R.id.headingWP) {
-                    mHeadingMode = WaypointMissionHeadingMode.USING_WAYPOINT_HEADING;
-                }
+            if (checkedId == R.id.headingNext) {
+                mHeadingMode = WaypointMissionHeadingMode.AUTO;
+            } else if (checkedId == R.id.headingInitDirec) {
+                mHeadingMode = WaypointMissionHeadingMode.USING_INITIAL_DIRECTION;
+            } else if (checkedId == R.id.headingRC) {
+                mHeadingMode = WaypointMissionHeadingMode.CONTROL_BY_REMOTE_CONTROLLER;
+            } else if (checkedId == R.id.headingWP) {
+                mHeadingMode = WaypointMissionHeadingMode.USING_WAYPOINT_HEADING;
             }
         });
 
         new AlertDialog.Builder(this)
                 .setTitle("")
                 .setView(wayPointSettings)
-                .setPositiveButton("Finish",new DialogInterface.OnClickListener(){
-                    public void onClick(DialogInterface dialog, int id) {
+                .setPositiveButton("Finish", (dialog, id) -> {
 
-                        String altitudeString = wpAltitude_TV.getText().toString();
-                        altitude = Integer.parseInt(nulltoIntegerDefault(altitudeString));
-                        Log.e(TAG,"altitude "+altitude);
-                        Log.e(TAG,"speed "+mSpeed);
-                        Log.e(TAG, "mFinishedAction "+mFinishedAction);
-                        Log.e(TAG, "mHeadingMode "+mHeadingMode);
-                        configWayPointMission();
-                    }
-
+                    String altitudeString = wpAltitude_TV.getText().toString();
+                    altitude = Integer.parseInt(nulltoIntegerDefault(altitudeString));
+                    Log.e(TAG,"altitude "+altitude);
+                    Log.e(TAG,"speed "+mSpeed);
+                    Log.e(TAG, "mFinishedAction "+mFinishedAction);
+                    Log.e(TAG, "mHeadingMode "+mHeadingMode);
+                    configWayPointMission();
                 })
-                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        dialog.cancel();
-                    }
-
-                })
+                .setNegativeButton("Cancel", (dialog, id) -> dialog.cancel())
                 .create()
                 .show();
     }
@@ -567,24 +515,12 @@ public class GaodeActivity extends FragmentActivity implements View.OnClickListe
     };
 
     private void startWaypointMission(){
-
-        getWaypointMissionOperator().startMission(new CommonCallbacks.CompletionCallback() {
-            @Override
-            public void onResult(DJIError error) {
-                setResultToToast("Mission Start: " + (error == null ? "Successfully" : error.getDescription()));
-            }
-        });
+        getWaypointMissionOperator().startMission(error -> setResultToToast("Mission Start: " + (error == null ? "Successfully" : error.getDescription())));
 
     }
 
     private void stopWaypointMission(){
-
-        getWaypointMissionOperator().stopMission(new CommonCallbacks.CompletionCallback() {
-            @Override
-            public void onResult(DJIError error) {
-                setResultToToast("Mission Stop: " + (error == null ? "Successfully" : error.getDescription()));
-            }
-        });
+        getWaypointMissionOperator().stopMission(error -> setResultToToast("Mission Stop: " + (error == null ? "Successfully" : error.getDescription())));
 
     }
 

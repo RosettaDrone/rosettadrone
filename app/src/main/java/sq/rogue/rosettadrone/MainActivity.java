@@ -141,7 +141,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
     private AMap aMap;
     private double droneLocationLat, droneLocationLng;
     private Marker droneMarker = null;
-    private FlightController mFlightController;
+//    private FlightController mFlightController;
 
     private static BaseProduct mProduct;
     private final String TAG =  MainActivity.class.getSimpleName();
@@ -270,6 +270,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
 
         //------------------------------------------------------------
         videostreamPreviewTtView = findViewById(R.id.livestream_preview_ttv);
+        videostreamPreviewTtViewSmall = findViewById(R.id.livestream_preview_ttv_small);
         videostreamPreviewTtView.setVisibility(View.VISIBLE);
     }
 
@@ -454,8 +455,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
             //aMap.setOnMapClickListener(this);// add the listener for click for amap object
         }
 
-
-        LatLng coordinate = new LatLng(22.5362, 113.9454);
+        LatLng coordinate = new LatLng(60.4094, 10.4911);
 
         if (checkGpsCoordination(droneLocationLat, droneLocationLng)) {
             coordinate = new LatLng(droneLocationLat, droneLocationLng);
@@ -464,36 +464,17 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         aMap.addMarker(new MarkerOptions().position(coordinate));
         aMap.getUiSettings().setZoomControlsEnabled(false);
         aMap.moveCamera(CameraUpdateFactory.newLatLng(coordinate));
-
     }
 
     private void initFlightController() {
 //        setResultToToast(droneLocationLat+"----"+droneLocationLng);
 
-        BaseProduct product;
-
-        if (RDApplication.getSim() == true) {
-            product = DJISimulatorApplication.getAircraftInstance();
-        }else {
-            product = RDApplication.getProductInstance();
-        }
-
-        if (product != null && product.isConnected()) {
-            if (product instanceof Aircraft) {
-                mFlightController = ((Aircraft) product).getFlightController();
-            }
-        }
-
-        if (mFlightController != null) {
-            mFlightController.setStateCallback(
-                    new FlightControllerState.Callback() {
-                        @Override
-                        public void onUpdate(FlightControllerState djiFlightControllerCurrentState) {
-                            droneLocationLat = djiFlightControllerCurrentState.getAircraftLocation().getLatitude();
-                            droneLocationLng = djiFlightControllerCurrentState.getAircraftLocation().getLongitude();
-                            updateDroneLocation();
-
-                        }
+        if (mModel.mFlightController != null) {
+            mModel.mFlightController.setStateCallback(
+                    djiFlightControllerCurrentState -> {
+                        droneLocationLat = djiFlightControllerCurrentState.getAircraftLocation().getLatitude();
+                        droneLocationLng = djiFlightControllerCurrentState.getAircraftLocation().getLongitude();
+                        updateDroneLocation();
                     });
         }
     }
@@ -505,6 +486,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
     private void updateDroneLocation(){
 
         LatLng pos = new LatLng(droneLocationLat, droneLocationLng);
+
         //Create MarkerOptions object
         final MarkerOptions markerOptions = new MarkerOptions();
         markerOptions.position(pos);
@@ -737,17 +719,17 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
                 //When calibration is needed or the fetch key frame is required by SDK, should use the provideTranscodedVideoFeed
                 //to receive the transcoded video feed from main camera.
                 if (isTranscodedVideoFeedNeeded()) {
+                    mGstEnabled = false;
                     standardVideoFeeder = VideoFeeder.getInstance().provideTranscodedVideoFeed();
                     if (mExternalVideoOut == true) {
                         standardVideoFeeder.addVideoDataListener(mReceivedVideoDataListener);
-                        mGstEnabled = false;
                         logMessageDJI("Transcode Video !!!!!!!");
                     }
                 }else{
+                    mGstEnabled = true;
                     VideoFeeder.getInstance().getPrimaryVideoFeed();
                     if (mExternalVideoOut == true) {
                         VideoFeeder.getInstance().getPrimaryVideoFeed().addVideoDataListener(mReceivedVideoDataListener);
-                        mGstEnabled = true;
                         logMessageDJI("Do NOT Transcode Video !!!!!!!");
                     }
                 }
@@ -1142,7 +1124,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
             livestream_view.setVisibility(View.GONE);
             livestream_view_small.setVisibility(View.VISIBLE);
 
-            if (compare_height==0 && mCodecManager != null){
+            if (compare_height==0 && mCodecManager != null &&  mGstEnabled == true){
                 mCodecManager.cleanSurface();
                 mCodecManager.destroyCodec();
                 videoViewHeight = ((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 86, getResources().getDisplayMetrics()));

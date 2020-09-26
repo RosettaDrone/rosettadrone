@@ -5,6 +5,7 @@
       "sdkFolder": "/home/smartdrone/Android/Sdk",
       "isNativeCompilerSettingsCacheEnabled": false,
       "isBuildOnlyTargetAbiEnabled": true,
+      "ideBuildTargetAbi": "arm64-v8a,armeabi-v7a,armeabi",
       "splitsAbiFilterSet": [],
       "intermediatesFolder": "/home/smartdrone/Working_Private/rosettadrone_work/app/build/intermediates",
       "gradleModulePathName": ":app",
@@ -39,9 +40,8 @@
     "gradleBuildOutputFolder": "/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cxx/debug",
     "isDebuggableEnabled": true,
     "validAbiList": [
-      "ARMEABI_V7A",
       "ARM64_V8A",
-      "X86"
+      "ARMEABI_V7A"
     ],
     "buildTargetSet": []
   },

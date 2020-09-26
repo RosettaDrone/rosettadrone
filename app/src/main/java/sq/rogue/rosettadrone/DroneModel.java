@@ -187,7 +187,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     private boolean mSafetyEnabled = true;
     private boolean mMotorsArmed = false;
     private FollowMeMissionOperator fmmo;
-    private FlightController mFlightController;
+    public FlightController mFlightController;
     private Gimbal mGimbal = null;
     private Rotation mRotation = null;
 

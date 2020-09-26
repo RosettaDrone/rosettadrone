@@ -5,47 +5,23 @@
   },
   {
     "level": "INFO",
-    "message": "rebuilding JSON /home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cmake/debug/arm64-v8a/android_gradle_build.json due to:"
+    "message": "No CMake version was specified in build.gradle. Choosing a suitable version."
   },
   {
     "level": "INFO",
-    "message": "- expected json /home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cmake/debug/arm64-v8a/android_gradle_build.json file is not present, will remove stale json folder"
+    "message": "Trying to locate CMake in local SDK repository."
   },
   {
     "level": "INFO",
-    "message": "- missing previous command file /home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cmake/debug/arm64-v8a/build_command.txt, will remove stale json folder"
+    "message": "CMake \u00273.10.2\u0027 found in SDK did not match requested version \u00273.6.0\u0027."
   },
   {
     "level": "INFO",
-    "message": "- command changed from previous, will remove stale json folder"
+    "message": "- CMake found in SDK at \u0027/home/smartdrone/Android/Sdk/cmake/3.6.4111459\u0027 had version \u00273.6.0\u0027"
   },
   {
     "level": "INFO",
-    "message": "removing stale contents from \u0027/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cmake/debug/arm64-v8a\u0027"
-  },
-  {
-    "level": "INFO",
-    "message": "created folder \u0027/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cmake/debug/arm64-v8a\u0027"
-  },
-  {
-    "level": "INFO",
-    "message": "executing cmake Executable : /home/smartdrone/Android/Sdk/cmake/3.6.4111459/bin/cmake\narguments : \n-H/home/smartdrone/Working_Private/rosettadrone_work/app\n-B/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cmake/debug/arm64-v8a\n-DANDROID_ABI\u003darm64-v8a\n-DANDROID_PLATFORM\u003dandroid-22\n-DCMAKE_LIBRARY_OUTPUT_DIRECTORY\u003d/home/smartdrone/Working_Private/rosettadrone_work/app/build/intermediates/cmake/debug/obj/arm64-v8a\n-DCMAKE_BUILD_TYPE\u003dDebug\n-DANDROID_NDK\u003d/home/smartdrone/Android/Sdk/ndk/21.3.6528147\n-DCMAKE_TOOLCHAIN_FILE\u003d/home/smartdrone/Android/Sdk/ndk/21.3.6528147/build/cmake/android.toolchain.cmake\n-DCMAKE_MAKE_PROGRAM\u003d/home/smartdrone/Android/Sdk/cmake/3.6.4111459/bin/ninja\n-GAndroid Gradle - Ninja\njvmArgs : \n\n"
-  },
-  {
-    "level": "INFO",
-    "message": "Executable : /home/smartdrone/Android/Sdk/cmake/3.6.4111459/bin/cmake\narguments : \n-H/home/smartdrone/Working_Private/rosettadrone_work/app\n-B/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cmake/debug/arm64-v8a\n-DANDROID_ABI\u003darm64-v8a\n-DANDROID_PLATFORM\u003dandroid-22\n-DCMAKE_LIBRARY_OUTPUT_DIRECTORY\u003d/home/smartdrone/Working_Private/rosettadrone_work/app/build/intermediates/cmake/debug/obj/arm64-v8a\n-DCMAKE_BUILD_TYPE\u003dDebug\n-DANDROID_NDK\u003d/home/smartdrone/Android/Sdk/ndk/21.3.6528147\n-DCMAKE_TOOLCHAIN_FILE\u003d/home/smartdrone/Android/Sdk/ndk/21.3.6528147/build/cmake/android.toolchain.cmake\n-DCMAKE_MAKE_PROGRAM\u003d/home/smartdrone/Android/Sdk/cmake/3.6.4111459/bin/ninja\n-GAndroid Gradle - Ninja\njvmArgs : \n\n"
-  },
-  {
-    "level": "INFO",
-    "message": "done executing cmake"
-  },
-  {
-    "level": "INFO",
-    "message": "write build output /home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cmake/debug/arm64-v8a/build_output.txt"
-  },
-  {
-    "level": "INFO",
-    "message": "write command file /home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cmake/debug/arm64-v8a/build_command.txt"
+    "message": "JSON \u0027/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cmake/debug/arm64-v8a/android_gradle_build.json\u0027 was up-to-date"
   },
   {
     "level": "INFO",
