@@ -73,7 +73,13 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"/>
     </LinearLayout>
-
+<!--
+        <fragment xmlns:android="http://schemas.android.com/apk/res/android"
+            android:name="com.google.android.gms.maps.SupportMapFragment"
+            android:id="@+id/map"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+-->
     <FrameLayout
         android:id="@+id/compass_container"
         android:layout_width="510dp"
@@ -95,7 +101,7 @@
             tools:ignore="RtlHardcoded" />
     </FrameLayout>
 
-
+<!--
     <FrameLayout
         android:id="@+id/tab_map_video"
         android:layout_width="164dp"
@@ -110,7 +116,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintRight_toRightOf="parent">
     </FrameLayout>
-
+-->
 
     <FrameLayout
         android:layout_width="match_parent"
@@ -159,7 +165,7 @@
         android:orientation="horizontal"
         android:gravity="end"
         android:padding="12dp"
-        android:layout_marginTop="15dp"
+        android:layout_marginTop="70dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 

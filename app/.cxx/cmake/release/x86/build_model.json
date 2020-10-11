@@ -1,0 +1,69 @@
+{
+  "variant": {
+    "module": {
+      "rootBuildGradleFolder": "/home/smartdrone/Working_Private/rosettadrone_work",
+      "sdkFolder": "/home/smartdrone/Android/Sdk",
+      "isNativeCompilerSettingsCacheEnabled": false,
+      "isBuildOnlyTargetAbiEnabled": true,
+      "splitsAbiFilterSet": [],
+      "intermediatesFolder": "/home/smartdrone/Working_Private/rosettadrone_work/app/build/intermediates",
+      "gradleModulePathName": ":app",
+      "moduleRootFolder": "/home/smartdrone/Working_Private/rosettadrone_work/app",
+      "makeFile": "/home/smartdrone/Working_Private/rosettadrone_work/app/CMakeLists.txt",
+      "buildSystem": "CMAKE",
+      "compilerSettingsCacheFolder": "/home/smartdrone/Working_Private/rosettadrone_work/.cxx",
+      "cxxFolder": "/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx",
+      "ndkFolder": "/home/smartdrone/Android/Sdk/ndk/21.3.6528147",
+      "ndkVersion": "21.3.6528147",
+      "ndkSupportedAbiList": [
+        "ARMEABI_V7A",
+        "ARM64_V8A",
+        "X86",
+        "X86_64"
+      ],
+      "ndkDefaultAbiList": [
+        "ARMEABI_V7A",
+        "ARM64_V8A",
+        "X86",
+        "X86_64"
+      ],
+      "cmakeToolchainFile": "."
+    },
+    "buildSystemArgumentList": [],
+    "cFlagList": [],
+    "cppFlagsList": [],
+    "variantName": "release",
+    "soFolder": "/home/smartdrone/Working_Private/rosettadrone_work/app/build/intermediates/cmake/release/lib",
+    "objFolder": "/home/smartdrone/Working_Private/rosettadrone_work/app/build/intermediates/cmake/release/obj",
+    "jsonFolder": "/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cmake/release",
+    "gradleBuildOutputFolder": "/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cxx/release",
+    "isDebuggableEnabled": false,
+    "validAbiList": [
+      "ARMEABI_V7A",
+      "ARM64_V8A",
+      "X86"
+    ],
+    "buildTargetSet": []
+  },
+  "abi": "X86",
+  "abiPlatformVersion": 22,
+  "cxxBuildFolder": "/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cmake/release/x86",
+  "jsonFile": "/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cmake/release/x86/android_gradle_build.json",
+  "gradleBuildOutputFolder": "/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cxx/release/x86",
+  "objFolder": "/home/smartdrone/Working_Private/rosettadrone_work/app/build/intermediates/cmake/release/obj/x86",
+  "buildCommandFile": "/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cmake/release/x86/build_command.txt",
+  "buildOutputFile": "/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cmake/release/x86/build_output.txt",
+  "modelOutputFile": "/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cmake/release/x86/build_model.json",
+  "cmake": {
+    "cmakeListsWrapperFile": "/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cxx/release/x86/CMakeLists.txt",
+    "toolchainWrapperFile": "/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cxx/release/x86/android_gradle_build.toolchain.cmake",
+    "buildGenerationStateFile": "/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cxx/release/x86/build_generation_state.json",
+    "cacheKeyFile": "/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cxx/release/x86/compiler_cache_key.json",
+    "compilerCacheUseFile": "/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cxx/release/x86/compiler_cache_use.json",
+    "compilerCacheWriteFile": "/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cxx/release/x86/compiler_cache_write.json",
+    "toolchainSettingsFromCacheFile": "/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cxx/release/x86/compiler_settings_cache.cmake",
+    "cmakeWrappingBaseFolder": "."
+  },
+  "jsonGenerationLoggingRecordFile": "/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cmake/release/x86/json_generation_record.json",
+  "compileCommandsJsonFile": "/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cmake/release/x86/compile_commands.json"
+}

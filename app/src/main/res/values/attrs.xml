@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (c) 2018-2020 DJI
+  ~
+  ~ Permission is hereby granted, free of charge, to any person obtaining a copy
+  ~ of this software and associated documentation files (the "Software"), to deal
+  ~ in the Software without restriction, including without limitation the rights
+  ~ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  ~ copies of the Software, and to permit persons to whom the Software is
+  ~ furnished to do so, subject to the following conditions:
+  ~
+  ~ The above copyright notice and this permission notice shall be included in all
+  ~ copies or substantial portions of the Software.
+  ~
+  ~ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  ~ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  ~ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  ~ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  ~ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  ~ SOFTWARE.
+  ~
+  -->
+
+<resources>
+
+    <attr name="uxsdk_mapProvider">
+        <enum name="GoogleMap" value="0" />
+        <enum name="HereMap" value="1" />
+        <enum name="AMap" value="2" />
+        <enum name="MapBox" value="3" />
+    </attr>
+
+    <attr name="uxsdk_djiMap_mapType">
+        <enum name="normal" value="1" />
+        <enum name="satellite" value="2" />
+        <enum name="hybrid" value="4" />
+    </attr>
+
+    <attr name="uxsdk_mapCenterLock">
+        <enum name="NONE" value="0" />
+        <enum name="AIRCRAFT" value="1" />
+        <enum name="HOME" value="2" />
+    </attr>
+
+    <declare-styleable name="MapWidget">
+        <attr name="uxsdk_mapProvider" />
+        <attr name="uxsdk_djiMap_mapType" />
+        <attr name="uxsdk_mapBoxToken" format="string" />
+        <attr name="uxsdk_warningFlyZoneColor" format="color" />
+        <attr name="uxsdk_enhancedWarningZoneColor" format="color" />
+        <attr name="uxsdk_authorizedFlyZoneColor" format="color" />
+        <attr name="uxsdk_restrictedFlyZoneColor" format="color" />
+        <attr name="uxsdk_selfUnlockedFlyZoneColor" format="color" />
+        <attr name="uxsdk_customUnlockedFlyZoneColor" format="color" />
+        <attr name="uxsdk_customUnlockedFlyZoneOnAircraftColor" format="color" />
+        <attr name="uxsdk_customUnlockedFlyZoneEnabledColor" format="color" />
+        <attr name="uxsdk_warningFlyZoneAlpha" format="integer" />
+        <attr name="uxsdk_enhancedWarningZoneAlpha" format="integer" />
+        <attr name="uxsdk_authorizedFlyZoneAlpha" format="integer" />
+        <attr name="uxsdk_restrictedFlyZoneAlpha" format="integer" />
+        <attr name="uxsdk_selfUnlockedFlyZoneAlpha" format="integer" />
+        <attr name="uxsdk_customUnlockedFlyZoneAlpha" format="integer" />
+        <attr name="uxsdk_customUnlockedFlyZoneOnAircraftAlpha" format="integer" />
+        <attr name="uxsdk_customUnlockedFlyZoneEnabledAlpha" format="integer" />
+        <attr name="uxsdk_flyZoneBorderWidth" format="float" />
+        <attr name="uxsdk_flyZoneLockedIcon" format="reference" />
+        <attr name="uxsdk_flyZoneUnLockedIcon" format="reference" />
+        <attr name="uxsdk_customFlyZoneOnAircraftIcon" format="reference" />
+        <attr name="uxsdk_customFlyZoneEnabledIcon" format="reference" />
+        <attr name="uxsdk_maximumHeightColor" format="color" />
+        <attr name="uxsdk_maximumHeightAlpha" format="integer" />
+        <attr name="uxsdk_flightPathColor" format="color" />
+        <attr name="uxsdk_flightPathWidth" format="float" />
+        <attr name="uxsdk_flightPathEnabled" format="boolean" />
+        <attr name="uxsdk_homeDirectionEnabled" format="boolean" />
+        <attr name="uxsdk_homeDirectionColor" format="color" />
+        <attr name="uxsdk_homeDirectionWidth" format="float" />
+        <attr name="uxsdk_homeMarkerEnabled" format="boolean" />
+        <attr name="uxsdk_homeMarkerIcon" format="reference" />
+        <attr name="uxsdk_aircraftMarkerEnabled" format="boolean" />
+        <attr name="uxsdk_aircraftMarkerIcon" format="reference" />
+        <attr name="uxsdk_gimbalAttitudeEnabled" format="boolean" />
+        <attr name="uxsdk_gimbalMarkerIcon" format="reference" />
+        <attr name="uxsdk_autoFrameMap" format="boolean" />
+        <attr name="uxsdk_mapCenterLock" />
+        <attr name="uxsdk_flyZoneLegendEnabled" format="boolean" />
+
+    </declare-styleable>
+
+    <declare-styleable name="UserAccountLoginWidget">
+        <attr name="uxsdk_messageTextEnabled" format="boolean" />
+        <attr name="uxsdk_messageTextColorAuthorized" format="color" />
+        <attr name="uxsdk_messageTextColorTokenOutOfDate" format="color" />
+        <attr name="uxsdk_messageTextColorNotAuthorized" format="color" />
+        <attr name="uxsdk_messageTextColorNotLoggedIn" format="color" />
+        <attr name="uxsdk_stateTextEnabled" format="boolean" />
+        <attr name="uxsdk_stateTextAppearance" format="reference" />
+        <attr name="uxsdk_stateTextSize" format="dimension" />
+        <attr name="uxsdk_stateTextColorAuthorized" format="color" />
+        <attr name="uxsdk_stateTextColorTokenOutOfDate" format="color" />
+        <attr name="uxsdk_stateTextColorNotAuthorized" format="color" />
+        <attr name="uxsdk_stateTextColorNotLoggedIn" format="color" />
+        <attr name="uxsdk_stateTextBackground" format="reference" />
+        <attr name="uxsdk_userIconEnabled" format="boolean" />
+        <attr name="uxsdk_userIconAuthorized" format="reference" />
+        <attr name="uxsdk_userIconNotAuthorized" format="reference" />
+        <attr name="uxsdk_userIconTokenOutOfDate" format="reference" />
+        <attr name="uxsdk_userIconNotLoggedIn" format="reference" />
+        <attr name="uxsdk_userIconBackground" format="reference" />
+        <attr name="uxsdk_actionIconEnabled" format="boolean" />
+        <attr name="uxsdk_actionIconAuthorized" format="reference" />
+        <attr name="uxsdk_actionIconNotAuthorized" format="reference" />
+        <attr name="uxsdk_actionIconTokenOutOfDate" format="reference" />
+        <attr name="uxsdk_actionIconNotLoggedIn" format="reference" />
+        <attr name="uxsdk_actionIconBackground" format="reference" />
+    </declare-styleable>
+
+</resources>

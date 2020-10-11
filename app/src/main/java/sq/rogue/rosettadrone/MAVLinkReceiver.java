@@ -160,18 +160,21 @@ public class MAVLinkReceiver {
                         while( mModel.mAirBorn == 0)
                             safeSleep(250);
 
-                        // If we took off, wait for command co complete...
-                        while( mModel.mAirBorn == 2 && mModel.m_alt < 1.0)
-                            safeSleep(250);
-
-                        // We must wait until the takeoff sequence in the DJI module has completed...
-                        Log.d(TAG,"Mode = " + mModel.mAirBorn);
-                        safeSleep(2500);
-
-                        // If we are airborne, or was airborne from the start...
-                        if(mModel.m_alt >= 0.9)
-                            mModel.do_set_motion_relative(0, 0, msg_cmd.param7, 0, 0, 0, 0, 0, 0b00011111111000);
-
+                        if(mModel.mAirBorn == 1) {
+                            mModel.send_command_ack(MAV_CMD_NAV_TAKEOFF, MAV_RESULT.MAV_RESULT_FAILED);
+                        }
+                        else {
+                            int timeout = 0;
+                            // If we took off, wait for command co complete...
+                            while (mModel.m_alt < 1000.0 || timeout > (20*(1/0.250))) {
+                                safeSleep(250);
+                            }
+                            safeSleep(500);
+                            // If we are airborne, or was airborne from the start...
+                            if (mModel.m_alt >= 0.8) {
+                                mModel.do_set_motion_relative(MAV_CMD_NAV_TAKEOFF, 0, 0, msg_cmd.param7-(mModel.m_alt/(float)1000.0), 0, 0, 0, 0, 0, 0b00011111111000);
+                            }
+                        }
                         break;
                     case MAV_CMD_NAV_LAND:
                         mModel.do_land();
@@ -252,6 +255,7 @@ public class MAVLinkReceiver {
                     mModel.do_set_motion_velocity(msg_param.vx, msg_param.vy, msg_param.vz, (float)Math.toDegrees(msg_param.yaw_rate), msg_param.type_mask);
                 } else {
                     mModel.do_set_motion_relative(
+                            MAVLINK_MSG_ID_SET_POSITION_TARGET_LOCAL_NED,
                             (double)msg_param.x,
                             (double)msg_param.y,
                             msg_param.z,

@@ -170,4 +170,206 @@
     <string name="title_activity_demo">GSDemoActivity</string>
     <string name="google_app_id">Google_App_ID_String</string>
 
+    <string name="uxsdk_fly_zone_unlock">Unlock</string>
+    <string name="uxsdk_fly_zone_unlock_zone">Unlock %1$s</string>
+    <string name="uxsdk_fly_zone_unlock_confirmation">By tapping Unlock, you agree that you have the authorization to operate in this fly zone. A record of this request will be linked to your DJI account. Tap Cancel to abort the operation.</string>
+    <string name="uxsdk_fly_zone_unlock_end_time">Currently unlocked and expires at %1$s</string>
+    <string name="uxsdk_fly_zone_unlock_failed_unauthorized">Failed to unlock. You are not authorized to unlock this zone.</string>
+    <string name="uxsdk_fly_zone_unlock_failed">Failed to unlock. %1$s</string>
+    <string name="uxsdk_fly_zone_warning">Warning</string>
+    <string name="uxsdk_fly_zone_enhanced_warning">Enhanced warning</string>
+    <string name="uxsdk_fly_zone_authorized">Authorized</string>
+    <string name="uxsdk_fly_zone_restricted">Restricted</string>
+    <string name="uxsdk_fly_zone_self_unlock">Self Unlock</string>
+    <string name="uxsdk_fly_zone_custom_unlock">Custom Unlock</string>
+    <string name="uxsdk_self_fly_zone_login_requirement">In order to unlock fly zones you must login with your DJI account. Tap Log in to continue logging in</string>
+    <string name="uxsdk_fly_zone_custom_unlock_aircraft">Custom Unlock on Aircraft</string>
+    <string name="uxsdk_fly_zone_custom_unlock_enabled">Custom Unlock Enabled</string>
+    <string name="uxsdk_custom_fly_zone_duplicate">%1$s is currently enabled. Do you wish you disable it and enable %2$s</string>
+    <string name="uxsdk_app_name">DJIUXSDK Beta</string>
+    <string name="uxsdk_app_yes">Yes</string>
+    <string name="uxsdk_app_no">No</string>
+    <string name="uxsdk_app_ok">OK</string>
+    <string name="uxsdk_app_save">Save</string>
+    <string name="uxsdk_app_cancel">Cancel</string>
+    <string name="uxsdk_error">Error</string>
+    <string name="uxsdk_alert">Alert</string>
+    <string name="uxsdk_success">Success</string>
+    <string name="uxsdk_enable">Enable</string>
+    <string name="uxsdk_disable">Disable</string>
+
+    <string name="uxsdk_user_login_widget_logout">Logout</string>
+    <string name="uxsdk_user_login_widget_login">Login</string>
+    <string name="uxsdk_user_login_widget_refresh">Refresh</string>
+    <string name="uxsdk_user_login_widget_token">Token out of date</string>
+    <string name="uxsdk_user_login_widget_not_logged_in">Not Logged In.</string>
+    <string name="uxsdk_user_login_widget_logged_in_authorized">Logged in and authorized to unlock flyzones.</string>
+    <string name="uxsdk_user_login_widget_logged_in_not_authorized">Logged in but not authorized to unlock flyzones.</string>
+
+    <string name="uxsdk_string_default_value">N/A</string>
+
+    <string name="uxsdk_battery_percent">%1$d%%</string>
+    <string name="uxsdk_battery_voltage_unit">%.2f V</string>
+
+    <string name="uxsdk_gps_rtk_enabled">R</string>
+
+    <string name="uxsdk_home_location_letter">H</string>
+
+    <!-- Dashboard widgets -->
+    <string name="uxsdk_unit_meters">m</string>
+    <string name="uxsdk_unit_feet">ft</string>
+    <string name="uxsdk_value_meters">%1$s m</string>
+    <string name="uxsdk_value_feet">%1$s ft</string>
+    <string name="uxsdk_unit_meter_per_second">m/s</string>
+    <string name="uxsdk_unit_km_per_hr">km/h</string>
+    <string name="uxsdk_unit_mile_per_hr">mph</string>
+    <string name="uxsdk_altitude_title">H:</string>
+    <string name="uxsdk_distance_home_title">D:</string>
+    <string name="uxsdk_distance_rc_title">DRC:</string>
+    <string name="uxsdk_vps_title">VPS:</string>
+    <string name="uxsdk_horizontal_velocity_title">H.S:</string>
+    <string name="uxsdk_vertical_velocity_title">V.S:</string>
+
+    <string name="uxsdk_video_time_hours">%1$02d:%2$02d:%3$02d</string>
+    <string name="uxsdk_video_time">%1$02d:%2$02d</string>
+
+    <!-- picture format -->
+    <string name="uxsdk_camera_picture_format_raw">RAW</string>
+    <string name="uxsdk_camera_picture_format_jpeg">JPEG</string>
+    <string name="uxsdk_camera_picture_format_jpegraw">JPEG+RAW</string>
+    <string name="uxsdk_camera_picture_format_tiff">TIFF</string>
+    <string name="uxsdk_camera_picture_format_radiometic_jpeg">Radiometric JPEG</string>
+    <string name="uxsdk_camera_picture_format_low_tiff">TIFF Linear Low</string>
+    <string name="uxsdk_camera_picture_format_high_tiff">TIFF Linear High</string>
+    <string name="uxsdk_camera_picture_format_jr">J+R</string>
+
+    <string name="uxsdk_message_air_sense_warning_title">Another aircraft is nearby. Fly with caution.</string>
+    <string name="uxsdk_message_air_sense_warning_content">Another aircraft is too close, please descend to a safer altitude.</string>
+    <string name="uxsdk_message_air_sense_dangerous_content">Another aircraft is dangerously close, please descend to a safer altitude.</string>
+    <string name="uxsdk_air_sense_terms_content">Please make sure you have read and understood the DJI AirSense Warnings.</string>
+    <string name="uxsdk_air_sense_never_show">Don\'t show again</string>
+
+    <string name="uxsdk_visual_radar_avoidance_disabled_message_post">Obstacle Avoidance Disabled. Fly with caution.</string>
+
+    <string name="uxsdk_max_flight_height_limit">Max Flight Altitude: %1$s</string>
+
+    <!-- Pre Flight Checklist -->
+    <string name="uxsdk_list_item_flight_mode_title">Flight Mode</string>
+    <string name="uxsdk_list_item_travel_mode">Travel Mode</string>
+    <string name="uxsdk_enter_travel_mode_success">The aircraft will automatically retract the landing gear and enter Travel Mode.</string>
+    <string name="uxsdk_enter_travel_mode_failed">Failed to enter Travel Mode. %1$s</string>
+    <string name="uxsdk_exit_travel_mode_failed">Failed to exit Travel Mode. %1$s</string>
+    <string name="uxsdk_travel_mode_enter">Enter</string>
+    <string name="uxsdk_travel_mode_exit">Exit</string>
+    <string name="uxsdk_travel_mode_enter_confirmation">The aircraft will enter Travel Mode for easier transportation. Place the aircraft on a flat, hard surface and remove the gimbal. If the aircraft does not enter Travel Mode, adjust the landing gear manually.</string>
+
+    <string name="uxsdk_list_item_rc_batery">Remote Controller Battery</string>
+    <string name="uxsdk_rc_battery_percent">%1$d%%</string>
+
+    <string name="uxsdk_list_item_rc_stick_mode">Control Stick Mode</string>
+    <string name="uxsdk_rc_stick_mode_1">Mode 1</string>
+    <string name="uxsdk_rc_stick_mode_2">Mode 2</string>
+    <string name="uxsdk_rc_stick_mode_3">Mode 3</string>
+
+    <string name="uxsdk_list_item_sd_card">SD Card Remaining Capacity</string>
+    <string name="uxsdk_list_item_format_button">Format</string>
+    <string name="uxsdk_list_item_emmc">eMMC Remaining Capacity</string>
+
+    <string name="uxsdk_storage_status_not_supported">Not Supported</string>
+    <string name="uxsdk_storage_status_usb_connected">USB Connected</string>
+    <string name="uxsdk_storage_status_missing">Not Inserted</string>
+    <string name="uxsdk_storage_status_full">Full</string>
+    <string name="uxsdk_storage_status_slow">Slow, %1$s</string>
+    <string name="uxsdk_storage_status_write_protect">Write Protected</string>
+    <string name="uxsdk_storage_status_not_formatted">Not Formatted</string>
+    <string name="uxsdk_storage_status_formatting">Formatting&#8230;</string>
+    <string name="uxsdk_storage_status_invalid">Invalid</string>
+    <string name="uxsdk_storage_status_busy">Busy</string>
+    <string name="uxsdk_storage_status_unknown_error">Unknown Error</string>
+    <string name="uxsdk_storage_status_initial">Initializing</string>
+    <string name="uxsdk_storage_status_recover_file">Repairing Video Files</string>
+    <string name="uxsdk_storage_status_write_slow">Slow Write Speed</string>
+    <string name="uxsdk_storage_status_formatting_recommended">Formatting Recommended</string>
+    <string name="uxsdk_storage_status_needs_formatting">Formatting Required</string>
+    <string name="uxsdk_storage_status_remaining_space_mb">%1$d MB</string>
+    <string name="uxsdk_storage_status_remaining_space_gb">%1$.2f GB</string>
+    <string name="uxsdk_storage_status_file_indices">No file indices</string>
+    <string name="uxsdk_sd_card_format_confirmation">Are you sure you want to format the SD card?</string>
+    <string name="uxsdk_sd_card_format_complete">SD card formatting completed.</string>
+    <string name="uxsdk_sd_card_dialog_title">SD Card Format</string>
+    <string name="uxsdk_sd_card_format_error">Error formatting SD card. %1$s</string>
+
+    <string name="uxsdk_emmc_dialog_title">eMMC Storage Format</string>
+    <string name="uxsdk_emmc_format_error">Error formatting internal storage (eMMC). %1$s</string>
+    <string name="uxsdk_emmc_format_confirmation">Are you sure you want to format the internal storage (eMMC)?</string>
+    <string name="uxsdk_emmc_format_complete">Internal storage (eMMC) formatting completed.</string>
+
+    <string name="uxsdk_list_item_max_flight_distance">Max Flight Distance</string>
+    <string name="uxsdk_list_item_max_flight_altitude">Max Flight Altitude</string>
+    <string name="uxsdk_limit_required_error">Setting failed. Flight altitude exceeds max limit (400 ft/ 120 m)</string>
+    <string name="uxsdk_limit_high_notice">Altering the maximum altitude setting could violate local laws and regulations (a 400 ft / 120 m flight limit is set by the FAA).\nYou are solely responsible and liable for the operation of the aircraft after altering these settings.\nDJI and its affiliates shall not be liable for any damages, whether in contract, tort (including negligence), or any other legal or equitable theory.</string>
+    <string name="uxsdk_list_item_value_out_of_range">Failed to set. Input number in range.</string>
+    <string name="uxsdk_limit_return_home_warning">Failsafe RTH altitude cannot exceed maximum flight altitude. Failsafe RTH altitude will be set to %1$d ft / %2$d m.</string>
+
+    <string name="uxsdk_list_item_max_return_to_home_altitude">Return-to-Home Altitude</string>
+    <string name="uxsdk_rth_error_dialog_message">Return to home altitude cannot exceed maximum flight altitude.</string>
+    <string name="uxsdk_list_rth_dialog_title">Return to Home Altitude</string>
+    <string name="uxsdk_rth_success_dialog_message">The return altitude has been changed, please pay attention to flight safety.</string>
+
+    <string name="uxsdk_novice_mode_altitude_meters">30m</string>
+    <string name="uxsdk_novice_mode_altitude_feet">100ft</string>
+    <string name="uxsdk_novice_mode_distance_meters">30m</string>
+    <string name="uxsdk_novice_mode_distance_feet">100ft</string>
+    <string name="uxsdk_altitude_range_meters">(%1$d~%2$dm)</string>
+    <string name="uxsdk_altitude_range_feet">(%1$d~%2$dft)</string>
+
+    <!-- System Status List -->
+    <string name="uxsdk_system_status_list_title">System Status List</string>
+
+    <string name="uxsdk_list_item_overview_status">Overall Status</string>
+
+    <string name="uxsdk_list_item_novice_mode">Beginner Mode</string>
+
+    <string name="uxsdk_novice_mode_disabled_message">Flight speed and sensitivity will be substantially increased when you turn off Beginner mode. Fly with caution.</string>
+
+    <string name="uxsdk_novice_mode_enabled_message">Beginner mode enabled. Altitude and distance will both be limited to 100ft / 30m.</string>
+
+    <string name="uxsdk_list_item_unit_type">Unit Type</string>
+    <string name="uxsdk_list_item_unit_type_imperial">Imperial</string>
+    <string name="uxsdk_list_item_unit_type_metric">Metric</string>
+
+    <string name="uxsdk_list_item_ssd">SSD Remaining Capacity</string>
+    <string name="uxsdk_ssd_not_found">Not Inserted</string>
+    <string name="uxsdk_ssd_saving">Saving</string>
+    <string name="uxsdk_ssd_formatting">Formatting</string>
+    <string name="uxsdk_ssd_initializing">Initializing</string>
+    <string name="uxsdk_ssd_error">Error</string>
+    <string name="uxsdk_ssd_full">Full</string>
+    <string name="uxsdk_ssd_poor_connection">Poor Connection</string>
+    <string name="uxsdk_ssd_switching_license">Switching License</string>
+    <string name="uxsdk_ssd_formatting_required">Formatting Required</string>
+    <string name="uxsdk_ssd_not_initialized">Not Initialized</string>
+    <string name="uxsdk_ssd_dialog_title">SSD Storage Format</string>
+    <string name="uxsdk_ssd_format_error">Error formatting SSD. %1$s</string>
+    <string name="uxsdk_ssd_format_confirmation">Are you sure you want to format the SSD?</string>
+    <string name="uxsdk_ssd_format_complete">SSD formatting completed.</string>
+
+
+    <string name="uxsdk_widget_default_ratio" translatable="false">W,1:1</string>
+    <string name="uxsdk_widget_battery_ratio" translatable="false">W,25:11</string>
+    <string name="uxsdk_widget_remote_control_signal_ratio" translatable="false">W,19:11</string>
+    <string name="uxsdk_widget_video_signal_ratio" translatable="false">W,19:11</string>
+    <string name="uxsdk_widget_air_sense_ratio" translatable="false">W,37:32</string>
+    <string name="uxsdk_widget_gps_signal_ratio" translatable="false">W,21:11</string>
+    <string name="uxsdk_widget_compass_ratio" translatable="false">W,1:1</string>
+    <string name="uxsdk_widget_base_dashboard_distance_ratio" translatable="false">W,81:16</string>
+    <string name="uxsdk_widget_dashboard_ratio" translatable="false">W,476:91</string>
+    <string name="uxsdk_widget_flight_mode_ratio" translatable="false">W,52:11</string>
+    <string name="uxsdk_widget_fpv_ratio" translatable="false">W,16:9</string>
+    <string name="uxsdk_widget_user_account_login_ratio" translatable="false">W,4:1</string>
+    <string name="uxsdk_widget_remaining_flight_time_ratio" translatable="false">W,400:3</string>
+    <string name="uxsdk_icon_single_battery_ratio" translatable="false">W,1:1</string>
+    <string name="uxsdk_icon_dual_battery_ratio" translatable="false">W,23:16</string>
+    <string name="uxsdk_icon_flight_mode_ratio" translatable="false">W,1:1</string>
+
 </resources>
