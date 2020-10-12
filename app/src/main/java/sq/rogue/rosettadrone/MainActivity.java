@@ -41,6 +41,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
+import android.widget.ScrollView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -59,6 +60,7 @@ import com.amap.api.maps.model.BitmapDescriptorFactory;
 import com.amap.api.maps.model.LatLng;
 import com.amap.api.maps.model.Marker;
 import com.amap.api.maps.model.MarkerOptions;
+import com.dji.megatronking.stringfog.fdd.dgh;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -99,6 +101,7 @@ import dji.sdk.products.Aircraft;
 import dji.sdk.sdkmanager.DJISDKInitEvent;
 import dji.sdk.sdkmanager.DJISDKManager;
 import sq.rogue.rosettadrone.logs.LogFragment;
+import sq.rogue.rosettadrone.settings.AiActivity;
 import sq.rogue.rosettadrone.settings.GaodeActivity;
 import sq.rogue.rosettadrone.settings.MapActivity;
 import sq.rogue.rosettadrone.settings.SettingsActivity;
@@ -167,7 +170,6 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
     private VideoService mService = null;
     private boolean mIsBound;
     private int m_videoMode = 1;
-
 
     private VideoFeeder.VideoFeed standardVideoFeeder;
     protected VideoFeeder.VideoDataListener mReceivedVideoDataListener = null;
@@ -558,7 +560,6 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
                 sendBroadcast(attachedIntent);
             }
         }
-
         deleteApplicationDirectory();
         initLogs();
         initPacketizer();
@@ -607,6 +608,10 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
         Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), notification);
 
+        Intent intent = new Intent(MainActivity.this, AiActivity.class);
+        startActivityForResult(intent, RESULT_SETTINGS);
+/*
+
 //        AlertDialog.Builder alertDialog2 = new AlertDialog.Builder(this, R.style.CustomDialog);
         AlertDialog.Builder alertDialog2 = new AlertDialog.Builder(this);
         alertDialog2.setIcon(R.mipmap.track_right);
@@ -631,18 +636,19 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
                     r.stop();
                     dialog.cancel();
                 });
-        /*
+        ///
         alertDialog2.setPositiveButton("Cancel",
                 (dialog, which) -> {
                     mModel.setAIfunction(0);
                     r.stop();
                     dialog.cancel();
                 });
-*/
+///
         this.runOnUiThread(() -> {
             r.play();
             alertDialog2.show();
         });
+        */
     }
 
     // By default disable takeoff...
@@ -702,9 +708,11 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
             mCamera = null;
         } else {
             // List all models that needs alternative decoding...
-            if (product.getModel().equals(Model.MAVIC_AIR)) {
+            if ( validateTranscodingMethod(product.getModel())==true)
+            {
                 m_videoMode = 2;
             }
+
             if (!product.getModel().equals(Model.UNKNOWN_AIRCRAFT)) {
                 mCamera = product.getCamera();
                 mCamera.setMode(SettingsDefinitions.CameraMode.SHOOT_PHOTO, djiError -> {
@@ -738,6 +746,29 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
                 }
             }
         }
+    }
+
+    private boolean validateTranscodingMethod(Model model)
+    {
+        // If the drone requires the old handling...
+        switch (model) {
+            case UNKNOWN_HANDHELD:
+            case UNKNOWN_AIRCRAFT:
+            case PHANTOM_3_STANDARD:
+            case PHANTOM_3_ADVANCED:
+            case PHANTOM_3_PROFESSIONAL:
+            case Phantom_3_4K:
+            case INSPIRE_1:
+            case INSPIRE_1_PRO:
+            case INSPIRE_1_RAW:     // Verified...
+            case MAVIC_AIR:         // Verified...
+                return true;
+        }
+
+        // Mavic 2 Pro              // Verified...
+        // Mavic 2 Zoom             // Verified...
+        // Matrice 210 V2 RTK       // Verified...
+        return false;
     }
 
     /**
