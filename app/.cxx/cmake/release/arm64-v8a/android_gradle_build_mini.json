@@ -1,0 +1,31 @@
+{
+  "buildFiles": [
+    "/home/smartdrone/Working_Private/rosettadrone_work/app/CMakeLists.txt"
+  ],
+  "cleanCommands": [
+    "/home/smartdrone/Android/Sdk/cmake/3.6.4111459/bin/cmake --build /home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cmake/release/arm64-v8a --target clean"
+  ],
+  "libraries": {
+    "ffmpegjni-Release-arm64-v8a": {
+      "artifactName": "ffmpegjni",
+      "abi": "arm64-v8a",
+      "output": "/home/smartdrone/Working_Private/rosettadrone_work/app/src/main/cpp/lib/arm64-v8a/libffmpeg.so"
+    },
+    "djivideojni-Release-arm64-v8a": {
+      "artifactName": "djivideojni",
+      "buildCommand": "/home/smartdrone/Android/Sdk/cmake/3.6.4111459/bin/cmake --build /home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cmake/release/arm64-v8a --target djivideojni",
+      "abi": "arm64-v8a",
+      "output": "/home/smartdrone/Working_Private/rosettadrone_work/app/build/intermediates/cmake/release/obj/arm64-v8a/libdjivideojni.so"
+    },
+    "gstreamer_android-Release-arm64-v8a": {
+      "artifactName": "gstreamer_android",
+      "abi": "arm64-v8a",
+      "output": "/home/smartdrone/Working_Private/rosettadrone_work/app/src/main/cpp/lib/arm64-v8a/libgstreamer_android.so"
+    },
+    "c++_shared-Release-arm64-v8a": {
+      "artifactName": "c++_shared",
+      "abi": "arm64-v8a",
+      "output": "/home/smartdrone/Working_Private/rosettadrone_work/app/src/main/cpp/lib/arm64-v8a/libc++_shared.so.27"
+    }
+  }
+}

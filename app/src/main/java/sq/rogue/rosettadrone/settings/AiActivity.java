@@ -21,7 +21,7 @@ public class AiActivity extends AppCompatActivity implements PreferenceFragmentC
         Log.d(TAG, "onCreate");
 
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_help);
+        setContentView(R.layout.ai_layout);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 

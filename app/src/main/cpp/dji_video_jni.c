@@ -115,6 +115,7 @@ int parse(JNIEnv *env, jobject obj, uint8_t *pBuff, int videosize, uint64_t pts)
     int decode_data_length;
     int got_picture = 0;
     uint8_t *pFrameBuff = (uint8_t *) pBuff;
+
     while (paserLength_In > 0) {
         AVPacket packet;
         av_init_packet(&packet);
@@ -130,23 +131,24 @@ int parse(JNIEnv *env, jobject obj, uint8_t *pBuff, int videosize, uint64_t pts)
                                     pFrameBuff,
                                     paserLength_In, AV_NOPTS_VALUE, AV_NOPTS_VALUE, AV_NOPTS_VALUE);
 
-        //LOGD("paserLen = %d",paserLen);
+        //      LOGD("paserLen = %d",paserLen);
         paserLength_In -= paserLen;
         pFrameBuff += paserLen;
 
-        if (packet.size > 0) {
-
-            // LOGD(
-            // 	"packet size=%d, pts=%lld, width_in_pixel=%d, height_in_pixel=%d, key_frame=%d, frame_has_sps=%d, frame_has_pps=%d, frame_num=%d",
-            // 	packet.size,
-            // 	pts,
-            // 	m_pCodecPaser->width_in_pixel,
-            // 	m_pCodecPaser->height_in_pixel,
-            // 	m_pCodecPaser->key_frame,
-            // 	m_pCodecPaser->frame_has_sps,
-            // 	m_pCodecPaser->frame_has_pps,
-            // 	m_pCodecPaser->frame_num
-            // 	);
+        if (packet.size > 0 & m_pCodecPaser->width_in_pixel > 10 & m_pCodecPaser->height_in_pixel > 10) {
+/*
+             LOGD(
+             	"packet size=%d, pts=%lld, width_in_pixel=%d, height_in_pixel=%d, key_frame=%d, frame_has_sps=%d, frame_has_pps=%d, frame_num=%d",
+             	packet.size,
+             	pts,
+             	m_pCodecPaser->width_in_pixel,
+             	m_pCodecPaser->height_in_pixel,
+             	m_pCodecPaser->key_frame,
+             	m_pCodecPaser->frame_has_sps,
+             	m_pCodecPaser->frame_has_pps,
+             	m_pCodecPaser->frame_num
+             	);
+*/
             invokeFrameDataCallback(
                     env,
                     obj,
@@ -165,6 +167,26 @@ int parse(JNIEnv *env, jobject obj, uint8_t *pBuff, int videosize, uint64_t pts)
     return 0;
 }
 
+/**
+ * Framing the raw data from camera using the av parser.
+ */
+int noparse(JNIEnv *env, jobject obj, uint8_t *pBuff, int videosize) {
+
+    if (videosize > 0){
+        invokeFrameDataCallback(
+                env,
+                obj,
+                pBuff,
+                videosize,
+                m_pCodecPaser->frame_num,
+                m_pCodecPaser->key_frame,
+                m_pCodecPaser->width_in_pixel,
+                m_pCodecPaser->height_in_pixel
+        );
+    }
+    return 0;
+}
+
 uint8_t audbuffer2[] = {0x00, 0x00, 0x00, 0x01, 0x09, 0x10};
 uint8_t audsize2 = 6;
 uint8_t fillerbuffer2[] = {0x00, 0x00, 0x00, 0x01, 0x0C, 0x00, 0x00, 0x00, 0x01, 0x09, 0x10};
@@ -176,28 +198,33 @@ uint8_t audaudsize2 = 12;
  */
 JNIEXPORT jboolean
 Java_sq_rogue_rosettadrone_video_NativeHelper_parse(JNIEnv *env, jobject obj, jbyteArray pBuff,
-                                                         int size) {
+                                                         int size, int mode) {
     jbyte *jBuff = (jbyte *) ((*env)->GetByteArrayElements(env, pBuff, 0));
     uint8_t *buff = (uint8_t *) jBuff;
     uint64_t pts = 0;
     jbyte *jBuff2;
 
-    // LOGD("pts=%llu", pts);
+    if(mode)
+        noparse(env,obj,buff,size);
+    else {
+        // LOGD("pts=%llu", pts);
 
-    // Removing the aud bytes.
-    if (size >= fillersize2 && memcmp(fillerbuffer2, buff + size - fillersize2, fillersize2) == 0) {
-        LOGD("Remove filler+AUD");
-        parse(env, obj, buff, size - fillersize2, pts);
-    } else if (size >= audaudsize2 &&
-               memcmp(audaudbuffer2, buff + size - audaudsize2, audaudsize2) == 0) {
-        LOGD("Remove AUD+AUD");
-        parse(env, obj, buff, size - audaudsize2, pts);
-    } else if (size >= audsize2 && memcmp(audbuffer2, buff + size - audsize2, audsize2) == 0) {
-        LOGD("Remove AUD");
-        parse(env, obj, buff, size - audsize2, pts);
-    } else {
-        // LOGD("Remove Nothing");
-        parse(env, obj, buff, size, pts);
+        // Removing the aud bytes.
+        if (size >= fillersize2 &&
+            memcmp(fillerbuffer2, buff + size - fillersize2, fillersize2) == 0) {
+            LOGD("Remove filler+AUD");
+            parse(env, obj, buff, size - fillersize2, pts);
+        } else if (size >= audaudsize2 &&
+                   memcmp(audaudbuffer2, buff + size - audaudsize2, audaudsize2) == 0) {
+            LOGD("Remove AUD+AUD");
+            parse(env, obj, buff, size - audaudsize2, pts);
+        } else if (size >= audsize2 && memcmp(audbuffer2, buff + size - audsize2, audsize2) == 0) {
+            //    LOGD("Remove AUD");
+            parse(env, obj, buff, size - audsize2, pts);
+        } else {
+            //  LOGD("Remove Nothing");
+            parse(env, obj, buff, size, pts);
+        }
     }
     (*env)->ReleaseByteArrayElements(env, pBuff, jBuff, 0);
 

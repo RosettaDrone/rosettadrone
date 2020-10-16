@@ -18,18 +18,68 @@
         android:layout_gravity="bottom|end"
         android:textColor="@color/centerpoint_green"
         android:background="@color/background_blue"
-        >
+        android:visibility="visible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintRight_toRightOf="parent">
 
         <TextureView
             android:id="@+id/livestream_preview_ttv"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:layout_gravity="bottom|end"
             android:alpha="40"
             android:foregroundGravity="center_horizontal"
-            android:visibility="visible"/>
+            android:visibility="visible"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintRight_toRightOf="parent"/>
 
     </FrameLayout>
 
+    <FrameLayout
+        android:id="@+id/fragment_container_small"
+        android:layout_width="164dp"
+        android:layout_height="86dp"
+        android:layout_gravity="bottom|end"
+        android:textColor="@color/centerpoint_green"
+        android:background="@color/background_blue"
+        android:visibility="visible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintRight_toRightOf="parent">
+
+        <TextureView
+            android:id="@+id/livestream_preview_ttv_small"
+            android:layout_width="164dp"
+            android:layout_height="86dp"
+            android:layout_gravity="bottom|end"
+            android:alpha="40"
+            android:foregroundGravity="center_horizontal"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintRight_toRightOf="parent"/>
+
+    </FrameLayout>
+
+    <LinearLayout
+        android:id="@+id/map_view"
+        android:layout_width="164dp"
+        android:layout_height="86dp"
+        android:gravity="bottom|end"
+        android:orientation="horizontal"
+        android:visibility="visible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintRight_toRightOf="parent">
+        <com.amap.api.maps.MapView
+            android:id="@+id/map"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+    </LinearLayout>
+<!--
+        <fragment xmlns:android="http://schemas.android.com/apk/res/android"
+            android:name="com.google.android.gms.maps.SupportMapFragment"
+            android:id="@+id/map"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+-->
     <FrameLayout
         android:id="@+id/compass_container"
         android:layout_width="510dp"
@@ -37,19 +87,36 @@
         android:background="@color/transparent"
         android:gravity="bottom|start"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        app:layout_constraintStart_toStartOf="parent"
+        android:visibility="visible">
 
-        <!-- "240dp" -->
+    <!-- "240dp" -->
         <dji.ux.widget.dashboard.DashboardWidget
             android:id="@+id/Compass"
             android:layout_width="500dp"
             android:layout_height="130dp"
             android:layout_marginStart="5dp"
             android:layout_marginTop="30dp"
+            android:visibility="visible"
             tools:ignore="RtlHardcoded" />
     </FrameLayout>
 
-
+<!--
+    <FrameLayout
+        android:id="@+id/tab_map_video"
+        android:layout_width="164dp"
+        android:layout_height="86dp"
+        android:layout_marginEnd="5dp"
+        android:layout_marginBottom="10dp"
+        android:background="#FF0000"
+        android:gravity="bottom|end"
+        android:onClick="onSmallMapClick"
+        android:clickable="true"
+        android:alpha="0"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintRight_toRightOf="parent">
+    </FrameLayout>
+-->
 
     <FrameLayout
         android:layout_width="match_parent"
@@ -91,13 +158,14 @@
 
 
     <LinearLayout
+        android:id="@+id/camera_set"
         android:layout_width="500dp"
         android:layout_height="match_parent"
         android:layout_marginEnd="10dp"
         android:orientation="horizontal"
         android:gravity="end"
         android:padding="12dp"
-        android:layout_marginTop="60dp"
+        android:layout_marginTop="70dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
@@ -186,7 +254,7 @@
                     android:layout_height="20dp"
                     android:text="@string/gcs"
                     android:textColor="@color/white" />
-                @
+
                 <dji.ux.widget.FlightModeWidget
                     android:layout_marginTop="2dp"
                     android:layout_width="103dp"

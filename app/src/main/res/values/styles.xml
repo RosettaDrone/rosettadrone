@@ -33,6 +33,10 @@
 
     </style>
 
+    <style name="MapTheme" parent="AppTheme">
+        <item name="android:textColorSecondary">@color/colorAccent</item>
+    </style>
+
     <!-- SettingsActivity Theme  -->
     <style name="AppTheme.Settings" parent="AppTheme">
         <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Material</item>
@@ -41,6 +45,11 @@
     <style name="CustomDialog" parent="android:Theme.Dialog">
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>
+    </style>
+
+    <style name="UXSDKMapWidgetTheme" parent="@style/Base.Theme.AppCompat.Light.Dialog.Alert">
+        <item name="colorAccent">@color/uxsdk_blue</item>
+        <item name="android:textColorSecondary">@color/uxsdk_blue</item>
     </style>
 
 </resources>

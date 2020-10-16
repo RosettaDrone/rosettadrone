@@ -55,6 +55,7 @@ public class RtpSocket implements Runnable {
     public static final int MTU = 1300;
     public MulticastSocket mSocket;
     public DatagramSocket  mSocketUDP;
+    public DatagramSocket  mSocketUDP2;
     protected OutputStream mOutputStream = null;
     private DatagramPacket[] mPackets;
     private byte[][] mBuffers;
@@ -72,6 +73,7 @@ public class RtpSocket implements Runnable {
     private int mCount = 0;
     private byte mTcpHeader[];
     private AverageBitrate mAverageBitrate;
+    private boolean mUseDualVideoOut = false;
 
     /**
      * This RTP socket implements a buffering mechanism relying on a FIFO of buffers and a Thread.
@@ -89,6 +91,7 @@ public class RtpSocket implements Runnable {
 
         try {
             mSocketUDP = new DatagramSocket();
+            mSocketUDP2 = new DatagramSocket();
         } catch (SocketException e) {
             Log.e(TAG, "Error creating Gstreamer datagram socket", e);
         }
@@ -120,13 +123,16 @@ public class RtpSocket implements Runnable {
 
         try {
             mSocket = new MulticastSocket();
-
             mSocket.setLoopbackMode(false); // enable multicast traffic to be seen locally
 
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }
 
+    }
+
+    public void UseDualVideo(boolean dualvideo) {
+        mUseDualVideoOut = dualvideo;
     }
 
     private void resetFifo() {
@@ -146,6 +152,7 @@ public class RtpSocket implements Runnable {
     public void close() {
         mSocket.close();
         mSocketUDP.close();
+        mSocketUDP2.close();
     }
 
     /**
@@ -224,6 +231,7 @@ public class RtpSocket implements Runnable {
     public int[] getLocalPorts() {
         return new int[]{
                 mSocketUDP.getLocalPort(),
+                mSocketUDP2.getLocalPort(),
 //                mSocket.getLocalPort(),
                 //mReport.getLocalPort()
         };
@@ -340,9 +348,16 @@ public class RtpSocket implements Runnable {
                 mOldTimestamp = mTimestamps[mBufferOut];
                 if (mCount++ > 30) {
                     if (mTransport == TRANSPORT_UDP) {
-                   //     Log.e(TAG,"sening...");
- 						mSocketUDP.send(mPackets[mBufferOut]);
-//                        mSocket.send(mPackets[mBufferOut]);
+                        if(mUseDualVideoOut) {
+                            mPackets[mBufferOut].setPort(mPort);
+                            mSocketUDP.send(mPackets[mBufferOut]);
+
+                            mPackets[mBufferOut].setPort(mPort + 1);
+                            mSocketUDP2.send(mPackets[mBufferOut]);
+                        }
+                        else{
+                            mSocketUDP.send(mPackets[mBufferOut]);
+                        }
                     } else {
                         sendTCP();
                     }

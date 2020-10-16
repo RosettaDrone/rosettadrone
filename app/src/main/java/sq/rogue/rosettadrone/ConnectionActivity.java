@@ -271,7 +271,6 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         checkAndRequestPermissions();
         setContentView(R.layout.activity_connection);
         initUI();
-
 /*
         // Register the broadcast receiver for receiving the device connection's changes.
         IntentFilter filter = new IntentFilter();
@@ -296,6 +295,14 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         Log.v(TAG, "onResume");
         super.onResume();
         updateTitleBar();
+
+        // JUST FOR DEBUG MUST BE REMOVED:::::::
+/*
+        View x = new View(this);
+        x.setId(R.id.btn_start);
+        onClick(x);
+*/
+
     }
 
     @Override

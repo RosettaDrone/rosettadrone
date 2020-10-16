@@ -10,16 +10,23 @@ cmake_minimum_required(VERSION 3.4.1)
 # and CMake builds them for you. When you build your app, Gradle
 # automatically packages shared libraries with your APK.
 
+#set(log-lib /home/smartdrone/Android/Sdk/ndk/21.3.6528147/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/arm-linux-androideabi/22/liblog.so)
+
 include_directories(${CMAKE_SOURCE_DIR}/src/main/cpp/ ${CMAKE_SOURCE_DIR}/src/main/cpp/include
                         ${CMAKE_SOURCE_DIR}/src/main/cpp/gstreamer-1.0/armv7/include/gstreamer-1.0
                         ${CMAKE_SOURCE_DIR}/src/main/cpp/gstreamer-1.0/armv7/include/glib-2.0
-                        ${CMAKE_SOURCE_DIR}/src/main/cpp/gstreamer-1.0/armv7/lib/glib-2.0/include )
+                        ${CMAKE_SOURCE_DIR}/src/main/cpp/gstreamer-1.0/armv7/lib/glib-2.0/include)
+#                        /home/smartdrone/Android/Sdk/ndk/21.3.6528147/sysroot/usr/include)
 
 set(gst_DIR ${CMAKE_SOURCE_DIR}/src/main/cpp/lib)
 
 add_library(gstreamer_android SHARED IMPORTED)
 set_target_properties(gstreamer_android PROPERTIES IMPORTED_LOCATION
          ${gst_DIR}/${ANDROID_ABI}/libgstreamer_android.so)
+
+add_library(c++_shared SHARED IMPORTED)
+set_target_properties(c++_shared PROPERTIES IMPORTED_LOCATION
+        ${gst_DIR}/${ANDROID_ABI}/libc++_shared.so.27)
 
 
 set(ffmpeg_DIR ${CMAKE_SOURCE_DIR}/src/main/cpp/lib)
@@ -41,14 +48,3 @@ add_library( # Specifies the name of the library.
 find_library( log-lib log )
 
 target_link_libraries( djivideojni ffmpegjni ${log-lib} )
-
-add_library( # Specifies the name of the library.
-             VideoEncoderJNI
-
-             # Sets the library as a shared library.
-             SHARED
-
-             # Provides a relative path to your source file(s).
-             src/main/cpp/video_encoder.c )
-
-target_link_libraries( VideoEncoderJNI gstreamer_android ${log-lib} )
