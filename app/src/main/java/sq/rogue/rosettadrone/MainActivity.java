@@ -715,12 +715,14 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
 
             if (!product.getModel().equals(Model.UNKNOWN_AIRCRAFT)) {
                 mCamera = product.getCamera();
-                mCamera.setMode(SettingsDefinitions.CameraMode.SHOOT_PHOTO, djiError -> {
-                    if (djiError != null) {
-                        Log.e(TAG, "can't change mode of camera, error: "+djiError.getDescription());
-                        logMessageDJI("can't change mode of camera, error: "+djiError.getDescription());
-                    }
-                });
+                if(mCamera != null) {
+                    mCamera.setMode(SettingsDefinitions.CameraMode.SHOOT_PHOTO, djiError -> {
+                        if (djiError != null) {
+                            Log.e(TAG, "can't change mode of camera, error: " + djiError.getDescription());
+                            logMessageDJI("can't change mode of camera, error: " + djiError.getDescription());
+                        }
+                    });
+                }
 /*
                 mCamera.setVideoResolutionAndFrameRate(new ResolutionAndFrameRate(SettingsDefinitions.VideoResolution.RESOLUTION_1280x720,SettingsDefinitions.VideoFrameRate.FRAME_RATE_25_FPS) , djiError -> {
                     if (djiError != null) {
@@ -1483,7 +1485,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
         }
 
         if (FLAG_DRONE_RTL_ALTITUDE_CHANGED) {
-            mModel.setRTLAltitude(Integer.parseInt(Objects.requireNonNull(prefs.getString("pref_drone_rtl_altitude", "60"))));
+            mModel.setRTLAltitude(Integer.parseInt(Objects.requireNonNull(prefs.getString("pref_drone_rtl_altitude", "30"))));
             FLAG_DRONE_RTL_ALTITUDE_CHANGED = false;
         }
 

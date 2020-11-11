@@ -84,6 +84,11 @@
             android:label="Settings">
         </activity>
 
+        <activity android:name="sq.rogue.rosettadrone.settings.AiActivity"
+            android:theme="@style/AppTheme.Settings"
+            android:label="Settings">
+        </activity>
+
         <activity android:name="sq.rogue.rosettadrone.settings.MapActivity"
             android:theme="@style/AppTheme.Settings"
             android:label="Settings">

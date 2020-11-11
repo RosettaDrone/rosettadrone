@@ -65,6 +65,7 @@ import static com.MAVLink.enums.MAV_CMD.MAV_CMD_DO_SET_SERVO;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_GET_HOME_POSITION;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_MISSION_START;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_CONDITION_YAW;
+import static com.MAVLink.enums.MAV_CMD.MAV_CMD_DO_SET_PARAMETER;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_NAV_LAND;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_NAV_LOITER_UNLIM;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_NAV_RETURN_TO_LAUNCH;
@@ -79,6 +80,7 @@ import static sq.rogue.rosettadrone.util.TYPE_WAYPOINT_MAX_ALTITUDE;
 import static sq.rogue.rosettadrone.util.TYPE_WAYPOINT_MAX_SPEED;
 import static sq.rogue.rosettadrone.util.TYPE_WAYPOINT_MIN_ALTITUDE;
 import static sq.rogue.rosettadrone.util.TYPE_WAYPOINT_MIN_SPEED;
+import static com.MAVLink.enums.MAV_CMD.MAV_CMD_DO_JUMP;
 
 import static sq.rogue.rosettadrone.util.safeSleep;
 
@@ -112,13 +114,14 @@ public class MAVLinkReceiver {
 
     public void process(MAVLinkMessage msg) {
 
+        // IS 0 is hart beat...
         if(msg.msgid != 0) {
             Log.d(TAG, msg.toString());
+            parent.logMessageDJI("Message: " + msg);
   //          parent.logMessageDJI(String.valueOf(msg));
      //       parent.logMessageDJI(String.valueOf(msg.msgid));
         }
 
-       // parent.logMessageDJI("Message: " + msg);
 
         switch (msg.msgid) {
             case MAVLINK_MSG_ID_HEARTBEAT:
@@ -154,27 +157,47 @@ public class MAVLinkReceiver {
                     case MAV_CMD_NAV_TAKEOFF:
                         Log.d(TAG,"ALT = " + msg_cmd.param7);
                         mModel.mAirBorn = 0;
-                        mModel.do_takeoff();
-
+                        mModel.do_takeoff( msg_cmd.param7 * (double)1000.0);
+/*
                         // Wait for command to be executed...
                         while( mModel.mAirBorn == 0)
                             safeSleep(250);
+                            Log.d(TAG,"Wait for takeoff...");
 
                         if(mModel.mAirBorn == 1) {
+                            Log.d(TAG,"Takeoff failed...");
                             mModel.send_command_ack(MAV_CMD_NAV_TAKEOFF, MAV_RESULT.MAV_RESULT_FAILED);
                         }
-                        else {
+                        else{
+                            mModel.send_command_ack(MAV_CMD_NAV_TAKEOFF, MAV_RESULT.MAV_RESULT_IN_PROGRESS);
+
+                            Log.d(TAG,"Takeoff succes...");
                             int timeout = 0;
                             // If we took off, wait for command co complete...
                             while (mModel.m_alt < 1000.0 || timeout > (20*(1/0.250))) {
+                                timeout+= 1;
                                 safeSleep(250);
+                                Log.d(TAG,"Wait for first altitude...");
                             }
                             safeSleep(500);
+                            timeout = 0;
                             // If we are airborne, or was airborne from the start...
-                            if (mModel.m_alt >= 0.8) {
-                                mModel.do_set_motion_relative(MAV_CMD_NAV_TAKEOFF, 0, 0, msg_cmd.param7-(mModel.m_alt/(float)1000.0), 0, 0, 0, 0, 0, 0b00011111111000);
+                            if (mModel.m_alt >= 800) {
+                                float desired_alt = (msg_cmd.param7*(float)1000.0) - mModel.m_alt;
+                                // Climb out to 99% of requested altitude, however 100% is set, just to avoid deadlock...
+                                while (mModel.m_alt < desired_alt*0.98 || timeout > (30*(1/0.250))){
+                                    mModel.do_set_motion_relative(MAV_CMD_NAV_TAKEOFF, 0, 0, msg_cmd.param7 - (mModel.m_alt / (float) 1000.0), 0, 0, 0, 0, 0, 0b00011111111000);
+                                    timeout+= 1;
+                                    safeSleep(250);
+                                    Log.d(TAG, "Climb out..."+mModel.m_alt);
+                                }
+                                Log.d(TAG, "Climb out completed..."+mModel.m_alt);
+                            }else{
+                                Log.d(TAG, "Climb out failed...");
                             }
                         }
+
+ */
                         break;
                     case MAV_CMD_NAV_LAND:
                         mModel.do_land();
@@ -187,6 +210,7 @@ public class MAVLinkReceiver {
                         // TODO;
                         break;
                     case MAV_CMD_NAV_RETURN_TO_LAUNCH:
+                        Log.d(TAG, "MAV_CMD_NAV_RETURN_TO_LAUNCH...");
                         mModel.do_go_home();
                         mModel.send_command_ack(MAV_CMD_NAV_RETURN_TO_LAUNCH, MAV_RESULT.MAV_RESULT_ACCEPTED);
                         break;
@@ -212,8 +236,10 @@ public class MAVLinkReceiver {
 
                     case MAV_CMD_CONDITION_YAW:
                         parent.logMessageDJI("Yaw = " + msg_cmd.param1);
-                        // If absolut yaw...
+
+                        // If absolute yaw...
                         if( msg_cmd.param4 == 0) {
+                            mModel.send_command_ack(MAV_CMD_CONDITION_YAW, MAV_RESULT.MAV_RESULT_IN_PROGRESS);
                             mModel.do_set_motion_absolute(
                                     0,
                                     0,
@@ -225,11 +251,19 @@ public class MAVLinkReceiver {
                                     10,
                                     0b1111001111111111);
                         }
+                        else{
+                            mModel.send_command_ack(MAV_CMD_CONDITION_YAW, MAV_RESULT.MAV_RESULT_UNSUPPORTED);
+                        }
                         break;
-
 
                     case MAV_CMD_DO_SET_SERVO:
                         mModel.do_set_Gimbal(msg_cmd.param1, msg_cmd.param2);
+                        break;
+
+                    // JUMP is just a test function to enter the Timeline...
+                    case MAV_CMD_DO_JUMP:
+                        Log.d(TAG, "Start Timeline...");
+                        mModel.echoLoadedMission();
                         break;
                 }
                 break;
@@ -253,7 +287,9 @@ public class MAVLinkReceiver {
                 if ( ((msg_param.type_mask & 0b0000100000000111) == 0x007) ){  // If no move and we use yaw rate...
                     mModel.mAutonomy = false; // Velocity must halt autonomy (as Autonomy tries to reach a point, whule veliciity tries to set a speed)
                     mModel.do_set_motion_velocity(msg_param.vx, msg_param.vy, msg_param.vz, (float)Math.toDegrees(msg_param.yaw_rate), msg_param.type_mask);
+                    mModel.send_command_ack(MAVLINK_MSG_ID_SET_POSITION_TARGET_LOCAL_NED, MAV_RESULT.MAV_RESULT_ACCEPTED);
                 } else {
+                    mModel.send_command_ack(MAVLINK_MSG_ID_SET_POSITION_TARGET_LOCAL_NED, MAV_RESULT.MAV_RESULT_IN_PROGRESS);
                     mModel.do_set_motion_relative(
                             MAVLINK_MSG_ID_SET_POSITION_TARGET_LOCAL_NED,
                             (double)msg_param.x,
@@ -276,7 +312,9 @@ public class MAVLinkReceiver {
                 if ( ((msg_param_4.type_mask & 0b0000100000000111) == 0x007) ){  // If no move and we use yaw rate...
                     mModel.mAutonomy = false;
                     mModel.do_set_motion_velocity_NED(msg_param_4.vx, msg_param_4.vy, msg_param_4.vz, (float)Math.toDegrees(msg_param_4.yaw_rate),msg_param_4.type_mask);
+                    mModel.send_command_ack(MAVLINK_MSG_ID_SET_POSITION_TARGET_GLOBAL_INT, MAV_RESULT.MAV_RESULT_ACCEPTED);
                 } else{
+                    mModel.send_command_ack(MAVLINK_MSG_ID_SET_POSITION_TARGET_GLOBAL_INT, MAV_RESULT.MAV_RESULT_IN_PROGRESS);
                     mModel.do_set_motion_absolute(
                             (double)msg_param_4.lat_int/10000000,
                             (double)msg_param_4.lon_int/10000000,
@@ -294,6 +332,7 @@ public class MAVLinkReceiver {
             case MAVLINK_MSG_ID_MANUAL_CONTROL:
                 msg_manual_control msg_param_5 = (msg_manual_control) msg;
                 mModel.do_set_motion_velocity(msg_param_5.x / (float) 100.0, msg_param_5.y / (float) 100.0,  msg_param_5.z / (float) 260.0, msg_param_5.r / (float) 50.0, 0b0000100000111000);
+                mModel.send_command_ack(MAVLINK_MSG_ID_MANUAL_CONTROL, MAV_RESULT.MAV_RESULT_ACCEPTED);
                 break;
 
 
