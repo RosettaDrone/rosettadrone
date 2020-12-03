@@ -96,6 +96,7 @@
         <item>6</item>
         <item>4</item>
         <item>2</item>
+        <item>0</item>
     </string-array>
 
     <!-- Logs -->
@@ -125,8 +126,8 @@
     <string name="options_clear_log">Clear Logs</string>
     <string name="options_download_log">Download Logs</string>
     <string name="options_help">Help &amp; feedback</string>
-    <string name="options_map">Map and Control</string>
-    <string name="options_map_new">Map Gaode</string>
+    <string name="options_map">Waypoint v1</string>
+    <string name="options_map_new">Waypoint v2</string>
     <string name="options_gui">Switch Logging</string>
 
     <!-- Error Messages -->

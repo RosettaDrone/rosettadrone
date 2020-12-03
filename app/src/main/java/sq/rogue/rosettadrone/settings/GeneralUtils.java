@@ -1,6 +1,7 @@
 package sq.rogue.rosettadrone.settings;
 
 import android.util.Log;
+
 import dji.common.error.DJIError;
 import dji.common.util.CommonCallbacks;
 
@@ -55,7 +56,7 @@ public class GeneralUtils {
         return new CommonCallbacks.CompletionCallback() {
             @Override
             public void onResult(DJIError djiError) {
-                Log.d("GeneralUtils",djiError == null ? "Succeed!" : "failed!" + djiError.getDescription());
+                Log.d("GeneralUtils", djiError == null ? "Succeed!" : "failed!" + djiError.getDescription());
             }
         };
     }

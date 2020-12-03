@@ -2,23 +2,23 @@ package sq.rogue.rosettadrone.settings;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Patterns;
+
 import androidx.preference.EditTextPreference;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceGroup;
-import android.util.Patterns;
-
 import sq.rogue.rosettadrone.MainActivity;
 import sq.rogue.rosettadrone.NotificationHandler;
 import sq.rogue.rosettadrone.R;
 
+import static sq.rogue.rosettadrone.util.TYPE_APP_NAME;
 import static sq.rogue.rosettadrone.util.TYPE_GCS_IP;
 import static sq.rogue.rosettadrone.util.TYPE_GCS_PORT;
 import static sq.rogue.rosettadrone.util.TYPE_VIDEO_BITRATE;
 import static sq.rogue.rosettadrone.util.TYPE_VIDEO_IP;
 import static sq.rogue.rosettadrone.util.TYPE_VIDEO_PORT;
-import static sq.rogue.rosettadrone.util.TYPE_APP_NAME;
 
 // Display value of preference in summary field
 

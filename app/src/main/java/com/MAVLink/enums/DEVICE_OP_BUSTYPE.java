@@ -6,12 +6,12 @@
 
 package com.MAVLink.enums;
 
-/** 
-* Bus types for device operations.
-*/
+/**
+ * Bus types for device operations.
+ */
 public class DEVICE_OP_BUSTYPE {
-   public static final int DEVICE_OP_BUSTYPE_I2C = 0; /* I2C Device operation. | */
-   public static final int DEVICE_OP_BUSTYPE_SPI = 1; /* SPI Device operation. | */
-   public static final int DEVICE_OP_BUSTYPE_ENUM_END = 2; /*  | */
+    public static final int DEVICE_OP_BUSTYPE_I2C = 0; /* I2C Device operation. | */
+    public static final int DEVICE_OP_BUSTYPE_SPI = 1; /* SPI Device operation. | */
+    public static final int DEVICE_OP_BUSTYPE_ENUM_END = 2; /*  | */
 }
             

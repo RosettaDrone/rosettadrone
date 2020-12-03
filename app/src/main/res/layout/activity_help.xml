@@ -126,7 +126,7 @@
         android:layout_gravity="center"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="530dp"
-        android:src="@drawable/ic_drone"/>
+        android:src="@drawable/ic_drone" />
 
     <ImageView
         android:id="@+id/action_logo"
@@ -135,6 +135,6 @@
         android:layout_gravity="center"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="360dp"
-        android:src="@drawable/logo"/>
+        android:src="@drawable/logo" />
 
 </RelativeLayout>

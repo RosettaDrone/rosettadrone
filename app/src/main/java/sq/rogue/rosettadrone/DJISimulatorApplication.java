@@ -3,7 +3,6 @@ package sq.rogue.rosettadrone;
 import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -78,7 +77,7 @@ public class DJISimulatorApplication extends Application {
             @Override
             public void onRegister(DJIError error) {
 
-                if(error == DJISDKError.REGISTRATION_SUCCESS) {
+                if (error == DJISDKError.REGISTRATION_SUCCESS) {
 
                     Handler handler = new Handler(Looper.getMainLooper());
                     handler.post(new Runnable() {
@@ -110,6 +109,7 @@ public class DJISimulatorApplication extends Application {
                 Log.d("TAG", "onProductDisconnect");
                 notifyStatusChange();
             }
+
             @Override
             public void onProductConnect(BaseProduct baseProduct) {
                 Log.d("TAG", String.format("onProductConnect newProduct:%s", baseProduct));
@@ -149,6 +149,7 @@ public class DJISimulatorApplication extends Application {
                                 newComponent));
 
             }
+
             @Override
             public void onInitProcess(DJISDKInitEvent djisdkInitEvent, int i) {
 

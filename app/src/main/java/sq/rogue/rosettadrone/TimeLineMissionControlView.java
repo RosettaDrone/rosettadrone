@@ -3,12 +3,11 @@ package sq.rogue.rosettadrone;
 import android.util.Log;
 import android.widget.TextView;
 
-import androidx.annotation.Nullable;
-
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import androidx.annotation.Nullable;
 import dji.common.error.DJIError;
 import dji.common.gimbal.Attitude;
 import dji.common.gimbal.Rotation;
@@ -30,26 +29,22 @@ import dji.sdk.mission.Triggerable;
 import dji.sdk.mission.timeline.TimelineElement;
 import dji.sdk.mission.timeline.TimelineEvent;
 import dji.sdk.mission.timeline.TimelineMission;
-import dji.sdk.mission.timeline.actions.AircraftYawAction;
 import dji.sdk.mission.timeline.actions.GimbalAttitudeAction;
 import dji.sdk.mission.timeline.actions.GoHomeAction;
 import dji.sdk.mission.timeline.actions.GoToAction;
 import dji.sdk.mission.timeline.actions.HotpointAction;
-import dji.sdk.mission.timeline.actions.RecordVideoAction;
-import dji.sdk.mission.timeline.actions.ShootPhotoAction;
 import dji.sdk.mission.timeline.actions.TakeOffAction;
 import dji.sdk.mission.timeline.triggers.AircraftLandedTrigger;
 import dji.sdk.mission.timeline.triggers.BatteryPowerLevelTrigger;
 import dji.sdk.mission.timeline.triggers.Trigger;
 import dji.sdk.mission.timeline.triggers.TriggerEvent;
 import dji.sdk.mission.timeline.triggers.WaypointReachedTrigger;
-
 import sq.rogue.rosettadrone.settings.GeneralUtils;
 
 /**
  * Class for Timeline MissionControl.
  */
-public class TimeLineMissionControlView     {
+public class TimeLineMissionControlView {
 
     private final String TAG = TimeLineMissionControlView.class.getSimpleName();
 
@@ -67,11 +62,11 @@ public class TimeLineMissionControlView     {
 
 
     private void setRunningResultToText(final String s) {
-        Log.d(TAG,s);
+        Log.d(TAG, s);
     }
 
     private void setTimelinePlanToText(final String s) {
-        Log.d(TAG,s);
+        Log.d(TAG, s);
     }
 
     /**
@@ -104,6 +99,7 @@ public class TimeLineMissionControlView     {
     /**
      * Demo on AircraftLandedTrigger. Once the aircraft is landed, this trigger action will be called if the timeline is
      * not finished yet.
+     *
      * @param triggerTarget
      */
     private void addAircraftLandedTrigger(Triggerable triggerTarget) {
@@ -114,7 +110,7 @@ public class TimeLineMissionControlView     {
     private Trigger.Listener triggerListener = new Trigger.Listener() {
         @Override
         public void onEvent(Trigger trigger, TriggerEvent event, @Nullable DJIError error) {
-            setRunningResultToText("Trigger " + trigger.getClass().getSimpleName() + " event is " + event.name() + (error==null? " ":error.getDescription()));
+            setRunningResultToText("Trigger " + trigger.getClass().getSimpleName() + " event is " + event.name() + (error == null ? " " : error.getDescription()));
         }
     };
 
@@ -149,10 +145,10 @@ public class TimeLineMissionControlView     {
                     + additionalComment);
         }
     }
-    void initTimeline()
-    {
+
+    void initTimeline() {
         if (!GeneralUtils.checkGpsCoordinate(homeLatitude, homeLongitude)) {
-            Log.d(TAG,"No home point!!!");
+            Log.d(TAG, "No home point!!!");
             return;
         }
 
@@ -168,7 +164,7 @@ public class TimeLineMissionControlView     {
 
         //Step 2: reset the gimbal to horizontal angle in 2 seconds.
         setTimelinePlanToText("Step 2: set the gimbal pitch -30 angle in 2 seconds");
-        Attitude attitude  = new Attitude(20, Rotation.NO_ROTATION, Rotation.NO_ROTATION);
+        Attitude attitude = new Attitude(20, Rotation.NO_ROTATION, Rotation.NO_ROTATION);
         GimbalAttitudeAction gimbalAction = new GimbalAttitudeAction(attitude);
         gimbalAction.setCompletionTime(2);
         elements.add(gimbalAction);
@@ -242,8 +238,7 @@ public class TimeLineMissionControlView     {
     }
 
     // Takeoff and climbe to "alt" located at "lat,lon" rotating "yaw" degrees relative...
-    void TimeLinetakeOff(double lat, double lon, int alt, float yaw)
-    {
+    void TimeLinetakeOff(double lat, double lon, float alt, float yaw) {
         List<TimelineElement> elements = new ArrayList<>();
 
         missionControl = MissionControl.getInstance();
@@ -253,21 +248,9 @@ public class TimeLineMissionControlView     {
         setTimelinePlanToText("Step 1: takeoff from the ground");
         elements.add(new TakeOffAction());
 
-        setTimelinePlanToText("Step 2: rotate 90 deg");
-        elements.add(new AircraftYawAction(yaw, 25));
-
-        setTimelinePlanToText("Step 3: climb x meters from home point");
-        GoToAction lift = new GoToAction(new LocationCoordinate2D(lat,lon), alt);
-        lift.setFlightSpeed((float)1.0); // Slow down...
-        elements.add(lift);
-
-        setTimelinePlanToText("Step 4: set the gimbal pitch -30 angle in 2 seconds");
-        Attitude attitude  = new Attitude(-30, Rotation.NO_ROTATION, Rotation.NO_ROTATION);
-        GimbalAttitudeAction gimbalAction = new GimbalAttitudeAction(attitude);
-        gimbalAction.setCompletionTime(2);
-        elements.add(gimbalAction);
-
-        addBatteryPowerLevelTrigger(missionControl);
+        setTimelinePlanToText("Step 2: climb x meters from home point");
+        setTimelinePlanToText("Lat: " + lat + " Lon: " + lon + " Alt: " + alt);
+        elements.add(new GoToAction(new LocationCoordinate2D(lat, lon), alt / (float) 1000.0));
 
         if (missionControl.scheduledCount() > 0) {
             missionControl.unscheduleEverything();
@@ -277,9 +260,9 @@ public class TimeLineMissionControlView     {
         missionControl.scheduleElements(elements);
         missionControl.addListener(listener);
     }
+
     // Takeoff and climbe to "alt" located at "lat,lon" rotating "yaw" degrees relative...
-    void TimeLineGoTo(double lat, double lon, int alt, float speed, float yaw)
-    {
+    void TimeLineGoTo(double lat, double lon, float alt, float speed, float yaw) {
         List<TimelineElement> elements = new ArrayList<>();
 
         missionControl = MissionControl.getInstance();
@@ -287,11 +270,8 @@ public class TimeLineMissionControlView     {
         MissionControl.Listener listener = (element, event, error) -> updateTimelineStatus(element, event, error);
 
         setTimelinePlanToText("Step 1: takeoff from the ground");
-        GoToAction lift = new GoToAction(new LocationCoordinate2D(lat,lon), alt);
-        lift.setFlightSpeed((float)speed); // Slow down...
-        elements.add(lift);
-
-        addBatteryPowerLevelTrigger(missionControl);
+        setTimelinePlanToText("Lat: " + lat + " Lon: " + lon + " Alt: " + alt);
+        elements.add(new GoToAction(new LocationCoordinate2D(lat, lon), alt / (float) 1000.0));
 
         if (missionControl.scheduledCount() > 0) {
             missionControl.unscheduleEverything();
@@ -327,6 +307,10 @@ public class TimeLineMissionControlView     {
                     ? ""
                     : "Failed:"
                     + error.getDescription()));
+
+            if (event.toString() == "FINISHED") {
+
+            }
         }
 
         preEvent = event;
@@ -336,7 +320,7 @@ public class TimeLineMissionControlView     {
 
     private WaypointMission initTestingWaypointMission() {
         if (!GeneralUtils.checkGpsCoordinate(homeLatitude, homeLongitude)) {
-            Log.d(TAG,"No home point!!!");
+            Log.d(TAG, "No home point!!!");
             return null;
         }
 
@@ -348,13 +332,14 @@ public class TimeLineMissionControlView     {
                 .flightPathMode(WaypointMissionFlightPathMode.NORMAL)
                 .gotoFirstWaypointMode(WaypointMissionGotoWaypointMode.SAFELY)
                 .headingMode(WaypointMissionHeadingMode.AUTO)
-                .repeatTimes(1);;
+                .repeatTimes(1);
+        ;
         List<Waypoint> waypoints = new LinkedList<>();
 
         Waypoint northPoint = new Waypoint(homeLatitude + 10 * GeneralUtils.ONE_METER_OFFSET, homeLongitude, 10f);
-        Waypoint eastPoint  = new Waypoint(homeLatitude, homeLongitude + 10 * GeneralUtils.calcLongitudeOffset(homeLatitude), 15f);
+        Waypoint eastPoint = new Waypoint(homeLatitude, homeLongitude + 10 * GeneralUtils.calcLongitudeOffset(homeLatitude), 15f);
         Waypoint southPoint = new Waypoint(homeLatitude - 10 * GeneralUtils.ONE_METER_OFFSET, homeLongitude, 10f);
-        Waypoint westPoint  = new Waypoint(homeLatitude, homeLongitude - 10 * GeneralUtils.calcLongitudeOffset(homeLatitude), 15f);
+        Waypoint westPoint = new Waypoint(homeLatitude, homeLongitude - 10 * GeneralUtils.calcLongitudeOffset(homeLatitude), 15f);
 
 //        northPoint.addAction(new WaypointAction(WaypointActionType.RESET_GIMBAL_YAW, 0));
         northPoint.addAction(new WaypointAction(WaypointActionType.GIMBAL_PITCH, -60));
@@ -373,7 +358,7 @@ public class TimeLineMissionControlView     {
         if (MissionControl.getInstance().scheduledCount() > 0) {
             MissionControl.getInstance().startTimeline();
         } else {
-            Log.d(TAG,"Wait for takeoff...");
+            Log.d(TAG, "Wait for takeoff...");
         }
     }
 
@@ -400,8 +385,7 @@ public class TimeLineMissionControlView     {
     }
 
 
-    void addHome(double lat, double lon)
-    {
+    void addHome(double lat, double lon) {
         homeLatitude = lat;
         homeLongitude = lon;
 

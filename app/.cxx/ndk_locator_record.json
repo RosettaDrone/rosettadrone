@@ -1,13 +1,13 @@
 {
-  "ndkFolder": "/home/smartdrone/Android/Sdk/ndk/21.3.6528147",
+  "ndkFolder": "/Users/teni/Library/Android/sdk/ndk/20.1.5948944",
   "messages": [
     {
       "level": "INFO",
-      "message": "android.ndkVersion from module build.gradle is not set"
+      "message": "android.ndkVersion from module build.gradle is 20.1.5948944"
     },
     {
       "level": "INFO",
-      "message": "ndk.dir in local.properties is /home/smartdrone/Android/Sdk/ndk/21.3.6528147"
+      "message": "ndk.dir in local.properties is not set"
     },
     {
       "level": "INFO",
@@ -15,35 +15,19 @@
     },
     {
       "level": "INFO",
-      "message": "sdkFolder is /home/smartdrone/Android/Sdk"
+      "message": "sdkFolder is /Users/teni/Library/Android/sdk"
     },
     {
       "level": "INFO",
-      "message": "Considering /home/smartdrone/Android/Sdk/ndk/21.3.6528147 by ndk.dir"
+      "message": "Considering /Users/teni/Library/Android/sdk/ndk-bundle in SDK ndk-bundle folder"
     },
     {
       "level": "INFO",
-      "message": "Considering /home/smartdrone/Android/Sdk/ndk-bundle in SDK ndk-bundle folder"
+      "message": "Considering /Users/teni/Library/Android/sdk/ndk/20.1.5948944 in SDK ndk folder"
     },
     {
       "level": "INFO",
-      "message": "Considering /home/smartdrone/Android/Sdk/ndk/21.2.6472646 in SDK ndk folder"
-    },
-    {
-      "level": "INFO",
-      "message": "Considering /home/smartdrone/Android/Sdk/ndk/21.3.6528147 in SDK ndk folder"
-    },
-    {
-      "level": "INFO",
-      "message": "Considering /home/smartdrone/Android/Sdk/ndk/21.0.6113669 in SDK ndk folder"
-    },
-    {
-      "level": "INFO",
-      "message": "Rejected /home/smartdrone/Android/Sdk/ndk/21.2.6472646 in SDK ndk folder because that location has no source.properties"
-    },
-    {
-      "level": "INFO",
-      "message": "Found requested ndk.dir (/home/smartdrone/Android/Sdk/ndk/21.3.6528147) which has version 21.3.6528147"
+      "message": "Found requested NDK version 20.1.5948944 at /Users/teni/Library/Android/sdk/ndk/20.1.5948944"
     }
   ]
 }

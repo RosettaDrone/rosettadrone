@@ -32,7 +32,7 @@ enum AVStereo3DType {
     /**
      * Video is not stereoscopic (and metadata has to be there).
      */
-            AV_STEREO3D_2D,
+    AV_STEREO3D_2D,
 
     /**
      * Views are next to each other.
@@ -42,7 +42,7 @@ enum AVStereo3DType {
      *    LLLLRRRR
      *    ...
      */
-            AV_STEREO3D_SIDEBYSIDE,
+    AV_STEREO3D_SIDEBYSIDE,
 
     /**
      * Views are on top of each other.
@@ -52,7 +52,7 @@ enum AVStereo3DType {
      *    RRRRRRRR
      *    RRRRRRRR
      */
-            AV_STEREO3D_TOPBOTTOM,
+    AV_STEREO3D_TOPBOTTOM,
 
     /**
      * Views are alternated temporally.
@@ -63,7 +63,7 @@ enum AVStereo3DType {
      *    LLLLLLLL RRRRRRRR LLLLLLLL
      *    ...      ...      ...
      */
-            AV_STEREO3D_FRAMESEQUENCE,
+    AV_STEREO3D_FRAMESEQUENCE,
 
     /**
      * Views are packed in a checkerboard-like structure per pixel.
@@ -73,7 +73,7 @@ enum AVStereo3DType {
      *    LRLRLRLR
      *    ...
      */
-            AV_STEREO3D_CHECKERBOARD,
+    AV_STEREO3D_CHECKERBOARD,
 
     /**
      * Views are next to each other, but when upscaling
@@ -84,7 +84,7 @@ enum AVStereo3DType {
      *     LLLLRRRR          L L L L    R R R R
      *     LLLLRRRR           L L L L  R R R R
      */
-            AV_STEREO3D_SIDEBYSIDE_QUINCUNX,
+    AV_STEREO3D_SIDEBYSIDE_QUINCUNX,
 
     /**
      * Views are packed per line, as if interlaced.
@@ -94,7 +94,7 @@ enum AVStereo3DType {
      *    LLLLLLLL
      *    ...
      */
-            AV_STEREO3D_LINES,
+    AV_STEREO3D_LINES,
 
     /**
      * Views are packed per column.
@@ -104,7 +104,7 @@ enum AVStereo3DType {
      *    LRLRLRLR
      *    ...
      */
-            AV_STEREO3D_COLUMNS,
+    AV_STEREO3D_COLUMNS,
 };
 
 

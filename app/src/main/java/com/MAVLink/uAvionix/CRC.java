@@ -7,26 +7,24 @@
 package com.MAVLink.uAvionix;
 
 /**
-* X.25 CRC calculation for MAVlink messages. The checksum must be initialized,
-* updated with witch field of the message, and then finished with the message
-* id.
-*
-*/
+ * X.25 CRC calculation for MAVlink messages. The checksum must be initialized,
+ * updated with witch field of the message, and then finished with the message
+ * id.
+ */
 public class CRC {
     private static final int[] MAVLINK_MESSAGE_CRCS = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     private static final int CRC_INIT_VALUE = 0xffff;
     private int crcValue;
 
     /**
-    * Accumulate the X.25 CRC by adding one char at a time.
-    *
-    * The checksum function adds the hash of one char at a time to the 16 bit
-    * checksum (uint16_t).
-    *
-    * @param data
-    *            new char to hash
-    **/
-    public  void update_checksum(int data) {
+     * Accumulate the X.25 CRC by adding one char at a time.
+     * <p>
+     * The checksum function adds the hash of one char at a time to the 16 bit
+     * checksum (uint16_t).
+     *
+     * @param data new char to hash
+     **/
+    public void update_checksum(int data) {
         data = data & 0xff; //cast because we want an unsigned type
         int tmp = data ^ (crcValue & 0xff);
         tmp ^= (tmp << 4) & 0xff;
@@ -34,20 +32,18 @@ public class CRC {
     }
 
     /**
-    * Finish the CRC calculation of a message, by running the CRC with the
-    * Magic Byte. This Magic byte has been defined in MAVlink v1.0.
-    *
-    * @param msgid
-    *            The message id number
-    */
+     * Finish the CRC calculation of a message, by running the CRC with the
+     * Magic Byte. This Magic byte has been defined in MAVlink v1.0.
+     *
+     * @param msgid The message id number
+     */
     public void finish_checksum(int msgid) {
         update_checksum(MAVLINK_MESSAGE_CRCS[msgid]);
     }
 
     /**
-    * Initialize the buffer for the X.25 CRC
-    *
-    */
+     * Initialize the buffer for the X.25 CRC
+     */
     public void start_checksum() {
         crcValue = CRC_INIT_VALUE;
     }

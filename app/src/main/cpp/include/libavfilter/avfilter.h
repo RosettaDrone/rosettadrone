@@ -94,6 +94,7 @@ typedef struct AVFilterBuffer {
 
     /** private data to be used by a custom free function */
     void *priv;
+
     /**
      * A pointer to the function to deallocate this buffer if the default
      * function is not sufficient. This could, for example, add the memory
@@ -234,6 +235,7 @@ void avfilter_unref_buffer(AVFilterBufferRef *ref);
  */
 attribute_deprecated
 void avfilter_unref_bufferp(AVFilterBufferRef **ref);
+
 #endif
 
 /**
@@ -243,6 +245,7 @@ attribute_deprecated
 int avfilter_ref_get_channels(AVFilterBufferRef *ref);
 
 #if FF_API_AVFILTERPAD_PUBLIC
+
 /**
  * A filter pad used for either input or output.
  *
@@ -393,6 +396,7 @@ struct AVFilterPad {
      */
     int needs_writable;
 };
+
 #endif
 
 /**
@@ -913,7 +917,7 @@ int avfilter_config_links(AVFilterContext *filter);
  */
 attribute_deprecated
 AVFilterBufferRef *
-avfilter_get_video_buffer_ref_from_arrays(uint8_t * const data[4], const int linesize[4], int perms,
+avfilter_get_video_buffer_ref_from_arrays(uint8_t *const data[4], const int linesize[4], int perms,
                                           int w, int h, enum AVPixelFormat format);
 
 /**
@@ -979,6 +983,7 @@ void avfilter_register_all(void);
 /** Uninitialize the filter system. Unregister all filters. */
 attribute_deprecated
 void avfilter_uninit(void);
+
 #endif
 
 /**
@@ -1004,6 +1009,7 @@ int avfilter_register(AVFilter *filter);
 
 const
 #endif
+
 AVFilter *avfilter_get_by_name(const char *name);
 
 /**
@@ -1023,6 +1029,7 @@ const AVFilter *avfilter_next(const AVFilter *prev);
  */
 attribute_deprecated
 AVFilter **av_filter_next(AVFilter **filter);
+
 #endif
 
 #if FF_API_AVFILTER_OPEN
@@ -1038,6 +1045,7 @@ AVFilter **av_filter_next(AVFilter **filter);
  */
 attribute_deprecated
 int avfilter_open(AVFilterContext **filter_ctx, AVFilter *filter, const char *inst_name);
+
 #endif
 
 
@@ -1054,6 +1062,7 @@ int avfilter_open(AVFilterContext **filter_ctx, AVFilter *filter, const char *in
  */
 attribute_deprecated
 int avfilter_init_filter(AVFilterContext *filter, const char *args, void *opaque);
+
 #endif
 
 /**
@@ -1128,6 +1137,7 @@ int avfilter_copy_frame_props(AVFilterBufferRef *dst, const AVFrame *src);
  */
 attribute_deprecated
 int avfilter_copy_buf_props(AVFrame *dst, const AVFilterBufferRef *src);
+
 #endif
 
 /**
@@ -1292,6 +1302,7 @@ AVFilterContext *avfilter_graph_get_filter(AVFilterGraph *graph, const char *nam
  */
 attribute_deprecated
 int avfilter_graph_add_filter(AVFilterGraph *graphctx, AVFilterContext *filter);
+
 #endif
 
 /**
