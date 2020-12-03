@@ -1,5 +1,5 @@
 # RosettaDrone 2 is now updated to DJI SDK 4.13...
-# 3. Des. 2020: Main is merged with the work branch, thanks for all the help.
+## 3. Des. 2020: Main is merged with the work branch, thanks for all the help.
 
 Rosetta Drone 2 tested on **DJI Air, Mavic 2 and Matrice 210 V2 with X7 camera** series 
 and supports Android 5.1 and newer, with DJI SDK 4.13.0 and Androidx lib
