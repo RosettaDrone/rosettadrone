@@ -2,13 +2,13 @@ package sq.rogue.rosettadrone.settings.drone;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
+
+import java.util.Map;
+
 import androidx.preference.EditTextPreference;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
-
-import java.util.Map;
-
 import sq.rogue.rosettadrone.MainActivity;
 import sq.rogue.rosettadrone.NotificationHandler;
 import sq.rogue.rosettadrone.R;

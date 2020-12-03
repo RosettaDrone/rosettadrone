@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:id="@+id/tv_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Camera Type"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <RadioGroup
+        android:id="@+id/radio_gimbal_type"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tv_title">
+
+        <RadioButton
+            android:id="@+id/rb_rotate_gimbal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="ROTATE_GIMBAL" />
+
+        <RadioButton
+            android:id="@+id/rb_aircraft_control_gimbal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="AIRCRAFT_CONTROL_GIMBAL" />
+
+    </RadioGroup>
+
+    <EditText
+        android:id="@+id/et_gimbal_roll"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:inputType="numberSigned|numberDecimal"
+        android:hint="input gimbal roll"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/radio_gimbal_type" />
+
+    <EditText
+        android:id="@+id/et_gimbal_pitch"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="input gimbal pitch"
+        android:inputType="numberSigned|numberDecimal"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/et_gimbal_roll" />
+
+    <EditText
+        android:id="@+id/et_gimbal_yaw"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="Input gimbal yaw"
+        android:inputType="numberSigned|numberDecimal"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/et_gimbal_pitch" />
+
+    <EditText
+        android:id="@+id/et_duration_time"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="Input duration"
+        android:inputType="number"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/et_gimbal_yaw" />
+
+    <androidx.appcompat.widget.AppCompatCheckBox
+        android:id="@+id/box_absulote"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="absulote"
+        app:layout_constraintLeft_toLeftOf="@id/et_duration_time"
+        app:layout_constraintTop_toBottomOf="@id/et_duration_time" />
+
+    <androidx.appcompat.widget.AppCompatCheckBox
+        android:id="@+id/box_rollIgnore"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="rollIgnore"
+        app:layout_constraintLeft_toLeftOf="@id/box_absulote"
+        app:layout_constraintTop_toBottomOf="@id/box_absulote" />
+
+    <androidx.appcompat.widget.AppCompatCheckBox
+        android:id="@+id/box_pitch_ignore"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="pitch ignore"
+        app:layout_constraintLeft_toLeftOf="@id/box_rollIgnore"
+        app:layout_constraintTop_toBottomOf="@id/box_rollIgnore" />
+
+    <androidx.appcompat.widget.AppCompatCheckBox
+        android:id="@+id/box_yaw_igore"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="yaw ignore"
+        app:layout_constraintLeft_toLeftOf="@id/box_pitch_ignore"
+        app:layout_constraintTop_toBottomOf="@id/box_pitch_ignore" />
+
+    <androidx.appcompat.widget.AppCompatCheckBox
+        android:id="@+id/box_abs_yaw_ref"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Abs yaw ref"
+        app:layout_constraintLeft_toLeftOf="@id/box_yaw_igore"
+        app:layout_constraintTop_toBottomOf="@id/box_yaw_igore" />
+</androidx.constraintlayout.widget.ConstraintLayout>

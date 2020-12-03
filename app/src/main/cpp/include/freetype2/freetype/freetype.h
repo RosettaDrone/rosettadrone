@@ -667,7 +667,7 @@ typedef enum FT_Encoding_ {
     FT_ENC_TAG(FT_ENCODING_JOHAB, 'j', 'o', 'h', 'a'),
 
     /* for backwards compatibility */
-            FT_ENCODING_MS_SJIS = FT_ENCODING_SJIS,
+    FT_ENCODING_MS_SJIS = FT_ENCODING_SJIS,
     FT_ENCODING_MS_GB2312 = FT_ENCODING_GB2312,
     FT_ENCODING_MS_BIG5 = FT_ENCODING_BIG5,
     FT_ENCODING_MS_WANSUNG = FT_ENCODING_WANSUNG,

@@ -24,21 +24,14 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-
-import androidx.fragment.app.FragmentManager;
-import androidx.preference.PreferenceManager;
-import dji.common.flightcontroller.simulator.InitializationData;
-
-import dji.common.model.LocationCoordinate2D;
-import dji.sdk.sdkmanager.DJISDKInitEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import dji.common.error.DJIError;
 import dji.common.error.DJISDKError;
 import dji.common.useraccount.UserAccountState;
@@ -51,6 +44,7 @@ import dji.log.DJILog;
 import dji.sdk.base.BaseComponent;
 import dji.sdk.base.BaseProduct;
 import dji.sdk.products.Aircraft;
+import dji.sdk.sdkmanager.DJISDKInitEvent;
 import dji.sdk.sdkmanager.DJISDKManager;
 import dji.sdk.useraccount.UserAccountManager;
 
@@ -145,26 +139,28 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
                             Log.v(TAG, djiError.getDescription());
                             isRegistrationInProgress.set(false);
                         }
+
                         @Override
                         public void onProductDisconnect() {
                             showToast("Product Disconnected");
                             notifyStatusChange();
                         }
+
                         @Override
                         public void onProductConnect(BaseProduct baseProduct) {
-                            Log.e(TAG,"Product Connected");
+                            Log.e(TAG, "Product Connected");
 
                             notifyStatusChange();
                             isRegistrationInProgress.set(false);
                             updateVersion();
                             if (baseProduct != null) {
-                           //     RDApplication.updateProduct(baseProduct);
+                                //     RDApplication.updateProduct(baseProduct);
                             }
                         }
 
                         @Override
                         public void onProductChanged(BaseProduct baseProduct) {
-                            Log.e(TAG,"Product Changed");
+                            Log.e(TAG, "Product Changed");
 
                             notifyStatusChange();
                             isRegistrationInProgress.set(false);
@@ -179,13 +175,13 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
                                                       BaseComponent oldComponent,
                                                       BaseComponent newComponent) {
                             if (newComponent != null && oldComponent == null) {
-                                Log.v(TAG,componentKey.name() + " Component Found index:" + newComponent.getIndex());
+                                Log.v(TAG, componentKey.name() + " Component Found index:" + newComponent.getIndex());
                             }
                             if (newComponent != null) {
                                 newComponent.setComponentListener(new BaseComponent.ComponentListener() {
                                     @Override
                                     public void onConnectivityChange(boolean b) {
-                                        Log.v(TAG," Component " + (b?"connected":"disconnected"));
+                                        Log.v(TAG, " Component " + (b ? "connected" : "disconnected"));
                                         notifyStatusChange();
                                     }
                                 });
@@ -217,7 +213,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
                 new CommonCallbacks.CompletionCallbackWith<UserAccountState>() {
                     @Override
                     public void onSuccess(final UserAccountState userAccountState) {
-                        showToast("login success! Account state is:" +userAccountState.name());
+                        showToast("login success! Account state is:" + userAccountState.name());
                     }
 
                     @Override
@@ -331,26 +327,25 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         mBtnTest.setOnClickListener(this);
 
         Context appContext = this.getBaseContext();
-        String version = "Version: "+getAppVersion(appContext);
-        Log.v(TAG,""+version);
-        ((TextView)findViewById(R.id.textView3)).setText(version);
+        String version = "Version: " + getAppVersion(appContext);
+        Log.v(TAG, "" + version);
+        ((TextView) findViewById(R.id.textView3)).setText(version);
 
         sharedPreferences = android.preference.PreferenceManager.getDefaultSharedPreferences(this);
         CustomName = sharedPreferences.getString("pref_app_name", "RosettaDrone 2"); //+"RosettaDrone 2";
-        if(CustomName.length() > 0)
-            ((TextView)findViewById(R.id.textView)).setText(CustomName);
+        if (CustomName.length() > 0)
+            ((TextView) findViewById(R.id.textView)).setText(CustomName);
 
-        ((TextView)findViewById(R.id.textView2)).setText(getResources().getString(R.string.sdk_version, DJISDKManager.getInstance().getSDKVersion()));
+        ((TextView) findViewById(R.id.textView2)).setText(getResources().getString(R.string.sdk_version, DJISDKManager.getInstance().getSDKVersion()));
 
     }
 
-    public static String getAppVersion(Context context){
+    public static String getAppVersion(Context context) {
         PackageManager localPackageManager = context.getPackageManager();
-        try{
+        try {
             String str = localPackageManager.getPackageInfo(context.getPackageName(), 0).versionName;
             return str;
-        }
-        catch (PackageManager.NameNotFoundException e){
+        } catch (PackageManager.NameNotFoundException e) {
             Log.v(TAG, "getAppVersion error" + e.getMessage());
             e.printStackTrace();
         }
@@ -363,7 +358,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
 
         if (RDApplication.getSim() == true) {
             product = DJISimulatorApplication.getAircraftInstance();
-        }else {
+        } else {
             product = RDApplication.getProductInstance();
         }
 
@@ -433,14 +428,14 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
                 break;
 
             case R.id.btn_sim: {
-                if (RDApplication.getSim() == true){
+                if (RDApplication.getSim() == true) {
                     TextView lTextConnectionStatus = (TextView) findViewById(R.id.text_model_simulated);
                     lTextConnectionStatus.setText("");
 
                     showToast("noSimulate...");
                     RDApplication.setSim(false);
                     mTextConnectionStatus.setText(R.string.connection_loose);
-                }else{
+                } else {
                     showToast("Simulate...");
                     RDApplication.setSim(true);
                     TextView lTextConnectionStatus = (TextView) findViewById(R.id.text_model_simulated);
@@ -497,12 +492,12 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
             if (KeyManager.getInstance() != null) {
                 KeyManager.getInstance().addListener(firmkey, firmVersionListener);
             }
-        } else if (RDApplication.getSim() == true){
+        } else if (RDApplication.getSim() == true) {
             Log.v(TAG, "refreshSDK: Sim");
 //            mBtnOpen.setEnabled(true);
 
             mTextProduct.setText(R.string.product_information);
-          //  mTextConnectionStatus.setText(R.string.connection_sim);
+            //  mTextConnectionStatus.setText(R.string.connection_sim);
         } else {
             Log.v(TAG, "refreshSDK: False");
             mBtnOpen.setEnabled(false);
@@ -511,6 +506,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
             mTextConnectionStatus.setText(R.string.connection_loose);
         }
     }
+
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);

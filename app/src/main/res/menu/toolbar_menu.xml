@@ -18,13 +18,13 @@
         android:title="@string/settings" />
 
     <item
-        android:id="@+id/action_gaode"
+        android:id="@+id/action_waypoint1"
         android:orderInCategory="503"
         app:showAsAction="never"
         android:onClick="onMenuItemClick"
         android:title="@string/options_map_new" />
     <item
-        android:id="@+id/action_help"
+        android:id="@+id/action_waypoint2"
         android:orderInCategory="503"
         app:showAsAction="never"
         android:onClick="onMenuItemClick"

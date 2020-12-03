@@ -26,7 +26,7 @@ typedef enum RotationMode {
     kRotate270 = 270,  // Rotate 270 degrees clockwise.
 
     // Deprecated.
-            kRotateNone = 0,
+    kRotateNone = 0,
     kRotateClockwise = 90,
     kRotateCounterClockwise = 270,
 } RotationModeEnum;

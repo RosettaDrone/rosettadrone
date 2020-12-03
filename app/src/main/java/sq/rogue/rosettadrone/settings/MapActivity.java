@@ -96,7 +96,7 @@ public class MapActivity extends FragmentActivity implements View.OnClickListene
 
     @Override
     protected void onDestroy() {
-        if(mReceiver.getResultCode() < 0 )
+        if (mReceiver.getResultCode() < 0)
             unregisterReceiver(mReceiver);
         removeListener();
         super.onDestroy();
@@ -163,9 +163,9 @@ public class MapActivity extends FragmentActivity implements View.OnClickListene
 
         setContentView(R.layout.activity_help);
 
-    //    IntentFilter filter = new IntentFilter();
-    //    filter.addAction(DJIDemoApplication.FLAG_CONNECTION_CHANGE);
-    //    registerReceiver(mReceiver, filter);
+        //    IntentFilter filter = new IntentFilter();
+        //    filter.addAction(DJIDemoApplication.FLAG_CONNECTION_CHANGE);
+        //    registerReceiver(mReceiver, filter);
 
         initUI();
 
@@ -212,7 +212,7 @@ public class MapActivity extends FragmentActivity implements View.OnClickListene
 
         if (RDApplication.getSim() == true) {
             product = DJISimulatorApplication.getAircraftInstance();
-        }else {
+        } else {
             product = RDApplication.getProductInstance();
         }
 
@@ -325,7 +325,7 @@ public class MapActivity extends FragmentActivity implements View.OnClickListene
                 }
 
                 if (checkGpsCoordination(droneLocationLat, droneLocationLng)) {
-             //       droneMarker = gMap.addMarker(markerOptions);
+                    //       droneMarker = gMap.addMarker(markerOptions);
                 }
             }
         });
@@ -398,7 +398,7 @@ public class MapActivity extends FragmentActivity implements View.OnClickListene
         CameraUpdate cu = CameraUpdateFactory.newLatLngZoom(pos, zoomlevel);
         gMap.moveCamera(cu);
     }
-  
+
     private void enableDisableAdd() {
         if (isAdd == false) {
             isAdd = true;

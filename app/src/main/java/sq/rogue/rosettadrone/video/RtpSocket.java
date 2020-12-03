@@ -54,8 +54,8 @@ public class RtpSocket implements Runnable {
     public static final int RTP_HEADER_LENGTH = 12;
     public static final int MTU = 1300;
     public MulticastSocket mSocket;
-    public DatagramSocket  mSocketUDP;
-    public DatagramSocket  mSocketUDP2;
+    public DatagramSocket mSocketUDP;
+    public DatagramSocket mSocketUDP2;
     protected OutputStream mOutputStream = null;
     private DatagramPacket[] mPackets;
     private byte[][] mBuffers;
@@ -201,7 +201,7 @@ public class RtpSocket implements Runnable {
         if (dport != 0 && rtcpPort != 0) {
             mTransport = TRANSPORT_UDP;
             mPort = dport;
-            Log.d(TAG, "setDestination: " +dest +":"+dport );
+            Log.d(TAG, "setDestination: " + dest + ":" + dport);
             for (int i = 0; i < mBufferCount; i++) {
                 mPackets[i].setPort(dport);
                 mPackets[i].setAddress(dest);
@@ -348,14 +348,13 @@ public class RtpSocket implements Runnable {
                 mOldTimestamp = mTimestamps[mBufferOut];
                 if (mCount++ > 30) {
                     if (mTransport == TRANSPORT_UDP) {
-                        if(mUseDualVideoOut) {
+                        if (mUseDualVideoOut) {
                             mPackets[mBufferOut].setPort(mPort);
                             mSocketUDP.send(mPackets[mBufferOut]);
 
                             mPackets[mBufferOut].setPort(mPort + 1);
                             mSocketUDP2.send(mPackets[mBufferOut]);
-                        }
-                        else{
+                        } else {
                             mSocketUDP.send(mPackets[mBufferOut]);
                         }
                     } else {

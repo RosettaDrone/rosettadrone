@@ -6,12 +6,12 @@
 
 package com.MAVLink.enums;
 
-/** 
-* Enumeration of the ADSB altimeter types
-*/
+/**
+ * Enumeration of the ADSB altimeter types
+ */
 public class ADSB_ALTITUDE_TYPE {
-   public static final int ADSB_ALTITUDE_TYPE_PRESSURE_QNH = 0; /* Altitude reported from a Baro source using QNH reference | */
-   public static final int ADSB_ALTITUDE_TYPE_GEOMETRIC = 1; /* Altitude reported from a GNSS source | */
-   public static final int ADSB_ALTITUDE_TYPE_ENUM_END = 2; /*  | */
+    public static final int ADSB_ALTITUDE_TYPE_PRESSURE_QNH = 0; /* Altitude reported from a Baro source using QNH reference | */
+    public static final int ADSB_ALTITUDE_TYPE_GEOMETRIC = 1; /* Altitude reported from a GNSS source | */
+    public static final int ADSB_ALTITUDE_TYPE_ENUM_END = 2; /*  | */
 }
             

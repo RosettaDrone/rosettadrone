@@ -1,69 +1,203 @@
 {
-  "variant": {
-    "module": {
-      "rootBuildGradleFolder": "/home/smartdrone/Working_Private/rosettadrone_work",
-      "sdkFolder": "/home/smartdrone/Android/Sdk",
-      "isNativeCompilerSettingsCacheEnabled": false,
-      "isBuildOnlyTargetAbiEnabled": true,
-      "splitsAbiFilterSet": [],
-      "intermediatesFolder": "/home/smartdrone/Working_Private/rosettadrone_work/app/build/intermediates",
-      "gradleModulePathName": ":app",
-      "moduleRootFolder": "/home/smartdrone/Working_Private/rosettadrone_work/app",
-      "makeFile": "/home/smartdrone/Working_Private/rosettadrone_work/app/CMakeLists.txt",
-      "buildSystem": "CMAKE",
-      "compilerSettingsCacheFolder": "/home/smartdrone/Working_Private/rosettadrone_work/.cxx",
-      "cxxFolder": "/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx",
-      "ndkFolder": "/home/smartdrone/Android/Sdk/ndk/21.3.6528147",
-      "ndkVersion": "21.3.6528147",
-      "ndkSupportedAbiList": [
-        "ARMEABI_V7A",
-        "ARM64_V8A",
-        "X86",
-        "X86_64"
+  "abi": "X86",
+  "abiPlatformVersion": 22,
+  "buildSettings": {
+    "environmentVariables": []
+  },
+  "cmake": {
+    "cmakeArtifactsBaseFolder": "/Users/terjenilsen/Dropbox/Autonomy_Terje/rosettadrone_work/app/.cxx/cmake/debug/x86",
+    "cmakeServerLogFile": "/Users/terjenilsen/Dropbox/Autonomy_Terje/rosettadrone_work/app/.cxx/cmake/debug/x86/cmake_server_log.txt",
+    "cmakeWrappingBaseFolder": "/Users/terjenilsen/Dropbox/Autonomy_Terje/rosettadrone_work/app/.cxx/cxx/debug/x86",
+    "effectiveConfiguration": {
+      "name": "traditional-android-studio-cmake-environment",
+      "description": "Composite reified CMakeSettings configuration",
+      "generator": "Ninja",
+      "inheritEnvironments": [
+        "ndk"
       ],
+      "buildRoot": "/Users/terjenilsen/Dropbox/Autonomy_Terje/rosettadrone_work/app/.cxx/cmake/debug/x86",
+      "cmakeToolchain": "/Users/teni/Library/Android/sdk/ndk/20.1.5948944/build/cmake/android.toolchain.cmake",
+      "cmakeExecutable": "/Users/teni/Library/Android/sdk/cmake/3.10.2.4988404/bin/cmake",
+      "variables": [
+        {
+          "name": "CMAKE_FIND_ROOT_PATH",
+          "value": "/Users/terjenilsen/Dropbox/Autonomy_Terje/rosettadrone_work/app/.cxx/cmake/debug/prefab/x86/prefab"
+        },
+        {
+          "name": "CMAKE_BUILD_TYPE",
+          "value": "Debug"
+        },
+        {
+          "name": "CMAKE_TOOLCHAIN_FILE",
+          "value": "/Users/teni/Library/Android/sdk/ndk/20.1.5948944/build/cmake/android.toolchain.cmake"
+        },
+        {
+          "name": "ANDROID_ABI",
+          "value": "x86"
+        },
+        {
+          "name": "ANDROID_NDK",
+          "value": "/Users/teni/Library/Android/sdk/ndk/20.1.5948944"
+        },
+        {
+          "name": "ANDROID_PLATFORM",
+          "value": "android-22"
+        },
+        {
+          "name": "CMAKE_ANDROID_ARCH_ABI",
+          "value": "x86"
+        },
+        {
+          "name": "CMAKE_ANDROID_NDK",
+          "value": "/Users/teni/Library/Android/sdk/ndk/20.1.5948944"
+        },
+        {
+          "name": "CMAKE_EXPORT_COMPILE_COMMANDS",
+          "value": "ON"
+        },
+        {
+          "name": "CMAKE_LIBRARY_OUTPUT_DIRECTORY",
+          "value": "/Users/terjenilsen/Dropbox/Autonomy_Terje/rosettadrone_work/app/build/intermediates/cmake/debug/obj/x86"
+        },
+        {
+          "name": "CMAKE_MAKE_PROGRAM",
+          "value": "/Users/teni/Library/Android/sdk/cmake/3.10.2.4988404/bin/ninja"
+        },
+        {
+          "name": "CMAKE_SYSTEM_NAME",
+          "value": "Android"
+        },
+        {
+          "name": "CMAKE_SYSTEM_VERSION",
+          "value": "22"
+        }
+      ]
+    }
+  },
+  "cxxBuildFolder": "/Users/terjenilsen/Dropbox/Autonomy_Terje/rosettadrone_work/app/.cxx/cmake/debug/x86",
+  "info": {
+    "abi": "X86",
+    "bitness": 32,
+    "deprecated": false,
+    "default": true
+  },
+  "originalCxxBuildFolder": "/Users/terjenilsen/Dropbox/Autonomy_Terje/rosettadrone_work/app/.cxx/cmake/debug/x86",
+  "variant": {
+    "buildSystemArgumentList": [],
+    "buildTargetSet": [],
+    "implicitBuildTargetSet": [],
+    "cFlagsList": [],
+    "cmakeSettingsConfiguration": "android-gradle-plugin-predetermined-name",
+    "cppFlagsList": [],
+    "isDebuggableEnabled": true,
+    "module": {
+      "buildSystem": "CMAKE",
+      "cmake": {
+        "cmakeExe": "/Users/teni/Library/Android/sdk/cmake/3.10.2.4988404/bin/cmake",
+        "minimumCmakeVersion": "3.10.2",
+        "ninjaExe": "/Users/teni/Library/Android/sdk/cmake/3.10.2.4988404/bin/ninja"
+      },
+      "cmakeToolchainFile": "/Users/teni/Library/Android/sdk/ndk/20.1.5948944/build/cmake/android.toolchain.cmake",
+      "cxxFolder": "/Users/terjenilsen/Dropbox/Autonomy_Terje/rosettadrone_work/app/.cxx",
+      "gradleModulePathName": ":app",
+      "intermediatesFolder": "/Users/terjenilsen/Dropbox/Autonomy_Terje/rosettadrone_work/app/build/intermediates",
+      "makeFile": "/Users/terjenilsen/Dropbox/Autonomy_Terje/rosettadrone_work/app/CMakeLists.txt",
+      "moduleBuildFile": "/Users/terjenilsen/Dropbox/Autonomy_Terje/rosettadrone_work/app/build.gradle",
+      "moduleRootFolder": "/Users/terjenilsen/Dropbox/Autonomy_Terje/rosettadrone_work/app",
       "ndkDefaultAbiList": [
         "ARMEABI_V7A",
         "ARM64_V8A",
         "X86",
         "X86_64"
       ],
-      "cmakeToolchainFile": "."
+      "ndkFolder": "/Users/teni/Library/Android/sdk/ndk/20.1.5948944",
+      "ndkMetaAbiList": [
+        {
+          "abi": "ARMEABI_V7A",
+          "bitness": 32,
+          "deprecated": false,
+          "default": true
+        },
+        {
+          "abi": "ARM64_V8A",
+          "bitness": 64,
+          "deprecated": false,
+          "default": true
+        },
+        {
+          "abi": "X86",
+          "bitness": 32,
+          "deprecated": false,
+          "default": true
+        },
+        {
+          "abi": "X86_64",
+          "bitness": 64,
+          "deprecated": false,
+          "default": true
+        }
+      ],
+      "ndkMetaPlatforms": {
+        "min": 16,
+        "max": 29,
+        "aliases": {
+          "20": 19,
+          "25": 24,
+          "J": 16,
+          "J-MR1": 17,
+          "J-MR2": 18,
+          "K": 19,
+          "L": 21,
+          "L-MR1": 22,
+          "M": 23,
+          "N": 24,
+          "N-MR1": 24,
+          "O": 26,
+          "O-MR1": 27,
+          "P": 28,
+          "Q": 29
+        }
+      },
+      "ndkSupportedAbiList": [
+        "ARMEABI_V7A",
+        "ARM64_V8A",
+        "X86",
+        "X86_64"
+      ],
+      "ndkDefaultStl": "LIBCXX_STATIC",
+      "ndkVersion": "20.1.5948944",
+      "project": {
+        "compilerSettingsCacheFolder": "/Users/terjenilsen/Dropbox/Autonomy_Terje/rosettadrone_work/.cxx",
+        "cxxFolder": "/Users/terjenilsen/Dropbox/Autonomy_Terje/rosettadrone_work/.cxx",
+        "isBuildOnlyTargetAbiEnabled": true,
+        "isCmakeBuildCohabitationEnabled": false,
+        "isNativeCompilerSettingsCacheEnabled": false,
+        "rootBuildGradleFolder": "/Users/terjenilsen/Dropbox/Autonomy_Terje/rosettadrone_work",
+        "sdkFolder": "/Users/teni/Library/Android/sdk",
+        "isPrefabEnabled": false
+      },
+      "splitsAbiFilterSet": [],
+      "stlSharedObjectMap": {
+        "LIBCXX_SHARED": {
+          "ARMEABI_V7A": "/Users/teni/Library/Android/sdk/ndk/20.1.5948944/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/arm-linux-androideabi/libc++_shared.so",
+          "ARM64_V8A": "/Users/teni/Library/Android/sdk/ndk/20.1.5948944/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/aarch64-linux-android/libc++_shared.so",
+          "X86": "/Users/teni/Library/Android/sdk/ndk/20.1.5948944/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/i686-linux-android/libc++_shared.so",
+          "X86_64": "/Users/teni/Library/Android/sdk/ndk/20.1.5948944/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/x86_64-linux-android/libc++_shared.so"
+        },
+        "LIBCXX_STATIC": {},
+        "NONE": {},
+        "SYSTEM": {}
+      }
     },
-    "buildSystemArgumentList": [],
-    "cFlagList": [],
-    "cppFlagsList": [],
+    "objFolder": "/Users/terjenilsen/Dropbox/Autonomy_Terje/rosettadrone_work/app/build/intermediates/cmake/debug/obj",
     "variantName": "debug",
-    "soFolder": "/home/smartdrone/Working_Private/rosettadrone_work/app/build/intermediates/cmake/debug/lib",
-    "objFolder": "/home/smartdrone/Working_Private/rosettadrone_work/app/build/intermediates/cmake/debug/obj",
-    "jsonFolder": "/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cmake/debug",
-    "gradleBuildOutputFolder": "/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cxx/debug",
-    "isDebuggableEnabled": true,
     "validAbiList": [
       "ARMEABI_V7A",
       "ARM64_V8A",
       "X86"
     ],
-    "buildTargetSet": []
+    "prefabDirectory": "/Users/terjenilsen/Dropbox/Autonomy_Terje/rosettadrone_work/app/.cxx/cmake/debug/prefab",
+    "prefabPackageDirectoryList": []
   },
-  "abi": "X86",
-  "abiPlatformVersion": 22,
-  "cxxBuildFolder": "/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cmake/debug/x86",
-  "jsonFile": "/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cmake/debug/x86/android_gradle_build.json",
-  "gradleBuildOutputFolder": "/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cxx/debug/x86",
-  "objFolder": "/home/smartdrone/Working_Private/rosettadrone_work/app/build/intermediates/cmake/debug/obj/x86",
-  "buildCommandFile": "/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cmake/debug/x86/build_command.txt",
-  "buildOutputFile": "/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cmake/debug/x86/build_output.txt",
-  "modelOutputFile": "/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cmake/debug/x86/build_model.json",
-  "cmake": {
-    "cmakeListsWrapperFile": "/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cxx/debug/x86/CMakeLists.txt",
-    "toolchainWrapperFile": "/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cxx/debug/x86/android_gradle_build.toolchain.cmake",
-    "buildGenerationStateFile": "/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cxx/debug/x86/build_generation_state.json",
-    "cacheKeyFile": "/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cxx/debug/x86/compiler_cache_key.json",
-    "compilerCacheUseFile": "/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cxx/debug/x86/compiler_cache_use.json",
-    "compilerCacheWriteFile": "/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cxx/debug/x86/compiler_cache_write.json",
-    "toolchainSettingsFromCacheFile": "/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cxx/debug/x86/compiler_settings_cache.cmake",
-    "cmakeWrappingBaseFolder": "."
-  },
-  "jsonGenerationLoggingRecordFile": "/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cmake/debug/x86/json_generation_record.json",
-  "compileCommandsJsonFile": "/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cmake/debug/x86/compile_commands.json"
+  "prefabFolder": "/Users/terjenilsen/Dropbox/Autonomy_Terje/rosettadrone_work/app/.cxx/cmake/debug/prefab/x86"
 }

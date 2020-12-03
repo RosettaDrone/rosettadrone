@@ -6,11 +6,11 @@
 
 package com.MAVLink.enums;
 
-/** 
-* These flags encode the cellular network status
-*/
+/**
+ * These flags encode the cellular network status
+ */
 public class CELLULAR_NETWORK_STATUS_FLAG {
-   public static final int CELLULAR_NETWORK_STATUS_FLAG_ROAMING = 1; /* Roaming is active | */
-   public static final int CELLULAR_NETWORK_STATUS_FLAG_ENUM_END = 2; /*  | */
+    public static final int CELLULAR_NETWORK_STATUS_FLAG_ROAMING = 1; /* Roaming is active | */
+    public static final int CELLULAR_NETWORK_STATUS_FLAG_ENUM_END = 2; /*  | */
 }
             

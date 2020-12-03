@@ -31,30 +31,30 @@ typedef struct AVComponentDescriptor {
     /**
      * Which of the 4 planes contains the component.
      */
-    uint16_t plane        : 2;
+    uint16_t plane: 2;
 
     /**
      * Number of elements between 2 horizontally consecutive pixels minus 1.
      * Elements are bits for bitstream formats, bytes otherwise.
      */
-    uint16_t step_minus1  : 3;
+    uint16_t step_minus1: 3;
 
     /**
      * Number of elements before the component of the first pixel plus 1.
      * Elements are bits for bitstream formats, bytes otherwise.
      */
-    uint16_t offset_plus1 : 3;
+    uint16_t offset_plus1: 3;
 
     /**
      * Number of least significant bits that must be shifted away
      * to get the value.
      */
-    uint16_t shift        : 3;
+    uint16_t shift: 3;
 
     /**
      * Number of bits in the component minus 1.
      */
-    uint16_t depth_minus1 : 4;
+    uint16_t depth_minus1: 4;
 } AVComponentDescriptor;
 
 /**

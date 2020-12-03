@@ -90,7 +90,9 @@ void *av_malloc(size_t size) av_malloc_attrib av_alloc_size(1);
  * be allocated.
  * @see av_malloc()
  */
-av_alloc_size(1, 2) static inline void *av_malloc_array(size_t nmemb, size_t size) {
+av_alloc_size(1, 2)
+
+static inline void *av_malloc_array(size_t nmemb, size_t size) {
     if (!size || nmemb >= INT_MAX / size)
         return NULL;
     return av_malloc(nmemb * size);
@@ -162,7 +164,9 @@ int av_reallocp(void *ptr, size_t size);
  *          The situation is undefined according to POSIX and may crash with
  *          some libc implementations.
  */
-av_alloc_size(2, 3) void *av_realloc_array(void *ptr, size_t nmemb, size_t size);
+av_alloc_size(2, 3)
+
+void *av_realloc_array(void *ptr, size_t nmemb, size_t size);
 
 /**
  * Allocate or reallocate an array through a pointer to a pointer.
@@ -181,7 +185,9 @@ av_alloc_size(2, 3) void *av_realloc_array(void *ptr, size_t nmemb, size_t size)
  *          The situation is undefined according to POSIX and may crash with
  *          some libc implementations.
  */
-av_alloc_size(2, 3) int av_reallocp_array(void *ptr, size_t nmemb, size_t size);
+av_alloc_size(2, 3)
+
+int av_reallocp_array(void *ptr, size_t nmemb, size_t size);
 
 /**
  * Free a memory block which has been allocated with av_malloc(z)() or
@@ -224,7 +230,9 @@ void *av_calloc(size_t nmemb, size_t size) av_malloc_attrib;
  * @see av_mallocz()
  * @see av_malloc_array()
  */
-av_alloc_size(1, 2) static inline void *av_mallocz_array(size_t nmemb, size_t size) {
+av_alloc_size(1, 2)
+
+static inline void *av_mallocz_array(size_t nmemb, size_t size) {
     if (!size || nmemb >= INT_MAX / size)
         return NULL;
     return av_mallocz(nmemb * size);

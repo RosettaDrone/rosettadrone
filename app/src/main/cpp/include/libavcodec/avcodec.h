@@ -103,7 +103,7 @@ enum AVCodecID {
     AV_CODEC_ID_NONE,
 
     /* video codecs */
-            AV_CODEC_ID_MPEG1VIDEO,
+    AV_CODEC_ID_MPEG1VIDEO,
     AV_CODEC_ID_MPEG2VIDEO, ///< preferred ID for MPEG-1/2 video decoding
 #if FF_API_XVMC
     AV_CODEC_ID_MPEG2VIDEO_XVMC,
@@ -322,7 +322,7 @@ enum AVCodecID {
     AV_CODEC_ID_APNG = MKBETAG('A', 'P', 'N', 'G'),
 
     /* various PCM "codecs" */
-            AV_CODEC_ID_FIRST_AUDIO = 0x10000,     ///< A dummy id pointing at the start of audio codecs
+    AV_CODEC_ID_FIRST_AUDIO = 0x10000,     ///< A dummy id pointing at the start of audio codecs
     AV_CODEC_ID_PCM_S16LE = 0x10000,
     AV_CODEC_ID_PCM_S16BE,
     AV_CODEC_ID_PCM_U16LE,
@@ -358,7 +358,7 @@ enum AVCodecID {
     AV_CODEC_ID_PCM_S16BE_PLANAR = MKBETAG('P', 'S', 'P', 16),
 
     /* various ADPCM codecs */
-            AV_CODEC_ID_ADPCM_IMA_QT = 0x11000,
+    AV_CODEC_ID_ADPCM_IMA_QT = 0x11000,
     AV_CODEC_ID_ADPCM_IMA_WAV,
     AV_CODEC_ID_ADPCM_IMA_DK3,
     AV_CODEC_ID_ADPCM_IMA_DK4,
@@ -398,21 +398,21 @@ enum AVCodecID {
     AV_CODEC_ID_ADPCM_G726LE = MKBETAG('6', '2', '7', 'G'),
 
     /* AMR */
-            AV_CODEC_ID_AMR_NB = 0x12000,
+    AV_CODEC_ID_AMR_NB = 0x12000,
     AV_CODEC_ID_AMR_WB,
 
     /* RealAudio codecs*/
-            AV_CODEC_ID_RA_144 = 0x13000,
+    AV_CODEC_ID_RA_144 = 0x13000,
     AV_CODEC_ID_RA_288,
 
     /* various DPCM codecs */
-            AV_CODEC_ID_ROQ_DPCM = 0x14000,
+    AV_CODEC_ID_ROQ_DPCM = 0x14000,
     AV_CODEC_ID_INTERPLAY_DPCM,
     AV_CODEC_ID_XAN_DPCM,
     AV_CODEC_ID_SOL_DPCM,
 
     /* audio codecs */
-            AV_CODEC_ID_MP2 = 0x15000,
+    AV_CODEC_ID_MP2 = 0x15000,
     AV_CODEC_ID_MP3, ///< preferred ID for decoding MPEG audio layer 1, 2 or 3
     AV_CODEC_ID_AAC,
     AV_CODEC_ID_AC3,
@@ -495,7 +495,7 @@ enum AVCodecID {
     AV_CODEC_ID_DSD_MSBF_PLANAR = MKBETAG('D', 'S', 'D', '8'),
 
     /* subtitle codecs */
-            AV_CODEC_ID_FIRST_SUBTITLE = 0x17000,          ///< A dummy ID pointing at the start of subtitle codecs.
+    AV_CODEC_ID_FIRST_SUBTITLE = 0x17000,          ///< A dummy ID pointing at the start of subtitle codecs.
     AV_CODEC_ID_DVD_SUBTITLE = 0x17000,
     AV_CODEC_ID_DVB_SUBTITLE,
     AV_CODEC_ID_TEXT,  ///< raw UTF-8 text
@@ -521,7 +521,7 @@ enum AVCodecID {
     AV_CODEC_ID_ASS = MKBETAG('A', 'S', 'S', ' '),  ///< ASS as defined in Matroska
 
     /* other specific kind of codecs (generally used for attachments) */
-            AV_CODEC_ID_FIRST_UNKNOWN = 0x18000,           ///< A dummy ID pointing at the start of various fake codecs.
+    AV_CODEC_ID_FIRST_UNKNOWN = 0x18000,           ///< A dummy ID pointing at the start of various fake codecs.
     AV_CODEC_ID_TTF = 0x18000,
     AV_CODEC_ID_BINTEXT = MKBETAG('B', 'T', 'X', 'T'),
     AV_CODEC_ID_XBIN = MKBETAG('X', 'B', 'I', 'N'),
@@ -656,7 +656,7 @@ enum Motion_Est_ID {
 enum AVDiscard {
     /* We leave some space between them for extensions (drop some
      * keyframes for intra-only or drop just some bidir frames). */
-            AVDISCARD_NONE = -16, ///< discard nothing
+    AVDISCARD_NONE = -16, ///< discard nothing
     AVDISCARD_DEFAULT = 0, ///< discard useless packets like 0 size packets in avi
     AVDISCARD_NONREF = 8, ///< discard all non reference
     AVDISCARD_BIDIR = 16, ///< discard all bidirectional frames
@@ -989,7 +989,7 @@ enum AVPacketSideDataType {
      *     s32le height
      * @endcode
      */
-            AV_PKT_DATA_PARAM_CHANGE,
+    AV_PKT_DATA_PARAM_CHANGE,
 
     /**
      * An AV_PKT_DATA_H263_MB_INFO side data packet contains a number of
@@ -1010,13 +1010,13 @@ enum AVPacketSideDataType {
      * u8    vertical MV predictor for block number 3
      * @endcode
      */
-            AV_PKT_DATA_H263_MB_INFO,
+    AV_PKT_DATA_H263_MB_INFO,
 
     /**
      * This side data should be associated with an audio stream and contains
      * ReplayGain information in form of the AVReplayGain struct.
      */
-            AV_PKT_DATA_REPLAYGAIN,
+    AV_PKT_DATA_REPLAYGAIN,
 
     /**
      * This side data contains a 3x3 transformation matrix describing an affine
@@ -1025,13 +1025,13 @@ enum AVPacketSideDataType {
      *
      * See libavutil/display.h for a detailed description of the data.
      */
-            AV_PKT_DATA_DISPLAYMATRIX,
+    AV_PKT_DATA_DISPLAYMATRIX,
 
     /**
      * This side data should be associated with a video stream and contains
      * Stereoscopic 3D information in form of the AVStereo3D struct.
      */
-            AV_PKT_DATA_STEREO3D,
+    AV_PKT_DATA_STEREO3D,
 
     /**
      * Recommmends skipping the specified number of samples
@@ -1042,7 +1042,7 @@ enum AVPacketSideDataType {
      * u8    reason for end   skip (0=padding silence, 1=convergence)
      * @endcode
      */
-            AV_PKT_DATA_SKIP_SAMPLES = 70,
+    AV_PKT_DATA_SKIP_SAMPLES = 70,
 
     /**
      * An AV_PKT_DATA_JP_DUALMONO side data packet indicates that
@@ -1052,13 +1052,13 @@ enum AVPacketSideDataType {
      * u8    selected channels (0=mail/left, 1=sub/right, 2=both)
      * @endcode
      */
-            AV_PKT_DATA_JP_DUALMONO,
+    AV_PKT_DATA_JP_DUALMONO,
 
     /**
      * A list of zero terminated key/value strings. There is no end marker for
      * the list, so it is required to rely on the side data size to stop.
      */
-            AV_PKT_DATA_STRINGS_METADATA,
+    AV_PKT_DATA_STRINGS_METADATA,
 
     /**
      * Subtitle event position
@@ -1069,7 +1069,7 @@ enum AVPacketSideDataType {
      * u32le y2
      * @endcode
      */
-            AV_PKT_DATA_SUBTITLE_POSITION,
+    AV_PKT_DATA_SUBTITLE_POSITION,
 
     /**
      * Data found in BlockAdditional element of matroska container. There is
@@ -1077,25 +1077,25 @@ enum AVPacketSideDataType {
      * size to recognize the end. 8 byte id (as found in BlockAddId) followed
      * by data.
      */
-            AV_PKT_DATA_MATROSKA_BLOCKADDITIONAL,
+    AV_PKT_DATA_MATROSKA_BLOCKADDITIONAL,
 
     /**
      * The optional first identifier line of a WebVTT cue.
      */
-            AV_PKT_DATA_WEBVTT_IDENTIFIER,
+    AV_PKT_DATA_WEBVTT_IDENTIFIER,
 
     /**
      * The optional settings (rendering instructions) that immediately
      * follow the timestamp specifier of a WebVTT cue.
      */
-            AV_PKT_DATA_WEBVTT_SETTINGS,
+    AV_PKT_DATA_WEBVTT_SETTINGS,
 
     /**
      * A list of zero terminated key/value strings. There is no end marker for
      * the list, so it is required to rely on the side data size to stop. This
      * side data includes updated metadata which appeared in the stream.
      */
-            AV_PKT_DATA_METADATA_UPDATE,
+    AV_PKT_DATA_METADATA_UPDATE,
 };
 
 typedef struct AVPacketSideData {
@@ -2962,9 +2962,9 @@ typedef struct AVCodecContext {
      * @deprecated this field is not supposed to be accessed from outside lavc
      */
     attribute_deprecated
-            AVPacket
-    *
-    pkt;
+    AVPacket
+            *
+            pkt;
 #endif
 
     /**
@@ -3453,13 +3453,13 @@ enum AVSubtitleType {
      * Plain text, the text field must be set by the decoder and is
      * authoritative. ass and pict fields may contain approximations.
      */
-            SUBTITLE_TEXT,
+    SUBTITLE_TEXT,
 
     /**
      * Formatted text, the ass field must be set by the decoder and is
      * authoritative. pict and text fields may contain approximations.
      */
-            SUBTITLE_ASS,
+    SUBTITLE_ASS,
 };
 
 #define AV_SUBTITLE_FLAG_FORCED 0x00000001
@@ -3644,6 +3644,7 @@ void avcodec_get_frame_defaults(AVFrame *frame);
  */
 attribute_deprecated
 void avcodec_free_frame(AVFrame **frame);
+
 #endif
 
 /**
@@ -4489,6 +4490,7 @@ AVCodec *avcodec_find_encoder(enum AVCodecID id);
 AVCodec *avcodec_find_encoder_by_name(const char *name);
 
 #if FF_API_OLD_ENCODE_AUDIO
+
 /**
  * Encode an audio frame from samples into buf.
  *
@@ -4515,11 +4517,12 @@ AVCodec *avcodec_find_encoder_by_name(const char *name);
  */
 int attribute_deprecated
 avcodec_encode_audio(AVCodecContext
-*avctx,
-uint8_t *buf,
-int buf_size,
-const short *samples
+                     *avctx,
+                     uint8_t *buf,
+                     int buf_size,
+                     const short *samples
 );
+
 #endif
 
 /**
@@ -4661,7 +4664,7 @@ typedef struct ReSampleContext ReSampleContext;
  * @return allocated ReSampleContext, NULL if error occurred
  */
 attribute_deprecated
-        ReSampleContext
+ReSampleContext
 *
 
 av_audio_resample_init(int output_channels, int input_channels,
@@ -5227,6 +5230,7 @@ attribute_deprecated
 void av_log_ask_for_sample(void *avc, const char *msg, ...)
 
 av_printf_format(2, 3);
+
 #endif /* FF_API_MISSING_SAMPLE */
 
 /**

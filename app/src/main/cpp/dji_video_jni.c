@@ -60,7 +60,7 @@ void invokeFrameDataCallback(JNIEnv *env, jobject obj, uint8_t *buf, int size, i
                              int isKeyFrame, int width, int height) {
     jbyte *buff = (jbyte *) buf;
     jbyteArray jarray = (*env)->NewByteArray(env, size);
-    (*env)->SetByteArrayRegion(env, jarray, 0, size, (const signed char *)buf);
+    (*env)->SetByteArrayRegion(env, jarray, 0, size, (const signed char *) buf);
     (*env)->CallVoidMethod(env, obj, dataCallbackMID, jarray, size, frameNum, isKeyFrame != 0,
                            width, height);
 }
@@ -135,7 +135,8 @@ int parse(JNIEnv *env, jobject obj, uint8_t *pBuff, int videosize, uint64_t pts)
         paserLength_In -= paserLen;
         pFrameBuff += paserLen;
 
-        if (packet.size > 0 & m_pCodecPaser->width_in_pixel > 10 & m_pCodecPaser->height_in_pixel > 10) {
+        if (packet.size > 0 & m_pCodecPaser->width_in_pixel > 10 &
+            m_pCodecPaser->height_in_pixel > 10) {
 /*
              LOGD(
              	"packet size=%d, pts=%lld, width_in_pixel=%d, height_in_pixel=%d, key_frame=%d, frame_has_sps=%d, frame_has_pps=%d, frame_num=%d",
@@ -172,7 +173,7 @@ int parse(JNIEnv *env, jobject obj, uint8_t *pBuff, int videosize, uint64_t pts)
  */
 int noparse(JNIEnv *env, jobject obj, uint8_t *pBuff, int videosize) {
 
-    if (videosize > 0){
+    if (videosize > 0) {
         invokeFrameDataCallback(
                 env,
                 obj,
@@ -198,14 +199,14 @@ uint8_t audaudsize2 = 12;
  */
 JNIEXPORT jboolean
 Java_sq_rogue_rosettadrone_video_NativeHelper_parse(JNIEnv *env, jobject obj, jbyteArray pBuff,
-                                                         int size, int mode) {
+                                                    int size, int mode) {
     jbyte *jBuff = (jbyte *) ((*env)->GetByteArrayElements(env, pBuff, 0));
     uint8_t *buff = (uint8_t *) jBuff;
     uint64_t pts = 0;
     jbyte *jBuff2;
 
-    if(mode)
-        noparse(env,obj,buff,size);
+    if (mode)
+        noparse(env, obj, buff, size);
     else {
         // LOGD("pts=%llu", pts);
 

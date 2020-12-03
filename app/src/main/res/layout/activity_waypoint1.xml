@@ -1,0 +1,89 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#00000000"
+    tools:context="sq.rogue.rosettadrone.MainActivity">
+
+    <!--   android:orientation="vertical" -->
+
+    <LinearLayout
+        android:background="#00000000"
+        android:windowBackground="@android:color/transparent"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="200dp"
+            android:gravity="top"
+            android:orientation="vertical">
+
+            <Button
+                android:id="@+id/locate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="#00000000"
+                android:text="Locate"
+                android:layout_weight="1" />
+
+            <Button
+                android:id="@+id/add"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="#00000000"
+                android:text="Add"
+                android:layout_weight="1" />
+
+            <Button
+                android:id="@+id/clear"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="#00000000"
+                android:text="Clear"
+                android:layout_weight="1" />
+
+            <Button
+                android:id="@+id/config"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Config"
+                android:background="#00000000"
+                android:layout_weight="0.9" />
+
+            <Button
+                android:id="@+id/upload"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Upload"
+                android:background="#00000000"
+                android:layout_weight="0.9" />
+
+            <Button
+                android:id="@+id/start"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Start"
+                android:background="#00000000"
+                android:layout_weight="1" />
+
+            <Button
+                android:id="@+id/stop"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Stop"
+                android:background="#00000000"
+                android:layout_weight="1" />
+        </LinearLayout>
+
+        <fragment
+            android:id="@+id/map"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#00000000"
+            class="com.google.android.gms.maps.SupportMapFragment" />
+
+    </LinearLayout>
+
+</LinearLayout>

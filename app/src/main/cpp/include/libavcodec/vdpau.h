@@ -167,8 +167,11 @@ void av_vdpau_hwaccel_set_render2(AVVDPAUContext *, AVVDPAU_Render2);
  *
  * @return 0 on success, an AVERROR code on failure.
  */
-int av_vdpau_bind_context(AVCodecContext *avctx, VdpDevice device,
-                          VdpGetProcAddress *get_proc_address, unsigned flags);
+int av_vdpau_bind_context(AVCodecContext * avctx, VdpDevice
+device,
+VdpGetProcAddress *get_proc_address,
+unsigned flags
+);
 
 /**
  * Allocate an AVVDPAUContext.
@@ -188,7 +191,7 @@ AVVDPAUContext *av_vdpau_alloc_context(void);
  *
  * @return 0 on success (non-negative), a negative AVERROR on failure.
  */
-int av_vdpau_get_profile(AVCodecContext *avctx, VdpDecoderProfile *profile);
+int av_vdpau_get_profile(AVCodecContext * avctx, VdpDecoderProfile * profile);
 
 #if FF_API_CAP_VDPAU
 /** @brief The videoSurface is used for rendering. */

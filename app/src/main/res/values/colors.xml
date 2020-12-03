@@ -155,4 +155,7 @@
     <!--FPV-->
     <color name="uxsdk_fpv_text_background">#991c2831</color>
 
+    <color name="button_normal">#50808080</color>
+    <color name="button_press">#5086BFFF</color>
+
 </resources>

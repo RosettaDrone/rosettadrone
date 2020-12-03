@@ -2,9 +2,6 @@ package sq.rogue.rosettadrone.logs;
 
 import android.annotation.SuppressLint;
 import android.os.Bundle;
-
-import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
@@ -14,15 +11,17 @@ import android.view.ViewTreeObserver;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
 import sq.rogue.rosettadrone.R;
 
 public class LogFragment extends Fragment {
 
-//    final Handler handler = new Handler();
+    //    final Handler handler = new Handler();
     private final String TAG = getClass().getSimpleName();
     //    private final String INSTANCE_STATE_KEY = "saved_state";
     private final int DEFAULT_MAX_CHARACTERS = 200000;
-//    GestureDetector gestureDetector;
+    //    GestureDetector gestureDetector;
     private TextView mTextViewTraffic;
     private ScrollView mScrollView;
     //    Runnable mLongPressed = new Runnable() {
