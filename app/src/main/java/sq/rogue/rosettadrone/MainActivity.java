@@ -762,6 +762,7 @@ public class MainActivity extends AppCompatActivity implements DJICodecManager.Y
             case INSPIRE_1_PRO:
             case INSPIRE_1_RAW:     // Verified...
             case MAVIC_AIR:         // Verified...
+            case MAVIC_PRO:
                 return true;
         }
 
