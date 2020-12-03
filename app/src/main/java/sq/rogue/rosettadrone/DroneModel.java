@@ -1803,10 +1803,10 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     //    Log.i(TAG, "do_set_motion_velocity");
 
         // If we use yaw rate...
-        if((mask & 0b0000100000000000) == 0){  mYaw = yaw; }
-        if((mask & 0b0000000000001000) == 0){  mPitch = y; }
-        if((mask & 0b0000000000010000) == 0){  mRoll = x; }
-        if((mask & 0b0000000000100000) == 0){  mThrottle = z;}
+        if((mask & 0b0000100000000000) != 0){  mYaw = yaw; }
+        if((mask & 0b0000000000001000) != 0){  mPitch = y; }
+        if((mask & 0b0000000000010000) != 0){  mRoll = x; }
+        if((mask & 0b0000000000100000) != 0){  mThrottle = z;}
 
         // Only allow velocity movement in P mode...
         if( rcmode == HardwareState.FlightModeSwitch.POSITION_ONE) { // != avtivemode || rcmode != HardwareState.FlightModeSwitch.POSITION_TWO) {
