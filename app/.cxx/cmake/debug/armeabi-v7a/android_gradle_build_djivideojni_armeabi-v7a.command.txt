@@ -1,7 +1,0 @@
-Executable : /Users/teni/Library/Android/sdk/cmake/3.10.2.4988404/bin/ninja
-arguments : 
--C
-/Users/terjenilsen/Dropbox/Autonomy_Terje/rosettadrone_work/app/.cxx/cmake/debug/armeabi-v7a
-djivideojni
-jvmArgs : 
-
