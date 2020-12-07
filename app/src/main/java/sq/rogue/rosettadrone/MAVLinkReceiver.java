@@ -389,24 +389,9 @@ public class MAVLinkReceiver {
 
                 // Somehow the GOTO from QGroundControl does not issue a mission count...
                 if (mMissionItemList == null && msg_item.command == MAV_CMD_NAV_WAYPOINT) {
-                    Log.d(TAG, "Lat = " + msg_item.x);
-                    Log.d(TAG, "Lon = " + msg_item.y);
-                    Log.d(TAG, "ALT = " + msg_item.z);
                     mModel.goto_position(msg_item.x, msg_item.y, msg_item.z, 0);
-                    /*
-                    mModel.do_set_motion_absolute(
-                            (double) msg_item.x, // * 10000000,
-                            (double) msg_item.y, // * 10000000,
-                            msg_item.z,
-                            msg_item.param4,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0b0000111111111000);
-
-                     */
-                } else {
+                }
+                else {
                     if (mMissionItemList == null) {
                         Log.d(TAG, "Special single point mission!");
                         generateNewMission();

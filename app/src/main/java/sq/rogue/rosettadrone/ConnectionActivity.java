@@ -51,7 +51,7 @@ import dji.sdk.useraccount.UserAccountManager;
 
 public class ConnectionActivity extends Activity implements View.OnClickListener {
 
-    private static final String TAG = MainActivity.class.getName();
+    private static final String TAG = ConnectionActivity.class.getName();
     private static final String[] REQUIRED_PERMISSION_LIST = new String[]{
             Manifest.permission.VIBRATE,
             Manifest.permission.INTERNET,
@@ -97,6 +97,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
      * requests runtime permission if needed.
      */
     private void checkAndRequestPermissions() {
+        Log.d(TAG, "checkAndRequestPermissions");
         // Check for permissions
         for (String eachPermission : REQUIRED_PERMISSION_LIST) {
             if (ContextCompat.checkSelfPermission(this, eachPermission) != PackageManager.PERMISSION_GRANTED) {
@@ -115,14 +116,16 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
     }
 
     private void startSDKRegistration() {
+        Log.d(TAG, "startSDKRegistration");
         if (isRegistrationInProgress.compareAndSet(false, true)) {
-            Log.e(TAG, "startSDKRegistration");
             AsyncTask.execute(new Runnable() {
                 @Override
                 public void run() {
+                    Log.d(TAG, "startSDKRegistration:run");
                     DJISDKManager.getInstance().registerApp(ConnectionActivity.this.getApplicationContext(), new DJISDKManager.SDKManagerCallback() {
                         @Override
                         public void onRegister(DJIError djiError) {
+                            Log.d(TAG, "onRegister:run");
                             if (djiError == DJISDKError.REGISTRATION_SUCCESS) {
                                 DJILog.v("App registration", DJISDKError.REGISTRATION_SUCCESS.getDescription());
                                 DJISDKManager.getInstance().startConnectionToProduct();
@@ -142,13 +145,14 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
 
                         @Override
                         public void onProductDisconnect() {
+                            Log.d(TAG, "onProductDisconnect");
                             showToast("Product Disconnected");
                             notifyStatusChange();
                         }
 
                         @Override
                         public void onProductConnect(BaseProduct baseProduct) {
-                            Log.e(TAG, "Product Connected");
+                            Log.d(TAG, "Product Connected");
 
                             notifyStatusChange();
                             isRegistrationInProgress.set(false);
@@ -160,7 +164,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
 
                         @Override
                         public void onProductChanged(BaseProduct baseProduct) {
-                            Log.e(TAG, "Product Changed");
+                            Log.d(TAG, "Product Changed");
 
                             notifyStatusChange();
                             isRegistrationInProgress.set(false);
@@ -192,14 +196,13 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
                         @Override
                         public void onInitProcess(DJISDKInitEvent djisdkInitEvent, int i) {
                             //notify the init progress
+                            Log.d(TAG, "onInitProcess");
                         }
 
                         @Override
                         public void onDatabaseDownloadProgress(long l, long l1) {
-
+                            Log.d(TAG, "onDatabaseDownloadProgress");
                         }
-
-
                     });
                 }
             });
@@ -311,6 +314,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
     }
 
     private void initUI() {
+        Log.v(TAG, "initUI");
 
         mTextConnectionStatus = (TextView) findViewById(R.id.text_connection_status);
         mTextModelAvailable = (TextView) findViewById(R.id.text_model_available);
@@ -395,7 +399,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
     }
 
     private void updateVersion() {
-
+        Log.v(TAG, "updateVersion");
         if (RDApplication.getProductInstance() != null) {
             final String version = RDApplication.getProductInstance().getFirmwarePackageVersion();
             this.runOnUiThread(new Runnable() {
@@ -471,9 +475,8 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
     };
 
     private void refreshSDKRelativeUI() {
-
-        BaseProduct mProduct = RDApplication.getProductInstance();
         Log.e(TAG, "refreshSDKRelativeUI");
+        BaseProduct mProduct = RDApplication.getProductInstance();
 
         if (null != mProduct && mProduct.isConnected()) {
             Log.v(TAG, "refreshSDK: True");
@@ -509,6 +512,8 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
 
     @Override
     protected void onNewIntent(Intent intent) {
+        Log.e(TAG, "onNewIntent");
+
         super.onNewIntent(intent);
         String action = intent.getAction();
         if (UsbManager.ACTION_USB_ACCESSORY_ATTACHED.equals(action)) {

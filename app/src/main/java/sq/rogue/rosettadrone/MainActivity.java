@@ -520,11 +520,13 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_gui);
 
         mProduct = RDApplication.getProductInstance(); // Should be set by Connection ...
-        try {
-            mProductModel = mProduct.getModel();
-        }catch(Exception e){
-            Log.d(TAG, "exception", e);
-            mProductModel = Model.MAVIC_PRO; // Just a dummy value should we be in test mode... (No Target)
+        if(mProduct != null){
+            try {
+                mProductModel = mProduct.getModel();
+            }catch(Exception e){
+                Log.d(TAG, "exception", e);
+                mProductModel = Model.MAVIC_PRO; // Just a dummy value should we be in test mode... (No Target)
+            }
         }
 /*
         FrameLayout wv = findViewById(R.id.compass_container);
@@ -1769,16 +1771,18 @@ public class MainActivity extends AppCompatActivity {
     // To be moved later for better structure....
 
     private boolean isTranscodedVideoFeedNeeded() {
-        // I do not like this, but is seems to work...
-        if( mProductModel == Model.MAVIC_PRO )
-            return true;
 
         if (VideoFeeder.getInstance() == null) {
             return false;
         }
-        boolean TranscodeNeeded = VideoFeeder.getInstance().isFetchKeyFrameNeeded() || VideoFeeder.getInstance()
+
+        // I do not like this, but is seems to work...
+        if( mProductModel == Model.MAVIC_PRO ) {
+            return true;
+        }
+
+        return VideoFeeder.getInstance().isFetchKeyFrameNeeded() || VideoFeeder.getInstance()
                 .isLensDistortionCalibrationNeeded();
-        return TranscodeNeeded;
     }
 
     //---------------------------------------------------------------------------------------
