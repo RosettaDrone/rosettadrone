@@ -673,7 +673,7 @@ public class MainActivity extends AppCompatActivity {
         // For newer drones...
         mReceivedVideoDataListener = (videoBuffer, size) -> {
             if (m_videoMode == 2) {
-                if (mCodecManager != null && mProductModel != Model.MAVIC_PRO) {
+                if (mCodecManager != null && (mProductModel != Model.MAVIC_PRO || mProductModel != Model.MAVIC_AIR)) {
                     mCodecManager.sendDataToDecoder(videoBuffer, size);
                 }
                 // Send raw H264 to the FFMPEG parser...
@@ -1391,6 +1391,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void logMessageDJI(String msg) {
+        Log.d(TAG, msg);
         if (mNewDJI.length() > 1000)
             mNewDJI = mNewDJI.substring(500, 1000);
 

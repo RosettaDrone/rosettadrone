@@ -19,8 +19,10 @@ import com.MAVLink.common.msg_home_position;
 import com.MAVLink.common.msg_mission_ack;
 import com.MAVLink.common.msg_mission_count;
 import com.MAVLink.common.msg_mission_item;
+import com.MAVLink.common.msg_mission_item_int;
 import com.MAVLink.common.msg_mission_item_reached;
 import com.MAVLink.common.msg_mission_request;
+import com.MAVLink.common.msg_mission_request_int;
 import com.MAVLink.common.msg_mission_request_list;
 import com.MAVLink.common.msg_param_value;
 import com.MAVLink.common.msg_power_status;
@@ -32,6 +34,7 @@ import com.MAVLink.common.msg_vfr_hud;
 import com.MAVLink.common.msg_vibration;
 import com.MAVLink.enums.GPS_FIX_TYPE;
 import com.MAVLink.enums.MAV_AUTOPILOT;
+import com.MAVLink.enums.MAV_CMD;
 import com.MAVLink.enums.MAV_FRAME;
 import com.MAVLink.enums.MAV_MISSION_RESULT;
 import com.MAVLink.enums.MAV_MISSION_TYPE;
@@ -76,6 +79,7 @@ import dji.common.mission.followme.FollowMeHeading;
 import dji.common.mission.followme.FollowMeMission;
 import dji.common.mission.followme.FollowMeMissionState;
 import dji.common.mission.waypoint.Waypoint;
+import dji.common.mission.waypoint.WaypointAction;
 import dji.common.mission.waypoint.WaypointMission;
 import dji.common.mission.waypoint.WaypointMissionState;
 import dji.common.model.LocationCoordinate2D;
@@ -1108,7 +1112,9 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                 parent.logMessageDJI("AI Mode Canceled...");
                 mAIfunction_activation = 0;
             }
+
             mAutonomy = false;
+        //    pauseWaypointMission();  // TODO:: halt mission for safety...
         }
 
         msg.chan8_raw = (mAIfunction_activation * 100) + 1000;
@@ -1128,6 +1134,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         float mBatteryTemp_C = 0;
         msg.temperature = (short) (mBatteryTemp_C * 100);
         msg.current_battery = (short) (mCurrent_mA * 10);
+        msg.battery_remaining = (byte) ((float) mCChargeRemaining_mAh / (float) mCFullChargeCapacity_mAh * 100.0);
         //     Log.d(TAG, "temp: " + String.valueOf(mBatteryTemp_C));
         //      Log.d(TAG, "send_battery_status() complete");
         // TODO cell voltages
@@ -1381,24 +1388,46 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     void send_mission_count() {
         msg_mission_count msg = new msg_mission_count();
         msg.mission_type = MAV_MISSION_TYPE.MAV_MISSION_TYPE_MISSION;
+        WaypointMission x = getWaypointMissionOperator().getLoadedMission();
+        if(x!=null){
+            msg.count = x.getWaypointCount();
+        }
+        else{
+            msg.count = 0;
+        }
+        Log.d(TAG, "Mission Count: "+msg.count);
         sendMessage(msg);
     }
 
     void send_mission_item(int i) {
-        msg_mission_item msg = new msg_mission_item();
+        msg_mission_item_int msg = new msg_mission_item_int();
 
         if (i == 0) {
-            msg.x = (float) (djiAircraft.getFlightController().getState().getHomeLocation().getLatitude());
-            msg.y = (float) (djiAircraft.getFlightController().getState().getHomeLocation().getLongitude());
+            msg.x = (int)(10000000*(djiAircraft.getFlightController().getState().getHomeLocation().getLatitude()));
+            msg.y = (int)(10000000*(djiAircraft.getFlightController().getState().getHomeLocation().getLongitude()));
             msg.z = 0;
         } else {
             Waypoint wp = Objects.requireNonNull(getWaypointMissionOperator().getLoadedMission()).getWaypointList().get(i - 1);
-            msg.x = (float) (wp.coordinate.getLatitude());
-            msg.y = (float) (wp.coordinate.getLongitude());
+            msg.x = (int)(10000000*(wp.coordinate.getLatitude()));
+            msg.y = (int)(10000000*(wp.coordinate.getLongitude()));
             msg.z = wp.altitude;
-        }
+            for (WaypointAction action : wp.waypointActions) {
+                switch (action.actionType){
+                    case STAY:
+                        break;
+                    case GIMBAL_PITCH:
+                        break;
+                    case START_TAKE_PHOTO:
+                        break;
 
+                        //...
+                }
+            }
+        }
+        Log.d(TAG, "Mission return: "+i);
         msg.seq = i;
+        msg.mission_type = MAV_MISSION_TYPE.MAV_MISSION_TYPE_MISSION;
+        msg.command = MAV_CMD.MAV_CMD_NAV_WAYPOINT;
         msg.frame = MAV_FRAME.MAV_FRAME_GLOBAL_RELATIVE_ALT;
         sendMessage(msg);
     }
@@ -1411,7 +1440,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
     // Send mission accepted back to Mavlink...
     void send_mission_ack(int status) {
-        parent.logMessageDJI("Mavlink: " + status);
+        parent.logMessageDJI("Mission status: " + status);
         msg_mission_ack msg = new msg_mission_ack();
         msg.type = (short) status;
         msg.mission_type = MAV_MISSION_TYPE.MAV_MISSION_TYPE_MISSION;
@@ -1422,13 +1451,17 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         request_mission_list();
     }
 
+    //--------------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------------------
+
     private void request_mission_list() {
         msg_mission_request_list msg = new msg_mission_request_list();
         sendMessage(msg);
     }
 
     void request_mission_item(int seq) {
-        msg_mission_request msg = new msg_mission_request();
+//        msg_mission_request msg = new msg_mission_request();
+        msg_mission_request_int msg = new msg_mission_request_int();
         msg.seq = seq;
         msg.mission_type = MAV_MISSION_TYPE.MAV_MISSION_TYPE_MISSION;
         sendMessage(msg);
@@ -1522,6 +1555,8 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             });
         }
     }
+    //--------------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------------------
 
     void do_takeoff(float alt) {
         mAutonomy = false;

@@ -234,15 +234,5 @@
         textview_custom_unlock_enabled_zone,textview_legend_self_unlock_zone,
         textview_legend_restricted_zone,textview_legend_enhanced_warning_zone,textview_legend_authorized_zone" />
 
-    <dji.ux.beta.core.widget.useraccount.UserAccountLoginWidget
-        android:id="@+id/widget_login"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:layout_margin="10dp"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:uxsdk_messageTextEnabled="false"
-        app:uxsdk_stateTextEnabled="false"
-        app:uxsdk_userIconEnabled="false" />
 
 </merge>
