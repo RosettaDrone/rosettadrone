@@ -1388,48 +1388,110 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     void send_mission_count() {
         msg_mission_count msg = new msg_mission_count();
         msg.mission_type = MAV_MISSION_TYPE.MAV_MISSION_TYPE_MISSION;
-        WaypointMission x = getWaypointMissionOperator().getLoadedMission();
-        if(x!=null){
-            msg.count = x.getWaypointCount();
-        }
-        else{
-            msg.count = 0;
-        }
+        // Get the full expanded list...
+        msg.count = send_mission_item(-1);
         Log.d(TAG, "Mission Count: "+msg.count);
         sendMessage(msg);
     }
 
-    void send_mission_item(int i) {
-        msg_mission_item_int msg = new msg_mission_item_int();
+    // This is a bit tricky, as DJI and MAVlink pack mission ithems very different...
+    // Firste we expand the full mission list and then we pick the one we need...
+    int send_mission_item(int i)
+    {
+        ArrayList<msg_mission_item_int> msglist = new ArrayList<>();
+        WaypointMission x = getWaypointMissionOperator().getLoadedMission();
 
-        if (i == 0) {
-            msg.x = (int)(10000000*(djiAircraft.getFlightController().getState().getHomeLocation().getLatitude()));
-            msg.y = (int)(10000000*(djiAircraft.getFlightController().getState().getHomeLocation().getLongitude()));
-            msg.z = 0;
-        } else {
-            Waypoint wp = Objects.requireNonNull(getWaypointMissionOperator().getLoadedMission()).getWaypointList().get(i - 1);
-            msg.x = (int)(10000000*(wp.coordinate.getLatitude()));
-            msg.y = (int)(10000000*(wp.coordinate.getLongitude()));
-            msg.z = wp.altitude;
-            for (WaypointAction action : wp.waypointActions) {
-                switch (action.actionType){
-                    case STAY:
-                        break;
-                    case GIMBAL_PITCH:
-                        break;
-                    case START_TAKE_PHOTO:
-                        break;
+        // If a mission loaded...
+        if(x!=null) {
+            // For all DJI mission ithems...
+            for (Waypoint wp : Objects.requireNonNull(getWaypointMissionOperator().getLoadedMission()).getWaypointList()) {
 
-                        //...
+                msg_mission_item_int msg = new msg_mission_item_int();
+                msg.command = MAV_CMD.MAV_CMD_NAV_WAYPOINT;
+                msg.seq = i;
+                msg.mission_type = MAV_MISSION_TYPE.MAV_MISSION_TYPE_MISSION;
+                msg.frame = MAV_FRAME.MAV_FRAME_GLOBAL_RELATIVE_ALT;
+                msg.x = (int) (10000000 * (wp.coordinate.getLatitude()));
+                msg.y = (int) (10000000 * (wp.coordinate.getLongitude()));
+                msg.z = wp.altitude;
+
+                // Assume the first mission point is a takeoff...
+                if (i == 0) {
+                    Log.d(TAG, "Mission Action : Takeoff");
+                    msg.command = MAV_CMD.MAV_CMD_NAV_TAKEOFF;
+                    msglist.add(msg);
+                }
+                // DJI pack the waypoints more than MAVlink, this is a problem, as we are to return only ONE element...
+                else {
+                    for (WaypointAction action : wp.waypointActions) {
+                        switch (action.actionType) {
+                            case STAY:
+                                Log.d(TAG, "Mission Action : STAY");
+                                msg.command = MAV_CMD.MAV_CMD_NAV_DELAY;
+                                msglist.add(msg);
+                                break;
+                            case GIMBAL_PITCH:
+                                Log.d(TAG, "Mission Action : GIMBAL_PITCH");
+                                msg.command = MAV_CMD.MAV_CMD_DO_DIGICAM_CONTROL;
+                                msglist.add(msg);
+                                break;
+                            case START_TAKE_PHOTO:
+                                Log.d(TAG, "Mission Action : START_TAKE_PHOTO");
+                                msg.command = MAV_CMD.MAV_CMD_IMAGE_START_CAPTURE;
+                                msglist.add(msg);
+                                break;
+                            case START_RECORD:
+                                msg.command = MAV_CMD.MAV_CMD_VIDEO_START_CAPTURE;
+                                Log.d(TAG, "Mission Action : START_RECORD");
+                                msglist.add(msg);
+                                break;
+                            case STOP_RECORD:
+                                msg.command = MAV_CMD.MAV_CMD_VIDEO_STOP_CAPTURE;
+                                Log.d(TAG, "Mission Action : STOP_RECORD");
+                                msglist.add(msg);
+                                break;
+                            case ROTATE_AIRCRAFT:
+                                msg.command = MAV_CMD.MAV_CMD_CONDITION_YAW;
+                                Log.d(TAG, "Mission Action : ROTATE_AIRCRAFT");
+                                msglist.add(msg);
+                                break;
+                            case CAMERA_ZOOM:
+                                msg.command = MAV_CMD.MAV_CMD_SET_CAMERA_ZOOM;
+                                Log.d(TAG, "Mission Action : CAMERA_ZOOM");
+                                msglist.add(msg);
+                                break;
+                            case CAMERA_FOCUS:
+                                msg.command = MAV_CMD.MAV_CMD_SET_CAMERA_FOCUS;
+                                Log.d(TAG, "Mission Action : CAMERA_FOCUS");
+                                msglist.add(msg);
+                                break;
+                            case PHOTO_GROUPING:
+                                msg.command = MAV_CMD.MAV_CMD_VIDEO_START_CAPTURE;
+                                msglist.add(msg);
+                                break;
+                            case FINE_TUNE_GIMBAL_PITCH:
+                                msg.command = MAV_CMD.MAV_CMD_VIDEO_START_CAPTURE;
+                                msglist.add(msg);
+                                break;
+                            case RESET_GIMBAL_YAW:
+                                msg.command = MAV_CMD.MAV_CMD_GIMBAL_RESET;
+                                Log.d(TAG, "Mission Action : RESET_GIMBAL_YAW");
+                                msglist.add(msg);
+                                break;
+                            default:
+                                Log.d(TAG, "Mission Action : Waypoint");
+                                msg.command = MAV_CMD.MAV_CMD_NAV_WAYPOINT;
+                                msglist.add(msg);
+                                break;
+                        }
+                    }
                 }
             }
+            if(i>=0)
+                sendMessage(msglist.get(i));
         }
         Log.d(TAG, "Mission return: "+i);
-        msg.seq = i;
-        msg.mission_type = MAV_MISSION_TYPE.MAV_MISSION_TYPE_MISSION;
-        msg.command = MAV_CMD.MAV_CMD_NAV_WAYPOINT;
-        msg.frame = MAV_FRAME.MAV_FRAME_GLOBAL_RELATIVE_ALT;
-        sendMessage(msg);
+        return (msglist.size());
     }
 
     public void send_mission_item_reached(int seq) {

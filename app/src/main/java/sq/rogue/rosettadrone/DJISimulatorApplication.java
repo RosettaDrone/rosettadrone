@@ -3,6 +3,7 @@ package sq.rogue.rosettadrone;
 import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -18,26 +19,22 @@ import dji.sdk.sdkmanager.DJISDKInitEvent;
 import dji.sdk.sdkmanager.DJISDKManager;
 
 public class DJISimulatorApplication extends Application {
-
     private static final String TAG = DJISimulatorApplication.class.getName();
+
     public static final String FLAG_CONNECTION_CHANGE = "com_dji_simulatorDemo_connection_change";
     private static BaseProduct mProduct;
     private Handler mHandler;
     private DJISDKManager.SDKManagerCallback mDJISDKManagerCallback;
-
     private Application instance;
 
     public void setContext(Application application) {
         instance = application;
     }
+    public DJISimulatorApplication() {}
 
     @Override
     public Context getApplicationContext() {
         return instance;
-    }
-
-    public DJISimulatorApplication() {
-
     }
 
     /**
@@ -66,7 +63,6 @@ public class DJISimulatorApplication extends Application {
         super.onCreate();
         mHandler = new Handler(Looper.getMainLooper());
 
-
         /**
          * When starting SDK services, an instance of interface DJISDKManager.DJISDKManagerCallback will be used to listen to
          * the SDK Registration result and the product changing.
@@ -76,6 +72,7 @@ public class DJISimulatorApplication extends Application {
             //Listens to the SDK registration result
             @Override
             public void onRegister(DJIError error) {
+                Log.e("TAG", error.toString());
 
                 if (error == DJISDKError.REGISTRATION_SUCCESS) {
 
@@ -90,7 +87,6 @@ public class DJISimulatorApplication extends Application {
                     DJISDKManager.getInstance().startConnectionToProduct();
 
                 } else {
-
                     Handler handler = new Handler(Looper.getMainLooper());
                     handler.post(new Runnable() {
 
@@ -99,9 +95,7 @@ public class DJISimulatorApplication extends Application {
                             Toast.makeText(getApplicationContext(), "Register sdk fails, check network is available", Toast.LENGTH_LONG).show();
                         }
                     });
-
                 }
-                Log.e("TAG", error.toString());
             }
 
             @Override
@@ -122,12 +116,6 @@ public class DJISimulatorApplication extends Application {
                 notifyStatusChange();
             }
 
-            /*
-                        @Override
-                        public void onProductChanged(BaseProduct baseProduct) {
-
-                        }
-            */
             @Override
             public void onComponentChange(BaseProduct.ComponentKey componentKey, BaseComponent oldComponent,
                                           BaseComponent newComponent) {
@@ -147,34 +135,32 @@ public class DJISimulatorApplication extends Application {
                                 componentKey,
                                 oldComponent,
                                 newComponent));
-
             }
 
             @Override
             public void onInitProcess(DJISDKInitEvent djisdkInitEvent, int i) {
-
+                Log.d("TAG", "onInitProcess");
             }
 
             @Override
             public void onDatabaseDownloadProgress(long l, long l1) {
-
+                Log.d("TAG", "onDatabaseDownloadProgress");
             }
-
-
         };
+
         //Check the permissions before registering the application for android system 6.0 above.
         int permissionCheck = ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.WRITE_EXTERNAL_STORAGE);
         int permissionCheck2 = ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.READ_PHONE_STATE);
-        /*
+
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || (permissionCheck == 0 && permissionCheck2 == 0)) {
             //This is used to start SDK services and initiate SDK.
-            DJISDKManager.getInstance().registerApp(getApplicationContext(), mDJISDKManagerCallback);
+            DJISDKManager x = DJISDKManager.getInstance();
+            Context y = getApplicationContext();
+            x.registerApp(y, mDJISDKManagerCallback);
             Toast.makeText(getApplicationContext(), "registering, pls wait...", Toast.LENGTH_LONG).show();
-
         } else {
             Toast.makeText(getApplicationContext(), "Please check if the permission is granted.", Toast.LENGTH_LONG).show();
         }
-        */
     }
 
     private void notifyStatusChange() {
@@ -190,5 +176,4 @@ public class DJISimulatorApplication extends Application {
             getApplicationContext().sendBroadcast(intent);
         }
     };
-
 }

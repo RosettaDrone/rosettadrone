@@ -54,6 +54,7 @@ import dji.sdk.mission.waypoint.WaypointMissionOperatorListener;
 import dji.sdk.products.Aircraft;
 import dji.sdk.sdkmanager.DJISDKManager;
 import dji.sdk.useraccount.UserAccountManager;
+import sq.rogue.rosettadrone.DJISimulatorApplication;
 import sq.rogue.rosettadrone.R;
 import sq.rogue.rosettadrone.RDApplication;
 
@@ -161,7 +162,7 @@ public class Waypoint1Activity extends FragmentActivity implements View.OnClickL
         setContentView(R.layout.activity_waypoint1);
 
         IntentFilter filter = new IntentFilter();
-        filter.addAction(RDApplication.FLAG_CONNECTION_CHANGE);
+        filter.addAction(DJISimulatorApplication.FLAG_CONNECTION_CHANGE);
         registerReceiver(mReceiver, filter);
 
         initUI();

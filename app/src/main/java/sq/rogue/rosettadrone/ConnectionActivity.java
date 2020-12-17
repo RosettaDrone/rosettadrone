@@ -3,9 +3,11 @@ package sq.rogue.rosettadrone;
 import android.Manifest;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.hardware.usb.UsbManager;
@@ -16,6 +18,7 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Log;
@@ -47,11 +50,11 @@ import dji.sdk.products.Aircraft;
 import dji.sdk.sdkmanager.DJISDKInitEvent;
 import dji.sdk.sdkmanager.DJISDKManager;
 import dji.sdk.useraccount.UserAccountManager;
-
+import sq.rogue.rosettadrone.video.VideoService;
 
 public class ConnectionActivity extends Activity implements View.OnClickListener {
 
-    private static final String TAG = ConnectionActivity.class.getName();
+    private static final String TAG = MainActivity.class.getName();
     private static final String[] REQUIRED_PERMISSION_LIST = new String[]{
             Manifest.permission.VIBRATE,
             Manifest.permission.INTERNET,
@@ -67,6 +70,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
             Manifest.permission.READ_EXTERNAL_STORAGE,
             Manifest.permission.READ_PHONE_STATE,
     };
+
     private static final int REQUEST_PERMISSION_CODE = 12345;
     private TextView mTextConnectionStatus;
     private TextView mTextProduct;
@@ -86,46 +90,83 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
     private DJIKey firmkey = ProductKey.create(ProductKey.FIRMWARE_PACKAGE_VERSION);
     private AtomicBoolean isRegistrationInProgress = new AtomicBoolean(false);
     private List<String> missingPermission = new ArrayList<>();
-
     private SharedPreferences sharedPreferences;
     private String CustomName;
 
     //region Registration n' Permissions Helpers
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        String action = intent.getAction();
+        if (UsbManager.ACTION_USB_ACCESSORY_ATTACHED.equals(action)) {
+            Intent attachedIntent = new Intent();
+            attachedIntent.setAction(DJISDKManager.USB_ACCESSORY_ATTACHED);
+            sendBroadcast(attachedIntent);
+        }
+    }
 
     /**
      * Checks if there is any missing permissions, and
      * requests runtime permission if needed.
      */
     private void checkAndRequestPermissions() {
-        Log.d(TAG, "checkAndRequestPermissions");
         // Check for permissions
+        Log.d(TAG, "checkAndRequestPermissions");
+
+        // Check the permissions...
         for (String eachPermission : REQUIRED_PERMISSION_LIST) {
             if (ContextCompat.checkSelfPermission(this, eachPermission) != PackageManager.PERMISSION_GRANTED) {
                 missingPermission.add(eachPermission);
             }
         }
         // Request for missing permissions
-        if (missingPermission.isEmpty()) {
-            startSDKRegistration();
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        if (!missingPermission.isEmpty() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             ActivityCompat.requestPermissions(this,
                     missingPermission.toArray(new String[missingPermission.size()]),
                     REQUEST_PERMISSION_CODE);
         }
 
+        if (missingPermission.isEmpty()) {
+            RDApplication.startLoginApplication();
+        }
+    }
+
+    /**
+     * Result of runtime permission request
+     */
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        Log.d(TAG, "onRequestPermissionsResult");
+        // Check for granted permission and remove from missing list
+        if (requestCode == REQUEST_PERMISSION_CODE) {
+            for (int i = grantResults.length - 1; i >= 0; i--) {
+                if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
+                    missingPermission.remove(permissions[i]);
+                }
+            }
+        }
+        // If there is enough permission, we will start the registration
+        if (missingPermission.isEmpty()) {
+            RDApplication.startLoginApplication();
+        } else {
+            Toast.makeText(getApplicationContext(), "Missing permissions!!!", Toast.LENGTH_LONG).show();
+        }
     }
 
     private void startSDKRegistration() {
         Log.d(TAG, "startSDKRegistration");
         if (isRegistrationInProgress.compareAndSet(false, true)) {
+            Log.d(TAG, "startSDKRegistration started");
             AsyncTask.execute(new Runnable() {
                 @Override
                 public void run() {
-                    Log.d(TAG, "startSDKRegistration:run");
                     DJISDKManager.getInstance().registerApp(ConnectionActivity.this.getApplicationContext(), new DJISDKManager.SDKManagerCallback() {
                         @Override
                         public void onRegister(DJIError djiError) {
-                            Log.d(TAG, "onRegister:run");
                             if (djiError == DJISDKError.REGISTRATION_SUCCESS) {
                                 DJILog.v("App registration", DJISDKError.REGISTRATION_SUCCESS.getDescription());
                                 DJISDKManager.getInstance().startConnectionToProduct();
@@ -145,14 +186,13 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
 
                         @Override
                         public void onProductDisconnect() {
-                            Log.d(TAG, "onProductDisconnect");
                             showToast("Product Disconnected");
                             notifyStatusChange();
                         }
 
                         @Override
                         public void onProductConnect(BaseProduct baseProduct) {
-                            Log.d(TAG, "Product Connected");
+                            Log.e(TAG, "Product Connected");
 
                             notifyStatusChange();
                             isRegistrationInProgress.set(false);
@@ -164,7 +204,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
 
                         @Override
                         public void onProductChanged(BaseProduct baseProduct) {
-                            Log.d(TAG, "Product Changed");
+                            Log.e(TAG, "Product Changed");
 
                             notifyStatusChange();
                             isRegistrationInProgress.set(false);
@@ -196,19 +236,17 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
                         @Override
                         public void onInitProcess(DJISDKInitEvent djisdkInitEvent, int i) {
                             //notify the init progress
-                            Log.d(TAG, "onInitProcess");
                         }
 
                         @Override
                         public void onDatabaseDownloadProgress(long l, long l1) {
-                            Log.d(TAG, "onDatabaseDownloadProgress");
+
                         }
                     });
                 }
             });
         }
     }
-
 
     private void loginDJIUserAccount() {
 
@@ -218,13 +256,11 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
                     public void onSuccess(final UserAccountState userAccountState) {
                         showToast("login success! Account state is:" + userAccountState.name());
                     }
-
                     @Override
                     public void onFailure(DJIError error) {
                         showToast(error.getDescription());
                     }
                 });
-
     }
 
     private void notifyStatusChange() {
@@ -234,35 +270,9 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
                 refreshSDKRelativeUI();
             }
         });
-
     }
 
     //endregion
-
-    /**
-     * Result of runtime permission request
-     */
-    @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-
-        // Check for granted permission and remove from missing list
-        if (requestCode == REQUEST_PERMISSION_CODE) {
-            for (int i = grantResults.length - 1; i >= 0; i--) {
-                if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
-                    missingPermission.remove(permissions[i]);
-                }
-            }
-        }
-        // If there is enough permission, we will start the registration
-        if (missingPermission.isEmpty()) {
-            startSDKRegistration();
-        } else {
-            Toast.makeText(getApplicationContext(), "Missing permissions!!!", Toast.LENGTH_LONG).show();
-        }
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -270,13 +280,11 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         checkAndRequestPermissions();
         setContentView(R.layout.activity_connection);
         initUI();
-/*
+
         // Register the broadcast receiver for receiving the device connection's changes.
         IntentFilter filter = new IntentFilter();
         filter.addAction(DJISimulatorApplication.FLAG_CONNECTION_CHANGE);
         registerReceiver(mReceiver, filter);
-
- */
     }
 
     protected BroadcastReceiver mReceiver = new BroadcastReceiver() {
@@ -287,7 +295,6 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
             notifyStatusChange();
         }
     };
-
 
     @Override
     public void onResume() {
@@ -301,7 +308,6 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         x.setId(R.id.btn_start);
         onClick(x);
 */
-
     }
 
     @Override
@@ -311,37 +317,6 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
             KeyManager.getInstance().removeListener(firmVersionListener);
         }
         super.onDestroy();
-    }
-
-    private void initUI() {
-        Log.v(TAG, "initUI");
-
-        mTextConnectionStatus = (TextView) findViewById(R.id.text_connection_status);
-        mTextModelAvailable = (TextView) findViewById(R.id.text_model_available);
-        mTextProduct = (TextView) findViewById(R.id.text_product_info);
-
-        mBtnOpen = (Button) findViewById(R.id.btn_start);
-        mBtnOpen.setOnClickListener(this);
-        mBtnOpen.setEnabled(false);
-
-        mBtnSim = (Button) findViewById(R.id.btn_sim);
-        mBtnSim.setOnClickListener(this);
-
-        mBtnTest = (Button) findViewById(R.id.btn_test);
-        mBtnTest.setOnClickListener(this);
-
-        Context appContext = this.getBaseContext();
-        String version = "Version: " + getAppVersion(appContext);
-        Log.v(TAG, "" + version);
-        ((TextView) findViewById(R.id.textView3)).setText(version);
-
-        sharedPreferences = android.preference.PreferenceManager.getDefaultSharedPreferences(this);
-        CustomName = sharedPreferences.getString("pref_app_name", "RosettaDrone 2"); //+"RosettaDrone 2";
-        if (CustomName.length() > 0)
-            ((TextView) findViewById(R.id.textView)).setText(CustomName);
-
-        ((TextView) findViewById(R.id.textView2)).setText(getResources().getString(R.string.sdk_version, DJISDKManager.getInstance().getSDKVersion()));
-
     }
 
     public static String getAppVersion(Context context) {
@@ -389,17 +364,9 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         }
     }
 
-    public void showToast(final String msg) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                Toast.makeText(ConnectionActivity.this, msg, Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
 
     private void updateVersion() {
-        Log.v(TAG, "updateVersion");
+
         if (RDApplication.getProductInstance() != null) {
             final String version = RDApplication.getProductInstance().getFirmwarePackageVersion();
             this.runOnUiThread(new Runnable() {
@@ -412,6 +379,87 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
                     }
                 }
             });
+        }
+    }
+
+
+    private void initUI() {
+
+        mTextConnectionStatus = (TextView) findViewById(R.id.text_connection_status);
+        mTextModelAvailable = (TextView) findViewById(R.id.text_model_available);
+        mTextProduct = (TextView) findViewById(R.id.text_product_info);
+
+        mBtnOpen = (Button) findViewById(R.id.btn_start);
+        mBtnOpen.setOnClickListener(this);
+        mBtnOpen.setEnabled(false);
+
+        mBtnSim = (Button) findViewById(R.id.btn_sim);
+        mBtnSim.setOnClickListener(this);
+
+        mBtnTest = (Button) findViewById(R.id.btn_test);
+        mBtnTest.setOnClickListener(this);
+
+        Context appContext = this.getBaseContext();
+        String version = "Version: " + getAppVersion(appContext);
+        Log.v(TAG, "" + version);
+        ((TextView) findViewById(R.id.textView3)).setText(version);
+
+        sharedPreferences = android.preference.PreferenceManager.getDefaultSharedPreferences(this);
+        CustomName = sharedPreferences.getString("pref_app_name", "RosettaDrone 2"); //+"RosettaDrone 2";
+        if (CustomName.length() > 0)
+            ((TextView) findViewById(R.id.textView)).setText(CustomName);
+
+        ((TextView) findViewById(R.id.textView2)).setText(getResources().getString(R.string.sdk_version, DJISDKManager.getInstance().getSDKVersion()));
+
+    }
+
+    private Runnable startApp = new Runnable() {
+
+        @Override
+        public void run() {
+            Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+            Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), notification);
+            r.play();
+
+            mBtnOpen.setEnabled(true);
+        }
+    };
+
+
+    private void refreshSDKRelativeUI() {
+
+        BaseProduct mProduct = DJISimulatorApplication.getProductInstance();
+        Log.d(TAG, "refreshSDKRelativeUI");
+
+        if (null != mProduct && mProduct.isConnected()) {
+            Log.d(TAG, "refreshSDK: True");
+
+            mUIHandler = new Handler(Looper.getMainLooper());
+            mUIHandler.postDelayed(startApp, 2000);
+
+            String str = mProduct instanceof Aircraft ? "DJIAircraft" : "DJIHandHeld";
+            mTextConnectionStatus.setText("Status: " + str + " connected");
+
+            if (null != mProduct.getModel()) {
+                mTextProduct.setText("" + mProduct.getModel().getDisplayName());
+            } else {
+                mTextProduct.setText(R.string.product_information);
+            }
+            if (KeyManager.getInstance() != null) {
+                KeyManager.getInstance().addListener(firmkey, firmVersionListener);
+            }
+        } else if (RDApplication.getSim() == true) {
+            Log.v(TAG, "refreshSDK: Sim");
+//            mBtnOpen.setEnabled(true);
+
+            mTextProduct.setText(R.string.product_information);
+            //  mTextConnectionStatus.setText(R.string.connection_sim);
+        } else {
+            Log.v(TAG, "refreshSDK: False");
+            mBtnOpen.setEnabled(false);
+
+            mTextProduct.setText(R.string.product_information);
+            mTextConnectionStatus.setText(R.string.connection_loose);
         }
     }
 
@@ -448,13 +496,12 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
                 break;
             }
             case R.id.btn_start: {
-                // Register the broadcast receiver for receiving the device connection's changes.
-                IntentFilter filter = new IntentFilter();
-                filter.addAction(DJISimulatorApplication.FLAG_CONNECTION_CHANGE);
-                registerReceiver(mReceiver, filter);
+                mBtnOpen.setEnabled(false);
+                unregisterReceiver(mReceiver);
 
                 Intent intent = new Intent(this, MainActivity.class);
-                startActivity(intent);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivityIfNeeded(intent,0);
                 break;
             }
             default:
@@ -462,64 +509,12 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         }
     }
 
-    private Runnable startApp = new Runnable() {
-
-        @Override
-        public void run() {
-            Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-            Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), notification);
-            r.play();
-
-            mBtnOpen.setEnabled(true);
-        }
-    };
-
-    private void refreshSDKRelativeUI() {
-        Log.e(TAG, "refreshSDKRelativeUI");
-        BaseProduct mProduct = RDApplication.getProductInstance();
-
-        if (null != mProduct && mProduct.isConnected()) {
-            Log.v(TAG, "refreshSDK: True");
-
-            mUIHandler = new Handler(Looper.getMainLooper());
-            mUIHandler.postDelayed(startApp, 2000);
-
-            String str = mProduct instanceof Aircraft ? "DJIAircraft" : "DJIHandHeld";
-            mTextConnectionStatus.setText("Status: " + str + " connected");
-
-            if (null != mProduct.getModel()) {
-                mTextProduct.setText("" + mProduct.getModel().getDisplayName());
-            } else {
-                mTextProduct.setText(R.string.product_information);
+    public void showToast(final String msg) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(ConnectionActivity.this, msg, Toast.LENGTH_SHORT).show();
             }
-            if (KeyManager.getInstance() != null) {
-                KeyManager.getInstance().addListener(firmkey, firmVersionListener);
-            }
-        } else if (RDApplication.getSim() == true) {
-            Log.v(TAG, "refreshSDK: Sim");
-//            mBtnOpen.setEnabled(true);
-
-            mTextProduct.setText(R.string.product_information);
-            //  mTextConnectionStatus.setText(R.string.connection_sim);
-        } else {
-            Log.v(TAG, "refreshSDK: False");
-            mBtnOpen.setEnabled(false);
-
-            mTextProduct.setText(R.string.product_information);
-            mTextConnectionStatus.setText(R.string.connection_loose);
-        }
-    }
-
-    @Override
-    protected void onNewIntent(Intent intent) {
-        Log.e(TAG, "onNewIntent");
-
-        super.onNewIntent(intent);
-        String action = intent.getAction();
-        if (UsbManager.ACTION_USB_ACCESSORY_ATTACHED.equals(action)) {
-            Intent attachedIntent = new Intent();
-            attachedIntent.setAction(DJISDKManager.USB_ACCESSORY_ATTACHED);
-            sendBroadcast(attachedIntent);
-        }
+        });
     }
 }

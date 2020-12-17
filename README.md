@@ -1,14 +1,11 @@
-# RosettaDrone 2 is now updated to DJI SDK 4.13...
-## 3. Des. 2020: Main is merged with the work branch, thanks for all the help.
+# RosettaDrone 2 is now updated to DJI SDK 4.14 beta 1...
 
-Rosetta Drone 2 tested on **DJI Air, Mavic 2 and Matrice 210 V2 with X7 camera** series 
-and supports Android 5.1 and newer, with DJI SDK 4.13.0 and Androidx lib
+Rosetta Drone 2 tested on **DJI Air, Mavic 2 x and Matrice 210 V2, Mavic Pro, Mavic AIR series
+and supports Android 5.1 and newer, with DJI SDK 4.14 and Androidx lib
 
 =======
 
-## The project works with QGroundcontrol.
-No Video on the Mavic-Air at the moment, but working on it...
-
+## The project works with QGroundcontrol, goto and joystic is implemented.
 
 ### **Please create issues and create PR on this fork.** 
 

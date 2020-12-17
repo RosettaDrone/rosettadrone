@@ -182,7 +182,7 @@ public class MainActivity extends AppCompatActivity {
     protected SharedPreferences sharedPreferences;
 
     private Runnable djiUpdateRunnable = () -> {
-        Intent intent = new Intent(RDApplication.FLAG_CONNECTION_CHANGE);
+        Intent intent = new Intent(DJISimulatorApplication.FLAG_CONNECTION_CHANGE);
 //        Intent intent = new Intent(FLAG_CONNECTION_CHANGE);
         sendBroadcast(intent);
     };
@@ -420,7 +420,21 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         Log.e(TAG, "onDestroy");
-//        logMessageDJI("onDestroy()");
+
+        // Thank you Vlad for figuring this out...
+        if(mCamera != null){
+            if(isTranscodedVideoFeedNeeded()){
+                if(standardVideoFeeder != null){
+                    standardVideoFeeder.removeVideoDataListener(mReceivedVideoDataListener);
+                }
+            }
+            else{
+                if(VideoFeeder.getInstance().getPrimaryVideoFeed() != null ){
+                    VideoFeeder.getInstance().getPrimaryVideoFeed().removeVideoDataListener(mReceivedVideoDataListener);
+                }
+            }
+        }
+
         sendDroneDisconnected();
         closeGCSCommunicator();
 
@@ -437,6 +451,10 @@ public class MainActivity extends AppCompatActivity {
             mCodecManager.destroyCodec();
         }
         doUnbindService();
+
+        //Intent intent = getIntent();
+        finish();
+
 
         super.onDestroy();
     }
@@ -673,7 +691,7 @@ public class MainActivity extends AppCompatActivity {
         // For newer drones...
         mReceivedVideoDataListener = (videoBuffer, size) -> {
             if (m_videoMode == 2) {
-                if (mCodecManager != null && (mProductModel != Model.MAVIC_PRO || mProductModel != Model.MAVIC_AIR)) {
+                if (mCodecManager != null && (mProductModel != Model.MAVIC_PRO || mProductModel != Model.MAVIC_AIR   )) {
                     mCodecManager.sendDataToDecoder(videoBuffer, size);
                 }
                 // Send raw H264 to the FFMPEG parser...
@@ -1781,6 +1799,12 @@ public class MainActivity extends AppCompatActivity {
         if( mProductModel == Model.MAVIC_PRO ) {
             return true;
         }
+        /*
+        if( mProductModel == Model.MAVIC_MINI ) {
+            return true;
+        }
+
+         */
 
         return VideoFeeder.getInstance().isFetchKeyFrameNeeded() || VideoFeeder.getInstance()
                 .isLensDistortionCalibrationNeeded();

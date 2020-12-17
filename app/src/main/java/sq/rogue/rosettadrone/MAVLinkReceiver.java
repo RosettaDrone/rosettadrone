@@ -115,7 +115,6 @@ public class MAVLinkReceiver {
             //       Log.d(TAG, String.valueOf(msg.msgid));
         }
 
-
         switch (msg.msgid) {
             case MAVLINK_MSG_ID_HEARTBEAT:
                 this.mTimeStampLastGCSHeartbeat = System.currentTimeMillis();
@@ -511,11 +510,11 @@ public class MAVLinkReceiver {
                     Log.d(TAG, "Takeoff...");
 
                     // Remember to check distance to takeoff location when starting mission...
-                //    currentWP = new Waypoint( m.x/10000000.0, m.y/10000000.0, m.z);
+                    currentWP = new Waypoint( m.x/10000000.0, m.y/10000000.0, m.z);
 
                     // Hmm do we need this...
                     homeValue = m.z;
-                  //  dji_wps.add(currentWP);
+                    dji_wps.add(currentWP);
                     break;
 
                 case MAV_CMD.MAV_CMD_NAV_WAYPOINT:
