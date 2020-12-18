@@ -74,6 +74,9 @@
     <string name="pref_encode_speed">Video encoding speed</string>
 
     <string name="pref_app">App Name</string>
+    <string name="pref_sim_pos_lat">Sim latitude</string>
+    <string name="pref_sim_pos_lon">Sim longitude</string>
+    <string name="pref_sim_pos_alt">Sim altitude</string>
 
     <string-array name="video_encode_array">
         <item>Ultra Fast</item>

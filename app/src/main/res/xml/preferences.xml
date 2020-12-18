@@ -53,6 +53,27 @@
                 android:title="@string/pref_app" />
 
         </PreferenceCategory>
+v
+        <PreferenceCategory
+            android:key="sim_pos_prefs"
+            android:title="Sim Settings">
+
+            <androidx.preference.EditTextPreference
+                android:defaultValue="60.4094"
+                android:key="pref_sim_pos_lat"
+                android:title="@string/pref_sim_pos_lat" />
+
+            <androidx.preference.EditTextPreference
+                android:defaultValue="10.4911"
+                android:key="pref_sim_pos_lon"
+                android:title="@string/pref_sim_pos_lon" />
+
+            <androidx.preference.EditTextPreference
+                android:defaultValue="210.0"
+                android:key="pref_sim_pos_alt"
+                android:title="@string/pref_sim_pos_alt" />
+
+        </PreferenceCategory>
 
         <PreferenceCategory
             android:key="drone_led_prefs"

@@ -1,6 +1,7 @@
 package sq.rogue.rosettadrone;
 
 import android.app.AlertDialog;
+import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -50,6 +51,7 @@ import java.net.DatagramSocket;
 import java.net.PortUnreachableException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -120,6 +122,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     private ArrayList<MAVParam> params = new ArrayList<>();
     private long ticks = 0;
     private MainActivity parent;
+    protected SharedPreferences sharedPreferences;
 
     private TimeLineMissionControlView TimeLine = new TimeLineMissionControlView();
 
@@ -176,17 +179,12 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
     private FlightMode lastMode = FlightMode.ATTI_HOVER;
     private HardwareState.FlightModeSwitch rcmode = HardwareState.FlightModeSwitch.POSITION_ONE;
-    // Mavic
     private static HardwareState.FlightModeSwitch avtivemode = HardwareState.FlightModeSwitch.POSITION_ONE; // Change this to decide what position the mode switch should be inn.
 
     private SendVelocityDataTask mSendVirtualStickDataTask = null;
-    ;
     private Timer mSendVirtualStickDataTimer = null;
-
     private MoveTo mMoveToDataTask = null;
-    ;
     private Timer mMoveToDataTimer = null;
-
     private Rotation m_ServoSet;
     private float m_ServoPos_pitch = 0;
     private float m_ServoPos_yaw = 0;
@@ -280,8 +278,26 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             parent.logMessageDJI("Target found...");
 
             if (sim) {
+                double lat = Double.parseDouble(Objects.requireNonNull(sharedPreferences.getString("pref_sim_pos_lat", "60.4094")));
+                double lon = Double.parseDouble(Objects.requireNonNull(sharedPreferences.getString("pref_sim_pos_lon", "10.4911")));
+                int alt = Integer.parseInt(Objects.requireNonNull(sharedPreferences.getString("pref_sim_pos_alt", "210")));
+
+                // If this is the first time the app is running...
+                if(lat == -1){
+                    sharedPreferences.getStringSet("pref_sim_pos_lat", Collections.singleton("60.4094"));
+                    lat = 60.4094;
+                }
+                if(lon == -1){
+                    sharedPreferences.getStringSet("pref_sim_pos_lon", Collections.singleton("10.4911"));
+                    lon = 10.4911;
+                }
+                if(alt == -1){
+                    sharedPreferences.getStringSet("pref_sim_pos_alt", Collections.singleton("210"));
+                    alt = 210;
+                }
+
                 mFlightController.getSimulator()
-                        .start(InitializationData.createInstance(new LocationCoordinate2D(60.4094, 10.4911), 10, 10),
+                        .start(InitializationData.createInstance(new LocationCoordinate2D(lat, lon), alt, 10),
                                 djiError -> {
                                     if (djiError != null) {
                                         parent.logMessageDJI(djiError.getDescription());
