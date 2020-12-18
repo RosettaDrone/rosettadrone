@@ -172,7 +172,7 @@ public class MainActivity extends AppCompatActivity {
     private int m_videoMode = 1;
 
     private VideoFeeder.VideoFeed standardVideoFeeder;
-    protected VideoFeeder.VideoDataListener mReceivedVideoDataListener = null;
+    protected VideoFeeder.VideoDataListener mReceivedVideoDataListener;
     private TextureView videostreamPreviewTtView;
     private TextureView videostreamPreviewTtViewSmall;
     private Camera mCamera;
@@ -180,6 +180,7 @@ public class MainActivity extends AppCompatActivity {
     private int videoViewWidth;
     private int videoViewHeight;
     protected SharedPreferences sharedPreferences;
+    private boolean mIsTranscodedVideoFeedNeeded = false;
 
     private Runnable djiUpdateRunnable = () -> {
         Intent intent = new Intent(DJISimulatorApplication.FLAG_CONNECTION_CHANGE);
@@ -257,7 +258,8 @@ public class MainActivity extends AppCompatActivity {
         safeSleep(500);
         doBindService();
 
-        if (isTranscodedVideoFeedNeeded()) {
+        mIsTranscodedVideoFeedNeeded = isTranscodedVideoFeedNeeded();
+        if (mIsTranscodedVideoFeedNeeded) {
             // The one were we get transcode data...
             VideoFeeder.getInstance().setTranscodingDataRate(mVideoBitrate);
             logMessageDJI("set rate to " + mVideoBitrate);
@@ -359,8 +361,8 @@ public class MainActivity extends AppCompatActivity {
         // If we use a camera... Remove Listeners if needed...
 
         if (mCamera != null) {
-            if (mExternalVideoOut == false) {
-                if (isTranscodedVideoFeedNeeded()) {
+            if (!mExternalVideoOut) {
+                if (mIsTranscodedVideoFeedNeeded) {
                     if (standardVideoFeeder != null) {
                         standardVideoFeeder.removeVideoDataListener(mReceivedVideoDataListener);
                     }
@@ -368,12 +370,19 @@ public class MainActivity extends AppCompatActivity {
                     VideoFeeder.getInstance().getPrimaryVideoFeed().removeVideoDataListener(mReceivedVideoDataListener);
                 }
             } else {
-                if (isTranscodedVideoFeedNeeded()) {
+                if (mIsTranscodedVideoFeedNeeded) {
                     if (standardVideoFeeder != null) {
+                        for (VideoFeeder.VideoDataListener listener : standardVideoFeeder.getListeners()) {
+                            standardVideoFeeder.removeVideoDataListener(listener);
+                        }
                         standardVideoFeeder.addVideoDataListener(mReceivedVideoDataListener);
                     }
                 } else {
-                    VideoFeeder.getInstance().getPrimaryVideoFeed().addVideoDataListener(mReceivedVideoDataListener);
+                    final VideoFeeder.VideoFeed videoFeed = VideoFeeder.getInstance().getPrimaryVideoFeed();
+                    for (VideoFeeder.VideoDataListener listener : videoFeed.getListeners()) {
+                        videoFeed.removeVideoDataListener(listener);
+                    }
+                    videoFeed.addVideoDataListener(mReceivedVideoDataListener);
                 }
             }
         }
@@ -392,7 +401,7 @@ public class MainActivity extends AppCompatActivity {
 /*
         // Remove Listeners...
         if (mCamera != null) {
-            if (isTranscodedVideoFeedNeeded()) {
+            if (mIsTranscodedVideoFeedNeeded) {
                 if (standardVideoFeeder != null) {
                     standardVideoFeeder.removeVideoDataListener(mReceivedVideoDataListener);
                 }
@@ -420,20 +429,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         Log.e(TAG, "onDestroy");
-
-        // Thank you Vlad for figuring this out...
-        if(mCamera != null){
-            if(isTranscodedVideoFeedNeeded()){
-                if(standardVideoFeeder != null){
-                    standardVideoFeeder.removeVideoDataListener(mReceivedVideoDataListener);
-                }
-            }
-            else{
-                if(VideoFeeder.getInstance().getPrimaryVideoFeed() != null ){
-                    VideoFeeder.getInstance().getPrimaryVideoFeed().removeVideoDataListener(mReceivedVideoDataListener);
-                }
-            }
-        }
 
         sendDroneDisconnected();
         closeGCSCommunicator();
@@ -691,7 +686,7 @@ public class MainActivity extends AppCompatActivity {
         // For newer drones...
         mReceivedVideoDataListener = (videoBuffer, size) -> {
             if (m_videoMode == 2) {
-                if (mCodecManager != null && (mProductModel != Model.MAVIC_PRO || mProductModel != Model.MAVIC_AIR   )) {
+                if (mCodecManager != null) {
                     mCodecManager.sendDataToDecoder(videoBuffer, size);
                 }
                 // Send raw H264 to the FFMPEG parser...
@@ -735,15 +730,23 @@ public class MainActivity extends AppCompatActivity {
 */
                 //When calibration is needed or the fetch key frame is required by SDK, should use the provideTranscodedVideoFeed
                 //to receive the transcoded video feed from main camera.
-                if (isTranscodedVideoFeedNeeded()) {
-                    standardVideoFeeder = VideoFeeder.getInstance().provideTranscodedVideoFeed();
-                    if (mExternalVideoOut == true) {
+                if (mIsTranscodedVideoFeedNeeded) {
+                    if (standardVideoFeeder == null)
+                        standardVideoFeeder = VideoFeeder.getInstance().provideTranscodedVideoFeed();
+                    if (mExternalVideoOut) {
+                        for (VideoFeeder.VideoDataListener listener : standardVideoFeeder.getListeners()) {
+                            standardVideoFeeder.removeVideoDataListener(listener);
+                        }
                         standardVideoFeeder.addVideoDataListener(mReceivedVideoDataListener);
                         logMessageDJI("Transcode Video !!!!!!!");
                     }
                 } else {
-                    if (mExternalVideoOut && VideoFeeder.getInstance().getPrimaryVideoFeed() != null) {
-                        VideoFeeder.getInstance().getPrimaryVideoFeed().addVideoDataListener(mReceivedVideoDataListener);
+                    final VideoFeeder.VideoFeed videoFeeder = VideoFeeder.getInstance().getPrimaryVideoFeed();
+                    if (mExternalVideoOut && videoFeeder != null) {
+                        for (VideoFeeder.VideoDataListener listener : videoFeeder.getListeners()) {
+                            videoFeeder.removeVideoDataListener(listener);
+                        }
+                        videoFeeder.addVideoDataListener(mReceivedVideoDataListener);
                         logMessageDJI("Do NOT Transcode Video !!!!!!!");
                     }
                 }
@@ -1794,17 +1797,6 @@ public class MainActivity extends AppCompatActivity {
         if (VideoFeeder.getInstance() == null) {
             return false;
         }
-
-        // I do not like this, but is seems to work...
-        if( mProductModel == Model.MAVIC_PRO ) {
-            return true;
-        }
-        /*
-        if( mProductModel == Model.MAVIC_MINI ) {
-            return true;
-        }
-
-         */
 
         return VideoFeeder.getInstance().isFetchKeyFrameNeeded() || VideoFeeder.getInstance()
                 .isLensDistortionCalibrationNeeded();
