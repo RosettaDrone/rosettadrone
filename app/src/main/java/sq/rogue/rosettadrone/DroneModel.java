@@ -278,27 +278,10 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             parent.logMessageDJI("Target found...");
 
             if (sim) {
-                sharedPreferences = android.preference.PreferenceManager.getDefaultSharedPreferences(parent.getApplicationContext());
-                double lat = Double.parseDouble(Objects.requireNonNull(sharedPreferences.getString("pref_sim_pos_lat", "-1")));
-                double lon = Double.parseDouble(Objects.requireNonNull(sharedPreferences.getString("pref_sim_pos_lon", "-1")));
-                double alt = Double.parseDouble(Objects.requireNonNull(sharedPreferences.getString("pref_sim_pos_alt", "-1")));
-
-                // If this is the first time the app is running...
-                if(lat == -1){
-                    sharedPreferences.getStringSet("pref_sim_pos_lat", Collections.singleton("60.4094"));
-                    lat = 60.4094;
-                }
-                if(lon == -1){
-                    sharedPreferences.getStringSet("pref_sim_pos_lon", Collections.singleton("10.4911"));
-                    lon = 10.4911;
-                }
-                if(alt == -1){  // Not Used...
-                    sharedPreferences.getStringSet("pref_sim_pos_alt", Collections.singleton("210.0"));
-                    alt = 210.0;
-                }
+                LocationCoordinate2D pos = getSimPos2D();
 
                 mFlightController.getSimulator()
-                        .start(InitializationData.createInstance(new LocationCoordinate2D(lat, lon), 10, 10),
+                        .start(InitializationData.createInstance(pos, 10, 10),
                                 djiError -> {
                                     if (djiError != null) {
                                         parent.logMessageDJI(djiError.getDescription());
@@ -311,6 +294,35 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         //  SetMesasageBox("Controller Ready!!!!!");
     }
 
+    LocationCoordinate3D getSimPos3D(){
+        sharedPreferences = android.preference.PreferenceManager.getDefaultSharedPreferences(parent.getApplicationContext());
+        LocationCoordinate3D pos = new LocationCoordinate3D(
+                Double.parseDouble(Objects.requireNonNull(sharedPreferences.getString("pref_sim_pos_lat", "-1"))),
+                Double.parseDouble(Objects.requireNonNull(sharedPreferences.getString("pref_sim_pos_lon", "-1"))),
+                Float.parseFloat(Objects.requireNonNull(sharedPreferences.getString("pref_sim_pos_alt", "-1")))
+        );
+
+        // If this is the first time the app is running...
+        if(pos.getLatitude() == -1){
+            sharedPreferences.getStringSet("pref_sim_pos_lat", Collections.singleton("60.4094"));
+            pos.setLatitude(60.4094);
+        }
+        if(pos.getLongitude() == -1){
+            sharedPreferences.getStringSet("pref_sim_pos_lon", Collections.singleton("10.4911"));
+            pos.setLongitude(10.4911);
+        }
+        if(pos.getAltitude() == -1){  // Not Used...
+            sharedPreferences.getStringSet("pref_sim_pos_alt", Collections.singleton("210.0"));
+            pos.setAltitude((float)210.0);
+        }
+        return (pos);
+    }
+
+    LocationCoordinate2D getSimPos2D(){
+        LocationCoordinate3D pos3d = getSimPos3D();
+        LocationCoordinate2D pos = new LocationCoordinate2D(pos3d.getLatitude(),pos3d.getLongitude());
+        return (pos);
+    }
 
     int getSystemId() {
         return mSystemId;
@@ -580,16 +592,18 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             @Override
             public void onUpdate(dji.common.remotecontroller.BatteryState batteryState) {
                 mControllerVoltage_pr = (batteryState.getRemainingChargeInPercent());
-                if (mControllerVoltage_pr > 90) lastState = 100;
-                if (mControllerVoltage_pr < 20 && lastState == 100) {
+                if (mControllerVoltage_pr > 90) {
+                    lastState = 100;
+                }
+                else if (mControllerVoltage_pr < 20 && lastState == 100) {
                     lastState = 20;
                     SetMesasageBox("Controller Battery Warning 20% !!!!!");
                 }
-                if (mControllerVoltage_pr < 10 && lastState == 20) {
+                else if (mControllerVoltage_pr < 10 && lastState == 20) {
                     lastState = 10;
                     SetMesasageBox("Controller Battery Warning 10% !!!!!");
                 }
-                if (mControllerVoltage_pr < 5 && lastState == 10) {
+                else if (mControllerVoltage_pr < 5 && lastState == 10) {
                     lastState = 5;
                     SetMesasageBox("Controller Battery Warning 5% !!!!!");
                 }
@@ -615,16 +629,18 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 //                        Log.d(TAG, "Voltage %: " + mCVoltage_pr);
 //                      Log.d(TAG, "mlastState %: " + mlastState);
 
-                    if (mCVoltage_pr > 90) mlastState = 100;
-                    if (mCVoltage_pr <= 20 && mlastState == 100) {
+                    if (mCVoltage_pr > 90) {
+                        mlastState = 100;
+                    }
+                    else if (mCVoltage_pr <= 20 && mlastState == 100) {
                         mlastState = 20;
                         SetMesasageBox("Drone Battery Warning 20% !!!!!");
                     }
-                    if (mCVoltage_pr <= 10 && mlastState == 20) {
+                    else if (mCVoltage_pr <= 10 && mlastState == 20) {
                         mlastState = 10;
                         SetMesasageBox("Drone Battery Warning 10% !!!!!");
                     }
-                    if (mCVoltage_pr <= 5 && mlastState == 10) {
+                    else if (mCVoltage_pr <= 5 && mlastState == 10) {
                         mlastState = 5;
                         SetMesasageBox("Drone Battery Warning 5% !!!!!");
                     }

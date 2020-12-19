@@ -86,6 +86,7 @@ import androidx.preference.PreferenceManager;
 import dji.common.camera.SettingsDefinitions;
 import dji.common.error.DJIError;
 import dji.common.error.DJISDKError;
+import dji.common.model.LocationCoordinate2D;
 import dji.common.product.Model;
 import dji.sdk.base.BaseComponent;
 import dji.sdk.base.BaseProduct;
@@ -462,10 +463,15 @@ public class MainActivity extends AppCompatActivity {
             //aMap.setOnMapClickListener(this);// add the listener for click for amap object
         }
 
-        LatLng coordinate = new LatLng(60.4094, 10.4911);
+        // We initialize the default map location to the same as the default SIM location...
+        LatLng coordinate;
 
         if (checkGpsCoordination(droneLocationLat, droneLocationLng)) {
             coordinate = new LatLng(droneLocationLat, droneLocationLng);
+        }
+        else{
+            LocationCoordinate2D pos = mModel.getSimPos2D();
+            coordinate = new LatLng(pos.getLatitude(), pos.getLongitude());
         }
 //        aMap.addMarker(new MarkerOptions().position(coordinate).title("Marker in Shenzhen"));
         aMap.addMarker(new MarkerOptions().position(coordinate));

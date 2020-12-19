@@ -132,16 +132,16 @@ public class MAVLinkReceiver {
 //                    return;
 //                }
 
-                switch (msg_cmd.command) {
+                switch (msg_cmd.command)
+                {
                     case MAV_CMD_COMPONENT_ARM_DISARM:
                         if (msg_cmd.param1 == 1)
                             mModel.armMotors();
                         else
                             mModel.disarmMotors();
-
                         break;
                     case MAV_CMD_DO_SET_MODE:
-                        changeFlightMode((int) msg_cmd.param1);
+                        changeFlightMode((int) msg_cmd.param2);
                         break;
                     case MAV_CMD_NAV_LOITER_UNLIM:
                         //                     mModel.set_flight_mode(ATTI);
@@ -185,7 +185,6 @@ public class MAVLinkReceiver {
                     case MAV_CMD_MISSION_START:
                         mModel.startWaypointMission();
                         break;
-
                     case MAV_CMD_CONDITION_YAW:
                         Log.d(TAG, "Yaw = " + msg_cmd.param1);
 
@@ -206,11 +205,9 @@ public class MAVLinkReceiver {
                             mModel.send_command_ack(MAV_CMD_CONDITION_YAW, MAV_RESULT.MAV_RESULT_UNSUPPORTED);
                         }
                         break;
-
                     case MAV_CMD_DO_SET_SERVO:
                         mModel.do_set_Gimbal(msg_cmd.param1, msg_cmd.param2);
                         break;
-
                     // JUMP is just a test function to enter the Timeline...
                     case MAV_CMD_DO_JUMP:
                         Log.d(TAG, "Start Timeline...");
@@ -510,10 +507,9 @@ public class MAVLinkReceiver {
                     Log.d(TAG, "Takeoff...");
 
                     // Hmm needs more consideration... DJI does this differently...
-                    // A Takeoff becomes a start mission... This becomes a redundant set altitude...
+                    // A Takeoff to altitude, becomes a start mission... This becomes a redundant set altitude...
                     currentWP = new Waypoint(mModel.get_current_lat(),mModel.get_current_lon(), m.z); // TODO check altitude conversion
                     dji_wps.add(currentWP);
-
                     break;
 
                 case MAV_CMD.MAV_CMD_NAV_WAYPOINT:
