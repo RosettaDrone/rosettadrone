@@ -556,7 +556,7 @@ public class MainActivity extends AppCompatActivity {
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         prefs = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
 
-        mModel = new DroneModel(this, null, RDApplication.getSim());
+        mModel = new DroneModel(this, null, RDApplication.getSim(), prefs);
         mModel.setSystemId(Integer.parseInt(Objects.requireNonNull(prefs.getString("pref_drone_id", "1"))));
 
         mMavlinkReceiver = new MAVLinkReceiver(this, mModel);

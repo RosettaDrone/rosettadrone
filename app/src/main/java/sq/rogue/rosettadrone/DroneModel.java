@@ -206,9 +206,10 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     public int mAirBorn = 0;
     int mission_loaded = -1;
 
-    DroneModel(MainActivity parent, DatagramSocket socket, boolean sim) {
+    DroneModel(MainActivity parent, DatagramSocket socket, boolean sim, SharedPreferences prefs) {
         this.parent = parent;
         this.socket = socket;
+        this.sharedPreferences = prefs;
         initFlightController(sim);
     }
 
@@ -278,10 +279,9 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             parent.logMessageDJI("Target found...");
 
             if (sim) {
-                sharedPreferences = android.preference.PreferenceManager.getDefaultSharedPreferences(parent.getApplicationContext());
-                double lat = Double.parseDouble(Objects.requireNonNull(sharedPreferences.getString("pref_sim_pos_lat", "-1")));
-                double lon = Double.parseDouble(Objects.requireNonNull(sharedPreferences.getString("pref_sim_pos_lon", "-1")));
-                double alt = Double.parseDouble(Objects.requireNonNull(sharedPreferences.getString("pref_sim_pos_alt", "-1")));
+                double lat = Double.parseDouble(Objects.requireNonNull(sharedPreferences.getString("pref_sim_pos_lat", "60.4094")));
+                double lon = Double.parseDouble(Objects.requireNonNull(sharedPreferences.getString("pref_sim_pos_lon", "10.4911")));
+                double alt = Double.parseDouble(Objects.requireNonNull(sharedPreferences.getString("pref_sim_pos_alt", "210.0")));
 
                 // If this is the first time the app is running...
                 if(lat == -1){
@@ -292,8 +292,8 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                     sharedPreferences.getStringSet("pref_sim_pos_lon", Collections.singleton("10.4911"));
                     lon = 10.4911;
                 }
-                if(alt == -1){  // Not Used...
-                    sharedPreferences.getStringSet("pref_sim_pos_alt", Collections.singleton("210.0"));
+                if(alt == -1){
+                    sharedPreferences.getStringSet("pref_sim_pos_alt", Collections.singleton("210"));
                     alt = 210.0;
                 }
 
@@ -1718,14 +1718,16 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
  */
         if (getWaypointMissionOperator().getCurrentState() == WaypointMissionState.READY_TO_EXECUTE) {
-            // But how about takeoff....
             startWaypointMission();
             send_command_ack(MAV_CMD_NAV_TAKEOFF, MAV_RESULT.MAV_RESULT_ACCEPTED);
         } else {
             FlightControllerState coord = djiAircraft.getFlightController().getState();
+
+            Log.d(TAG, "Init Timeline...");
             TimeLine.TimeLinetakeOff(coord.getAircraftLocation().getLatitude(), coord.getAircraftLocation().getLongitude(), alt, 0);
+            Log.d(TAG, "Start Timeline...");
             TimeLine.startTimeline();
-            Log.d(TAG, "Takeoff started...");
+            Log.d(TAG, "Timeline started...");
         }
     }
 
