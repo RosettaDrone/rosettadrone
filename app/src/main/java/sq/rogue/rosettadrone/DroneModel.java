@@ -1718,16 +1718,14 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
  */
         if (getWaypointMissionOperator().getCurrentState() == WaypointMissionState.READY_TO_EXECUTE) {
+            // But how about takeoff....
             startWaypointMission();
             send_command_ack(MAV_CMD_NAV_TAKEOFF, MAV_RESULT.MAV_RESULT_ACCEPTED);
         } else {
             FlightControllerState coord = djiAircraft.getFlightController().getState();
-
-            Log.d(TAG, "Init Timeline...");
             TimeLine.TimeLinetakeOff(coord.getAircraftLocation().getLatitude(), coord.getAircraftLocation().getLongitude(), alt, 0);
-            Log.d(TAG, "Start Timeline...");
             TimeLine.startTimeline();
-            Log.d(TAG, "Timeline started...");
+            Log.d(TAG, "Takeoff started...");
         }
     }
 

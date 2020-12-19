@@ -22,6 +22,7 @@ import com.MAVLink.enums.MAV_RESULT;
 
 import java.util.ArrayList;
 
+import dji.common.flightcontroller.FlightControllerState;
 import dji.common.mission.waypoint.Waypoint;
 import dji.common.mission.waypoint.WaypointAction;
 import dji.common.mission.waypoint.WaypointActionType;
@@ -97,7 +98,6 @@ public class MAVLinkReceiver {
     private WaypointMission.Builder mBuilder;
     private ArrayList<msg_mission_item_int> mMissionItemList;
     private boolean isHome = true;
-    private float homeValue = 0;
 
     public MAVLinkReceiver(MainActivity parent, DroneModel model) {
 
@@ -509,16 +509,18 @@ public class MAVLinkReceiver {
                 case MAV_CMD.MAV_CMD_NAV_TAKEOFF:
                     Log.d(TAG, "Takeoff...");
 
-                    // Remember to check distance to takeoff location when starting mission...
-                    currentWP = new Waypoint( m.x/10000000.0, m.y/10000000.0, m.z);
-
-                    // Hmm do we need this...
-                    homeValue = m.z;
+                    // Hmm needs more consideration... DJI does this differently...
+                    // A Takeoff becomes a start mission... This becomes a redundant set altitude...
+                    currentWP = new Waypoint(mModel.get_current_lat(),mModel.get_current_lon(), m.z); // TODO check altitude conversion
                     dji_wps.add(currentWP);
+
                     break;
 
                 case MAV_CMD.MAV_CMD_NAV_WAYPOINT:
                     Log.d(TAG, "Waypoint: " + m.x/10000000.0 + ", " + m.y/10000000.0 + " at " + m.z + " m " + m.param2 + " Yaw " + m.param1 + " Delay ");
+
+                    // We do not use the first element in the Mission Plane if it is a "Mission Start" element, it is implied.
+                    if(Float.isNaN(m.z)) continue;
 
                     if ((m.z) > 500) {  // TODO:  Shuld reqest max altitude not assume 500...
                         parent.runOnUiThread(() -> NotificationHandler.notifyAlert(parent, TYPE_WAYPOINT_MAX_ALTITUDE, null, null));
