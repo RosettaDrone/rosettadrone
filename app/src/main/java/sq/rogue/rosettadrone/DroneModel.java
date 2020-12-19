@@ -278,9 +278,10 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             parent.logMessageDJI("Target found...");
 
             if (sim) {
-                double lat = Double.parseDouble(Objects.requireNonNull(sharedPreferences.getString("pref_sim_pos_lat", "60.4094")));
-                double lon = Double.parseDouble(Objects.requireNonNull(sharedPreferences.getString("pref_sim_pos_lon", "10.4911")));
-                int alt = Integer.parseInt(Objects.requireNonNull(sharedPreferences.getString("pref_sim_pos_alt", "210")));
+                sharedPreferences = android.preference.PreferenceManager.getDefaultSharedPreferences(parent.getApplicationContext());
+                double lat = Double.parseDouble(Objects.requireNonNull(sharedPreferences.getString("pref_sim_pos_lat", "-1")));
+                double lon = Double.parseDouble(Objects.requireNonNull(sharedPreferences.getString("pref_sim_pos_lon", "-1")));
+                double alt = Double.parseDouble(Objects.requireNonNull(sharedPreferences.getString("pref_sim_pos_alt", "-1")));
 
                 // If this is the first time the app is running...
                 if(lat == -1){
@@ -291,13 +292,13 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                     sharedPreferences.getStringSet("pref_sim_pos_lon", Collections.singleton("10.4911"));
                     lon = 10.4911;
                 }
-                if(alt == -1){
-                    sharedPreferences.getStringSet("pref_sim_pos_alt", Collections.singleton("210"));
-                    alt = 210;
+                if(alt == -1){  // Not Used...
+                    sharedPreferences.getStringSet("pref_sim_pos_alt", Collections.singleton("210.0"));
+                    alt = 210.0;
                 }
 
                 mFlightController.getSimulator()
-                        .start(InitializationData.createInstance(new LocationCoordinate2D(lat, lon), alt, 10),
+                        .start(InitializationData.createInstance(new LocationCoordinate2D(lat, lon), 10, 10),
                                 djiError -> {
                                     if (djiError != null) {
                                         parent.logMessageDJI(djiError.getDescription());
