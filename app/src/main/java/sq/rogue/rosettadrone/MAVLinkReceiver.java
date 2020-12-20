@@ -506,17 +506,27 @@ public class MAVLinkReceiver {
                 case MAV_CMD.MAV_CMD_NAV_TAKEOFF:
                     Log.d(TAG, "Takeoff...");
 
-                    // Hmm needs more consideration... DJI does this differently...
-                    // A Takeoff to altitude, becomes a start mission... This becomes a redundant set altitude...
-                    currentWP = new Waypoint(mModel.get_current_lat(),mModel.get_current_lon(), m.z); // TODO check altitude conversion
+                    // if we got an item (Start item) already we got a position, now we just add altitude.
+                    if(currentWP != null){
+                        currentWP.altitude = m.z;
+                    }else{
+                        if(m.x == 0 || m.y == 0) {
+                            currentWP = new Waypoint(mModel.get_current_lat(), mModel.get_current_lon(), m.z);
+                        }else {
+                            currentWP = new Waypoint(m.x,m.z, m.z);
+                        }
+                    }
                     dji_wps.add(currentWP);
                     break;
 
                 case MAV_CMD.MAV_CMD_NAV_WAYPOINT:
                     Log.d(TAG, "Waypoint: " + m.x/10000000.0 + ", " + m.y/10000000.0 + " at " + m.z + " m " + m.param2 + " Yaw " + m.param1 + " Delay ");
 
-                    // We do not use the first element in the Mission Plane if it is a "Mission Start" element, it is implied.
-                    if(Float.isNaN(m.z)) continue;
+                    // If this is a start item let's store the position ...
+                    if(m.frame != 3 || Float.isNaN(m.z) ) {
+                        currentWP = new Waypoint(mModel.get_current_lat(), mModel.get_current_lon(), 0);
+                        break;
+                    }
 
                     if ((m.z) > 500) {  // TODO:  Shuld reqest max altitude not assume 500...
                         parent.runOnUiThread(() -> NotificationHandler.notifyAlert(parent, TYPE_WAYPOINT_MAX_ALTITUDE, null, null));
@@ -707,7 +717,7 @@ public class MAVLinkReceiver {
         // If this is a singlepoint goto... we must add at least one more waypoint (minimum 2 on DJI)
         // For now return error...
         if (wpIn.size() == 1) {
-            Log.d(TAG, "Single point WP erro ");
+            Log.d(TAG, "Single point WP error ");
             return null;
         }
 
