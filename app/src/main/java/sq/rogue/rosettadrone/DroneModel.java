@@ -1436,8 +1436,8 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
         // If a mission loaded...
         if(x!=null) {
-            // For all DJI mission ithems...
-            for (Waypoint wp : Objects.requireNonNull(getWaypointMissionOperator().getLoadedMission()).getWaypointList()) {
+            // For all DJI mission items...
+            for (Waypoint wp : Objects.requireNonNull(x).getWaypointList()) {
 
                 msg_mission_item_int msg = new msg_mission_item_int();
                 msg.command = MAV_CMD.MAV_CMD_NAV_WAYPOINT;
@@ -1454,18 +1454,16 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                     msg.command = MAV_CMD.MAV_CMD_NAV_TAKEOFF;
                     msglist.add(msg);
                 }
-                // DJI pack the waypoints more than MAVlink, this is a problem, as we are to return only ONE element...
+                // DJI pack the waypoints different than MAVlink, this is a problem...
                 else {
+                    Log.d(TAG, "Mission Action : WAYPOINT");
+                    msglist.add(msg);
+
                     for (WaypointAction action : wp.waypointActions) {
                         switch (action.actionType) {
                             case STAY:
                                 Log.d(TAG, "Mission Action : STAY");
                                 msg.command = MAV_CMD.MAV_CMD_NAV_DELAY;
-                                msglist.add(msg);
-                                break;
-                            case GIMBAL_PITCH:
-                                Log.d(TAG, "Mission Action : GIMBAL_PITCH");
-                                msg.command = MAV_CMD.MAV_CMD_DO_DIGICAM_CONTROL;
                                 msglist.add(msg);
                                 break;
                             case START_TAKE_PHOTO:
@@ -1488,6 +1486,11 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                                 Log.d(TAG, "Mission Action : ROTATE_AIRCRAFT");
                                 msglist.add(msg);
                                 break;
+                            case GIMBAL_PITCH:
+                                Log.d(TAG, "Mission Action : GIMBAL_PITCH");
+                                msg.command = MAV_CMD.MAV_CMD_DO_DIGICAM_CONTROL;
+                                msglist.add(msg);
+                                break;
                             case CAMERA_ZOOM:
                                 msg.command = MAV_CMD.MAV_CMD_SET_CAMERA_ZOOM;
                                 Log.d(TAG, "Mission Action : CAMERA_ZOOM");
@@ -1503,7 +1506,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                                 msglist.add(msg);
                                 break;
                             case FINE_TUNE_GIMBAL_PITCH:
-                                msg.command = MAV_CMD.MAV_CMD_VIDEO_START_CAPTURE;
+                                msg.command = MAV_CMD.MAV_CMD_DO_DIGICAM_CONTROL;
                                 msglist.add(msg);
                                 break;
                             case RESET_GIMBAL_YAW:

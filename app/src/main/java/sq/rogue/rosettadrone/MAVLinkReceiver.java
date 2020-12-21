@@ -40,6 +40,7 @@ import static com.MAVLink.common.msg_manual_control.MAVLINK_MSG_ID_MANUAL_CONTRO
 import static com.MAVLink.common.msg_mission_ack.MAVLINK_MSG_ID_MISSION_ACK;
 import static com.MAVLink.common.msg_mission_clear_all.MAVLINK_MSG_ID_MISSION_CLEAR_ALL;
 import static com.MAVLink.common.msg_mission_count.MAVLINK_MSG_ID_MISSION_COUNT;
+import static com.MAVLink.common.msg_mission_item.MAVLINK_MSG_ID_MISSION_ITEM;
 import static com.MAVLink.common.msg_mission_item_int.MAVLINK_MSG_ID_MISSION_ITEM_INT;
 import static com.MAVLink.common.msg_mission_request.MAVLINK_MSG_ID_MISSION_REQUEST;
 import static com.MAVLink.common.msg_mission_request_list.MAVLINK_MSG_ID_MISSION_REQUEST_LIST;
@@ -393,7 +394,7 @@ public class MAVLinkReceiver {
                 // Somehow the GOTO from QGroundControl does not issue a mission count...
                 if (mMissionItemList == null && msg_item.command == MAV_CMD_NAV_WAYPOINT) {
                     Log.d(TAG, "Goto... ");
-                    mModel.goto_position(msg_item.x, msg_item.y, msg_item.z, 0);
+                    mModel.goto_position(msg_item.x/10000000.0, msg_item.y/10000000.0, msg_item.z, 0);
                     mModel.send_command_ack(MAVLINK_MSG_ID_MISSION_ACK, MAV_RESULT.MAV_RESULT_ACCEPTED);
                 }
                 else {
@@ -416,6 +417,60 @@ public class MAVLinkReceiver {
                 }
             }
             break;
+
+            case MAVLINK_MSG_ID_MISSION_ITEM:  // 39
+            {
+                // Is this message to this system...
+                msg_mission_item msg_item = (msg_mission_item) msg;
+                if (mModel.getSystemId() != msg_item.target_system) {
+                    break;
+                }
+                Log.d(TAG, "Add mission: " + msg_item.seq);
+
+                // Somehow the GOTO from QGroundControl does not issue a mission count...
+                if (mMissionItemList == null && msg_item.command == MAV_CMD_NAV_WAYPOINT) {
+                    Log.d(TAG, "Goto old... ");
+                    mModel.goto_position(msg_item.x, msg_item.y, msg_item.z, 0);
+                    mModel.send_command_ack(MAVLINK_MSG_ID_MISSION_ACK, MAV_RESULT.MAV_RESULT_ACCEPTED);
+
+                } else {
+                    if (mMissionItemList == null) {
+                        Log.d(TAG, "Error Sequence error!");
+                        mModel.send_command_ack(MAVLINK_MSG_ID_MISSION_ACK, MAV_RESULT.MAV_RESULT_DENIED);
+                    }
+                    else {
+                        msg_mission_item_int msg_item_f = new msg_mission_item_int();
+
+                        msg_item_f.param1=msg_item.param1;
+                        msg_item_f.param2=msg_item.param2;
+                        msg_item_f.param3=msg_item.param3;
+                        msg_item_f.param4=msg_item.param4;
+                        msg_item_f.x=(int)(msg_item.x*10000000.0);
+                        msg_item_f.y=(int)(msg_item.y*10000000.0);
+                        msg_item_f.z=msg_item.z;
+                        msg_item_f.seq=msg_item.seq;
+                        msg_item_f.command=msg_item.command;
+                        msg_item_f.target_system=msg_item.target_system;
+                        msg_item_f.target_component=msg_item.target_component;
+                        msg_item_f.frame=msg_item.frame;
+                        msg_item_f.current=msg_item.current;
+                        msg_item_f.autocontinue=msg_item.autocontinue;
+                        msg_item_f.mission_type=msg_item.mission_type;
+
+                        mMissionItemList.add(msg_item_f);
+                        // We are done fetching a complete mission from the GCS...
+                        if (msg_item.seq == mNumGCSWaypoints - 1) {
+                            wpState = WP_STATE_INACTIVE;
+                            finalizeNewMission();
+                        } else {
+                            Log.d(TAG, "Mission REQ: " +msg_item.seq + 1);
+                            mModel.request_mission_item((msg_item.seq + 1));
+                        }
+                    }
+                }
+            }
+            break;
+
 
             /**************************************************************
              * These messages from GCS direct a mission-related action    *
@@ -479,7 +534,6 @@ public class MAVLinkReceiver {
         } else {
             mBuilder.flightPathMode(WaypointMissionFlightPathMode.NORMAL);
         }
-        mMissionItemList = new ArrayList<>();
     }
 
     protected void finalizeNewMission() {
@@ -610,7 +664,35 @@ public class MAVLinkReceiver {
                     Log.d(TAG, "MAV_CMD_NAV_RETURN_TO_LAUNCH");
                     mBuilder.finishedAction(WaypointMissionFinishedAction.GO_HOME);
                     break;
-            }
+
+                case MAV_CMD.MAV_CMD_NAV_DELAY:
+                    Log.d(TAG, "MAV_CMD_NAV_DELAY");
+                    break;
+
+                case MAV_CMD.MAV_CMD_VIDEO_START_CAPTURE:
+                    Log.d(TAG, "MAV_CMD_VIDEO_START_CAPTURE");
+                    break;
+
+                case MAV_CMD.MAV_CMD_VIDEO_STOP_CAPTURE:
+                    Log.d(TAG, "MAV_CMD_VIDEO_STOP_CAPTURE");
+                    break;
+
+                case MAV_CMD.MAV_CMD_CONDITION_YAW:
+                    Log.d(TAG, "MAV_CMD_CONDITION_YAW");
+                    break;
+
+                case MAV_CMD.MAV_CMD_DO_DIGICAM_CONTROL:
+                    Log.d(TAG, "MAV_CMD_DO_DIGICAM_CONTROL");
+                    break;
+
+                case MAV_CMD.MAV_CMD_SET_CAMERA_ZOOM:
+                    Log.d(TAG, "MAV_CMD_SET_CAMERA_ZOOM");
+                    break;
+
+                case MAV_CMD.MAV_CMD_SET_CAMERA_FOCUS:
+                    Log.d(TAG, "MAV_CMD_SET_CAMERA_FOCUS");
+                    break;
+                }
         }
 
         if (stopUpload) {
@@ -645,6 +727,8 @@ public class MAVLinkReceiver {
             mModel.setWaypointMission(builtMission);
             safeSleep(200);
         }
+
+        mMissionItemList=null;  // Flush the mission list...
         isHome = true;
     }
 
