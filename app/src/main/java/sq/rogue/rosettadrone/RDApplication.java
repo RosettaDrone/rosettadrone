@@ -10,7 +10,6 @@ import dji.sdk.sdkmanager.DJISDKManager;
 
 public class RDApplication extends Application {
 
-    public static final String FLAG_CONNECTION_CHANGE = "dji_sdk_connection_change";
     private static BaseProduct mProduct;
     private static DJISimulatorApplication simulatorApplication;
     private static boolean m_sim = false;
@@ -19,27 +18,31 @@ public class RDApplication extends Application {
     public static boolean getSim() {
         return m_sim;
     }
-
     public static void setSim(boolean sim) {
         m_sim = sim;
     }
 
     public static synchronized BaseProduct getProductInstance() {
         if (null == mProduct) {
-            if (getSim() == false) {
+            if( getSim() == false) {
                 mProduct = DJISDKManager.getInstance().getProduct();
-            } else {
-                mProduct = simulatorApplication.getProductInstance();
+            }else {
+                mProduct = DJISimulatorApplication.getProductInstance();
             }
         }
         return mProduct;
+    }
+
+    public static void startLoginApplication()
+    {
+        simulatorApplication.onCreate();
     }
 
     @Override
     public void onCreate() {
         super.onCreate();
         m_sim = false;
-        simulatorApplication.onCreate();
+  //      simulatorApplication.onCreate();
     }
 
     public static synchronized void updateProduct(BaseProduct product) {
@@ -56,7 +59,6 @@ public class RDApplication extends Application {
             simulatorApplication.setContext(this);
         }
     }
-
 }
 
 

@@ -8,6 +8,7 @@ import com.MAVLink.common.msg_manual_control;
 import com.MAVLink.common.msg_mission_ack;
 import com.MAVLink.common.msg_mission_count;
 import com.MAVLink.common.msg_mission_item;
+import com.MAVLink.common.msg_mission_item_int;
 import com.MAVLink.common.msg_mission_request;
 import com.MAVLink.common.msg_mission_request_int;
 import com.MAVLink.common.msg_param_request_read;
@@ -16,10 +17,12 @@ import com.MAVLink.common.msg_set_mode;
 import com.MAVLink.common.msg_set_position_target_global_int;
 import com.MAVLink.common.msg_set_position_target_local_ned;
 import com.MAVLink.enums.MAV_CMD;
+import com.MAVLink.enums.MAV_MISSION_TYPE;
 import com.MAVLink.enums.MAV_RESULT;
 
 import java.util.ArrayList;
 
+import dji.common.flightcontroller.FlightControllerState;
 import dji.common.mission.waypoint.Waypoint;
 import dji.common.mission.waypoint.WaypointAction;
 import dji.common.mission.waypoint.WaypointActionType;
@@ -38,6 +41,7 @@ import static com.MAVLink.common.msg_mission_ack.MAVLINK_MSG_ID_MISSION_ACK;
 import static com.MAVLink.common.msg_mission_clear_all.MAVLINK_MSG_ID_MISSION_CLEAR_ALL;
 import static com.MAVLink.common.msg_mission_count.MAVLINK_MSG_ID_MISSION_COUNT;
 import static com.MAVLink.common.msg_mission_item.MAVLINK_MSG_ID_MISSION_ITEM;
+import static com.MAVLink.common.msg_mission_item_int.MAVLINK_MSG_ID_MISSION_ITEM_INT;
 import static com.MAVLink.common.msg_mission_request.MAVLINK_MSG_ID_MISSION_REQUEST;
 import static com.MAVLink.common.msg_mission_request_list.MAVLINK_MSG_ID_MISSION_REQUEST_LIST;
 import static com.MAVLink.common.msg_mission_request_partial_list.MAVLINK_MSG_ID_MISSION_REQUEST_PARTIAL_LIST;
@@ -93,9 +97,8 @@ public class MAVLinkReceiver {
     private int wpState = 0;
     private MainActivity parent;
     private WaypointMission.Builder mBuilder;
-    private ArrayList<msg_mission_item> mMissionItemList;
+    private ArrayList<msg_mission_item_int> mMissionItemList;
     private boolean isHome = true;
-    private float homeValue = 0;
 
     public MAVLinkReceiver(MainActivity parent, DroneModel model) {
 
@@ -112,7 +115,6 @@ public class MAVLinkReceiver {
             //          Log.d(TAG, String.valueOf(msg));
             //       Log.d(TAG, String.valueOf(msg.msgid));
         }
-
 
         switch (msg.msgid) {
             case MAVLINK_MSG_ID_HEARTBEAT:
@@ -131,16 +133,16 @@ public class MAVLinkReceiver {
 //                    return;
 //                }
 
-                switch (msg_cmd.command) {
+                switch (msg_cmd.command)
+                {
                     case MAV_CMD_COMPONENT_ARM_DISARM:
                         if (msg_cmd.param1 == 1)
                             mModel.armMotors();
                         else
                             mModel.disarmMotors();
-
                         break;
                     case MAV_CMD_DO_SET_MODE:
-                        changeFlightMode((int) msg_cmd.param1);
+                        changeFlightMode((int) msg_cmd.param2);
                         break;
                     case MAV_CMD_NAV_LOITER_UNLIM:
                         //                     mModel.set_flight_mode(ATTI);
@@ -184,7 +186,6 @@ public class MAVLinkReceiver {
                     case MAV_CMD_MISSION_START:
                         mModel.startWaypointMission();
                         break;
-
                     case MAV_CMD_CONDITION_YAW:
                         Log.d(TAG, "Yaw = " + msg_cmd.param1);
 
@@ -205,11 +206,9 @@ public class MAVLinkReceiver {
                             mModel.send_command_ack(MAV_CMD_CONDITION_YAW, MAV_RESULT.MAV_RESULT_UNSUPPORTED);
                         }
                         break;
-
                     case MAV_CMD_DO_SET_SERVO:
                         mModel.do_set_Gimbal(msg_cmd.param1, msg_cmd.param2);
                         break;
-
                     // JUMP is just a test function to enter the Timeline...
                     case MAV_CMD_DO_JUMP:
                         Log.d(TAG, "Start Timeline...");
@@ -281,7 +280,14 @@ public class MAVLinkReceiver {
             // This command must be sent at 1Hz minimum...
             case MAVLINK_MSG_ID_MANUAL_CONTROL:
                 msg_manual_control msg_param_5 = (msg_manual_control) msg;
-                mModel.do_set_motion_velocity(msg_param_5.x / (float) 100.0, msg_param_5.y / (float) 100.0, msg_param_5.z / (float) 260.0, msg_param_5.r / (float) 50.0, 0b1111011111000111);
+
+                mModel.do_set_motion_velocity(
+                        msg_param_5.x / (float) 100.0,
+                        msg_param_5.y / (float) 100.0,
+                        msg_param_5.z / (float) 260.0,
+                        msg_param_5.r / (float) 50.0,
+                        0b0000011111000111);
+
                 mModel.send_command_ack(MAVLINK_MSG_ID_MANUAL_CONTROL, MAV_RESULT.MAV_RESULT_ACCEPTED);
                 break;
 
@@ -322,6 +328,7 @@ public class MAVLinkReceiver {
 
             case MAVLINK_MSG_ID_MISSION_REQUEST_LIST:
                 mModel.send_mission_count();
+
                 break;
 
             case MAVLINK_MSG_ID_MISSION_REQUEST_PARTIAL_LIST:
@@ -329,7 +336,8 @@ public class MAVLinkReceiver {
                 break;
 
             case MAVLINK_MSG_ID_MISSION_REQUEST:
-                msg_mission_request msg_request = new msg_mission_request();
+                msg_mission_request msg_request = (msg_mission_request) msg;;
+                Log.d(TAG, "Request: "+String.valueOf(msg_request));
                 mModel.send_mission_item(msg_request.seq);
                 break;
 
@@ -348,32 +356,71 @@ public class MAVLinkReceiver {
 
             // Start load new mission...
             case MAVLINK_MSG_ID_MISSION_COUNT:
+
                 // Is this message to this system...
                 msg_mission_count msg_count = (msg_mission_count) msg;
                 if (mModel.getSystemId() != msg_count.target_system) {
                     return;
                 }
 
-                WaypointMission y = mModel.getWaypointMissionOperator().getLoadedMission();
-                if (y != null) {
-                    y.getWaypointList().clear();
+                // Flush old mission...
+                if (mModel.getWaypointMissionOperator().getLoadedMission() != null) {
+                    mModel.getWaypointMissionOperator().getLoadedMission().getWaypointList().clear();
                 }
+
+                // Generate new empty mission...
                 generateNewMission();
 
                 // Get the expected counter...
-                Log.d(TAG, "Mission Counter: " + msg_count.count);
+                Log.d(TAG, "Expect: Mission Counter: " + msg_count.count);
                 mNumGCSWaypoints = msg_count.count;
                 wpState = WP_STATE_REQ_WP;
-                mMissionItemList = new ArrayList<msg_mission_item>();
-                mModel.request_mission_item(0);
+                mMissionItemList = new ArrayList<msg_mission_item_int>();
 
-                // Send response...
-                msg_mission_request_int msg_out = new msg_mission_request_int();
-                msg_out.mission_type = ((msg_mission_count) msg).mission_type;
-                mModel.sendMessage(msg_out);
+                // Request first mission ithem...
+                Log.d(TAG, "Mission REQ: 0...");
+                mModel.request_mission_item(0);
                 break;
 
-            case MAVLINK_MSG_ID_MISSION_ITEM:  // 0x73
+            case MAVLINK_MSG_ID_MISSION_ITEM_INT:  // 0x73
+            {
+                // Is this message to this system...
+                msg_mission_item_int msg_item = (msg_mission_item_int) msg;
+                Log.d(TAG, "Add mission: " + msg_item.seq);
+
+                if (mModel.getSystemId() != msg_item.target_system) {
+                    break;
+                }
+                Log.d(TAG, "To this system... ");
+
+                // Somehow the GOTO from QGroundControl does not issue a mission count...
+                if (mMissionItemList == null && msg_item.command == MAV_CMD_NAV_WAYPOINT) {
+                    Log.d(TAG, "Goto... ");
+                    mModel.goto_position(msg_item.x/10000000.0, msg_item.y/10000000.0, msg_item.z, 0);
+                    mModel.send_command_ack(MAVLINK_MSG_ID_MISSION_ACK, MAV_RESULT.MAV_RESULT_ACCEPTED);
+                }
+                else {
+                    if (mMissionItemList == null) {
+                        Log.d(TAG, "Error Sequence error!");
+                        mModel.send_command_ack(MAVLINK_MSG_ID_MISSION_ACK, MAV_RESULT.MAV_RESULT_DENIED);
+                    }
+                    else {
+                        mMissionItemList.add(msg_item);
+
+                        // We are done fetching a complete mission from the GCS...
+                        if (msg_item.seq == mNumGCSWaypoints - 1) {
+                            wpState = WP_STATE_INACTIVE;
+                            finalizeNewMission();
+                        } else {
+                            Log.d(TAG, "Mission REQ: " +msg_item.seq + 1);
+                            mModel.request_mission_item((msg_item.seq + 1));
+                        }
+                    }
+                }
+            }
+            break;
+
+            case MAVLINK_MSG_ID_MISSION_ITEM:  // 39
             {
                 // Is this message to this system...
                 msg_mission_item msg_item = (msg_mission_item) msg;
@@ -384,45 +431,48 @@ public class MAVLinkReceiver {
 
                 // Somehow the GOTO from QGroundControl does not issue a mission count...
                 if (mMissionItemList == null && msg_item.command == MAV_CMD_NAV_WAYPOINT) {
-                    Log.d(TAG, "Lat = " + msg_item.x);
-                    Log.d(TAG, "Lon = " + msg_item.y);
-                    Log.d(TAG, "ALT = " + msg_item.z);
+                    Log.d(TAG, "Goto old... ");
                     mModel.goto_position(msg_item.x, msg_item.y, msg_item.z, 0);
-                    /*
-                    mModel.do_set_motion_absolute(
-                            (double) msg_item.x, // * 10000000,
-                            (double) msg_item.y, // * 10000000,
-                            msg_item.z,
-                            msg_item.param4,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0b0000111111111000);
+                    mModel.send_command_ack(MAVLINK_MSG_ID_MISSION_ACK, MAV_RESULT.MAV_RESULT_ACCEPTED);
 
-                     */
                 } else {
                     if (mMissionItemList == null) {
-                        Log.d(TAG, "Special single point mission!");
-                        generateNewMission();
-                        mMissionItemList = new ArrayList<msg_mission_item>();
-                        mNumGCSWaypoints = 1;
-                        wpState = WP_STATE_REQ_WP;
-                        mModel.request_mission_item(0);
+                        Log.d(TAG, "Error Sequence error!");
+                        mModel.send_command_ack(MAVLINK_MSG_ID_MISSION_ACK, MAV_RESULT.MAV_RESULT_DENIED);
                     }
+                    else {
+                        msg_mission_item_int msg_item_f = new msg_mission_item_int();
 
-                    mMissionItemList.add(msg_item);
+                        msg_item_f.param1=msg_item.param1;
+                        msg_item_f.param2=msg_item.param2;
+                        msg_item_f.param3=msg_item.param3;
+                        msg_item_f.param4=msg_item.param4;
+                        msg_item_f.x=(int)(msg_item.x*10000000.0);
+                        msg_item_f.y=(int)(msg_item.y*10000000.0);
+                        msg_item_f.z=msg_item.z;
+                        msg_item_f.seq=msg_item.seq;
+                        msg_item_f.command=msg_item.command;
+                        msg_item_f.target_system=msg_item.target_system;
+                        msg_item_f.target_component=msg_item.target_component;
+                        msg_item_f.frame=msg_item.frame;
+                        msg_item_f.current=msg_item.current;
+                        msg_item_f.autocontinue=msg_item.autocontinue;
+                        msg_item_f.mission_type=msg_item.mission_type;
 
-                    // We are done fetching a complete mission from the GCS...
-                    if (msg_item.seq == mNumGCSWaypoints - 1) {
-                        wpState = WP_STATE_INACTIVE;
-                        finalizeNewMission();
-                    } else {
-                        mModel.request_mission_item((msg_item.seq + 1));
+                        mMissionItemList.add(msg_item_f);
+                        // We are done fetching a complete mission from the GCS...
+                        if (msg_item.seq == mNumGCSWaypoints - 1) {
+                            wpState = WP_STATE_INACTIVE;
+                            finalizeNewMission();
+                        } else {
+                            Log.d(TAG, "Mission REQ: " +msg_item.seq + 1);
+                            mModel.request_mission_item((msg_item.seq + 1));
+                        }
                     }
                 }
             }
             break;
+
 
             /**************************************************************
              * These messages from GCS direct a mission-related action    *
@@ -486,7 +536,6 @@ public class MAVLinkReceiver {
         } else {
             mBuilder.flightPathMode(WaypointMissionFlightPathMode.NORMAL);
         }
-        mMissionItemList = new ArrayList<>();
     }
 
     protected void finalizeNewMission() {
@@ -504,128 +553,104 @@ public class MAVLinkReceiver {
         float triggerDistance = 0;
 
         waypoint_loop:
-        for (msg_mission_item m : this.mMissionItemList) {
-            Log.d(TAG, String.valueOf(m.command));
+
+        for (msg_mission_item_int m : this.mMissionItemList) {
+            Log.d(TAG, "Command: " +String.valueOf(m));
 
             switch (m.command) {
 
                 case MAV_CMD.MAV_CMD_NAV_TAKEOFF:
                     Log.d(TAG, "Takeoff...");
-                    Log.d(TAG, "P1 = " + m.param1);
-                    Log.d(TAG, "P2 = " + m.param2);
-                    Log.d(TAG, "P3 = " + m.param3);
-                    Log.d(TAG, "P4 = " + m.param4);
-                    Log.d(TAG, "x = " + m.x);
-                    Log.d(TAG, "y = " + m.y);
-                    Log.d(TAG, "z = " + m.z);
+
+                    // if we got an item (Start item) already we got a position, now we just add altitude.
+                    if(currentWP != null){
+                        currentWP.altitude = m.z;
+                    }else{
+                        if(m.x == 0 || m.y == 0) {
+                            currentWP = new Waypoint(mModel.get_current_lat(), mModel.get_current_lon(), m.z);
+                        }else {
+                            currentWP = new Waypoint(m.x,m.z, m.z);
+                        }
+                    }
+                    dji_wps.add(currentWP);
                     break;
 
                 case MAV_CMD.MAV_CMD_NAV_WAYPOINT:
-                    // TODO:   Is this to handle the first way point being the current location ????
-                    if (isHome) {
-                        Log.d(TAG, "Is Home...");
-//                        homeValue = m.z;
-                        isHome = false;
-                    } //else
+                    Log.d(TAG, "Waypoint: " + m.x/10000000.0 + ", " + m.y/10000000.0 + " at " + m.z + " m " + m.param2 + " Yaw " + m.param1 + " Delay ");
 
-                {
+                    // If this is a start item let's store the position ...
+                    if(m.frame != 3 || Float.isNaN(m.z) ) {
+                        currentWP = new Waypoint(mModel.get_current_lat(), mModel.get_current_lon(), 0);
+                        break;
+                    }
+
                     if ((m.z) > 500) {  // TODO:  Shuld reqest max altitude not assume 500...
-//                            m.z = 500;
-                        parent.runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                NotificationHandler.notifyAlert(parent, TYPE_WAYPOINT_MAX_ALTITUDE, null, null);
-                            }
-                        });
+                        parent.runOnUiThread(() -> NotificationHandler.notifyAlert(parent, TYPE_WAYPOINT_MAX_ALTITUDE, null, null));
                         stopUpload = true;
+                        mModel.send_command_ack(MAVLINK_MSG_ID_MISSION_ACK, MAV_RESULT.MAV_RESULT_DENIED);
                         break waypoint_loop;
 
                     } else if ((m.z) < -200) {  // TODO:  hmm so we can not take off from a mountain and fly down?? ...
-//                            m.z = -200;
-                        parent.runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                NotificationHandler.notifyAlert(parent, TYPE_WAYPOINT_MIN_ALTITUDE, null, null);
-                            }
-                        });
+                        parent.runOnUiThread(() -> NotificationHandler.notifyAlert(parent, TYPE_WAYPOINT_MIN_ALTITUDE, null, null));
                         stopUpload = true;
+                        mModel.send_command_ack(MAVLINK_MSG_ID_MISSION_ACK, MAV_RESULT.MAV_RESULT_DENIED);
                         break waypoint_loop;
                     }
 
-                    currentWP = new Waypoint(m.x, m.y, m.z); // TODO check altitude conversion
+                    currentWP = new Waypoint(m.x/10000000.0, m.y/10000000.0, m.z); // TODO check altitude conversion
 
+                    // If delay at wp...
                     if (m.param1 > 0)
                         currentWP.addAction(new WaypointAction(WaypointActionType.STAY, (int) m.param1 * 1000)); // milliseconds...
 
+                    // If rotate at wp...
                     if (m.param2 > 0)
                         currentWP.addAction(new WaypointAction(WaypointActionType.ROTATE_AIRCRAFT, (int) (m.param2 * 180.0 / 3.141592))); // +-180 deg...
 
+                    // This is set in the RosettaDrone2 settings...
                     if (curvedFlightPath) {
                         currentWP.cornerRadiusInMeters = flightPathRadius;
                     }
 
                     dji_wps.add(currentWP);
-
-                    Log.d(TAG, "Waypoint: " + m.x + ", " + m.y + " at " + m.z + " m " + m.param2 + " Yaw " + m.param1 + " Delay ");
-//                        Log.d(TAG, "P1 = " + m.param1);
-//                        Log.d(TAG, "P2 = " + m.param2);
-//                        Log.d(TAG, "P3 = " + m.param3);
-//                        Log.d(TAG, "P4 = " + m.param4);
-//                        Log.d(TAG, "x = " + m.x);
-//                        Log.d(TAG, "y = " + m.y);
-//                        Log.d(TAG, "z = " + m.z);
-                }
                 break;
+
                 case MAV_CMD.MAV_CMD_DO_CHANGE_SPEED:
-//                    final DialogInterface.OnClickListener onClickListener = new DialogInterface.OnClickListener() {
-//                        @Override
-//                        public void onClick(DialogInterface dialog, int which) {
-//                        }
-//                    };
-//
-//                    final DialogInterface.OnCancelListener onCancelListener = new DialogInterface.OnCancelListener() {
-//                        @Override
-//                        public void onCancel(DialogInterface dialog) {
-//                        }
-//                    };
+                    Log.d(TAG, "Change Speed: " + m.x/10000000.0 + ", " + m.y/10000000.0 + " at " + m.z + " m " + m.param2 + " Yaw " + m.param1 + " Delay ");
 
                     if (m.param2 < -15) {
-                        parent.runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                NotificationHandler.notifyAlert(parent, TYPE_WAYPOINT_MIN_SPEED,
-                                        null, null);
-                            }
-                        });
+                        parent.runOnUiThread(() -> NotificationHandler.notifyAlert(parent, TYPE_WAYPOINT_MIN_SPEED,
+                                null, null));
                         stopUpload = true;
                         break waypoint_loop;
-                    } else if (m.param2 > 15) {
-                        parent.runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                NotificationHandler.notifyAlert(parent, TYPE_WAYPOINT_MAX_SPEED,
-                                        null, null);
-                            }
-                        });
+                    }
+                    else if (m.param2 > 15) {
+                        parent.runOnUiThread(() -> NotificationHandler.notifyAlert(parent, TYPE_WAYPOINT_MAX_SPEED,
+                                null, null));
                         stopUpload = true;
                         break waypoint_loop;
-                    } else {
+                    }
+                    else {
                         mBuilder.autoFlightSpeed(m.param2);
                     }
                     break;
 
                 case MAV_CMD.MAV_CMD_DO_MOUNT_CONTROL:
-                    currentWP.addAction(new WaypointAction(WaypointActionType.GIMBAL_PITCH, (int) m.param1));
                     Log.d(TAG, "Set gimbal pitch: " + m.param1);
+                    currentWP = new Waypoint(m.x/10000000.0, m.y/10000000.0, m.z); // TODO check altitude conversion
+                    currentWP.addAction(new WaypointAction(WaypointActionType.GIMBAL_PITCH, (int) m.param1));
+                    dji_wps.add(currentWP);
                     break;
 
                 case MAV_CMD.MAV_CMD_IMAGE_START_CAPTURE:
-                    if (currentWP != null)
-                        currentWP.addAction(new WaypointAction(WaypointActionType.START_TAKE_PHOTO, 0));
-                    Log.d(TAG, "Take photo");
+                    Log.d(TAG, "MAV_CMD_IMAGE_START_CAPTURE");
+                    currentWP = new Waypoint(m.x/10000000.0, m.y/10000000.0, m.z); // TODO check altitude conversion
+                    currentWP.addAction(new WaypointAction(WaypointActionType.START_TAKE_PHOTO, 0));
+                    dji_wps.add(currentWP);
                     break;
 
                 case MAV_CMD.MAV_CMD_DO_SET_CAM_TRIGG_DIST:
+                    Log.d(TAG, "MAV_CMD_DO_SET_CAM_TRIGG_DIST");
 
                     if (!triggerDistanceEnabled) {
                         if (m.param1 != 0) {
@@ -638,10 +663,38 @@ public class MAVLinkReceiver {
                     break;
 
                 case MAV_CMD.MAV_CMD_NAV_RETURN_TO_LAUNCH:
+                    Log.d(TAG, "MAV_CMD_NAV_RETURN_TO_LAUNCH");
                     mBuilder.finishedAction(WaypointMissionFinishedAction.GO_HOME);
-                    Log.d(TAG, "Waypoint RTL");
                     break;
-            }
+
+                case MAV_CMD.MAV_CMD_NAV_DELAY:
+                    Log.d(TAG, "MAV_CMD_NAV_DELAY");
+                    break;
+
+                case MAV_CMD.MAV_CMD_VIDEO_START_CAPTURE:
+                    Log.d(TAG, "MAV_CMD_VIDEO_START_CAPTURE");
+                    break;
+
+                case MAV_CMD.MAV_CMD_VIDEO_STOP_CAPTURE:
+                    Log.d(TAG, "MAV_CMD_VIDEO_STOP_CAPTURE");
+                    break;
+
+                case MAV_CMD.MAV_CMD_CONDITION_YAW:
+                    Log.d(TAG, "MAV_CMD_CONDITION_YAW");
+                    break;
+
+                case MAV_CMD.MAV_CMD_DO_DIGICAM_CONTROL:
+                    Log.d(TAG, "MAV_CMD_DO_DIGICAM_CONTROL");
+                    break;
+
+                case MAV_CMD.MAV_CMD_SET_CAMERA_ZOOM:
+                    Log.d(TAG, "MAV_CMD_SET_CAMERA_ZOOM");
+                    break;
+
+                case MAV_CMD.MAV_CMD_SET_CAMERA_FOCUS:
+                    Log.d(TAG, "MAV_CMD_SET_CAMERA_FOCUS");
+                    break;
+                }
         }
 
         if (stopUpload) {
@@ -657,8 +710,15 @@ public class MAVLinkReceiver {
                 correctedWps = addSurveyWaypoints(dji_wps, triggerDistance);
                 mBuilder.flightPathMode(WaypointMissionFlightPathMode.NORMAL);
             } else {
+                // If distances are to large, add inteermediet...
                 correctedWps = addIntermediateWaypoints(dji_wps);
+                if( correctedWps == null){
+                    Log.d(TAG, "Only 1 Waypoint error...");
+                    mModel.send_command_ack(MAVLINK_MSG_ID_MISSION_ACK, MAV_RESULT.MAV_RESULT_FAILED);
+                    return;
+                }
             }
+
             logWaypointstoRD(correctedWps);
             Log.d(TAG, "WP size " + correctedWps.size());
             safeSleep(200);
@@ -669,6 +729,8 @@ public class MAVLinkReceiver {
             mModel.setWaypointMission(builtMission);
             safeSleep(200);
         }
+
+        mMissionItemList=null;  // Flush the mission list...
         isHome = true;
     }
 
@@ -677,7 +739,7 @@ public class MAVLinkReceiver {
         Log.d(TAG, "Waypoints with intermediate wps");
         Log.d(TAG, "==============================");
         for (Waypoint wp : wps)
-            Log.d(TAG, wp.coordinate.getLatitude() + ", " + wp.coordinate.getLongitude() + ", " + wp.altitude);
+            Log.d(TAG, "WP: "+wp.coordinate.getLatitude() + ", " + wp.coordinate.getLongitude() + ", " + wp.altitude);
     }
 
     private ArrayList<Waypoint> addSurveyWaypoints(ArrayList<Waypoint> wpIn, float triggerDistance) {
@@ -705,12 +767,10 @@ public class MAVLinkReceiver {
             float prevDistance = currentDistance;
             int numSurveyWaypoints = 0;
 
-
             while (prevDistance < distanceBetweenPoints) {
                 prevDistance += triggerDistance;
                 numSurveyWaypoints++;
             }
-
 
             for (int i = 1; currentDistance < distanceBetweenPoints; i++) {
                 Log.d(TAG, String.valueOf("WAYPOINT ADDED AT " + currentDistance));
@@ -722,6 +782,7 @@ public class MAVLinkReceiver {
 
                 currentDistance += triggerDistance;
             }
+
             distanceRemainder = (currentDistance - distanceBetweenPoints);
             currentWaypoint.addAction(new WaypointAction(WaypointActionType.STAY, 1));
             currentWaypoint.addAction(new WaypointAction(WaypointActionType.START_TAKE_PHOTO, 0));
@@ -739,33 +800,26 @@ public class MAVLinkReceiver {
 
         ArrayList<Waypoint> wpOut = new ArrayList<>();
 
-        // If this is a goto position ... we must add at least one more waypoint (minimum 2 on DJI)
+        // If this is a singlepoint goto... we must add at least one more waypoint (minimum 2 on DJI)
+        // For now return error...
         if (wpIn.size() == 1) {
-            // Get current position...
-            double lat = mModel.get_current_lat();
-            double lon = mModel.get_current_lon();
-            float alt = mModel.get_current_alt();
-            Waypoint wpPrevious = new Waypoint(lat, lon, alt);
-
-            Waypoint wpCurrent = wpIn.get(0);
-            Log.d(TAG, "Single point WP distance: " + String.valueOf(getRangeBetweenWaypoints_m(wpPrevious, wpCurrent)));
-
-            float waypointIncrement = (wpCurrent.altitude - wpPrevious.altitude) / 2;
-            Waypoint intermediateWaypoint = createIntermediateWaypoint(wpPrevious, wpCurrent, 1, 1, 0, waypointIncrement);
-            // Insert the intermediate wp at the beginning of the list...
-            wpIn.add(0, intermediateWaypoint);
+            Log.d(TAG, "Single point WP error ");
+            return null;
         }
 
         Waypoint wpPrevious = wpIn.get(0);
         boolean shouldNotify = false;
 
+        // If the distance between waypoints are larget than MAX_WAYPOINT_DISTANCE...
         for (Waypoint wpCurrent : wpIn) {
-
+            // Add the first one...  TODO:: Check the distance...
             if (wpCurrent == wpIn.get(0)) {
                 wpOut.add(wpCurrent);
                 continue;
             }
-            Log.d(TAG, "WP dist: " + String.valueOf(getRangeBetweenWaypoints_m(wpCurrent, wpPrevious)));
+
+            Log.d(TAG, "WP dist x: " + String.valueOf(getRangeBetweenWaypoints_m(wpCurrent, wpPrevious)));
+
             if (getRangeBetweenWaypoints_m(wpCurrent, wpPrevious) > MAX_WAYPOINT_DISTANCE) {
                 int numIntermediateWps = (int) getRangeBetweenWaypoints_m(wpCurrent, wpPrevious) / MAX_WAYPOINT_DISTANCE;
                 shouldNotify = true;
@@ -784,13 +838,8 @@ public class MAVLinkReceiver {
         }
 
         if (shouldNotify) {
-            parent.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    NotificationHandler.notifyAlert(parent, TYPE_WAYPOINT_DISTANCE,
-                            null, null);
-                }
-            });
+            parent.runOnUiThread(() -> NotificationHandler.notifyAlert(parent, TYPE_WAYPOINT_DISTANCE,
+                    null, null));
         }
 
         return wpOut;
@@ -818,24 +867,11 @@ public class MAVLinkReceiver {
 
         double lat1 = wp1.coordinate.getLatitude();
         double lon1 = wp1.coordinate.getLongitude();
-        double el1 = wp1.altitude;
+        float el1 = 0;  //wp1.altitude;
         double lon2 = wp2.coordinate.getLongitude();
         double lat2 = wp2.coordinate.getLatitude();
-        double el2 = wp2.altitude;
+        float el2 =  0; //wp2.altitude;
 
-        final int R = 6371; // Radius of the earth
-
-        double latDistance = Math.toRadians(lat2 - lat1);
-        double lonDistance = Math.toRadians(lon2 - lon1);
-        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
-                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
-                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
-        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        double distance = R * c * 1000; // convert to meters
-        double height = el1 - el2;
-        distance = Math.pow(distance, 2) + Math.pow(height, 2);
-        return Math.sqrt(distance);
-
-
+        return mModel.getRangeBetweenWaypoints_m(lat1,lon1,el1,lat2,lon2,el2);
     }
 }

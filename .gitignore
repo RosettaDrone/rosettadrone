@@ -36,6 +36,8 @@ captures/
 
 # Intellij
 *.iml
+.idea/compiler.xml
+.idea/caches/build_file_checksums.ser
 .idea/workspace.xml
 .idea/tasks.xml
 .idea/gradle.xml
@@ -45,6 +47,7 @@ captures/
 .idea/libraries
 .idea/modules.xml
 .idea/runConfigurations.xml
+.idea/caches/build_file_checksums.ser
 
 # Keystore files
 *.jks

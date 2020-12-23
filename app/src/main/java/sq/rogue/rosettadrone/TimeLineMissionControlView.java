@@ -271,7 +271,7 @@ public class TimeLineMissionControlView {
 
         setTimelinePlanToText("Step 1: takeoff from the ground");
         setTimelinePlanToText("Lat: " + lat + " Lon: " + lon + " Alt: " + alt);
-        elements.add(new GoToAction(new LocationCoordinate2D(lat, lon), alt / (float) 1000.0));
+        elements.add(new GoToAction(new LocationCoordinate2D(lat, lon), alt ));
 
         if (missionControl.scheduledCount() > 0) {
             missionControl.unscheduleEverything();
