@@ -88,7 +88,7 @@ android {
 
     // We need to be restrict as we get error on newer versions...
     buildToolsVersion '30.0.2'
-    ndkVersion '20.1.5948944'
+    ndkVersion '22.0.7026061'
 
 }
 dependencies {
@@ -132,6 +132,8 @@ dependencies {
     implementation 'com.google.android.gms:play-services-base:17.5.0'
     implementation 'com.google.android.gms:play-services-gcm:17.0.0'
     implementation 'com.google.android.gms:play-services-location:17.1.0'
+
+    implementation 'com.google.maps:google-maps-services:0.15.0'
 
     implementation 'com.jakewharton:butterknife:10.2.3'
     annotationProcessor 'com.jakewharton:butterknife-compiler:10.2.3'
