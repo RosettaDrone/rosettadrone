@@ -280,12 +280,14 @@ public class MAVLinkReceiver {
             // This command must be sent at 1Hz minimum...
             case MAVLINK_MSG_ID_MANUAL_CONTROL:
                 msg_manual_control msg_param_5 = (msg_manual_control) msg;
+
                 mModel.do_set_motion_velocity(
                         msg_param_5.x / (float) 100.0,
                         msg_param_5.y / (float) 100.0,
                         msg_param_5.z / (float) 260.0,
                         msg_param_5.r / (float) 50.0,
                         0b0000011111000111);
+
                 mModel.send_command_ack(MAVLINK_MSG_ID_MANUAL_CONTROL, MAV_RESULT.MAV_RESULT_ACCEPTED);
                 break;
 
