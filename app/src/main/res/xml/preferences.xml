@@ -31,6 +31,28 @@
         </PreferenceCategory>
 
         <PreferenceCategory
+            android:key="drone_maptype_prefs"
+            android:title="@string/pref_maptype_mode">
+
+            <androidx.preference.ListPreference
+                android:key="pref_maptype_mode"
+                android:title="@string/pref_maptype"
+                android:entries="@array/maptype_array"
+                android:entryValues="@array/maptypet_values_array"
+                android:defaultValue="2" />
+        </PreferenceCategory>
+
+        <PreferenceCategory
+            android:key="drone_name_prefs"
+            android:title="App Name">
+
+            <androidx.preference.EditTextPreference
+                android:defaultValue="RosettaDrone 2"
+                android:key="pref_app_name"
+                android:title="@string/pref_app" />
+
+        </PreferenceCategory>
+        <PreferenceCategory
             android:key="drone_heading_prefs"
             android:title="@string/pref_drone_heading_cat">
 
@@ -41,17 +63,6 @@
                 android:entryValues="@array/drone_header_values_array"
                 android:defaultValue="0"
                 android:enabled="false" />
-        </PreferenceCategory>
-
-        <PreferenceCategory
-            android:key="drone_name_prefs"
-            android:title="App Name">
-
-            <androidx.preference.EditTextPreference
-                android:defaultValue=" "
-                android:key="pref_app_name"
-                android:title="@string/pref_app" />
-
         </PreferenceCategory>
 v
         <PreferenceCategory

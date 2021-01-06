@@ -32,6 +32,26 @@
         <item>1</item>
     </string-array>
 
+    <!-- Map Types -->
+    <string name="pref_maptype_mode">Select map type</string>
+    <string name="pref_maptype">Maps</string>
+
+    <string-array name="maptype_array">
+        <item>Normal</item>
+        <item>Hybrid</item>
+        <item>Satellite</item>
+        <item>Terrain</item>
+        <item>None</item>
+    </string-array>
+
+    <string-array name="maptypet_values_array">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+    </string-array>
+
     <!-- Drone Safety -->
     <string name="pref_drone_safety_cat">Safety</string>
     <string name="pref_drone_multi_mode">Enable multiple flight modes</string>

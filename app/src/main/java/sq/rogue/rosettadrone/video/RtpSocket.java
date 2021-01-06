@@ -45,11 +45,14 @@ public class RtpSocket implements Runnable {
      * Use this to use UDP for the transport protocol.
      */
     public final static int TRANSPORT_UDP = 0x00;
-
     /**
      * Use this to use TCP for the transport protocol.
      */
     public final static int TRANSPORT_TCP = 0x01;
+    /**
+     * Use this to use UDP MULTICAST for the transport protocol.
+     */
+    public final static int TRANSPORT_MULTICAST = 0x02;
 
     public static final int RTP_HEADER_LENGTH = 12;
     public static final int MTU = 1300;
@@ -199,7 +202,11 @@ public class RtpSocket implements Runnable {
      */
     public void setDestination(InetAddress dest, int dport, int rtcpPort) {
         if (dport != 0 && rtcpPort != 0) {
-            mTransport = TRANSPORT_UDP;
+            if(dest.isMulticastAddress()) {
+                mTransport = TRANSPORT_MULTICAST;
+            }else {
+                mTransport = TRANSPORT_UDP;
+            }
             mPort = dport;
             Log.d(TAG, "setDestination: " + dest + ":" + dport);
             for (int i = 0; i < mBufferCount; i++) {
@@ -230,10 +237,9 @@ public class RtpSocket implements Runnable {
 
     public int[] getLocalPorts() {
         return new int[]{
+                mSocket.getLocalPort(),
                 mSocketUDP.getLocalPort(),
                 mSocketUDP2.getLocalPort(),
-//                mSocket.getLocalPort(),
-                //mReport.getLocalPort()
         };
 
     }
@@ -357,7 +363,10 @@ public class RtpSocket implements Runnable {
                         } else {
                             mSocketUDP.send(mPackets[mBufferOut]);
                         }
-                    } else {
+                    } else if (mTransport == TRANSPORT_MULTICAST) {
+                        mSocket.send(mPackets[mBufferOut]);
+                    }
+                    else {
                         sendTCP();
                     }
                 }

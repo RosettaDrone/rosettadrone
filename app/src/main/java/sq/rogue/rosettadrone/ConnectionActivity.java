@@ -3,22 +3,18 @@ package sq.rogue.rosettadrone;
 import android.Manifest;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.hardware.usb.UsbManager;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.IBinder;
 import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Log;
@@ -35,22 +31,13 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import dji.common.error.DJIError;
-import dji.common.error.DJISDKError;
-import dji.common.useraccount.UserAccountState;
-import dji.common.util.CommonCallbacks;
 import dji.keysdk.DJIKey;
 import dji.keysdk.KeyManager;
 import dji.keysdk.ProductKey;
 import dji.keysdk.callback.KeyListener;
-import dji.log.DJILog;
-import dji.sdk.base.BaseComponent;
 import dji.sdk.base.BaseProduct;
 import dji.sdk.products.Aircraft;
-import dji.sdk.sdkmanager.DJISDKInitEvent;
 import dji.sdk.sdkmanager.DJISDKManager;
-import dji.sdk.useraccount.UserAccountManager;
-import sq.rogue.rosettadrone.video.VideoService;
 
 public class ConnectionActivity extends Activity implements View.OnClickListener {
 
@@ -156,113 +143,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
             Toast.makeText(getApplicationContext(), "Missing permissions!!!", Toast.LENGTH_LONG).show();
         }
     }
-
-    private void startSDKRegistration() {
-        Log.d(TAG, "startSDKRegistration");
-        if (isRegistrationInProgress.compareAndSet(false, true)) {
-            Log.d(TAG, "startSDKRegistration started");
-            AsyncTask.execute(new Runnable() {
-                @Override
-                public void run() {
-                    DJISDKManager.getInstance().registerApp(ConnectionActivity.this.getApplicationContext(), new DJISDKManager.SDKManagerCallback() {
-                        @Override
-                        public void onRegister(DJIError djiError) {
-                            if (djiError == DJISDKError.REGISTRATION_SUCCESS) {
-                                DJILog.v("App registration", DJISDKError.REGISTRATION_SUCCESS.getDescription());
-                                DJISDKManager.getInstance().startConnectionToProduct();
-                                showToast("Register SDK Success");
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        loginDJIUserAccount();
-                                    }
-                                });
-                            } else {
-                                showToast("Register sdk fails, check network is available");
-                            }
-                            Log.v(TAG, djiError.getDescription());
-                            isRegistrationInProgress.set(false);
-                        }
-
-                        @Override
-                        public void onProductDisconnect() {
-                            showToast("Product Disconnected");
-                            notifyStatusChange();
-                        }
-
-                        @Override
-                        public void onProductConnect(BaseProduct baseProduct) {
-                            Log.e(TAG, "Product Connected");
-
-                            notifyStatusChange();
-                            isRegistrationInProgress.set(false);
-                            updateVersion();
-                            if (baseProduct != null) {
-                                //     RDApplication.updateProduct(baseProduct);
-                            }
-                        }
-
-                        @Override
-                        public void onProductChanged(BaseProduct baseProduct) {
-                            Log.e(TAG, "Product Changed");
-
-                            notifyStatusChange();
-                            isRegistrationInProgress.set(false);
-                            updateVersion();
-                            if (baseProduct != null) {
-                                //     RDApplication.updateProduct(baseProduct);
-                            }
-                        }
-
-                        @Override
-                        public void onComponentChange(BaseProduct.ComponentKey componentKey,
-                                                      BaseComponent oldComponent,
-                                                      BaseComponent newComponent) {
-                            if (newComponent != null && oldComponent == null) {
-                                Log.v(TAG, componentKey.name() + " Component Found index:" + newComponent.getIndex());
-                            }
-                            if (newComponent != null) {
-                                newComponent.setComponentListener(new BaseComponent.ComponentListener() {
-                                    @Override
-                                    public void onConnectivityChange(boolean b) {
-                                        Log.v(TAG, " Component " + (b ? "connected" : "disconnected"));
-                                        notifyStatusChange();
-                                    }
-                                });
-                            }
-                            notifyStatusChange();
-                        }
-
-                        @Override
-                        public void onInitProcess(DJISDKInitEvent djisdkInitEvent, int i) {
-                            //notify the init progress
-                        }
-
-                        @Override
-                        public void onDatabaseDownloadProgress(long l, long l1) {
-
-                        }
-                    });
-                }
-            });
-        }
-    }
-
-    private void loginDJIUserAccount() {
-
-        UserAccountManager.getInstance().logIntoDJIUserAccount(this,
-                new CommonCallbacks.CompletionCallbackWith<UserAccountState>() {
-                    @Override
-                    public void onSuccess(final UserAccountState userAccountState) {
-                        showToast("login success! Account state is:" + userAccountState.name());
-                    }
-                    @Override
-                    public void onFailure(DJIError error) {
-                        showToast(error.getDescription());
-                    }
-                });
-    }
-
+    
     private void notifyStatusChange() {
         runOnUiThread(new Runnable() {
             @Override

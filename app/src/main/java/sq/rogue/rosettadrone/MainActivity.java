@@ -17,7 +17,6 @@ import android.content.res.AssetManager;
 import android.graphics.SurfaceTexture;
 import android.graphics.drawable.Drawable;
 import android.hardware.usb.UsbManager;
-import android.media.MediaFormat;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
@@ -45,13 +44,15 @@ import android.widget.Toast;
 import com.MAVLink.MAVLinkPacket;
 import com.MAVLink.Messages.MAVLinkMessage;
 import com.MAVLink.Parser;
-import com.amap.api.maps.AMap;
-import com.amap.api.maps.CameraUpdateFactory;
-import com.amap.api.maps.MapView;
-import com.amap.api.maps.model.BitmapDescriptorFactory;
-import com.amap.api.maps.model.LatLng;
-import com.amap.api.maps.model.Marker;
-import com.amap.api.maps.model.MarkerOptions;
+
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -70,7 +71,6 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Timer;
@@ -106,10 +106,8 @@ import sq.rogue.rosettadrone.video.VideoService;
 import static com.google.android.material.snackbar.Snackbar.LENGTH_LONG;
 import static sq.rogue.rosettadrone.util.safeSleep;
 
-// import sq.rogue.rosettadrone.settings.Waypoint1Activity;
-// import sq.rogue.rosettadrone.settings.Waypoint2Activity;
-
-public class MainActivity extends AppCompatActivity {
+//public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMapClickListener {
+public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     //    public static final String FLAG_CONNECTION_CHANGE = "dji_sdk_connection_change";
     private final static int RESULT_SETTINGS = 1001;
@@ -129,13 +127,12 @@ public class MainActivity extends AppCompatActivity {
     public static boolean FLAG_DRONE_LANDING_PROTECTION_CHANGED = false;
     public static boolean FLAG_DRONE_FLIGHT_PATH_MODE_CHANGED = false;
     public static boolean FLAG_DRONE_MAX_HEIGHT_CHANGED = false;
+    public static boolean FLAG_APP_NAME_CHANGED = false;
+    public static boolean FLAG_MAPS_CHANGED = false;
 
-    //    private com.google.android.gms.maps.SupportMapFragment mapView;
-    private MapView mapView;
-    private AMap aMap;
+    private GoogleMap  aMap;
     private double droneLocationLat, droneLocationLng;
     private Marker droneMarker = null;
-//    private FlightController mFlightController;
 
     private static BaseProduct mProduct;
     private Model mProductModel;
@@ -171,6 +168,7 @@ public class MainActivity extends AppCompatActivity {
     private VideoService mService = null;
     private boolean mIsBound;
     private int m_videoMode = 1;
+    private int mMaptype = GoogleMap.MAP_TYPE_HYBRID;
 
     private VideoFeeder.VideoFeed standardVideoFeeder;
     protected VideoFeeder.VideoDataListener mReceivedVideoDataListener;
@@ -195,7 +193,6 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void run() {
-
             if (!gui_enabled) {
                 try {
                     if (!mNewDJI.equals("")) {
@@ -206,7 +203,6 @@ public class MainActivity extends AppCompatActivity {
                     if (!mNewOutbound.equals("")) {
                         //                    ((LogFragment) logPagerAdapter.getItem(1)).appendLogText(mNewOutbound);
                         logOutbound.appendLogText(mNewOutbound);
-
                         mNewOutbound = "";
                     }
                     if (!mNewInbound.equals("")) {
@@ -214,7 +210,6 @@ public class MainActivity extends AppCompatActivity {
                         logInbound.appendLogText(mNewInbound);
                         mNewInbound = "";
                     }
-
                 } catch (Exception e) {
                     Log.d(TAG, "exception", e);
                 }
@@ -226,7 +221,6 @@ public class MainActivity extends AppCompatActivity {
 
     private void initPacketizer() {
         Log.e(TAG, "initPacketizer");
-
         String address = "127.0.0.1";
 
         sharedPreferences = android.preference.PreferenceManager.getDefaultSharedPreferences(this);
@@ -239,19 +233,16 @@ public class MainActivity extends AppCompatActivity {
         } else if (sharedPreferences.getBoolean("pref_separate_gcs", false)) {
             address = sharedPreferences.getString("pref_video_ip", "127.0.0.1");
         }
-
-
         //------------------------------------------------------------
         mvideoIPString = address;
-
-        //      address.replace("/","");
         Log.e(TAG, "Ip Address: " + mvideoIPString);
         //------------------------------------------------------------
-
         videoPort = Integer.parseInt(Objects.requireNonNull(sharedPreferences.getString("pref_video_port", "5600")));
         mVideoBitrate = Integer.parseInt(Objects.requireNonNull(sharedPreferences.getString("pref_video_bitrate", "2")));
         mEncodeSpeed = Integer.parseInt(Objects.requireNonNull(sharedPreferences.getString("pref_encode_speed", "2")));
-
+        //------------------------------------------------------------
+        mMaptype = Integer.parseInt(Objects.requireNonNull(prefs.getString("pref_maptype_mode", "2")));
+        logMessageDJI("Mapmode: " + mMaptype);
         //------------------------------------------------------------
 
         Intent intent = new Intent(this, VideoService.class);
@@ -323,6 +314,7 @@ public class MainActivity extends AppCompatActivity {
         Log.e(TAG, "onResume()");
         super.onResume();
 
+        setDroneParameters();
 /*
         if (mDroneDetails != null) {
             String droneID = prefs.getString("pref_drone_id", "1");
@@ -337,7 +329,6 @@ public class MainActivity extends AppCompatActivity {
 //            String text = "ID:" + "\t" + droneID + System.getProperty("line.separator") + "RTL:" + "\t" + rtlAlt;
             mDroneDetails.setText(text);
         }
-
  */
         if (prefs.getBoolean("pref_enable_video", true)) {
             mExternalVideoOut = true;
@@ -345,6 +336,7 @@ public class MainActivity extends AppCompatActivity {
             mExternalVideoOut = false;
         }
 
+        // Wew should rather use multicast...
         if (mService != null) {
             if (prefs.getBoolean("pref_enable_dualvideo", true)) {
                 mService.setDualVideo(true);
@@ -450,35 +442,68 @@ public class MainActivity extends AppCompatActivity {
 
         //Intent intent = getIntent();
         finish();
-
-
         super.onDestroy();
     }
 
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
 
-    private void initMapView() {
+        Log.d(TAG, "onMapReady()");
 
         if (aMap == null) {
-            aMap = mapView.getMap();
-            //aMap.setOnMapClickListener(this);// add the listener for click for amap object
+            aMap = googleMap;
+            LinearLayout map_layout = findViewById(R.id.map_view);
+            map_layout.setClickable(true);
+            map_layout.setOnClickListener((map) -> {
+                ViewGroup.LayoutParams map_para = map_layout.getLayoutParams();
+                map_layout.setZ(0.f);
+                map_para.height = LayoutParams.WRAP_CONTENT;
+                map_para.width = LayoutParams.WRAP_CONTENT;
+                map_layout.setLayoutParams(map_para);
+            });
         }
-
-        // We initialize the default map location to the same as the default SIM location...
-        LatLng coordinate;
-
-        if (checkGpsCoordination(droneLocationLat, droneLocationLng)) {
-            coordinate = new LatLng(droneLocationLat, droneLocationLng);
-        }
-        else{
-            LocationCoordinate2D pos = mModel.getSimPos2D();
-            coordinate = new LatLng(pos.getLatitude(), pos.getLongitude());
-        }
-//        aMap.addMarker(new MarkerOptions().position(coordinate).title("Marker in Shenzhen"));
-        aMap.addMarker(new MarkerOptions().position(coordinate));
-
-
         aMap.getUiSettings().setZoomControlsEnabled(false);
-        aMap.moveCamera(CameraUpdateFactory.newLatLng(coordinate));
+        aMap.setMapType(mMaptype);
+
+        updateDroneLocation();
+    }
+
+    // Update the drone location based on states from MCU.
+    private void updateDroneLocation() {
+
+        if (aMap != null) {
+
+            // We initialize the default map location to the same as the default SIM location...
+            LatLng pos;
+
+            if (checkGpsCoordination(droneLocationLat, droneLocationLng)) {
+                pos = new LatLng(droneLocationLat, droneLocationLng);
+            } else {
+                LocationCoordinate2D loc = mModel.getSimPos2D();
+                if(checkGpsCoordination(loc.getLongitude(),loc.getLongitude())) {
+                    pos = new LatLng(loc.getLatitude(), loc.getLongitude());
+                }
+                else{
+                    pos = new LatLng(62,12);
+                }
+            }
+
+            //Create MarkerOptions object
+            final MarkerOptions markerOptions = new MarkerOptions();
+            markerOptions.position(pos);
+            markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.aircraft));
+
+            runOnUiThread(() -> {
+                if (droneMarker != null) {
+                    droneMarker.remove();
+                }
+
+                if (checkGpsCoordination(pos.latitude, pos.longitude)) {
+                    droneMarker = aMap.addMarker(markerOptions);
+                    aMap.moveCamera(CameraUpdateFactory.newLatLng(pos));
+                }
+            });
+        }
     }
 
     private void initFlightController() {
@@ -496,28 +521,6 @@ public class MainActivity extends AppCompatActivity {
 
     public static boolean checkGpsCoordination(double latitude, double longitude) {
         return (latitude > -90 && latitude < 90 && longitude > -180 && longitude < 180) && (latitude != 0f && longitude != 0f);
-    }
-
-    private void updateDroneLocation() {
-
-        LatLng pos = new LatLng(droneLocationLat, droneLocationLng);
-
-        //Create MarkerOptions object
-        final MarkerOptions markerOptions = new MarkerOptions();
-        markerOptions.position(pos);
-        markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.aircraft));
-
-        runOnUiThread(() -> {
-            if (droneMarker != null) {
-                droneMarker.remove();
-            }
-
-//                setResultToToast(droneLocationLat+"----"+droneLocationLng);
-            if (checkGpsCoordination(droneLocationLat, droneLocationLng)) {
-//                    setResultToToast("小飞机标识");
-                droneMarker = aMap.addMarker(markerOptions);
-            }
-        });
     }
 
     @Override
@@ -587,10 +590,10 @@ public class MainActivity extends AppCompatActivity {
         initLogs();
         initPacketizer();
 
-        mapView = (MapView) findViewById(R.id.map);
-        mapView.onCreate(savedInstanceState);
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.map);
+        mapFragment.getMapAsync(this);
 
-        initMapView();
         initFlightController();
 
         DJISDKManager.getInstance().registerApp(this, mDJISDKManagerCallback);
@@ -789,8 +792,6 @@ public class MainActivity extends AppCompatActivity {
      * Init a fake texture view to for the codec manager, so that the video raw data can be received
      * by the camera needed to get video to the UDP handler...
      */
-    //   private void initPreviewerTextureView() {
-    //     Log.e(TAG, "initPreviewerTextureView");
 
     private TextureView.SurfaceTextureListener mSurfaceTextureListener = new TextureView.SurfaceTextureListener() {
         @Override
@@ -900,7 +901,6 @@ public class MainActivity extends AppCompatActivity {
             }
             notifyStatusChange();
         }
-
 
         @Override
         public void onComponentChange(BaseProduct.ComponentKey componentKey, BaseComponent oldComponent, BaseComponent newComponent) {
@@ -1239,6 +1239,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    // Hmm is this ever called...
     @Override
     public boolean onContextItemSelected(MenuItem item) {
         //     AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
@@ -1294,7 +1295,6 @@ public class MainActivity extends AppCompatActivity {
             gui_enabled = false;
         }
     }
-
 
     private void onClickClearLogs() {
         logDJI.clearLogText();
@@ -1425,18 +1425,12 @@ public class MainActivity extends AppCompatActivity {
         mNewDJI += "\n" + msg;
     }
 
-    /**
-     *
-     */
     private void sendRestartVideoService() {
         String videoIP = getVideoIP();
         int videoPort = Integer.parseInt(Objects.requireNonNull(prefs.getString("pref_video_port", "5600")));
         logMessageDJI("Restarting Video link to " + videoIP + ":" + videoPort);
     }
 
-    /**
-     *
-     */
     private void sendDroneConnected() {
         String videoIP = getVideoIP();
 
@@ -1462,9 +1456,6 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    /**
-     *
-     */
     private void sendDroneDisconnected() {
 
     }
@@ -1539,6 +1530,12 @@ public class MainActivity extends AppCompatActivity {
             FLAG_DRONE_LANDING_PROTECTION_CHANGED = false;
         }
 
+        if(FLAG_MAPS_CHANGED){
+            mMaptype = Integer.parseInt(Objects.requireNonNull(prefs.getString("pref_maptype_mode", "0")));
+            aMap.setMapType(mMaptype);
+            FLAG_MAPS_CHANGED = false;
+        }
+
     }
 
     //---------------------------------------------------------------------------------------
@@ -1560,6 +1557,7 @@ public class MainActivity extends AppCompatActivity {
         Log.e(TAG, "onPointerCaptureChanged");
     }
 
+
     //region GCS Timer Task
     //---------------------------------------------------------------------------------------
 
@@ -1577,7 +1575,6 @@ public class MainActivity extends AppCompatActivity {
             mainActivityWeakReference.get().mModel.tick();
         }
     }
-
 
     private static class GCSCommunicatorAsyncTask extends AsyncTask<Integer, Integer, Integer> {
 

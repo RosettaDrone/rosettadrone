@@ -72,7 +72,6 @@
 
         <activity android:name="sq.rogue.rosettadrone.MainActivity">
             <intent-filter>
-      <!--          <action android:name="android.intent.action.MAIN" />  -->
                 <action android:name="android.hardware.usb.action.USB_ACCESSORY_ATTACHED" />
             </intent-filter>
         </activity>
@@ -116,7 +115,7 @@
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyAO1eIAc6cCYdO74LBd8fmMNzs7sabxW5E" />
+            android:value="@string/google_key" />
     </application>
 </manifest>
 

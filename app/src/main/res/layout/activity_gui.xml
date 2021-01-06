@@ -68,18 +68,27 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintRight_toRightOf="parent">
 
-        <com.amap.api.maps.MapView
+        <fragment
             android:id="@+id/map"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="match_parent"
+            class="com.google.android.gms.maps.SupportMapFragment" />
+
+        <!--
+                <com.google.android.gms.maps.MapView
+                    android:id="@+id/map"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"/>
+         -->
+        <!--
+                <fragment xmlns:android="http://schemas.android.com/apk/res/android"
+                    android:name="com.google.android.gms.maps.SupportMapFragment"
+                    android:id="@+id/map"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"/>
+        -->
     </LinearLayout>
-    <!--
-            <fragment xmlns:android="http://schemas.android.com/apk/res/android"
-                android:name="com.google.android.gms.maps.SupportMapFragment"
-                android:id="@+id/map"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"/>
-    -->
+
     <FrameLayout
         android:id="@+id/compass_container"
         android:layout_width="510dp"
@@ -101,7 +110,7 @@
             tools:ignore="RtlHardcoded" />
     </FrameLayout>
 
-    <!--
+
         <FrameLayout
             android:id="@+id/tab_map_video"
             android:layout_width="164dp"
@@ -116,7 +125,7 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintRight_toRightOf="parent">
         </FrameLayout>
-    -->
+
 
     <FrameLayout
         android:layout_width="match_parent"

@@ -190,17 +190,9 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Shared
         findPreference("pref_app_name").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
             @Override
             public boolean onPreferenceChange(Preference preference, Object newValue) {
-                try {
-                    if (Integer.parseInt((String) newValue) >= 1 && Integer.parseInt((String) newValue) <= 65535) {
-                        MainActivity.FLAG_PREFS_CHANGED = true;
-                        MainActivity.FLAG_VIDEO_ADDRESS_CHANGED = true;
-                        return true;
-                    }
-                } catch (NumberFormatException ignored) {
-                }
-                NotificationHandler.notifyAlert(SettingsFragment.this.getActivity(), TYPE_APP_NAME,
-                        null, null);
-                return false;
+                MainActivity.FLAG_PREFS_CHANGED = true;
+                MainActivity.FLAG_APP_NAME_CHANGED = true;
+                return true;
             }
         });
 
