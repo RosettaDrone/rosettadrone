@@ -14,6 +14,16 @@
             android:title="@string/pref_drone_id" />
 
         <PreferenceCategory
+            android:key="drone_name_prefs"
+            android:title="App Name">
+
+            <androidx.preference.EditTextPreference
+                android:defaultValue="RosettaDrone 2"
+                android:key="pref_app_name"
+                android:title="@string/pref_app" />
+        </PreferenceCategory>
+
+        <PreferenceCategory
             android:key="drone_rtl_prefs"
             android:title="@string/pref_drone_rtl_cat">
             <androidx.preference.EditTextPreference
@@ -42,16 +52,15 @@
                 android:defaultValue="2" />
         </PreferenceCategory>
 
+
         <PreferenceCategory
-            android:key="drone_name_prefs"
-            android:title="App Name">
-
+            android:title="Use External H.264 input">
             <androidx.preference.EditTextPreference
-                android:defaultValue="RosettaDrone 2"
-                android:key="pref_app_name"
-                android:title="@string/pref_app" />
-
+                android:defaultValue="0"
+                android:key="pref_external_video"
+                android:title="Port Number" />
         </PreferenceCategory>
+
         <PreferenceCategory
             android:key="drone_heading_prefs"
             android:title="@string/pref_drone_heading_cat">

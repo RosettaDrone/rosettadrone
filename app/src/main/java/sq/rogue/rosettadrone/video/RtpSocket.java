@@ -204,8 +204,10 @@ public class RtpSocket implements Runnable {
         if (dport != 0 && rtcpPort != 0) {
             if(dest.isMulticastAddress()) {
                 mTransport = TRANSPORT_MULTICAST;
+                Log.d(TAG, "Use Multicast...");
             }else {
                 mTransport = TRANSPORT_UDP;
+                Log.d(TAG, "Use Unicast...");
             }
             mPort = dport;
             Log.d(TAG, "setDestination: " + dest + ":" + dport);

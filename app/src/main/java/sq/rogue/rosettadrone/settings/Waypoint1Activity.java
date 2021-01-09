@@ -311,7 +311,7 @@ public class Waypoint1Activity extends FragmentActivity implements View.OnClickL
         //Create MarkerOptions object
         final MarkerOptions markerOptions = new MarkerOptions();
         markerOptions.position(pos);
-        markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.aircraft));
+        markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_drone));
 
         runOnUiThread(new Runnable() {
             @Override
