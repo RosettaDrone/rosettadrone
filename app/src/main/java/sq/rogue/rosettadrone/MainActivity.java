@@ -8,6 +8,7 @@ package sq.rogue.rosettadrone;
 import android.Manifest;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
@@ -16,6 +17,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.SurfaceTexture;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -62,6 +64,8 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -90,6 +94,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentManager;
@@ -98,6 +103,9 @@ import androidx.preference.PreferenceManager;
 import dji.common.camera.SettingsDefinitions;
 import dji.common.error.DJIError;
 import dji.common.error.DJISDKError;
+import dji.common.flightcontroller.LocationCoordinate3D;
+import dji.common.mission.waypoint.Waypoint;
+import dji.common.mission.waypoint.WaypointMission;
 import dji.common.model.LocationCoordinate2D;
 import dji.common.product.Model;
 import dji.sdk.base.BaseComponent;
@@ -146,6 +154,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private double droneLocationLat, droneLocationLng;
     private Marker droneMarker = null;
     private Marker gcsMarker = null;
+    private Marker gotoMarker = null;
 
     private static BaseProduct mProduct;
     private Model mProductModel;
@@ -165,8 +174,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private DroneModel mModel;
     private Boolean mExtRunning = false;
     private LocationManager locationManager;
-    private double m_host_lat;
-    private double m_host_lon;
+    private double m_host_lat = -500;
+    private double m_host_lon = -500;
 
     private MAVLinkReceiver mMavlinkReceiver;
     private Parser mMavlinkParser;
@@ -197,8 +206,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private int videoViewHeight;
     protected SharedPreferences sharedPreferences;
     private boolean mIsTranscodedVideoFeedNeeded = false;
+    public static WaypointMission.Builder waypointMissionBuilder;
+    private List<Waypoint> waypointList = new ArrayList<>();
+    private List<Polyline> m_line = new ArrayList<>();
+    private LatLng m_lastPos;
 
-    //-----------------------------------------------------------------------------
+
+    //-----------------------------------------------------------------------------//
     private Runnable djiUpdateRunnable = () -> {
         Intent intent = new Intent(DJISimulatorApplication.FLAG_CONNECTION_CHANGE);
         sendBroadcast(intent);
@@ -455,7 +469,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             LinearLayout map_layout = findViewById(R.id.map_view);
             map_layout.setClickable(true);
             map_layout.setOnClickListener((map) -> {
-                ViewGroup.LayoutParams map_para = map_layout.getLayoutParams();
+                LayoutParams map_para = map_layout.getLayoutParams();
                 map_layout.setZ(0.f);
                 map_para.height = LayoutParams.WRAP_CONTENT;
                 map_para.width = LayoutParams.WRAP_CONTENT;
@@ -464,8 +478,82 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
         aMap.getUiSettings().setZoomControlsEnabled(false);
         aMap.setMapType(mMaptype);
+        LatLng marker = new LatLng(m_host_lat, m_host_lon);
+        aMap.moveCamera(CameraUpdateFactory.newLatLngZoom(marker, 14F));
+
+        aMap.setOnMapClickListener((point)-> {
+
+            Log.d(TAG, "Goto: " + point.toString());
+                AlertDialog.Builder alertDialog2 = new AlertDialog.Builder(this);
+                alertDialog2.setIcon(R.mipmap.track_right);
+                alertDialog2.setTitle("AI Mavlink/Python function selector!");
+                alertDialog2.setMessage("Clikked");
+                alertDialog2.setNegativeButton("Cancel",
+                        (dialog, which) -> {
+                            dialog.cancel();
+                        });
+                alertDialog2.setNeutralButton("Add to Waypoint list",
+                        (dialog, which) -> {
+                            markWaypoint(point, true);
+                            Waypoint mWaypoint = new Waypoint(point.latitude, point.longitude,  mModel.m_alt);
+                            //Add Waypoints to Waypoint arraylist;
+                            if (waypointMissionBuilder != null) {
+                                waypointList.add(mWaypoint);
+                                waypointMissionBuilder.waypointList(waypointList).waypointCount(waypointList.size());
+                            } else {
+                                waypointMissionBuilder = new WaypointMission.Builder();
+                                waypointList.add(mWaypoint);
+                                waypointMissionBuilder.waypointList(waypointList).waypointCount(waypointList.size());
+                            }
+                            dialog.cancel();
+                        });
+                alertDialog2.setPositiveButton ("Accept",
+                        (dialog, which) -> {
+                            // If we are airborn...
+                            if( mModel.m_alt > -5.0) {
+                                markWaypoint(point, false);
+                                mModel.goto_position(point.latitude, point.longitude, mModel.m_alt, 0);
+                                dialog.cancel();
+                            }else {
+                                Log.d(TAG, "Cannot Add Waypoint");
+                                Toast.makeText(getApplicationContext(), "Cannot goto position!!!", Toast.LENGTH_LONG).show();
+                            }
+                    });
+                ///
+                this.runOnUiThread(() -> {
+                    alertDialog2.show();
+                });
+         });
 
         updateDroneLocation();
+    }
+
+    private void markWaypoint(LatLng point, boolean keep) {
+        //Create MarkerOptions object
+        MarkerOptions markerOptions = new MarkerOptions();
+        markerOptions.position(point);
+        markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
+
+        if(keep) {
+            if(m_line.size() == 0){ m_lastPos = new LatLng(mModel.get_current_lat(), mModel.get_current_lat()); }
+            m_line.add(aMap.addPolyline(new PolylineOptions()
+                    .add(m_lastPos, point)
+                    .width(5)
+                    .color(Color.RED)));
+
+            m_lastPos = point;
+
+        }else{
+            for( Polyline line : m_line){
+                line.remove();
+            }
+            m_line.clear();
+        }
+
+        if (gotoMarker != null && keep == false) {
+            gotoMarker.remove();
+        }
+        gotoMarker = aMap.addMarker(markerOptions);
     }
 
     // Update the drone location based on states from MCU.
@@ -473,24 +561,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         // We initialize the default map location to the same as the default SIM location...
         if (aMap != null) {
-            LatLng pos;
-            if (checkGpsCoordination(droneLocationLat, droneLocationLng)) {
-                pos = new LatLng(droneLocationLat, droneLocationLng);
-            } else {
-                LocationCoordinate2D loc = mModel.getSimPos2D();
-                if(checkGpsCoordination(loc.getLongitude(),loc.getLongitude())) {
-                    pos = new LatLng(loc.getLatitude(), loc.getLongitude());
-                }
-                else{
-                    pos = new LatLng(62,12);
-                }
-            }
 
+            // Add GCS Location to map...
             if (checkGpsCoordination(m_host_lat, m_host_lon)) {
-                final MarkerOptions markerOptions = new MarkerOptions();
-                LatLng gscpos = new LatLng(m_host_lat, m_host_lon);
-                markerOptions.position(gscpos);
-                BitmapDrawable bitmapdraw = (BitmapDrawable)getResources().getDrawable(R.drawable.pilot);
+
+                final MarkerOptions GCS_markerOptions = new MarkerOptions();
+                GCS_markerOptions.position(new LatLng(m_host_lat, m_host_lon));
+                BitmapDrawable bitmapdraw = (BitmapDrawable)getResources().getDrawable(R.drawable.pilot, null);
                 Bitmap smallMarker;
 
                 if (compare_height == 0) {
@@ -498,19 +575,33 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }else{
                     smallMarker = Bitmap.createScaledBitmap(bitmapdraw.getBitmap(), 64, 64, false);
                 }
-                markerOptions.icon(BitmapDescriptorFactory.fromBitmap(smallMarker));
+                GCS_markerOptions.icon(BitmapDescriptorFactory.fromBitmap(smallMarker));
 
                 runOnUiThread(() -> {
                     if (gcsMarker != null) { gcsMarker.remove(); }
-                    gcsMarker = aMap.addMarker(markerOptions);
-                    aMap.moveCamera(CameraUpdateFactory.newLatLng(gscpos));
+                    gcsMarker = aMap.addMarker(GCS_markerOptions);
+//                aMap.moveCamera(CameraUpdateFactory.newLatLng(pos));
                 });
+
             }
 
-            //Create MarkerOptions object
+            // Find/define GCS Host location...
+            LatLng pos;
+            if (checkGpsCoordination(droneLocationLat, droneLocationLng)) {
+                pos = new LatLng(droneLocationLat, droneLocationLng);
+            } else {
+                LocationCoordinate2D loc = mModel.getSimPos2D();
+                if(checkGpsCoordination(loc.getLatitude(),loc.getLongitude())) {
+                    pos = new LatLng(loc.getLatitude(), loc.getLongitude());
+                }
+                else{
+                    pos = new LatLng(62,12);
+                }
+            }
+            // Add Drone location to map...
             final MarkerOptions markerOptions = new MarkerOptions();
             markerOptions.position(pos);
-            BitmapDrawable bitmapdraw = (BitmapDrawable)getResources().getDrawable(R.drawable.drone_img);
+            BitmapDrawable bitmapdraw = (BitmapDrawable)getResources().getDrawable(R.drawable.drone_img, null);
             Bitmap smallMarker;
 
             if (compare_height == 0) {
@@ -530,7 +621,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-    /*---------- Listener class to get coordinates ------------- */
+    /*---------- GCS Location changed... ------------- */
     private class MyLocationListener implements LocationListener {
 
         @Override
@@ -539,8 +630,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             m_host_lat = loc.getLatitude();
             m_host_lon = loc.getLongitude();
             updateDroneLocation();
-
             /*------- To get city name from coordinates -------- */
+/*
             String cityName = null;
             Geocoder gcd = new Geocoder(getBaseContext(), Locale.getDefault());
             List<Address> addresses;
@@ -556,6 +647,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 e.printStackTrace();
             }
             Log.d(TAG, m_host_lat + "\n" + m_host_lon + "\n\nMy Current City is: "+ cityName);
+            */
         }
 
         @Override
@@ -574,7 +666,15 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 djiFlightControllerCurrentState -> {
                     droneLocationLat = djiFlightControllerCurrentState.getAircraftLocation().getLatitude();
                     droneLocationLng = djiFlightControllerCurrentState.getAircraftLocation().getLongitude();
-                    updateDroneLocation();
+
+                    if (checkGpsCoordination(droneLocationLat, droneLocationLng)) {
+                        // If we got no data from GCS then use the initial Drone location
+                        if (m_host_lat == -500 && m_host_lon == -500) {
+                            m_host_lat = droneLocationLat;
+                            m_host_lon = droneLocationLng+0.00005;
+                        }
+                        updateDroneLocation();
+                    }
             });
         }
     }
@@ -1231,7 +1331,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             compare_height = 0;
         }
         v.setZ(101.f);
-        updateDroneLocation();
+  //      updateDroneLocation();
     }
 
     // Hmm is this ever called...
