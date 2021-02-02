@@ -74,6 +74,7 @@ import static com.MAVLink.enums.MAV_CMD.MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_VIDEO_START_CAPTURE;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_VIDEO_STOP_CAPTURE;
 import static com.MAVLink.enums.MAV_MISSION_TYPE.MAV_MISSION_TYPE_MISSION;
+import static com.MAVLink.enums.MAV_GOTO.MAV_GOTO_HOLD_AT_SPECIFIED_POSITION;
 import static sq.rogue.rosettadrone.util.TYPE_WAYPOINT_DISTANCE;
 import static sq.rogue.rosettadrone.util.TYPE_WAYPOINT_MAX_ALTITUDE;
 import static sq.rogue.rosettadrone.util.TYPE_WAYPOINT_MAX_SPEED;
@@ -95,6 +96,7 @@ public class MAVLinkReceiver {
     public boolean curvedFlightPath = true;
     public float flightPathRadius = .2f;
     DroneModel mModel;
+    CommandsManager commandsManager;
     private long mTimeStampLastGCSHeartbeat = 0;
     private int mNumGCSWaypoints = 0;
     private int wpState = 0;
@@ -108,6 +110,7 @@ public class MAVLinkReceiver {
 
         this.parent = parent;
         this.mModel = model;
+        this.commandsManager = new CommandsManager(parent, mModel);
     }
 
     public void process(MAVLinkMessage msg) {
@@ -137,101 +140,7 @@ public class MAVLinkReceiver {
 //                    return;
 //                }
 
-                switch (msg_cmd.command) {
-                    case MAV_CMD_COMPONENT_ARM_DISARM:
-                        if (msg_cmd.param1 == 1)
-                            mModel.armMotors();
-                        else
-                            mModel.disarmMotors();
-
-                        break;
-                    case MAV_CMD_DO_SET_MODE:
-                        changeFlightMode((int) msg_cmd.param1);
-                        break;
-                    case MAV_CMD_NAV_LOITER_UNLIM:
-   //                     mModel.set_flight_mode(ATTI);
-                        break;
-                    case MAV_CMD_NAV_TAKEOFF:
-                        Log.d(TAG,"ALT = " + msg_cmd.param7);
-                        mModel.mAirBorn = 0;
-                        mModel.do_takeoff();
-
-                        // Wait for command to be executed...
-                        while( mModel.mAirBorn == 0)
-                            safeSleep(250);
-
-                        if(mModel.mAirBorn == 1) {
-                            mModel.send_command_ack(MAV_CMD_NAV_TAKEOFF, MAV_RESULT.MAV_RESULT_FAILED);
-                        }
-                        else {
-                            int timeout = 0;
-                            // If we took off, wait for command co complete...
-                            while (mModel.m_alt < 1000.0 || timeout > (20*(1/0.250))) {
-                                safeSleep(250);
-                            }
-                            safeSleep(500);
-                            // If we are airborne, or was airborne from the start...
-                            if (mModel.m_alt >= 0.8) {
-                                mModel.do_set_motion_relative(MAV_CMD_NAV_TAKEOFF, 0, 0, msg_cmd.param7-(mModel.m_alt/(float)1000.0), 0, 0, 0, 0, 0, 0b00011111111000);
-                            }
-                        }
-                        break;
-                    case MAV_CMD_NAV_LAND:
-                        mModel.do_land();
-                        break;
-                    case MAV_CMD_DO_SET_HOME:
-                        parent.logMessageDJI("LAT = " + msg_cmd.param5);
-                        parent.logMessageDJI("LONG = " + msg_cmd.param6);
-                        parent.logMessageDJI("ALT = " + msg_cmd.param7);
-
-                        // TODO;
-                        break;
-                    case MAV_CMD_NAV_RETURN_TO_LAUNCH:
-                        mModel.do_go_home();
-                        mModel.send_command_ack(MAV_CMD_NAV_RETURN_TO_LAUNCH, MAV_RESULT.MAV_RESULT_ACCEPTED);
-                        break;
-                    case MAV_CMD_GET_HOME_POSITION:
-                        mModel.send_home_position();
-                        break;
-                    case MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES:
-                        mModel.send_autopilot_version();
-                        break;
-                    case MAV_CMD_VIDEO_START_CAPTURE:
-                        mModel.startRecordingVideo();
-                        break;
-                    case MAV_CMD_VIDEO_STOP_CAPTURE:
-                        mModel.stopRecordingVideo();
-                        break;
-                    case MAV_CMD_DO_DIGICAM_CONTROL:
-                        // DEPRECATED but still used by QGC
-                        mModel.takePhoto();
-                        break;
-                    case MAV_CMD_MISSION_START:
-                        mModel.startWaypointMission();
-                        break;
-
-                    case MAV_CMD_CONDITION_YAW:
-                        parent.logMessageDJI("Yaw = " + msg_cmd.param1);
-                        // If absolut yaw...
-                        if( msg_cmd.param4 == 0) {
-                            mModel.do_set_motion_absolute(
-                                    0,
-                                    0,
-                                    0,
-                                    msg_cmd.param1*(float)(Math.PI/180.0),
-                                    0,
-                                    0,
-                                    0,
-                                    10,
-                                    0b1111001111111111);
-                        }
-                        break;
-
-
-                    case MAV_CMD_DO_SET_SERVO:
-                        mModel.do_set_Gimbal(msg_cmd.param1, msg_cmd.param2);
-                        break;
-                }
+                commandsManager.manage_cmds(msg_cmd);
                 break;
 
             case MAVLINK_MSG_ID_COMMAND_INT:
