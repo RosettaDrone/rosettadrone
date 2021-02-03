@@ -2,23 +2,23 @@ package sq.rogue.rosettadrone.settings;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Patterns;
+
 import androidx.preference.EditTextPreference;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceGroup;
-import android.util.Patterns;
-
 import sq.rogue.rosettadrone.MainActivity;
 import sq.rogue.rosettadrone.NotificationHandler;
 import sq.rogue.rosettadrone.R;
 
+import static sq.rogue.rosettadrone.util.TYPE_APP_NAME;
 import static sq.rogue.rosettadrone.util.TYPE_GCS_IP;
 import static sq.rogue.rosettadrone.util.TYPE_GCS_PORT;
 import static sq.rogue.rosettadrone.util.TYPE_VIDEO_BITRATE;
 import static sq.rogue.rosettadrone.util.TYPE_VIDEO_IP;
 import static sq.rogue.rosettadrone.util.TYPE_VIDEO_PORT;
-import static sq.rogue.rosettadrone.util.TYPE_APP_NAME;
 
 // Display value of preference in summary field
 
@@ -188,6 +188,65 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Shared
         });
 
         findPreference("pref_app_name").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object newValue) {
+                MainActivity.FLAG_PREFS_CHANGED = true;
+                MainActivity.FLAG_APP_NAME_CHANGED = true;
+                return true;
+            }
+        });
+
+        findPreference("pref_external_video").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object newValue) {
+                try {
+                    if (Integer.parseInt((String) newValue) >= 1 && Integer.parseInt((String) newValue) <= 65535) {
+                        MainActivity.FLAG_PREFS_CHANGED = true;
+                        MainActivity.FLAG_VIDEO_ADDRESS_CHANGED = true;
+                        return true;
+                    }
+                } catch (NumberFormatException ignored) {
+                }
+                NotificationHandler.notifyAlert(SettingsFragment.this.getActivity(), TYPE_APP_NAME,
+                        null, null);
+                return false;
+            }
+        });
+
+        findPreference("pref_sim_pos_lat").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object newValue) {
+                try {
+                    if (Double.parseDouble((String) newValue) >= -90 && Double.parseDouble((String) newValue) <= 90) {
+                        MainActivity.FLAG_PREFS_CHANGED = true;
+                        MainActivity.FLAG_VIDEO_ADDRESS_CHANGED = true;
+                        return true;
+                    }
+                } catch (NumberFormatException ignored) {
+                }
+                NotificationHandler.notifyAlert(SettingsFragment.this.getActivity(), TYPE_APP_NAME,
+                        null, null);
+                return false;
+            }
+        });
+        findPreference("pref_sim_pos_lon").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object newValue) {
+                try {
+                    if (Double.parseDouble((String) newValue) >= 0 && Double.parseDouble((String) newValue) <= 180) {
+                        MainActivity.FLAG_PREFS_CHANGED = true;
+                        MainActivity.FLAG_VIDEO_ADDRESS_CHANGED = true;
+                        return true;
+                    }
+                } catch (NumberFormatException ignored) {
+                }
+                NotificationHandler.notifyAlert(SettingsFragment.this.getActivity(), TYPE_APP_NAME,
+                        null, null);
+                return false;
+            }
+        });
+
+        findPreference("pref_sim_pos_alt").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
             @Override
             public boolean onPreferenceChange(Preference preference, Object newValue) {
                 try {

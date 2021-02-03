@@ -6,13 +6,13 @@
 
 package com.MAVLink.enums;
 
-/** 
-* Winch actions.
-*/
+/**
+ * Winch actions.
+ */
 public class WINCH_ACTIONS {
-   public static final int WINCH_RELAXED = 0; /* Relax winch. | */
-   public static final int WINCH_RELATIVE_LENGTH_CONTROL = 1; /* Winch unwinds or winds specified length of cable optionally using specified rate. | */
-   public static final int WINCH_RATE_CONTROL = 2; /* Winch unwinds or winds cable at specified rate in meters/seconds. | */
-   public static final int WINCH_ACTIONS_ENUM_END = 3; /*  | */
+    public static final int WINCH_RELAXED = 0; /* Relax winch. | */
+    public static final int WINCH_RELATIVE_LENGTH_CONTROL = 1; /* Winch unwinds or winds specified length of cable optionally using specified rate. | */
+    public static final int WINCH_RATE_CONTROL = 2; /* Winch unwinds or winds cable at specified rate in meters/seconds. | */
+    public static final int WINCH_ACTIONS_ENUM_END = 3; /*  | */
 }
             

@@ -283,11 +283,10 @@ int64_t avio_skip(AVIOContext *s, int64_t offset);
  */
 static av_always_inline int64_t
 avio_tell(AVIOContext
-*s)
-{
-return
-avio_seek(s,
-0, SEEK_CUR);
+          *s) {
+    return
+            avio_seek(s,
+                      0, SEEK_CUR);
 }
 
 /**
@@ -308,6 +307,7 @@ int avio_feof(AVIOContext *s);
  */
 attribute_deprecated
 int url_feof(AVIOContext *s);
+
 #endif
 
 /** @warning currently size is limited */

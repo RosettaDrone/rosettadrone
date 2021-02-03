@@ -14,6 +14,16 @@
             android:title="@string/pref_drone_id" />
 
         <PreferenceCategory
+            android:key="drone_name_prefs"
+            android:title="App Name">
+
+            <androidx.preference.EditTextPreference
+                android:defaultValue="RosettaDrone 2"
+                android:key="pref_app_name"
+                android:title="@string/pref_app" />
+        </PreferenceCategory>
+
+        <PreferenceCategory
             android:key="drone_rtl_prefs"
             android:title="@string/pref_drone_rtl_cat">
             <androidx.preference.EditTextPreference
@@ -31,6 +41,27 @@
         </PreferenceCategory>
 
         <PreferenceCategory
+            android:key="drone_maptype_prefs"
+            android:title="@string/pref_maptype_mode">
+
+            <androidx.preference.ListPreference
+                android:key="pref_maptype_mode"
+                android:title="@string/pref_maptype"
+                android:entries="@array/maptype_array"
+                android:entryValues="@array/maptypet_values_array"
+                android:defaultValue="2" />
+        </PreferenceCategory>
+
+
+        <PreferenceCategory
+            android:title="Use External H.264 input">
+            <androidx.preference.EditTextPreference
+                android:defaultValue="0"
+                android:key="pref_external_video"
+                android:title="Port Number" />
+        </PreferenceCategory>
+
+        <PreferenceCategory
             android:key="drone_heading_prefs"
             android:title="@string/pref_drone_heading_cat">
 
@@ -42,15 +73,25 @@
                 android:defaultValue="0"
                 android:enabled="false" />
         </PreferenceCategory>
-
+v
         <PreferenceCategory
-            android:key="drone_name_prefs"
-            android:title="App Name">
+            android:key="sim_pos_prefs"
+            android:title="Sim Settings">
 
             <androidx.preference.EditTextPreference
-                android:defaultValue=" "
-                android:key="pref_app_name"
-                android:title="@string/pref_app" />
+                android:defaultValue="60.4094"
+                android:key="pref_sim_pos_lat"
+                android:title="@string/pref_sim_pos_lat" />
+
+            <androidx.preference.EditTextPreference
+                android:defaultValue="10.4911"
+                android:key="pref_sim_pos_lon"
+                android:title="@string/pref_sim_pos_lon" />
+
+            <androidx.preference.EditTextPreference
+                android:defaultValue="210.0"
+                android:key="pref_sim_pos_alt"
+                android:title="@string/pref_sim_pos_alt" />
 
         </PreferenceCategory>
 

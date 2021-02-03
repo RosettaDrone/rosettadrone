@@ -49,31 +49,31 @@ enum AVFrameSideDataType {
     /**
      * The data is the AVPanScan struct defined in libavcodec.
      */
-            AV_FRAME_DATA_PANSCAN,
+    AV_FRAME_DATA_PANSCAN,
     /**
      * ATSC A53 Part 4 Closed Captions.
      * A53 CC bitstream is stored as uint8_t in AVFrameSideData.data.
      * The number of bytes of CC data is AVFrameSideData.size.
      */
-            AV_FRAME_DATA_A53_CC,
+    AV_FRAME_DATA_A53_CC,
     /**
      * Stereoscopic 3d metadata.
      * The data is the AVStereo3D struct defined in libavutil/stereo3d.h.
      */
-            AV_FRAME_DATA_STEREO3D,
+    AV_FRAME_DATA_STEREO3D,
     /**
      * The data is the AVMatrixEncoding enum defined in libavutil/channel_layout.h.
      */
-            AV_FRAME_DATA_MATRIXENCODING,
+    AV_FRAME_DATA_MATRIXENCODING,
     /**
      * Metadata relevant to a downmix procedure.
      * The data is the AVDownmixInfo struct defined in libavutil/downmix_info.h.
      */
-            AV_FRAME_DATA_DOWNMIX_INFO,
+    AV_FRAME_DATA_DOWNMIX_INFO,
     /**
      * ReplayGain information in the form of the AVReplayGain struct.
      */
-            AV_FRAME_DATA_REPLAYGAIN,
+    AV_FRAME_DATA_REPLAYGAIN,
     /**
      * This side data contains a 3x3 transformation matrix describing an affine
      * transformation that needs to be applied to the frame for correct
@@ -81,19 +81,19 @@ enum AVFrameSideDataType {
      *
      * See libavutil/display.h for a detailed description of the data.
      */
-            AV_FRAME_DATA_DISPLAYMATRIX,
+    AV_FRAME_DATA_DISPLAYMATRIX,
     /**
      * Active Format Description data consisting of a single byte as specified
      * in ETSI TS 101 154 using AVActiveFormatDescription enum.
      */
-            AV_FRAME_DATA_AFD,
+    AV_FRAME_DATA_AFD,
     /**
      * Motion vectors exported by some codecs (on demand through the export_mvs
      * flag set in the libavcodec AVCodecContext flags2 option).
      * The data is the AVMotionVector struct defined in
      * libavutil/motion_vector.h.
      */
-            AV_FRAME_DATA_MOTION_VECTORS,
+    AV_FRAME_DATA_MOTION_VECTORS,
     /**
      * Recommmends skipping the specified number of samples. This is exported
      * only if the "skip_manual" AVOption is set in libavcodec.
@@ -105,7 +105,7 @@ enum AVFrameSideDataType {
      * u8    reason for end   skip (0=padding silence, 1=convergence)
      * @endcode
      */
-            AV_FRAME_DATA_SKIP_SAMPLES,
+    AV_FRAME_DATA_SKIP_SAMPLES,
 };
 
 enum AVActiveFormatDescription {

@@ -1,3 +1,0 @@
-/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cmake/release/x86/CMakeFiles/rebuild_cache.dir
-/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cmake/release/x86/CMakeFiles/edit_cache.dir
-/home/smartdrone/Working_Private/rosettadrone_work/app/.cxx/cmake/release/x86/CMakeFiles/djivideojni.dir

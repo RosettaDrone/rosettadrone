@@ -2,9 +2,11 @@ package sq.rogue.rosettadrone;
 
 import android.content.Context;
 import android.content.DialogInterface;
-import com.google.android.material.snackbar.Snackbar;
-import androidx.appcompat.app.AlertDialog;
 import android.view.View;
+
+import com.google.android.material.snackbar.Snackbar;
+
+import androidx.appcompat.app.AlertDialog;
 
 import static sq.rogue.rosettadrone.util.TYPE_DRONE_ID;
 import static sq.rogue.rosettadrone.util.TYPE_DRONE_RTL_ALTITUDE;

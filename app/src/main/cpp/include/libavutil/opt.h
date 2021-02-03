@@ -584,7 +584,7 @@ enum {
      * Accept to parse a value without a key; the key will then be returned
      * as NULL.
      */
-            AV_OPT_FLAG_IMPLICIT_KEY = 1,
+    AV_OPT_FLAG_IMPLICIT_KEY = 1,
 };
 
 /**

@@ -2,13 +2,14 @@ package sq.rogue.rosettadrone.settings.drone;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
+
+import java.util.Map;
+
 import androidx.preference.EditTextPreference;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
-
-import java.util.Map;
-
 import sq.rogue.rosettadrone.MainActivity;
 import sq.rogue.rosettadrone.NotificationHandler;
 import sq.rogue.rosettadrone.R;
@@ -196,7 +197,14 @@ public class DroneSettingsFragment extends PreferenceFragmentCompat implements S
                 return false;
             }
         });
-
+        findPreference("pref_maptype_mode").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object newValue) {
+                MainActivity.FLAG_PREFS_CHANGED = true;
+                MainActivity.FLAG_MAPS_CHANGED = true;
+                return true;
+            }
+        });
 
         findPreference("pref_drone_collision_avoidance").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
             @Override

@@ -1,13 +1,13 @@
 package sq.rogue.rosettadrone.settings;
 
 import android.os.Bundle;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentTransaction;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.preference.PreferenceFragmentCompat;
-import androidx.preference.PreferenceScreen;
 import android.util.Log;
 
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
+import androidx.preference.PreferenceFragmentCompat;
+import androidx.preference.PreferenceScreen;
 import sq.rogue.rosettadrone.R;
 import sq.rogue.rosettadrone.settings.drone.DroneSettingsFragment;
 

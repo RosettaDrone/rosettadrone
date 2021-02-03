@@ -28,7 +28,7 @@ typedef enum AVThreadMessageFlags {
      * If this flag is set, send and recv operations are non-blocking and
      * return AVERROR(EAGAIN) immediately if they can not proceed.
      */
-            AV_THREAD_MESSAGE_NONBLOCK = 1,
+    AV_THREAD_MESSAGE_NONBLOCK = 1,
 
 } AVThreadMessageFlags;
 

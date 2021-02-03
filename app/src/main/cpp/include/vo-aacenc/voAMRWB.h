@@ -52,12 +52,12 @@ typedef enum {
     /*One word (2-byte) for sync word (0x6b21)*/
     /*One word (2-byte) for frame length N.*/
     /*N words (2-byte) containing N bits (bit 0 = 0x007f, bit 1 = 0x0081).*/
-            VOAMRWB_ITU = 1,
+    VOAMRWB_ITU = 1,
     /*One word (2-byte) for sync word (0x6b21).*/
     /*One word (2-byte) to indicate the frame type.*/
     /*One word (2-byte) to indicate the mode.*/
     /*N words  (2-byte) containing N bits (bit 0 = 0xff81, bit 1 = 0x007f).*/
-            VOAMRWB_RFC3267 = 2,    /* see RFC 3267 */
+    VOAMRWB_RFC3267 = 2,    /* see RFC 3267 */
     VOAMRWB_TMAX = VO_MAX_ENUM_VALUE
 } VOAMRWBFRAMETYPE;
 

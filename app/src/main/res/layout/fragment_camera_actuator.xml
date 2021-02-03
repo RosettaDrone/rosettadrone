@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <RadioGroup
+        android:id="@+id/radio_camera_type"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <RadioButton
+            android:id="@+id/rb_shoot_single_photo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="SHOOT_SINGLE_PHOTO" />
+
+        <RadioButton
+            android:id="@+id/rb_start_record_video"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="START_RECORD_VIDEO" />
+
+        <RadioButton
+            android:id="@+id/rb_stop_record_video"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="STOP_RECORD_VIDEO" />
+
+        <RadioButton
+            android:id="@+id/rb_focus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="FOCUS" />
+
+        <RadioButton
+            android:id="@+id/rb_zoom"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ZOOM" />
+
+    </RadioGroup>
+
+    <EditText
+        android:id="@+id/et_focus_target_x"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="input focus target ratio(x) [range: (0,1)]"
+        android:inputType="numberDecimal"
+        android:visibility="gone"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/radio_camera_type" />
+
+    <EditText
+        android:id="@+id/et_focus_target_y"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="input focus target ratio(y) [range: (0,1)]"
+        android:inputType="numberDecimal"
+        android:visibility="gone"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/et_focus_target_x" />
+
+
+    <EditText
+        android:id="@+id/et_zoom"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="Input zoom"
+        android:inputType="number"
+        android:visibility="gone"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/et_focus_target_y" />
+</androidx.constraintlayout.widget.ConstraintLayout>

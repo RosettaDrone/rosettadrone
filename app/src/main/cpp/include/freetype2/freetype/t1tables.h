@@ -190,12 +190,12 @@ typedef PS_PrivateRec T1_Private;
 /*                                                                       */
 typedef enum T1_Blend_Flags_ {
     /*# required fields in a FontInfo blend dictionary */
-            T1_BLEND_UNDERLINE_POSITION = 0,
+    T1_BLEND_UNDERLINE_POSITION = 0,
     T1_BLEND_UNDERLINE_THICKNESS,
     T1_BLEND_ITALIC_ANGLE,
 
     /*# required fields in a Private blend dictionary */
-            T1_BLEND_BLUE_VALUES,
+    T1_BLEND_BLUE_VALUES,
     T1_BLEND_OTHER_BLUES,
     T1_BLEND_STANDARD_WIDTH,
     T1_BLEND_STANDARD_HEIGHT,
@@ -208,7 +208,7 @@ typedef enum T1_Blend_Flags_ {
     T1_BLEND_FORCE_BOLD,
 
     /*# never remove */
-            T1_BLEND_MAX
+    T1_BLEND_MAX
 
 } T1_Blend_Flags;
 
@@ -522,7 +522,7 @@ typedef enum T1_EncodingType_ {
 /*                                                                       */
 typedef enum PS_Dict_Keys_ {
     /* conventionally in the font dictionary */
-            PS_DICT_FONT_TYPE,              /* FT_Byte         */
+    PS_DICT_FONT_TYPE,              /* FT_Byte         */
     PS_DICT_FONT_MATRIX,            /* FT_Fixed        */
     PS_DICT_FONT_BBOX,              /* FT_Fixed        */
     PS_DICT_PAINT_TYPE,             /* FT_Byte         */
@@ -535,7 +535,7 @@ typedef enum PS_Dict_Keys_ {
     PS_DICT_ENCODING_ENTRY,         /* FT_String*      */
 
     /* conventionally in the font Private dictionary */
-            PS_DICT_NUM_SUBRS,              /* FT_Int     */
+    PS_DICT_NUM_SUBRS,              /* FT_Int     */
     PS_DICT_SUBR,                   /* FT_String* */
     PS_DICT_STD_HW,                 /* FT_UShort  */
     PS_DICT_STD_VW,                 /* FT_UShort  */
@@ -562,7 +562,7 @@ typedef enum PS_Dict_Keys_ {
     PS_DICT_LANGUAGE_GROUP,         /* FT_Long    */
 
     /* conventionally in the font FontInfo dictionary */
-            PS_DICT_VERSION,                /* FT_String* */
+    PS_DICT_VERSION,                /* FT_String* */
     PS_DICT_NOTICE,                 /* FT_String* */
     PS_DICT_FULL_NAME,              /* FT_String* */
     PS_DICT_FAMILY_NAME,            /* FT_String* */
