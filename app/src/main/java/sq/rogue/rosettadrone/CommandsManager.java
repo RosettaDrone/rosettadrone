@@ -11,6 +11,7 @@ import dji.common.mission.waypoint.WaypointMissionState;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_COMPONENT_ARM_DISARM;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_CONDITION_YAW;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_DO_DIGICAM_CONTROL;
+import static com.MAVLink.enums.MAV_CMD.MAV_CMD_DO_JUMP;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_DO_SET_HOME;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_DO_SET_MODE;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_DO_SET_SERVO;
@@ -42,6 +43,8 @@ public class CommandsManager {
     }
 
     public void manage_cmds(msg_command_long msg_cmd){
+
+
         switch (msg_cmd.command) {
             case MAV_CMD_COMPONENT_ARM_DISARM:
                 parent.logMessageDJI("Received MAV: MAV_CMD_COMPONENT_ARM_DISARM");
@@ -156,6 +159,7 @@ public class CommandsManager {
                     mModel.resumeWaypointMission();
                 }
                 mModel.send_command_ack(MAV_CMD_OVERRIDE_GOTO, MAV_RESULT.MAV_RESULT_ACCEPTED);
+                break;
             case MAV_CMD_CONDITION_YAW:
                 parent.logMessageDJI("Yaw = " + msg_cmd.param1);
                 // If absolut yaw...
@@ -182,9 +186,15 @@ public class CommandsManager {
                 parent.logMessageDJI("Received MAV: MAV_PROTOCOL_CAPABILITY_FTP");
                 mModel.send_command_ack(MAV_PROTOCOL_CAPABILITY_FTP, MAV_RESULT.MAV_RESULT_ACCEPTED);
                 break;
+            // JUMP is just a test function to enter the Timeline...
+            case MAV_CMD_DO_JUMP:
+                Log.d(TAG, "Start Timeline...");
+                //    mModel.echoLoadedMission();
+                break;
             default:
                 parent.logMessageDJI("Received unknown command id: " + msg_cmd.command);
                 parent.logMessageDJI("R:" + msg_cmd.toString());
+                break;
         }
     }
 
