@@ -15,11 +15,13 @@ import com.MAVLink.common.msg_param_request_read;
 import com.MAVLink.common.msg_param_set;
 import com.MAVLink.common.msg_set_mode;
 import com.MAVLink.common.msg_set_position_target_global_int;
+import com.MAVLink.common.msg_file_transfer_protocol;
 import com.MAVLink.common.msg_set_position_target_local_ned;
 import com.MAVLink.enums.MAV_CMD;
 import com.MAVLink.enums.MAV_MISSION_TYPE;
 import com.MAVLink.enums.MAV_RESULT;
 
+import java.io.File;
 import java.util.ArrayList;
 
 import dji.common.flightcontroller.FlightControllerState;
@@ -70,6 +72,8 @@ import static com.MAVLink.enums.MAV_CMD.MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_VIDEO_START_CAPTURE;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_VIDEO_STOP_CAPTURE;
 import static com.MAVLink.enums.MAV_MISSION_TYPE.MAV_MISSION_TYPE_MISSION;
+import static com.MAVLink.common.msg_file_transfer_protocol.MAVLINK_MSG_ID_FILE_TRANSFER_PROTOCOL;
+import static com.MAVLink.enums.MAV_GOTO.MAV_GOTO_HOLD_AT_SPECIFIED_POSITION;
 import static sq.rogue.rosettadrone.util.TYPE_WAYPOINT_DISTANCE;
 import static sq.rogue.rosettadrone.util.TYPE_WAYPOINT_MAX_ALTITUDE;
 import static sq.rogue.rosettadrone.util.TYPE_WAYPOINT_MAX_SPEED;
@@ -92,6 +96,7 @@ public class MAVLinkReceiver {
     public boolean curvedFlightPath = true;
     public float flightPathRadius = .2f;
     DroneModel mModel;
+    FTPManager ftpManager;
     private long mTimeStampLastGCSHeartbeat = 0;
     private int mNumGCSWaypoints = 0;
     private int wpState = 0;
@@ -490,6 +495,14 @@ public class MAVLinkReceiver {
                 if (ym != null) {
                     ym.getWaypointList().clear();
                 }
+                break;
+            case MAVLINK_MSG_ID_FILE_TRANSFER_PROTOCOL:
+                msg_file_transfer_protocol msg_ftp_item = (msg_file_transfer_protocol) msg;
+                ftpManager.manage_ftp(msg_ftp_item);
+                break;
+            default:
+                parent.logMessageDJI("Received (unkown) message");
+                parent.logMessageDJI( String.valueOf(msg.msgid));
                 break;
         }
     }

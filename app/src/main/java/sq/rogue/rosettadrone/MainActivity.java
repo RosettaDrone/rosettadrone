@@ -85,6 +85,7 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -92,6 +93,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import java.nio.ByteBuffer;
+import java.util.Collections;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -108,6 +111,8 @@ import dji.common.mission.waypoint.Waypoint;
 import dji.common.mission.waypoint.WaypointMission;
 import dji.common.model.LocationCoordinate2D;
 import dji.common.product.Model;
+import dji.common.util.CommonCallbacks;
+import dji.log.DJILog;
 import dji.sdk.base.BaseComponent;
 import dji.sdk.base.BaseProduct;
 import dji.sdk.camera.Camera;
@@ -116,6 +121,14 @@ import dji.sdk.codec.DJICodecManager;
 import dji.sdk.products.Aircraft;
 import dji.sdk.sdkmanager.DJISDKInitEvent;
 import dji.sdk.sdkmanager.DJISDKManager;
+
+import dji.sdk.media.DownloadListener;
+import dji.sdk.media.FetchMediaTask;
+import dji.sdk.media.FetchMediaTaskContent;
+import dji.sdk.media.FetchMediaTaskScheduler;
+import dji.sdk.media.MediaFile;
+import dji.sdk.media.MediaManager;
+
 import sq.rogue.rosettadrone.logs.LogFragment;
 import sq.rogue.rosettadrone.settings.SettingsActivity;
 import sq.rogue.rosettadrone.settings.Waypoint1Activity;
@@ -210,6 +223,16 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private List<Waypoint> waypointList = new ArrayList<>();
     private List<Polyline> m_line = new ArrayList<>();
     private LatLng m_lastPos;
+
+    public List<MediaFile> mediaFileList = new ArrayList<MediaFile>();
+    private MediaManager mMediaManager;
+    private MediaManager.FileListState currentFileListState = MediaManager.FileListState.UNKNOWN;
+    private FetchMediaTaskScheduler scheduler;
+    public String last_downloaded_file;
+    public boolean downloadError = false;
+    public int lastDownloadedIndex = -1;
+    public int currentProgress = -1;
+    File destDir = new File(Environment.getExternalStorageDirectory().getPath() + "/DroneApp/");
 
 
     //-----------------------------------------------------------------------------//
@@ -452,6 +475,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             mCodecManager.cleanSurface();
             mCodecManager.destroyCodec();
         }
+        if (mediaFileList != null) {
+            mediaFileList.clear();
+        }
+
         doUnbindService();
 
         //Intent intent = getIntent();
@@ -793,6 +820,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         Handler mTimerHandler = new Handler(Looper.getMainLooper());
         mTimerHandler.postDelayed(enablesafety, 3000);
         //--------------------------------------------------------------
+        logMessageDJI("Init media manager");
+        initMediaManager();
     }
 
     // Start the AI Pluggin (Developed by the customers...)
@@ -1618,6 +1647,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             aMap.setMapType(mMaptype);
             FLAG_MAPS_CHANGED = false;
         }
+
+        getFileList();
     }
 
     //---------------------------------------------------------------------------------------
@@ -1634,6 +1665,198 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     //region GCS Timer Task
+    //---------------------------------------------------------------------------------------
+
+    //---------------------------------------------------------------------------------------
+    // FTP and file related functions
+    public void initMediaManager() {
+        if (RDApplication.getProductInstance() == null) {
+            mediaFileList.clear();
+            DJILog.e(TAG, "Product disconnected");
+            return;
+        } else {
+            if (null != RDApplication.getCameraInstance() && RDApplication.getCameraInstance().isMediaDownloadModeSupported()) {
+                mMediaManager = RDApplication.getCameraInstance().getMediaManager();
+                if(!RDApplication.getCameraInstance().isSSDSupported()){
+                    logMessageDJI("Internal sd is not suported");
+                }
+                if (null != mMediaManager) {
+                    mMediaManager.addUpdateFileListStateListener(this.updateFileListStateListener);
+                    switchCameraMode(SettingsDefinitions.CameraMode.MEDIA_DOWNLOAD);
+                    RDApplication.getCameraInstance().setMode(SettingsDefinitions.CameraMode.MEDIA_DOWNLOAD, new CommonCallbacks.CompletionCallback() {
+                        @Override
+                        public void onResult(DJIError error) {
+                            if (error == null) {
+                                DJILog.e(TAG, "Set cameraMode success");
+                                logMessageDJI("Set cameraMode success");
+                            } else {
+                                logMessageDJI("Set cameraMode failed");
+                                DJILog.e(TAG, "Set cameraMode failed");
+                                logMessageDJI(error.toString());
+                            }
+                            getFileList();
+                        }
+                    });
+                    if (mMediaManager.isVideoPlaybackSupported()) {
+                        DJILog.e(TAG, "Camera support video playback!");
+                    } else {
+                        logMessageDJI("Camera does not support video playback!");
+                    }
+
+                    scheduler = mMediaManager.getScheduler();
+                }
+
+            } else if (null != RDApplication.getCameraInstance()
+                    && !RDApplication.getCameraInstance().isMediaDownloadModeSupported()) {
+                logMessageDJI("Media Download Mode not Supported");
+            }
+        }
+        return;
+    }
+
+    private void switchCameraMode(SettingsDefinitions.CameraMode cameraMode){
+
+        Camera camera = RDApplication.getCameraInstance();
+        if (camera != null) {
+            camera.setMode(cameraMode, new CommonCallbacks.CompletionCallback() {
+                @Override
+                public void onResult(DJIError error) {
+
+                    if (error == null) {
+                        logMessageDJI("Switch Camera Mode Succeeded");
+                    } else {
+                        logMessageDJI(error.getDescription());
+
+                    }
+                }
+            });
+            camera.getMode(new CommonCallbacks.CompletionCallbackWith<SettingsDefinitions.CameraMode>() {
+                @Override
+                public void onSuccess(SettingsDefinitions.CameraMode cameraMode) {
+                    logMessageDJI("Got camera mode" + cameraMode.toString());
+                }
+
+                @Override
+                public void onFailure(DJIError djiError) {
+                    logMessageDJI("error in getMode");
+                    logMessageDJI(djiError.getDescription());
+                    logMessageDJI(djiError.toString());
+                }
+            });
+        }
+    }
+
+    public void getFileList() {
+        RDApplication.getProductInstance().getCamera().getMediaManager();
+        mMediaManager = RDApplication.getCameraInstance().getMediaManager();
+        if (mMediaManager != null) {
+            logMessageDJI(currentFileListState.name());
+            if ((currentFileListState == MediaManager.FileListState.SYNCING) || (currentFileListState == MediaManager.FileListState.DELETING)){
+                DJILog.e(TAG, "Media Manager is busy.");
+                logMessageDJI("Media Manager is busy.");
+            } else {
+                mMediaManager.refreshFileListOfStorageLocation(SettingsDefinitions.StorageLocation.SDCARD, new CommonCallbacks.CompletionCallback() {
+                    @Override
+                    public void onResult(DJIError djiError) {
+                        if (null == djiError) {
+
+                            //Reset data
+                            if (currentFileListState != MediaManager.FileListState.INCOMPLETE) {
+                                mediaFileList.clear();
+                            }
+
+                            mediaFileList = mMediaManager.getSDCardFileListSnapshot();
+                            Collections.sort(mediaFileList, new Comparator<MediaFile>() {
+                                @Override
+                                public int compare(MediaFile lhs, MediaFile rhs) {
+                                    if (lhs.getTimeCreated() < rhs.getTimeCreated()) {
+                                        return -1;
+                                    } else if (lhs.getTimeCreated() > rhs.getTimeCreated()) {
+                                        return 1;
+                                    }
+                                    return 0;
+                                }
+                            });
+                            scheduler.resume(new CommonCallbacks.CompletionCallback() {
+                                @Override
+                                public void onResult(DJIError error) {
+                                    if (error == null) {
+                                    }
+                                }
+                            });
+                            logMessageDJI( "Got Media Files: " + mediaFileList.size());
+
+                        } else {
+                            logMessageDJI( "Get Media File List Failed: " + djiError.getDescription());
+                        }
+                    }
+                });
+
+            }
+        } else {
+            logMessageDJI("mMediaManager == null");
+        }
+    }
+    //Listeners
+    private MediaManager.FileListStateListener updateFileListStateListener = new MediaManager.FileListStateListener() {
+        @Override
+        public void onFileListStateChange(MediaManager.FileListState state) {
+            currentFileListState = state;
+            logMessageDJI("Changed state to " + currentFileListState.name());
+            if(currentFileListState == MediaManager.FileListState.UP_TO_DATE){
+                logMessageDJI("getFileList()");
+                getFileList();
+            }
+        }
+    };
+
+    public void downloadFileByIndex(final int index){
+        if ((mediaFileList.get(index).getMediaType() == MediaFile.MediaType.PANORAMA)
+                || (mediaFileList.get(index).getMediaType() == MediaFile.MediaType.SHALLOW_FOCUS)) {
+            logMessageDJI( "Media type is " + mediaFileList.get(index).getMediaType() + " This is not accaptable.");
+            return;
+        }
+
+        mediaFileList.get(index).fetchFileData(destDir, null, new DownloadListener<String>() {
+            @Override
+            public void onFailure(DJIError error) {
+                logMessageDJI( "Download File Failed" + error.getDescription());
+                currentProgress = -1;
+                downloadError = true;
+            }
+
+            @Override
+            public void onProgress(long total, long current) {
+            }
+
+            @Override
+            public void onRateUpdate(long total, long current, long persize) {
+                int tmpProgress = (int) (1.0 * current / total * 100);
+                if (tmpProgress != currentProgress) {
+                    currentProgress = tmpProgress;
+                }
+            }
+
+            @Override
+            public void onStart() {
+                currentProgress = 0;
+            }
+
+            @Override
+            public void onSuccess(String filePath) {
+                logMessageDJI( "Download File Success: " + filePath + "/" + mediaFileList.get(index).getFileName());
+                last_downloaded_file = filePath+ "/" + mediaFileList.get(index).getFileName();
+                currentProgress = -1;
+                downloadError = false;
+                lastDownloadedIndex = index;
+            }
+        });
+    }
+
+    void onFileListStateChange(MediaManager.FileListState state){
+        logMessageDJI( "Files changed?");
+    }
+    // FTP and file related functions
     //---------------------------------------------------------------------------------------
 
     private static class GCSSenderTimerTask extends TimerTask {
