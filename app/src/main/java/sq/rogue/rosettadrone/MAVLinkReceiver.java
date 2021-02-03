@@ -97,6 +97,7 @@ public class MAVLinkReceiver {
     public float flightPathRadius = .2f;
     DroneModel mModel;
     FTPManager ftpManager;
+    CommandsManager commandsManager;
     private long mTimeStampLastGCSHeartbeat = 0;
     private int mNumGCSWaypoints = 0;
     private int wpState = 0;
@@ -109,6 +110,7 @@ public class MAVLinkReceiver {
 
         this.parent = parent;
         this.mModel = model;
+        this.commandsManager = new CommandsManager(parent, mModel);
     }
 
     public void process(MAVLinkMessage msg) {
