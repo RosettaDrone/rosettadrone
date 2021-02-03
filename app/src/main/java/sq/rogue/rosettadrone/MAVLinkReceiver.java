@@ -304,8 +304,8 @@ public class MAVLinkReceiver {
                 Log.d(TAG, "Lon = " + goto_item.y);
                 Log.d(TAG, "ALT = " + goto_item.z);
                 mModel.do_set_motion_absolute(
-                        (double) goto_item.x,
-                        (double) goto_item.y,
+                        (double) goto_item.x / 10000000,
+                        (double) goto_item.y / 10000000,
                         goto_item.z,
                         goto_item.param4,
                         0,
