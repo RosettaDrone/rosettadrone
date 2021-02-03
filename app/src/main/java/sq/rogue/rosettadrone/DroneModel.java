@@ -13,6 +13,7 @@ import com.MAVLink.common.msg_attitude;
 import com.MAVLink.common.msg_autopilot_version;
 import com.MAVLink.common.msg_battery_status;
 import com.MAVLink.common.msg_command_ack;
+import com.MAVLink.common.msg_file_transfer_protocol;
 import com.MAVLink.common.msg_global_position_int;
 import com.MAVLink.common.msg_gps_raw_int;
 import com.MAVLink.common.msg_heartbeat;
@@ -33,6 +34,7 @@ import com.MAVLink.common.msg_statustext;
 import com.MAVLink.common.msg_sys_status;
 import com.MAVLink.common.msg_vfr_hud;
 import com.MAVLink.common.msg_vibration;
+import com.MAVLink.common.msg_file_transfer_protocol;
 import com.MAVLink.enums.GPS_FIX_TYPE;
 import com.MAVLink.enums.MAV_AUTOPILOT;
 import com.MAVLink.enums.MAV_CMD;
@@ -45,6 +47,8 @@ import com.MAVLink.enums.MAV_RESULT;
 import com.MAVLink.enums.MAV_STATE;
 import com.MAVLink.enums.MAV_TYPE;
 
+import com.google.android.gms.common.util.ArrayUtils;
+
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -55,6 +59,7 @@ import java.util.Collections;
 import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.nio.ByteBuffer;
 
 import androidx.annotation.NonNull;
 import dji.common.camera.SettingsDefinitions;
@@ -205,6 +210,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     public boolean mAutonomy = false;
     public int mAirBorn = 0;
     int mission_loaded = -1;
+    public boolean mission_started = true;
 
     public boolean mission_started = true;
 
@@ -1016,6 +1022,67 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         sendMessage(msg);
     }
 
+    void send_command_ftp_string_ack(int message_id, String data, byte[] header) {
+        msg_file_transfer_protocol msg = new msg_file_transfer_protocol();
+        byte[] byteString = data.getBytes();
+        short[] shortArray = new short[251];
+
+
+        if(header != null){
+            for(int i = 0; i < header.length; i++) {
+                short s = (short)(header[i] & 0xFF);
+                shortArray[i] = s;
+            }
+        }
+
+        int sizeCounter = 0;
+        for (int i = 0; i < byteString.length; i++){
+            int added = 12 + i;
+            short s = byteString[i];
+            shortArray[added] = s;
+            sizeCounter += 1;
+        }
+        shortArray[3] = (short)128;
+        shortArray[4] = (short)sizeCounter;
+        msg.payload = shortArray;
+        msg.msgid = message_id;
+
+        sendMessage(msg);
+    }
+
+    void send_command_ftp_bytes_ack(int message_id, byte[] data) {
+        msg_file_transfer_protocol msg = new msg_file_transfer_protocol();
+        short[] shortArray = new short[data.length];
+        for (int i = 0; i < data.length; i++){
+            short s = (short)(data[i] & 0xFF);
+            shortArray[i] = s;
+        }
+
+        shortArray[3] = (short)128;
+
+        msg.payload = shortArray;
+        msg.msgid = message_id;
+
+        sendMessage(msg);
+    }
+
+    void send_command_ftp_nak(int message_id, int errorCode, int failCode) {
+        msg_file_transfer_protocol msg = new msg_file_transfer_protocol();
+        short[] shortArray = new short[251];
+
+        shortArray[3] = (short)129; //nak code
+        if(failCode != 0){
+            shortArray[4] = (short)2; //error size
+            shortArray[13] = (short)failCode;
+        } else {
+            shortArray[4] = (short)1; //error size
+        }
+        shortArray[12] = (short)errorCode; // the error code
+
+        msg.msgid = message_id;
+        sendMessage(msg);
+    }
+
     private void send_global_position_int() {
         msg_global_position_int msg = new msg_global_position_int();
 
@@ -1569,6 +1636,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
     void startWaypointMission() {
         mAutonomy = false;
+        mission_started = true;
         parent.logMessageDJI("start WaypointMission()");
 
         if (getWaypointMissionOperator() == null) {
@@ -1596,6 +1664,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
     public void stopWaypointMission() {
         mAutonomy = false;
+        mission_started = false;
         if (getWaypointMissionOperator() == null) {
             parent.logMessageDJI("stopWaypointMission() - mWaypointMissionOperator null");
             return;
