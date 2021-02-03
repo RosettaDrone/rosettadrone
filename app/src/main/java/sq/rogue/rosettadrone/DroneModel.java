@@ -206,6 +206,8 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     public int mAirBorn = 0;
     int mission_loaded = -1;
 
+    public boolean mission_started = true;
+
     DroneModel(MainActivity parent, DatagramSocket socket, boolean sim) {
         this.parent = parent;
         this.socket = socket;
