@@ -15,14 +15,15 @@ import android.graphics.Color;
 import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
-import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 import android.util.Log;
 
 import java.io.ByteArrayInputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
+
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 
 public class VideoService extends Service implements NativeHelper.NativeDataListener {
 
@@ -50,6 +51,7 @@ public class VideoService extends Service implements NativeHelper.NativeDataList
         initVideoStreamDecoder();
         super.onCreate();
     }
+
     @Override
     public void onDestroy() {
         setActionDroneDisconnected();
@@ -79,16 +81,16 @@ public class VideoService extends Service implements NativeHelper.NativeDataList
         return channelID;
     }
 
-    public void setParameters(String ip, int videoPort, int videoBitrate, int encodeSpeed){
+    public void setParameters(String ip, int videoPort, int videoBitrate, int encodeSpeed) {
         Log.e(TAG, "setParameters");
         mip = ip;
-        mvideoPort= videoPort;
+        mvideoPort = videoPort;
         mvideoBitrate = videoBitrate;
         mencodeSpeed = encodeSpeed;
         initPacketizer(mip, mvideoPort, mvideoBitrate, mencodeSpeed);
     }
 
-    public void setDualVideo(boolean dualVideo){
+    public void setDualVideo(boolean dualVideo) {
         mPacketizer.socket.UseDualVideo(dualVideo);
     }
 
@@ -157,9 +159,13 @@ public class VideoService extends Service implements NativeHelper.NativeDataList
     //---------------------------------------------------------------------------------------
     @Override
     public void onDataRecv(byte[] data, int size, int frameNum, boolean isKeyFrame, int width, int height) {
-        if(size > 0 && isRunning) {
+        if (size > 0 && isRunning) {
             // Pack the raw H.264 stream...
-            splitNALs(data);
+            try {
+                splitNALs(data);
+            } catch (Exception e){
+                Log.d("VideoService",Log.getStackTraceString(e));
+            }
         }
     }
 }

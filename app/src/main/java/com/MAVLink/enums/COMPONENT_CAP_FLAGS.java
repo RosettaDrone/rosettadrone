@@ -6,12 +6,12 @@
 
 package com.MAVLink.enums;
 
-/** 
-* Component capability flags (Bitmap)
-*/
+/**
+ * Component capability flags (Bitmap)
+ */
 public class COMPONENT_CAP_FLAGS {
-   public static final int COMPONENT_CAP_FLAGS_PARAM = 1; /* Component has parameters, and supports the parameter protocol (PARAM messages). | */
-   public static final int COMPONENT_CAP_FLAGS_PARAM_EXT = 2; /* Component has parameters, and supports the extended parameter protocol (PARAM_EXT messages). | */
-   public static final int COMPONENT_CAP_FLAGS_ENUM_END = 3; /*  | */
+    public static final int COMPONENT_CAP_FLAGS_PARAM = 1; /* Component has parameters, and supports the parameter protocol (PARAM messages). | */
+    public static final int COMPONENT_CAP_FLAGS_PARAM_EXT = 2; /* Component has parameters, and supports the extended parameter protocol (PARAM_EXT messages). | */
+    public static final int COMPONENT_CAP_FLAGS_ENUM_END = 3; /*  | */
 }
             

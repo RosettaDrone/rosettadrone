@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <RadioGroup
+        android:id="@+id/radio_type"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <RadioButton
+            android:id="@+id/rb_rotate_yaw"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="rotate yaw" />
+
+        <RadioButton
+            android:id="@+id/rb_start_stop_fly"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="start stop fly" />
+    </RadioGroup>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/cl_yaw"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/radio_type">
+
+        <TextView
+            android:id="@+id/tv_tip_yaw"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Yaw info:"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <androidx.appcompat.widget.AppCompatCheckBox
+            android:id="@+id/box_yaw_relative"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="relative"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tv_tip_yaw" />
+
+        <androidx.appcompat.widget.AppCompatCheckBox
+            android:id="@+id/box_yaw_clockwise"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="clockwise"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/box_yaw_relative" />
+
+        <EditText
+            android:id="@+id/et_yaw_angle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:hint="please Input yaw angle"
+            android:inputType="numberSigned|numberDecimal"
+            app:layout_constraintLeft_toLeftOf="@id/tv_tip_yaw"
+            app:layout_constraintTop_toBottomOf="@id/box_yaw_clockwise" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/cl_start_stop"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/radio_type">
+
+        <TextView
+            android:id="@+id/tv_tip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="start or stop:"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <androidx.appcompat.widget.AppCompatCheckBox
+            android:id="@+id/box_start_stop_fly"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="start fly"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tv_tip" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

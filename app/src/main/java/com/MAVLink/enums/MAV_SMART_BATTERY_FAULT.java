@@ -6,16 +6,16 @@
 
 package com.MAVLink.enums;
 
-/** 
-* Smart battery supply status/fault flags (bitmask) for health indication.
-*/
+/**
+ * Smart battery supply status/fault flags (bitmask) for health indication.
+ */
 public class MAV_SMART_BATTERY_FAULT {
-   public static final int MAV_SMART_BATTERY_FAULT_DEEP_DISCHARGE = 1; /* Battery has deep discharged. | */
-   public static final int MAV_SMART_BATTERY_FAULT_SPIKES = 2; /* Voltage spikes. | */
-   public static final int MAV_SMART_BATTERY_FAULT_SINGLE_CELL_FAIL = 4; /* Single cell has failed. | */
-   public static final int MAV_SMART_BATTERY_FAULT_OVER_CURRENT = 8; /* Over-current fault. | */
-   public static final int MAV_SMART_BATTERY_FAULT_OVER_TEMPERATURE = 16; /* Over-temperature fault. | */
-   public static final int MAV_SMART_BATTERY_FAULT_UNDER_TEMPERATURE = 32; /* Under-temperature fault. | */
-   public static final int MAV_SMART_BATTERY_FAULT_ENUM_END = 33; /*  | */
+    public static final int MAV_SMART_BATTERY_FAULT_DEEP_DISCHARGE = 1; /* Battery has deep discharged. | */
+    public static final int MAV_SMART_BATTERY_FAULT_SPIKES = 2; /* Voltage spikes. | */
+    public static final int MAV_SMART_BATTERY_FAULT_SINGLE_CELL_FAIL = 4; /* Single cell has failed. | */
+    public static final int MAV_SMART_BATTERY_FAULT_OVER_CURRENT = 8; /* Over-current fault. | */
+    public static final int MAV_SMART_BATTERY_FAULT_OVER_TEMPERATURE = 16; /* Over-temperature fault. | */
+    public static final int MAV_SMART_BATTERY_FAULT_UNDER_TEMPERATURE = 32; /* Under-temperature fault. | */
+    public static final int MAV_SMART_BATTERY_FAULT_ENUM_END = 33; /*  | */
 }
             

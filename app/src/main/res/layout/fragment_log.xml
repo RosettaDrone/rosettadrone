@@ -18,7 +18,7 @@
             android:layout_height="wrap_content"
             android:measureAllChildren="true"
             android:fillViewport="true"
-            android:scrollbars="none" >
+            android:scrollbars="none">
 
             <TextView
                 android:id="@+id/log"
@@ -27,8 +27,7 @@
                 android:fillViewport="true"
                 android:background="@color/transparent"
                 android:textColor="@color/gray"
-                android:text=""
-                />
+                android:text="" />
         </HorizontalScrollView>
     </ScrollView>
 </LinearLayout>

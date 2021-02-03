@@ -3,41 +3,46 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="sq.rogue.rosettadrone">
 
-    <uses-permission android:name="android.permission.VIBRATE"/>
-    <uses-permission android:name="android.permission.INTERNET"/>
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
-    <uses-permission android:name="android.permission.WAKE_LOCK"/>
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
-    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
-    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
-    <uses-permission android:name="android.permission.BLUETOOTH"/>
+    <!-- DJI SDK need permission -->
+    <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
-
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS"
         tools:ignore="ProtectedPermissions" />
-    <uses-permission android:name="android.permission.CHANGE_CONFIGURATION"
-        tools:ignore="ProtectedPermissions" />
-    <uses-permission android:name="android.permission.WRITE_SETTINGS"
-        tools:ignore="ProtectedPermissions" />
 
-    <uses-feature android:name="android.hardware.camera"/>
-    <uses-feature android:name="android.hardware.camera.autofocus"/>
-
+    <uses-feature android:name="android.hardware.camera" />
+    <uses-feature android:name="android.hardware.camera.autofocus" />
+    <uses-feature android:name="android.hardware.usb.host"
+        android:required="false" />
+    <uses-feature android:name="android.hardware.usb.accessory"
+        android:required="true" />
     <uses-feature
         android:glEsVersion="0x00020000"
         android:required="true" />
 
-    <uses-feature
-        android:name="android.hardware.usb.host"
-        android:required="false"/>
-    <uses-feature
-        android:name="android.hardware.usb.accessory"
-        android:required="true"/>
+    <!--
+    <uses-permission
+        android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS"
+        tools:ignore="ProtectedPermissions" />
+       -->
+
+    <uses-permission
+        android:name="android.permission.CHANGE_CONFIGURATION"
+        tools:ignore="ProtectedPermissions" />
+    <uses-permission
+        android:name="android.permission.WRITE_SETTINGS"
+        tools:ignore="ProtectedPermissions" />
 
     <application
         android:name="sq.rogue.rosettadrone.RDApplication"
@@ -51,58 +56,57 @@
         <activity
             android:name="sq.rogue.rosettadrone.ConnectionActivity"
             android:launchMode="singleTop">
+
             <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
-                <action android:name="android.hardware.usb.action.USB_ACCESSORY_ATTACHED"/>
-            </intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                    <category android:name="android.intent.category.LAUNCHER" />
+                    <action android:name="android.hardware.usb.action.USB_ACCESSORY_ATTACHED" />
+                </intent-filter>
+
+                <!--  Spesify a spesific USB devide... can be used if one only whants to connect to a unique device... -->
             <meta-data
                 android:name="android.hardware.usb.action.USB_ACCESSORY_ATTACHED"
-                android:resource="@xml/accessory_filter"/>
+                android:resource="@xml/accessory_filter" />
+
         </activity>
 
         <activity android:name="sq.rogue.rosettadrone.MainActivity">
-
-        <!--            android:screenOrientation="portrait">  -->
-            <!--            android:launchMode="singleInstance"> -->
             <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
                 <action android:name="android.hardware.usb.action.USB_ACCESSORY_ATTACHED" />
-
-                <!--                <category android:name="android.intent.category.LAUNCHER"/>  -->
             </intent-filter>
-            <!--          <meta-data
-                          android:name="android.hardware.usb.action.USB_ACCESSORY_ATTACHED"
-                          android:resource="@xml/accessory_filter" />
-                      -->
         </activity>
 
-        <uses-library android:name="org.apache.http.legacy" android:required="false" />
-
-        <activity android:name="sq.rogue.rosettadrone.settings.SettingsActivity"
+        <activity
+            android:name="sq.rogue.rosettadrone.settings.SettingsActivity"
             android:theme="@style/AppTheme.Settings"
             android:label="Settings">
         </activity>
 
-        <activity android:name="sq.rogue.rosettadrone.settings.MapActivity"
-            android:theme="@style/AppTheme.Settings"
-            android:label="Settings">
+        <activity android:name="sq.rogue.rosettadrone.settings.Waypoint1Activity">
         </activity>
 
-        <!-- DJI SDK -->
-        <uses-library android:name="com.android.future.usb.accessory"/>
+        <activity android:name="sq.rogue.rosettadrone.settings.Waypoint2Activity">
+        </activity>
+
+        <service
+            android:name="dji.sdk.sdkmanager.DJIGlobalService"
+            tools:ignore="Instantiatable">
+        </service>
+
+        <service android:name="sq.rogue.rosettadrone.video.VideoService">
+        </service>
+
+        <!-- DJI SDK needed also by emulator, this is a problem... -->
+        <uses-library
+            android:name="com.android.future.usb.accessory"
+            android:required="false" />
+        <uses-library
+            android:name="org.apache.http.legacy"
+            android:required="false" />
 
         <meta-data
             android:name="com.dji.sdk.API_KEY"
-            android:value="@string/dji_key"/>
-
-        <service android:name="dji.sdk.sdkmanager.DJIGlobalService"
-            tools:ignore="Instantiatable">
-
-        </service>
-            <service android:name="sq.rogue.rosettadrone.video.VideoService">
-        </service>
-
+            android:value="@string/dji_key" />
         <!-- DJI SDK -->
 
         <meta-data
@@ -111,8 +115,7 @@
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyAO1eIAc6cCYdO74LBd8fmMNzs7sabxW5E" />
-
+            android:value="@string/google_key" />
     </application>
-
 </manifest>
+

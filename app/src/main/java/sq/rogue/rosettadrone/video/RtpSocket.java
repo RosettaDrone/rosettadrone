@@ -45,17 +45,20 @@ public class RtpSocket implements Runnable {
      * Use this to use UDP for the transport protocol.
      */
     public final static int TRANSPORT_UDP = 0x00;
-
     /**
      * Use this to use TCP for the transport protocol.
      */
     public final static int TRANSPORT_TCP = 0x01;
+    /**
+     * Use this to use UDP MULTICAST for the transport protocol.
+     */
+    public final static int TRANSPORT_MULTICAST = 0x02;
 
     public static final int RTP_HEADER_LENGTH = 12;
     public static final int MTU = 1300;
     public MulticastSocket mSocket;
-    public DatagramSocket  mSocketUDP;
-    public DatagramSocket  mSocketUDP2;
+    public DatagramSocket mSocketUDP;
+    public DatagramSocket mSocketUDP2;
     protected OutputStream mOutputStream = null;
     private DatagramPacket[] mPackets;
     private byte[][] mBuffers;
@@ -199,9 +202,15 @@ public class RtpSocket implements Runnable {
      */
     public void setDestination(InetAddress dest, int dport, int rtcpPort) {
         if (dport != 0 && rtcpPort != 0) {
-            mTransport = TRANSPORT_UDP;
+            if(dest.isMulticastAddress()) {
+                mTransport = TRANSPORT_MULTICAST;
+                Log.d(TAG, "Use Multicast...");
+            }else {
+                mTransport = TRANSPORT_UDP;
+                Log.d(TAG, "Use Unicast...");
+            }
             mPort = dport;
-            Log.d(TAG, "setDestination: " +dest +":"+dport );
+            Log.d(TAG, "setDestination: " + dest + ":" + dport);
             for (int i = 0; i < mBufferCount; i++) {
                 mPackets[i].setPort(dport);
                 mPackets[i].setAddress(dest);
@@ -230,10 +239,9 @@ public class RtpSocket implements Runnable {
 
     public int[] getLocalPorts() {
         return new int[]{
+                mSocket.getLocalPort(),
                 mSocketUDP.getLocalPort(),
                 mSocketUDP2.getLocalPort(),
-//                mSocket.getLocalPort(),
-                //mReport.getLocalPort()
         };
 
     }
@@ -348,17 +356,19 @@ public class RtpSocket implements Runnable {
                 mOldTimestamp = mTimestamps[mBufferOut];
                 if (mCount++ > 30) {
                     if (mTransport == TRANSPORT_UDP) {
-                        if(mUseDualVideoOut) {
+                        if (mUseDualVideoOut) {
                             mPackets[mBufferOut].setPort(mPort);
                             mSocketUDP.send(mPackets[mBufferOut]);
 
                             mPackets[mBufferOut].setPort(mPort + 1);
                             mSocketUDP2.send(mPackets[mBufferOut]);
-                        }
-                        else{
+                        } else {
                             mSocketUDP.send(mPackets[mBufferOut]);
                         }
-                    } else {
+                    } else if (mTransport == TRANSPORT_MULTICAST) {
+                        mSocket.send(mPackets[mBufferOut]);
+                    }
+                    else {
                         sendTCP();
                     }
                 }

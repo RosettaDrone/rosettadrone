@@ -6,13 +6,13 @@
 
 package com.MAVLink.enums;
 
-/** 
-* 
-*/
+/**
+ *
+ */
 public class MAV_ODID_LOCATION_SRC {
-   public static final int MAV_ODID_LOCATION_SRC_TAKEOFF = 0; /* The location of the operator is the same as the take-off location. | */
-   public static final int MAV_ODID_LOCATION_SRC_LIVE_GNSS = 1; /* The location of the operator is based on live GNSS data. | */
-   public static final int MAV_ODID_LOCATION_SRC_FIXED = 2; /* The location of the operator is a fixed location. | */
-   public static final int MAV_ODID_LOCATION_SRC_ENUM_END = 3; /*  | */
+    public static final int MAV_ODID_LOCATION_SRC_TAKEOFF = 0; /* The location of the operator is the same as the take-off location. | */
+    public static final int MAV_ODID_LOCATION_SRC_LIVE_GNSS = 1; /* The location of the operator is based on live GNSS data. | */
+    public static final int MAV_ODID_LOCATION_SRC_FIXED = 2; /* The location of the operator is a fixed location. | */
+    public static final int MAV_ODID_LOCATION_SRC_ENUM_END = 3; /*  | */
 }
             

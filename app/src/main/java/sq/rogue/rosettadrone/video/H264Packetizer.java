@@ -22,7 +22,6 @@ import android.annotation.SuppressLint;
 import android.util.Log;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -176,7 +175,7 @@ public class H264Packetizer extends AbstractPacketizer implements Runnable {
         // The stream already contains NAL unit type 7 or 8, we don't need
         // to add them to the stream ourselves
         if (type == 7 || type == 8) {
-      //      Log.v(TAG, "SPS or PPS present in the stream.");
+            //      Log.v(TAG, "SPS or PPS present in the stream.");
             count++;
             if (count > 4) {
                 sps = null;
@@ -192,7 +191,7 @@ public class H264Packetizer extends AbstractPacketizer implements Runnable {
             socket.updateTimestamp(ts);
             System.arraycopy(stapa, 0, buffer, rtphl, stapa.length);
             super.send(rtphl + stapa.length);
-          //  Log.e(TAG,"-----  NAL unit - len:"+len+" delay: "+delay);
+            //  Log.e(TAG,"-----  NAL unit - len:"+len+" delay: "+delay);
 
         }
 
@@ -206,7 +205,7 @@ public class H264Packetizer extends AbstractPacketizer implements Runnable {
             socket.updateTimestamp(ts);
             socket.markNextPacket();
             super.send(naluLength + rtphl);
-          //  Log.e(TAG,"----- Single NAL unit - len:"+len+" delay: "+delay);
+            //  Log.e(TAG,"----- Single NAL unit - len:"+len+" delay: "+delay);
         }
         // Large NAL unit => Split nal unit
         else {
@@ -235,7 +234,7 @@ public class H264Packetizer extends AbstractPacketizer implements Runnable {
                 super.send(len + rtphl + 2);
                 // Switch start bit
                 header[1] = (byte) (header[1] & 0x7F);
-            //    Log.e(TAG,"----- FU-A unit, sum:"+sum);
+                //    Log.e(TAG,"----- FU-A unit, sum:"+sum);
             }
         }
     }

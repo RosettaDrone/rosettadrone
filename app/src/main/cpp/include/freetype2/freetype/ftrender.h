@@ -38,8 +38,11 @@ FT_BEGIN_HEADER
 
 /* create a new glyph object */
 typedef FT_Error
-        (*FT_Glyph_InitFunc)(FT_Glyph glyph,
-                             FT_GlyphSlot slot);
+        (*FT_Glyph_InitFunc)
+(
+FT_Glyph glyph,
+        FT_GlyphSlot
+slot);
 
 /* destroys a given glyph object */
 typedef void

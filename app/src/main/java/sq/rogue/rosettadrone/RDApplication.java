@@ -2,10 +2,8 @@ package sq.rogue.rosettadrone;
 
 import android.app.Application;
 import android.content.Context;
-import android.media.Ringtone;
 
 import com.secneo.sdk.Helper;
-
 
 import dji.sdk.base.BaseProduct;
 import dji.sdk.sdkmanager.DJISDKManager;
@@ -17,10 +15,10 @@ public class RDApplication extends Application {
     private static boolean m_sim = false;
 
     // True if simulate...
-    public static boolean getSim(){
+    public static boolean getSim() {
         return m_sim;
     }
-    public static void setSim(boolean sim){
+    public static void setSim(boolean sim) {
         m_sim = sim;
     }
 
@@ -29,17 +27,22 @@ public class RDApplication extends Application {
             if( getSim() == false) {
                 mProduct = DJISDKManager.getInstance().getProduct();
             }else {
-                mProduct = simulatorApplication.getProductInstance();
+                mProduct = DJISimulatorApplication.getProductInstance();
             }
         }
         return mProduct;
+    }
+
+    public static void startLoginApplication()
+    {
+        simulatorApplication.onCreate();
     }
 
     @Override
     public void onCreate() {
         super.onCreate();
         m_sim = false;
-        simulatorApplication.onCreate();
+  //      simulatorApplication.onCreate();
     }
 
     public static synchronized void updateProduct(BaseProduct product) {
@@ -56,7 +59,6 @@ public class RDApplication extends Application {
             simulatorApplication.setContext(this);
         }
     }
-
 }
 
 
