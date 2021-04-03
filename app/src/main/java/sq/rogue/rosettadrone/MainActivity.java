@@ -915,12 +915,23 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             if (!product.getModel().equals(Model.UNKNOWN_AIRCRAFT)) {
                 mCamera = product.getCamera();
                 if (mCamera != null) {
-                    mCamera.setMode(SettingsDefinitions.CameraMode.SHOOT_PHOTO, djiError -> {
-                        if (djiError != null) {
-                            Log.e(TAG, "can't change mode of camera, error: " + djiError.getDescription());
-                            logMessageDJI("can't change mode of camera, error: " + djiError.getDescription());
-                        }
-                    });
+                    if (product.getModel().equals(Model.MAVIC_AIR_2)){
+                        product.getCamera()
+                                .setFlatMode(SettingsDefinitions.FlatCameraMode.PHOTO_SINGLE, djiError -> {
+                                    if (djiError != null) {
+                                        Log.e(TAG, "can't change mode of camera, error: " + djiError.getDescription());
+                                        logMessageDJI("can't change mode of camera, error: " + djiError.getDescription());
+                                    }
+                                });
+                    }
+                    else {
+                        mCamera.setMode(SettingsDefinitions.CameraMode.SHOOT_PHOTO, djiError -> {
+                            if (djiError != null) {
+                                Log.e(TAG, "can't change mode of camera, error: " + djiError.getDescription());
+                                logMessageDJI("can't change mode of camera, error: " + djiError.getDescription());
+                            }
+                        });
+                    }
                 }
 
                 //When calibration is needed or the fetch key frame is required by SDK, should use the provideTranscodedVideoFeed
@@ -965,6 +976,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             case INSPIRE_1_PRO:
             case INSPIRE_1_RAW:     // Verified...
             case MAVIC_AIR:         // Verified...
+            case MAVIC_AIR_2:       // Verified...
                 return true;
         }
 
