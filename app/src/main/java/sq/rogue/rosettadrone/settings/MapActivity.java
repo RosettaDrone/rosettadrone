@@ -56,27 +56,19 @@ import sq.rogue.rosettadrone.DJISimulatorApplication;
 import sq.rogue.rosettadrone.R;
 import sq.rogue.rosettadrone.RDApplication;
 
-//public class HelpActivity extends AppCompatActivity implements OnMapReadyCallback{
 //public class HelpActivity extends AppCompatActivity implements PreferenceFragmentCompat.OnPreferenceStartScreenCallback, OnMapReadyCallback{
 public class MapActivity extends FragmentActivity implements View.OnClickListener, GoogleMap.OnMapClickListener, OnMapReadyCallback {
     private static final String TAG = MapActivity.class.getSimpleName();
-
     private GoogleMap gMap;
-
     private Button locate, add, clear, exit;
     private Button config, upload, start, stop;
-
     private boolean isAdd = false;
-
     private double droneLocationLat = 30, droneLocationLng = 60;
     private final Map<Integer, Marker> mMarkers = new ConcurrentHashMap<Integer, Marker>();
     private Marker droneMarker = null;
-
     private float altitude = 100.0f;
     private float mSpeed = 10.0f;
-
     private List<Waypoint> waypointList = new ArrayList<>();
-
     public static WaypointMission.Builder waypointMissionBuilder;
     private FlightController mFlightController;
     private WaypointMissionOperator instance;

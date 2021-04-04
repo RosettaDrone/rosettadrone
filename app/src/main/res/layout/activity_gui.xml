@@ -404,13 +404,24 @@
                     android:text=""
                     android:textColor="@color/colorWhite"
                     android:textSize="12sp" />
+                <!--
+                               <Button
+                                   android:id="@+id/btn_Report"
+                                   android:layout_width="46dp"
+                                   android:layout_height="40dp"
+                                   android:layout_marginTop="12dp"
+                                   android:background="@mipmap/track_report"
+                                   android:alpha="0.50"
+                                   android:text=""
+                                   android:textColor="@color/colorWhite"
+                                   android:textSize="12sp" />
+               -->
+           </LinearLayout>
 
-            </LinearLayout>
 
+       </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
-        </androidx.coordinatorlayout.widget.CoordinatorLayout>
-
-    </RelativeLayout>
+   </RelativeLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
 

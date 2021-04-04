@@ -68,9 +68,6 @@ public class RDApplication extends Application {
         Camera camera = null;
         if (getProductInstance() instanceof Aircraft){
             camera = ((Aircraft) getProductInstance()).getCamera();
-
-        } else if (getProductInstance() instanceof HandHeld) {
-            camera = ((HandHeld) getProductInstance()).getCamera();
         } else if (getProductInstance() instanceof HandHeld) {
             camera = ((HandHeld) getProductInstance()).getCamera();
         }

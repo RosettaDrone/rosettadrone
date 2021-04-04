@@ -223,7 +223,7 @@
                 android:layout_height="70dp"
                 android:gravity="center"
                 android:scaleType="fitXY"
-                android:background="@drawable/logo"
+                android:background="@drawable/esmart"
                 android:textColor="@color/colorWhite"
                 android:textSize="20dp" />
 

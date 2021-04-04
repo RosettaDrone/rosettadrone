@@ -24,6 +24,15 @@
         </PreferenceCategory>
 
         <PreferenceCategory
+            android:title="Report Email">
+
+            <androidx.preference.EditTextPreference
+                android:defaultValue=""
+                android:key="pref_email_name"
+                android:title="@string/pref_email" />
+        </PreferenceCategory>
+
+        <PreferenceCategory
             android:key="drone_rtl_prefs"
             android:title="@string/pref_drone_rtl_cat">
             <androidx.preference.EditTextPreference

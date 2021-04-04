@@ -85,6 +85,7 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
@@ -93,8 +94,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-import java.nio.ByteBuffer;
-import java.util.Collections;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -118,18 +117,16 @@ import dji.sdk.base.BaseProduct;
 import dji.sdk.camera.Camera;
 import dji.sdk.camera.VideoFeeder;
 import dji.sdk.codec.DJICodecManager;
-import dji.sdk.products.Aircraft;
-import dji.sdk.sdkmanager.DJISDKInitEvent;
-import dji.sdk.sdkmanager.DJISDKManager;
-
 import dji.sdk.media.DownloadListener;
-import dji.sdk.media.FetchMediaTask;
-import dji.sdk.media.FetchMediaTaskContent;
 import dji.sdk.media.FetchMediaTaskScheduler;
 import dji.sdk.media.MediaFile;
 import dji.sdk.media.MediaManager;
-
+import dji.sdk.products.Aircraft;
+import dji.sdk.sdkmanager.DJISDKInitEvent;
+import dji.sdk.sdkmanager.DJISDKManager;
 import sq.rogue.rosettadrone.logs.LogFragment;
+import sq.rogue.rosettadrone.settings.GMailSender;
+import sq.rogue.rosettadrone.settings.MailReport;
 import sq.rogue.rosettadrone.settings.SettingsActivity;
 import sq.rogue.rosettadrone.settings.Waypoint1Activity;
 import sq.rogue.rosettadrone.settings.Waypoint2Activity;
@@ -161,6 +158,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     public static boolean FLAG_DRONE_FLIGHT_PATH_MODE_CHANGED = false;
     public static boolean FLAG_DRONE_MAX_HEIGHT_CHANGED = false;
     public static boolean FLAG_APP_NAME_CHANGED = false;
+    public static boolean FLAG_APP_REPORT_EMAIL = false;
     public static boolean FLAG_MAPS_CHANGED = false;
 
     private GoogleMap aMap;
@@ -184,7 +182,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private String mNewInbound = "";
     private String mNewDJI = "";
     private DatagramSocket socket;
-    private DroneModel mModel;
+    public  DroneModel mModel;
     private Boolean mExtRunning = false;
     private LocationManager locationManager;
     private double m_host_lat = -500;
@@ -213,7 +211,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     protected VideoFeeder.VideoDataListener mReceivedVideoDataListener;
     private TextureView videostreamPreviewTtView;
     private TextureView videostreamPreviewTtViewSmall;
-    private Camera mCamera;
     private DJICodecManager mCodecManager;
     private int videoViewWidth;
     private int videoViewHeight;
@@ -231,9 +228,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     public String last_downloaded_file;
     public boolean downloadError = false;
     public int lastDownloadedIndex = -1;
-    public int currentProgress = -1;
-    File destDir = new File(Environment.getExternalStorageDirectory().getPath() + "/DroneApp/");
-
 
     //-----------------------------------------------------------------------------//
     private Runnable djiUpdateRunnable = () -> {
@@ -277,6 +271,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         LocationListener locationListener = new MyLocationListener();
+
         if (ActivityCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(this,
@@ -307,8 +302,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         //------------------------------------------------------------
         mMaptype = Integer.parseInt(Objects.requireNonNull(prefs.getString("pref_maptype_mode", "2")));
         logMessageDJI("Mapmode: " + mMaptype);
-        //------------------------------------------------------------
 
+        //------------------------------------------------------------
         Intent intent = new Intent(this, VideoService.class);
         this.startService(intent);
         safeSleep(500);
@@ -410,7 +405,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
 
         videostreamPreviewTtView.setSurfaceTextureListener(mSurfaceTextureListener);
-        if (mCamera != null) {
+        if ( mModel.m_camera != null) {
             if (!mExternalVideoOut) {
                 if (mIsTranscodedVideoFeedNeeded) {
                     if (standardVideoFeeder != null) {
@@ -757,9 +752,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             navState = savedInstanceState.getInt("navigation_state");
         }
 
+        //------------------------------------------------------------
         mModel = new DroneModel(this, null, RDApplication.getSim());
         mModel.setSystemId(Integer.parseInt(Objects.requireNonNull(prefs.getString("pref_drone_id", "1"))));
 
+        //--------------------------------------------------------------
         mMavlinkReceiver = new MAVLinkReceiver(this, mModel);
         loadMockParamFile();
 
@@ -810,44 +807,34 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     (mModel.isSafetyEnabled()) ? R.string.safety_on : R.string.safety_off, LENGTH_LONG);
         });
 
-
+        //--------------------------------------------------------------
+        // Make the Report button....
+     //   Button mBtnRepport = findViewById(R.id.btn_Report);
+     //   mBtnRepport.setOnClickListener(v -> SetMesasageBox("com.example.sendmail",1));
         //--------------------------------------------------------------
         // Make the AI button....
         Button mBtnAI = findViewById(R.id.btn_AI_start);
-        mBtnAI.setOnClickListener(v -> SetMesasageBox("Hit A to go Left and B to go right..."));
+        mBtnAI.setOnClickListener(v -> SetMesasageBox("com.example.remoteconfig3",2));
         //--------------------------------------------------------------
         // Disable takeoff by default... This however it not how DJI does it, so we must delay this action...
         Handler mTimerHandler = new Handler(Looper.getMainLooper());
         mTimerHandler.postDelayed(enablesafety, 3000);
-        //--------------------------------------------------------------
-        logMessageDJI("Init media manager");
-        initMediaManager();
-    }
-
-    // Start the AI Pluggin (Developed by the customers...)
-    protected boolean startActivity(String pluggin) {
-
-        Intent intent = getPackageManager().getLaunchIntentForPackage(pluggin);
-        if (intent == null) {
-            // Bring user to the market or let them choose an app?
-            intent = new Intent(Intent.ACTION_VIEW);
-            intent.setData(Uri.parse("market://details?id=" + "com.example.remoteconfig3"));
-        }
-        if (intent != null) {
-            intent.putExtra("password", "thisisrosettadrone246546101");
-            intent.putExtra("ip", "127.0.0.1");
-            intent.putExtra("port", 4000);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(intent);
-        }
-        return true;
     }
 
     // If AI button is pressed then start the AI Pluggin ...
-    protected void SetMesasageBox(String msg) {
-        Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
-        Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), notification);
-        startActivity("com.example.remoteconfig3");
+    protected void SetMesasageBox(String msg, int type) {
+        switch (type){
+            case 1:
+                //--------------------------------------------------------------
+                logMessageDJI("Init media manager and fetch image...");
+                mModel.getfile();
+                break;
+            case 2:
+                Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
+                Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), notification);
+                startActivity(msg);
+                break;
+        }
     }
 
     // By default disable takeoff...
@@ -905,7 +892,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         };
 
         if (null == product || !product.isConnected()) {
-            mCamera = null;
+            mModel.m_camera = null; // Hmm to be investigated...
         } else {
             // List all models that needs alternative decoding...
             if (validateTranscodingMethod(product.getModel()) == true) {
@@ -913,14 +900,35 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
 
             if (!product.getModel().equals(Model.UNKNOWN_AIRCRAFT)) {
-                mCamera = product.getCamera();
-                if (mCamera != null) {
-                    mCamera.setMode(SettingsDefinitions.CameraMode.SHOOT_PHOTO, djiError -> {
+
+                if (mModel.m_camera != null) {
+
+                    mModel.m_camera.setMode(SettingsDefinitions.CameraMode.SHOOT_PHOTO, djiError -> {
                         if (djiError != null) {
                             Log.e(TAG, "can't change mode of camera, error: " + djiError.getDescription());
                             logMessageDJI("can't change mode of camera, error: " + djiError.getDescription());
                         }
                     });
+                    if (product.getModel().equals(Model.MAVIC_AIR_2)){
+                        product.getCamera()
+                                .setFlatMode(SettingsDefinitions.FlatCameraMode.PHOTO_SINGLE, djiError -> {
+                                    if (djiError != null) {
+                                        Log.e(TAG, "can't change mode of camera, error: " + djiError.getDescription());
+                                        logMessageDJI("can't change mode of camera, error: " + djiError.getDescription());
+                                    }
+                                });
+                    }
+                    else {
+                        mModel.m_camera.setMode(SettingsDefinitions.CameraMode.SHOOT_PHOTO, djiError -> {
+                            if (djiError != null) {
+                                Log.e(TAG, "can't change mode of camera, error: " + djiError.getDescription());
+                                logMessageDJI("can't change mode of camera, error: " + djiError.getDescription());
+                            }
+                            else{
+                                logMessageDJI("Camera Mode set OK...");
+                            }
+                        });
+                    }
                 }
 
                 //When calibration is needed or the fetch key frame is required by SDK, should use the provideTranscodedVideoFeed
@@ -949,6 +957,26 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
+
+    // Start the AI Pluggin (Developed by the customers...)
+    public boolean startActivity(String pluggin)
+    {
+        Intent intent = getPackageManager().getLaunchIntentForPackage(pluggin);
+        if (intent == null) {
+            // Bring user to the market or let them choose an app?
+            intent = new Intent(Intent.ACTION_VIEW);
+            intent.setData(Uri.parse("market://details?id=" + pluggin));
+        }
+        if (intent != null) {
+            intent.putExtra("password", "thisisrosettadrone246546101");
+            intent.putExtra("ip", "127.0.0.1");
+            intent.putExtra("port", 4000);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+        }
+        return true;
+    }
+
     private boolean validateTranscodingMethod(Model model) {
         // If the drone requires the old handling...
         switch (model) {
@@ -962,6 +990,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             case MAVIC_PRO:
             case INSPIRE_1:
             case Spark:
+            case MAVIC_AIR_2:
             case INSPIRE_1_PRO:
             case INSPIRE_1_RAW:     // Verified...
             case MAVIC_AIR:         // Verified...
@@ -1647,8 +1676,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             aMap.setMapType(mMaptype);
             FLAG_MAPS_CHANGED = false;
         }
-
-        getFileList();
     }
 
     //---------------------------------------------------------------------------------------
@@ -1666,202 +1693,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     //region GCS Timer Task
     //---------------------------------------------------------------------------------------
-
-    //---------------------------------------------------------------------------------------
-    // FTP and file related functions
-    public void initMediaManager() {
-        if (RDApplication.getProductInstance() == null) {
-            mediaFileList.clear();
-            DJILog.e(TAG, "Product disconnected");
-            return;
-        } else {
-            if (null != RDApplication.getCameraInstance() && RDApplication.getCameraInstance().isMediaDownloadModeSupported()) {
-                mMediaManager = RDApplication.getCameraInstance().getMediaManager();
-                if(!RDApplication.getCameraInstance().isSSDSupported()){
-                    logMessageDJI("Internal sd is not suported");
-                }
-                if (null != mMediaManager) {
-                    mMediaManager.addUpdateFileListStateListener(this.updateFileListStateListener);
-                    switchCameraMode(SettingsDefinitions.CameraMode.MEDIA_DOWNLOAD);
-                    RDApplication.getCameraInstance().setMode(SettingsDefinitions.CameraMode.MEDIA_DOWNLOAD, new CommonCallbacks.CompletionCallback() {
-                        @Override
-                        public void onResult(DJIError error) {
-                            if (error == null) {
-                                DJILog.e(TAG, "Set cameraMode success");
-                                logMessageDJI("Set cameraMode success");
-                            } else {
-                                logMessageDJI("Set cameraMode failed");
-                                DJILog.e(TAG, "Set cameraMode failed");
-                                logMessageDJI(error.toString());
-                            }
-                            getFileList();
-                        }
-                    });
-                    if (mMediaManager.isVideoPlaybackSupported()) {
-                        DJILog.e(TAG, "Camera support video playback!");
-                    } else {
-                        logMessageDJI("Camera does not support video playback!");
-                    }
-
-                    scheduler = mMediaManager.getScheduler();
-                }
-
-            } else if (null != RDApplication.getCameraInstance()
-                    && !RDApplication.getCameraInstance().isMediaDownloadModeSupported()) {
-                logMessageDJI("Media Download Mode not Supported");
-            }
-        }
-        return;
-    }
-
-    private void switchCameraMode(SettingsDefinitions.CameraMode cameraMode){
-
-        Camera camera = RDApplication.getCameraInstance();
-        if (camera != null) {
-            camera.setMode(cameraMode, new CommonCallbacks.CompletionCallback() {
-                @Override
-                public void onResult(DJIError error) {
-
-                    if (error == null) {
-                        logMessageDJI("Switch Camera Mode Succeeded");
-                    } else {
-                        logMessageDJI(error.getDescription());
-
-                    }
-                }
-            });
-            camera.getMode(new CommonCallbacks.CompletionCallbackWith<SettingsDefinitions.CameraMode>() {
-                @Override
-                public void onSuccess(SettingsDefinitions.CameraMode cameraMode) {
-                    logMessageDJI("Got camera mode" + cameraMode.toString());
-                }
-
-                @Override
-                public void onFailure(DJIError djiError) {
-                    logMessageDJI("error in getMode");
-                    logMessageDJI(djiError.getDescription());
-                    logMessageDJI(djiError.toString());
-                }
-            });
-        }
-    }
-
-    public void getFileList() {
-        RDApplication.getProductInstance().getCamera().getMediaManager();
-        mMediaManager = RDApplication.getCameraInstance().getMediaManager();
-        if (mMediaManager != null) {
-            logMessageDJI(currentFileListState.name());
-            if ((currentFileListState == MediaManager.FileListState.SYNCING) || (currentFileListState == MediaManager.FileListState.DELETING)){
-                DJILog.e(TAG, "Media Manager is busy.");
-                logMessageDJI("Media Manager is busy.");
-            } else {
-                mMediaManager.refreshFileListOfStorageLocation(SettingsDefinitions.StorageLocation.SDCARD, new CommonCallbacks.CompletionCallback() {
-                    @Override
-                    public void onResult(DJIError djiError) {
-                        if (null == djiError) {
-
-                            //Reset data
-                            if (currentFileListState != MediaManager.FileListState.INCOMPLETE) {
-                                mediaFileList.clear();
-                            }
-
-                            mediaFileList = mMediaManager.getSDCardFileListSnapshot();
-                            Collections.sort(mediaFileList, new Comparator<MediaFile>() {
-                                @Override
-                                public int compare(MediaFile lhs, MediaFile rhs) {
-                                    if (lhs.getTimeCreated() < rhs.getTimeCreated()) {
-                                        return -1;
-                                    } else if (lhs.getTimeCreated() > rhs.getTimeCreated()) {
-                                        return 1;
-                                    }
-                                    return 0;
-                                }
-                            });
-                            scheduler.resume(new CommonCallbacks.CompletionCallback() {
-                                @Override
-                                public void onResult(DJIError error) {
-                                    if (error == null) {
-                                    }
-                                }
-                            });
-                            logMessageDJI( "Got Media Files: " + mediaFileList.size());
-
-                        } else {
-                            logMessageDJI( "Get Media File List Failed: " + djiError.getDescription());
-                        }
-                    }
-                });
-
-            }
-        } else {
-            logMessageDJI("mMediaManager == null");
-        }
-    }
-    //Listeners
-    private MediaManager.FileListStateListener updateFileListStateListener = new MediaManager.FileListStateListener() {
-        @Override
-        public void onFileListStateChange(MediaManager.FileListState state) {
-            currentFileListState = state;
-            logMessageDJI("Changed state to " + currentFileListState.name());
-            if(currentFileListState == MediaManager.FileListState.UP_TO_DATE){
-                logMessageDJI("getFileList()");
-                getFileList();
-            }
-        }
-    };
-
-    public void downloadFileByIndex(final int index){
-        if ((mediaFileList.get(index).getMediaType() == MediaFile.MediaType.PANORAMA)
-                || (mediaFileList.get(index).getMediaType() == MediaFile.MediaType.SHALLOW_FOCUS)) {
-            logMessageDJI( "Media type is " + mediaFileList.get(index).getMediaType() + " This is not accaptable.");
-            return;
-        }
-
-        mediaFileList.get(index).fetchFileData(destDir, null, new DownloadListener<String>() {
-            @Override
-            public void onFailure(DJIError error) {
-                logMessageDJI( "Download File Failed" + error.getDescription());
-                currentProgress = -1;
-                downloadError = true;
-            }
-
-            @Override
-            public void onProgress(long total, long current) {
-            }
-
-            @Override
-            public void onRateUpdate(long total, long current, long persize) {
-                int tmpProgress = (int) (1.0 * current / total * 100);
-                if (tmpProgress != currentProgress) {
-                    currentProgress = tmpProgress;
-                }
-            }
-
-            @Override
-            public void onRealtimeDataUpdate(byte[] bytes, long l, boolean b) {
-
-            }
-
-            @Override
-            public void onStart() {
-                currentProgress = 0;
-            }
-
-            @Override
-            public void onSuccess(String filePath) {
-                logMessageDJI( "Download File Success: " + filePath + "/" + mediaFileList.get(index).getFileName());
-                last_downloaded_file = filePath+ "/" + mediaFileList.get(index).getFileName();
-                currentProgress = -1;
-                downloadError = false;
-                lastDownloadedIndex = index;
-            }
-        });
-    }
-
-    void onFileListStateChange(MediaManager.FileListState state){
-        logMessageDJI( "Files changed?");
-    }
-    // FTP and file related functions
     //---------------------------------------------------------------------------------------
 
     private static class GCSSenderTimerTask extends TimerTask {
@@ -2127,5 +1958,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         return VideoFeeder.getInstance().isFetchKeyFrameNeeded() || VideoFeeder.getInstance()
                 .isLensDistortionCalibrationNeeded();
     }
-    //---------------------------------------------------------------------------------------
+
+
 }

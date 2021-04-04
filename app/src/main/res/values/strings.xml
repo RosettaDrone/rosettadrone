@@ -3,6 +3,7 @@
 
     <!-- Drone -->
     <string name="pref_drone_id">ID</string>
+    <string name="pref_email">Email Address</string>
 
     <!-- Drone RTL -->
     <string name="pref_drone_rtl_cat">RTL/RTH</string>

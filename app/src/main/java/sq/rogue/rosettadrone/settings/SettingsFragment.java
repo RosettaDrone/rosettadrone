@@ -196,6 +196,15 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Shared
             }
         });
 
+        findPreference("pref_email_name").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object newValue) {
+                MainActivity.FLAG_PREFS_CHANGED = true;
+                MainActivity.FLAG_APP_REPORT_EMAIL = true;
+                return true;
+            }
+        });
+
         findPreference("pref_external_video").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
             @Override
             public boolean onPreferenceChange(Preference preference, Object newValue) {

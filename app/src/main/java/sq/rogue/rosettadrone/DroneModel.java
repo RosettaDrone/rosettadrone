@@ -1,10 +1,14 @@
 package sq.rogue.rosettadrone;
 
 import android.app.AlertDialog;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.MAVLink.MAVLinkPacket;
 import com.MAVLink.Messages.MAVLinkMessage;
@@ -20,10 +24,8 @@ import com.MAVLink.common.msg_heartbeat;
 import com.MAVLink.common.msg_home_position;
 import com.MAVLink.common.msg_mission_ack;
 import com.MAVLink.common.msg_mission_count;
-import com.MAVLink.common.msg_mission_item;
 import com.MAVLink.common.msg_mission_item_int;
 import com.MAVLink.common.msg_mission_item_reached;
-import com.MAVLink.common.msg_mission_request;
 import com.MAVLink.common.msg_mission_request_int;
 import com.MAVLink.common.msg_mission_request_list;
 import com.MAVLink.common.msg_param_value;
@@ -34,7 +36,6 @@ import com.MAVLink.common.msg_statustext;
 import com.MAVLink.common.msg_sys_status;
 import com.MAVLink.common.msg_vfr_hud;
 import com.MAVLink.common.msg_vibration;
-import com.MAVLink.common.msg_file_transfer_protocol;
 import com.MAVLink.enums.GPS_FIX_TYPE;
 import com.MAVLink.enums.MAV_AUTOPILOT;
 import com.MAVLink.enums.MAV_CMD;
@@ -47,8 +48,7 @@ import com.MAVLink.enums.MAV_RESULT;
 import com.MAVLink.enums.MAV_STATE;
 import com.MAVLink.enums.MAV_TYPE;
 
-import com.google.android.gms.common.util.ArrayUtils;
-
+import java.io.File;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -56,10 +56,11 @@ import java.net.PortUnreachableException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.nio.ByteBuffer;
 
 import androidx.annotation.NonNull;
 import dji.common.camera.SettingsDefinitions;
@@ -93,14 +94,22 @@ import dji.common.model.LocationCoordinate2D;
 import dji.common.product.Model;
 import dji.common.remotecontroller.HardwareState;
 import dji.common.util.CommonCallbacks;
+import dji.log.DJILog;
+import dji.sdk.base.BaseProduct;
 import dji.sdk.battery.Battery;
+import dji.sdk.camera.Camera;
 import dji.sdk.flightcontroller.FlightController;
 import dji.sdk.gimbal.Gimbal;
+import dji.sdk.media.DownloadListener;
+import dji.sdk.media.FetchMediaTaskScheduler;
+import dji.sdk.media.MediaFile;
+import dji.sdk.media.MediaManager;
 import dji.sdk.mission.MissionControl;
 import dji.sdk.mission.followme.FollowMeMissionOperator;
 import dji.sdk.mission.waypoint.WaypointMissionOperator;
 import dji.sdk.products.Aircraft;
 import dji.sdk.sdkmanager.DJISDKManager;
+import sq.rogue.rosettadrone.settings.MailReport;
 
 import static com.MAVLink.common.msg_set_position_target_global_int.MAVLINK_MSG_ID_SET_POSITION_TARGET_GLOBAL_INT;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_COMPONENT_ARM_DISARM;
@@ -204,17 +213,48 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     private Gimbal mGimbal = null;
     private Rotation mRotation = null;
 
-    private Model m_model;
+    Model    m_model;
+    Camera   m_camera;
+    Aircraft m_aircraft;
+
+    File destDir = new File(Environment.getExternalStorageDirectory().getPath() + "/DroneApp/");
+    File m_directory;
+
+    private MailReport SendMail;
 
     private int mAIfunction_activation = 0;
     public boolean mAutonomy = false;
     public int mAirBorn = 0;
     int mission_loaded = -1;
+
     public boolean mission_started = true;
+
+    // FTP...
+    public List<MediaFile> mediaFileList = new ArrayList<MediaFile>();
+    public int numFiles;
+    private MediaManager mMediaManager;
+    private MediaManager.FileListState currentFileListState = MediaManager.FileListState.UNKNOWN;
+    private FetchMediaTaskScheduler scheduler;
+    public String last_downloaded_file;
+    public int lastDownloadedIndex = -1;
+    public int currentProgress = -1;
+
+    enum camera_mode {
+        IDLE,
+        SUCCSESS,
+        DISCONNECTED,
+        MEDIAMANAGER,
+        DOWNLOADMODESUPPORTED,
+        FAILURE,
+        TIMEOUT
+    }
+
+    public camera_mode switch_camera_mode = camera_mode.IDLE;
 
     DroneModel(MainActivity parent, DatagramSocket socket, boolean sim) {
         this.parent = parent;
         this.socket = socket;
+        this.numFiles = 0;
         initFlightController(sim);
     }
 
@@ -241,19 +281,27 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         miniPIDSide = new MiniPID(0.35, 0.0, 0.0);
         miniPIDFwd = new MiniPID(0.35, 0.0, 0.0);
 
-        Aircraft aircraft = (Aircraft) RDApplication.getProductInstance(); //DJISimulatorApplication.getAircraftInstance();
-        if (aircraft == null || !aircraft.isConnected()) {
+        //------------------------------------------------------------
+        // Prepare mail handler and add the catalog for images...
+        //   m_directory = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/accident");
+        m_directory = new File(parent.getExternalFilesDir(null).getAbsolutePath() + "/accident");
+        m_directory.mkdirs();
+        SendMail = new MailReport(parent,m_directory,parent.getApplicationContext().getContentResolver());
+
+        m_aircraft = (Aircraft) RDApplication.getProductInstance(); //DJISimulatorApplication.getAircraftInstance();
+        if (m_aircraft == null || !m_aircraft.isConnected()) {
             parent.logMessageDJI("No target...");
             mFlightController = null;
             return;
         } else {
-            m_model = aircraft.getModel();
+            m_model = m_aircraft.getModel();
             if (m_model.equals("INSPIRE_1") || m_model.equals("INSPIRE_1_PRO") || m_model.equals("INSPIRE_1_RAW")) {
                 avtivemode = HardwareState.FlightModeSwitch.POSITION_THREE;
             }
 
-            mGimbal = aircraft.getGimbal();
-            mFlightController = aircraft.getFlightController();
+            mGimbal = m_aircraft.getGimbal();
+            m_camera = RDApplication.getCameraInstance();
+            mFlightController = m_aircraft.getFlightController();
             mFlightController.setRollPitchControlMode(RollPitchControlMode.VELOCITY);
             mFlightController.setYawControlMode(YawControlMode.ANGULAR_VELOCITY);
             mFlightController.setVerticalControlMode(VerticalControlMode.VELOCITY);
@@ -300,7 +348,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         //  SetMesasageBox("Controller Ready!!!!!");
     }
 
-    LocationCoordinate3D getSimPos3D(){
+    LocationCoordinate3D getSimPos3D() {
         sharedPreferences = android.preference.PreferenceManager.getDefaultSharedPreferences(parent.getApplicationContext());
         LocationCoordinate3D pos = new LocationCoordinate3D(
                 Double.parseDouble(Objects.requireNonNull(sharedPreferences.getString("pref_sim_pos_lat", "-1"))),
@@ -309,24 +357,24 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         );
 
         // If this is the first time the app is running...
-        if(pos.getLatitude() == -1){
+        if (pos.getLatitude() == -1) {
             sharedPreferences.getStringSet("pref_sim_pos_lat", Collections.singleton("60.4094"));
             pos.setLatitude(60.4094);
         }
-        if(pos.getLongitude() == -1){
+        if (pos.getLongitude() == -1) {
             sharedPreferences.getStringSet("pref_sim_pos_lon", Collections.singleton("10.4911"));
             pos.setLongitude(10.4911);
         }
-        if(pos.getAltitude() == -1){  // Not Used...
+        if (pos.getAltitude() == -1) {  // Not Used...
             sharedPreferences.getStringSet("pref_sim_pos_alt", Collections.singleton("210.0"));
-            pos.setAltitude((float)210.0);
+            pos.setAltitude((float) 210.0);
         }
         return (pos);
     }
 
-    LocationCoordinate2D getSimPos2D(){
+    LocationCoordinate2D getSimPos2D() {
         LocationCoordinate3D pos3d = getSimPos3D();
-        LocationCoordinate2D pos = new LocationCoordinate2D(pos3d.getLatitude(),pos3d.getLongitude());
+        LocationCoordinate2D pos = new LocationCoordinate2D(pos3d.getLatitude(), pos3d.getLongitude());
         return (pos);
     }
 
@@ -600,16 +648,13 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                 mControllerVoltage_pr = (batteryState.getRemainingChargeInPercent());
                 if (mControllerVoltage_pr > 90) {
                     lastState = 100;
-                }
-                else if (mControllerVoltage_pr < 20 && lastState == 100) {
+                } else if (mControllerVoltage_pr < 20 && lastState == 100) {
                     lastState = 20;
                     SetMesasageBox("Controller Battery Warning 20% !!!!!");
-                }
-                else if (mControllerVoltage_pr < 10 && lastState == 20) {
+                } else if (mControllerVoltage_pr < 10 && lastState == 20) {
                     lastState = 10;
                     SetMesasageBox("Controller Battery Warning 10% !!!!!");
-                }
-                else if (mControllerVoltage_pr < 5 && lastState == 10) {
+                } else if (mControllerVoltage_pr < 5 && lastState == 10) {
                     lastState = 5;
                     SetMesasageBox("Controller Battery Warning 5% !!!!!");
                 }
@@ -637,16 +682,13 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
                     if (mCVoltage_pr > 90) {
                         mlastState = 100;
-                    }
-                    else if (mCVoltage_pr <= 20 && mlastState == 100) {
+                    } else if (mCVoltage_pr <= 20 && mlastState == 100) {
                         mlastState = 20;
                         SetMesasageBox("Drone Battery Warning 20% !!!!!");
-                    }
-                    else if (mCVoltage_pr <= 10 && mlastState == 20) {
+                    } else if (mCVoltage_pr <= 10 && mlastState == 20) {
                         mlastState = 10;
                         SetMesasageBox("Drone Battery Warning 10% !!!!!");
-                    }
-                    else if (mCVoltage_pr <= 5 && mlastState == 10) {
+                    } else if (mCVoltage_pr <= 5 && mlastState == 10) {
                         mlastState = 5;
                         SetMesasageBox("Drone Battery Warning 5% !!!!!");
                     }
@@ -1026,22 +1068,22 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         short[] shortArray = new short[251];
 
 
-        if(header != null){
-            for(int i = 0; i < header.length; i++) {
-                short s = (short)(header[i] & 0xFF);
+        if (header != null) {
+            for (int i = 0; i < header.length; i++) {
+                short s = (short) (header[i] & 0xFF);
                 shortArray[i] = s;
             }
         }
 
         int sizeCounter = 0;
-        for (int i = 0; i < byteString.length; i++){
+        for (int i = 0; i < byteString.length; i++) {
             int added = 12 + i;
             short s = byteString[i];
             shortArray[added] = s;
             sizeCounter += 1;
         }
-        shortArray[3] = (short)128;
-        shortArray[4] = (short)sizeCounter;
+        shortArray[3] = (short) 128;
+        shortArray[4] = (short) sizeCounter;
         msg.payload = shortArray;
         msg.msgid = message_id;
 
@@ -1051,12 +1093,12 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     void send_command_ftp_bytes_ack(int message_id, byte[] data) {
         msg_file_transfer_protocol msg = new msg_file_transfer_protocol();
         short[] shortArray = new short[data.length];
-        for (int i = 0; i < data.length; i++){
-            short s = (short)(data[i] & 0xFF);
+        for (int i = 0; i < data.length; i++) {
+            short s = (short) (data[i] & 0xFF);
             shortArray[i] = s;
         }
 
-        shortArray[3] = (short)128;
+        shortArray[3] = (short) 128;
 
         msg.payload = shortArray;
         msg.msgid = message_id;
@@ -1068,14 +1110,14 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         msg_file_transfer_protocol msg = new msg_file_transfer_protocol();
         short[] shortArray = new short[251];
 
-        shortArray[3] = (short)129; //nak code
-        if(failCode != 0){
-            shortArray[4] = (short)2; //error size
-            shortArray[13] = (short)failCode;
+        shortArray[3] = (short) 129; //nak code
+        if (failCode != 0) {
+            shortArray[4] = (short) 2; //error size
+            shortArray[13] = (short) failCode;
         } else {
-            shortArray[4] = (short)1; //error size
+            shortArray[4] = (short) 1; //error size
         }
-        shortArray[12] = (short)errorCode; // the error code
+        shortArray[12] = (short) errorCode; // the error code
 
         msg.msgid = message_id;
         sendMessage(msg);
@@ -1115,18 +1157,37 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     public double get_current_lat() {
+        if (mFlightController == null)
+            return getSimPos3D().getLatitude();
+
         LocationCoordinate3D coord = djiAircraft.getFlightController().getState().getAircraftLocation();
         return coord.getLatitude();
     }
 
     public double get_current_lon() {
+        if (mFlightController == null)
+            return getSimPos3D().getLongitude();
+
         LocationCoordinate3D coord = djiAircraft.getFlightController().getState().getAircraftLocation();
         return coord.getLongitude();
     }
 
     public float get_current_alt() {
+        if (mFlightController == null)
+            return getSimPos3D().getAltitude();
+
         LocationCoordinate3D coord = djiAircraft.getFlightController().getState().getAircraftLocation();
         return coord.getAltitude();
+    }
+
+    public float get_current_head() {
+        if (mFlightController == null)
+            return (float) 123.45;
+
+        double yaw = djiAircraft.getFlightController().getState().getAttitude().yaw;
+        if (yaw < 0)
+            yaw += 360;
+        return (float) yaw;
     }
 
     private void send_gps_raw_int() {
@@ -1214,7 +1275,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             }
 
             mAutonomy = false;
-        //    pauseWaypointMission();  // TODO:: halt mission for safety...
+            //    pauseWaypointMission();  // TODO:: halt mission for safety...
         }
 
         msg.chan8_raw = (mAIfunction_activation * 100) + 1000;
@@ -1490,19 +1551,18 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         msg.mission_type = MAV_MISSION_TYPE.MAV_MISSION_TYPE_MISSION;
         // Get the full expanded list...
         msg.count = send_mission_item(-1);
-        Log.d(TAG, "Mission Count: "+msg.count);
+        Log.d(TAG, "Mission Count: " + msg.count);
         sendMessage(msg);
     }
 
     // This is a bit tricky, as DJI and MAVlink pack mission ithems very different...
     // Firste we expand the full mission list and then we pick the one we need...
-    int send_mission_item(int i)
-    {
+    int send_mission_item(int i) {
         ArrayList<msg_mission_item_int> msglist = new ArrayList<>();
         WaypointMission x = getWaypointMissionOperator().getLoadedMission();
 
         // If a mission loaded...
-        if(x!=null) {
+        if (x != null) {
             // For all DJI mission items...
             for (Waypoint wp : Objects.requireNonNull(x).getWaypointList()) {
 
@@ -1590,10 +1650,10 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                     }
                 }
             }
-            if(i>=0)
+            if (i >= 0)
                 sendMessage(msglist.get(i));
         }
-        Log.d(TAG, "Mission return: "+i);
+        Log.d(TAG, "Mission return: " + i);
         return (msglist.size());
     }
 
@@ -2546,4 +2606,250 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         parent.logMessageDJI("Was: lat " + lat + " lon " + lon + " newlat " + newlat + " newlon " + newlon);
         return new double[]{newlat, newlon};
     }
+
+//---------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------
+// FTP and file related functions
+    public void getfile(){
+        Runnable runnable = () -> initMediaManager();
+        new Thread(runnable).start();
+    }
+
+    public void initMediaManager() {
+        parent.logMessageDJI("Image retrival started...");
+        switch_camera_mode = camera_mode.IDLE;
+
+        if (m_aircraft == null) {
+            mediaFileList.clear();
+            DJILog.e(TAG, "Product disconnected");
+            switch_camera_mode = camera_mode.DISCONNECTED;
+            return;
+        } else {
+            if (null != m_camera && m_camera.isMediaDownloadModeSupported()) {
+                mMediaManager = m_camera.getMediaManager();
+
+                // Is actually of no interest...
+                if(!m_camera.isSSDSupported()){
+                    parent.logMessageDJI("Internal ssd is not suported");
+                }
+                if (null != mMediaManager) {
+                    mMediaManager.addUpdateFileListStateListener(this.updateFileListStateListener);
+                    //switchCameraMode(SettingsDefinitions.CameraMode.MEDIA_DOWNLOAD);
+
+                    RDApplication.getCameraInstance().setMode(SettingsDefinitions.CameraMode.MEDIA_DOWNLOAD, new CommonCallbacks.CompletionCallback() {
+                        @Override
+                        public void onResult(DJIError error) {
+                            if (error == null) {
+                                parent.logMessageDJI("Set camera to MEDIA_DOWNLOAD success");
+                                getFileList();
+                            } else {
+                                parent.logMessageDJI("Set camera to MEDIA_DOWNLOAD failed");
+                                parent.logMessageDJI(error.toString());
+                            }
+                        }
+                    });
+
+                    // Is actually of no interest...
+                    if (mMediaManager.isVideoPlaybackSupported()) {
+                        DJILog.e(TAG, "Camera support video playback!");
+                    } else {
+                        parent.logMessageDJI("Camera does not support video playback!");
+                    }
+
+                    scheduler = mMediaManager.getScheduler();
+
+                } else{
+                    switch_camera_mode = camera_mode.MEDIAMANAGER;
+                }
+
+            } else if (null != m_camera && !m_camera.isMediaDownloadModeSupported()) {
+                parent.logMessageDJI("Media Download Mode not Supported");
+                switch_camera_mode = camera_mode.DOWNLOADMODESUPPORTED;
+            }
+        }
+        return;
+    }
+
+    public void getFileList() {
+        BaseProduct product = null;
+        if (RDApplication.getSim() == false) product = m_aircraft;
+        if (product != null){
+            if(product.isConnected()) {
+                mMediaManager = m_camera.getMediaManager();
+                if (mMediaManager != null) {
+                    parent.logMessageDJI(currentFileListState.name());
+                    if ((currentFileListState == MediaManager.FileListState.SYNCING) || (currentFileListState == MediaManager.FileListState.DELETING)) {
+                        DJILog.e(TAG, "Media Manager is busy.");
+                        parent.logMessageDJI("Media Manager is busy.");
+                    } else {
+                        mMediaManager.refreshFileListOfStorageLocation(SettingsDefinitions.StorageLocation.SDCARD, new CommonCallbacks.CompletionCallback() {
+                            @Override
+                            public void onResult(DJIError djiError) {
+                                if (null == djiError) {
+                                    //Reset data
+                                    if (currentFileListState != MediaManager.FileListState.INCOMPLETE) {
+                                        mediaFileList.clear();
+                                    }
+                                    mediaFileList = mMediaManager.getSDCardFileListSnapshot();
+                                    Collections.sort(mediaFileList, new Comparator<MediaFile>() {
+                                        @Override
+                                        public int compare(MediaFile lhs, MediaFile rhs) {
+                                            if (lhs.getTimeCreated() < rhs.getTimeCreated()) {
+                                                return -1;
+                                            } else if (lhs.getTimeCreated() > rhs.getTimeCreated()) {
+                                                return 1;
+                                            }
+                                            return 0;
+                                        }
+                                    });
+                                    scheduler.resume(new CommonCallbacks.CompletionCallback() {
+                                        @Override
+                                        public void onResult(DJIError error) {
+                                            if (error == null) {
+                                            }
+                                        }
+                                    });
+
+                                    if(numFiles != mediaFileList.size()){
+                                        numFiles = mediaFileList.size();
+                                    }
+
+                                    parent.logMessageDJI("Got Media Files: " + mediaFileList.size());
+                                    for(int i=0; i<mediaFileList.size(); i++) {
+                                        MediaFile file = mediaFileList.get(i);
+                                        String fileName = file.getFileName();
+                                        parent.logMessageDJI("FileName on Drone: " + fileName);
+                                    }
+                                } else {
+                                    parent.logMessageDJI("Get Media File List Failed: " + djiError.getDescription());
+                                }
+                            }
+                        });
+                    }
+                } else {
+                    parent.logMessageDJI("mMediaManager == null");
+                }
+            }else {
+                parent.logMessageDJI("product == None");
+            }
+        } else {
+            parent.logMessageDJI("product == null");
+        }
+    }
+    //Listeners
+    private MediaManager.FileListStateListener updateFileListStateListener = new MediaManager.FileListStateListener() {
+        @Override
+        public void onFileListStateChange(MediaManager.FileListState state) {
+            currentFileListState = state;
+            parent.logMessageDJI("Changed state to " + currentFileListState.name());
+            if(currentFileListState == MediaManager.FileListState.UP_TO_DATE){
+                parent.logMessageDJI("getFileList()");
+
+                if(numFiles > 0) {
+                    downloadFileByIndex(numFiles - 1);
+                }
+            }
+        }
+    };
+    public void downloadFileByName(final String name) {
+        for(int i=0; i<mediaFileList.size(); i++) {
+            if (mediaFileList.get(i).getFileName() == name) {
+                downloadFileByIndex(i);
+            }
+        }
+    }
+
+    public boolean downloadFileByIndex(final int index){
+        if ((mediaFileList.get(index).getMediaType() == MediaFile.MediaType.PANORAMA)
+                || (mediaFileList.get(index).getMediaType() == MediaFile.MediaType.SHALLOW_FOCUS)) {
+            parent.logMessageDJI( "Media type is " + mediaFileList.get(index).getMediaType() + " This is not accaptable.");
+            return false;
+        }
+
+        mediaFileList.get(index).fetchFileData(destDir, null, new DownloadListener<String>() {
+            @Override
+            public void onFailure(DJIError error) {
+                parent.logMessageDJI( "Download File Failed" + error.getDescription());
+            }
+
+            @Override
+            public void onProgress(long total, long current) {
+            }
+
+            @Override
+            public void onRateUpdate(long total, long current, long persize) {
+                int tmpProgress = (int) (1.0 * current / total * 100);
+                if (tmpProgress != currentProgress) {
+                    currentProgress = tmpProgress;
+                }
+            }
+
+            @Override
+            public void onRealtimeDataUpdate(byte[] bytes, long l, boolean b) {
+            }
+
+            @Override
+            public void onStart() {
+                currentProgress = 0;
+            }
+
+            @Override
+            public void onSuccess(String filePath) {
+                parent.logMessageDJI( "Download File Success: " + filePath + "/" + mediaFileList.get(index).getFileName());
+//                last_downloaded_file = filePath+ "/" + mediaFileList.get(index).getFileName();
+                last_downloaded_file = mediaFileList.get(index).getFileName();
+
+                RDApplication.getCameraInstance().setMode(SettingsDefinitions.CameraMode.SHOOT_PHOTO, new CommonCallbacks.CompletionCallback() {
+                    @Override
+                    public void onResult(DJIError error) {
+                        if (error == null) {
+                            parent.logMessageDJI("Set camera to SHOOT_PHOTO success");
+                            sendmail();
+                        } else {
+                            parent.logMessageDJI("Set camera to SHOOT_PHOTO failed");
+                            parent.logMessageDJI(error.toString());
+                        }
+                    }
+                });
+                lastDownloadedIndex = index;
+            }
+        });
+        return true;
+    }
+
+    //--------------------------------------------------------------
+    void sendmail()
+    {
+        List<String> address = new ArrayList<String>();
+        String Eemail = sharedPreferences.getString("pref_email_name", "");
+        address.add(Eemail);
+
+        try {
+            Intent email = SendMail.createEmail(
+                    address,
+                    "Status report",
+                    "There is an issue: ",
+                    get_current_lat(),
+                    get_current_lon(),
+                    get_current_alt(),
+                    get_current_head(),
+                    last_downloaded_file);
+            if(email != null) {
+                try {
+                    parent.startActivity(Intent.createChooser(email, "Send mail..."));
+                    Log.i(TAG, "Finished sending email...");
+                } catch (android.content.ActivityNotFoundException ex) {
+                    Toast.makeText(parent, "There is no email client installed.", Toast.LENGTH_SHORT).show();
+                }
+            }
+        }catch (Exception e) {
+            Toast.makeText(parent, "Can not send email: "+ e.toString(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    void onFileListStateChange(MediaManager.FileListState state){
+        parent.logMessageDJI( "Files changed?");
+    }
+    // FTP and file related functions
+    //---------------------------------------------------------------------------------------
 }

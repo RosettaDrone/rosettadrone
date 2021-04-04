@@ -65,10 +65,14 @@ public class FTPManager {
     }
 
     public void fetchFiles(int offset){
-        parent.initMediaManager();
-        safeSleep(1500);
+        mModel.initMediaManager();
+        // Wait for answer...
+        do {
+            safeSleep(500);
+        }while(mModel.switch_camera_mode == DroneModel.camera_mode.IDLE);
+
         parent.logMessageDJI("Getting files");
-        parent.getFilesDir();
+        //parent.getFilesDir();
         if(parent.mediaFileList.size() < offset) {
             mModel.send_command_ftp_nak(MAVLINK_MSG_ID_FILE_TRANSFER_PROTOCOL, 10, 0);
         } else {
@@ -81,20 +85,18 @@ public class FTPManager {
                 }
             }
             parent.logMessageDJI("total: " + dir_items.getBytes().length + ": " + dir_items);
-
             mModel.send_command_ftp_string_ack(MAVLINK_MSG_ID_FILE_TRANSFER_PROTOCOL, dir_items, null);
         }
     }
 
     public void openFile(int file_id, int session_id){
         parent.logMessageDJI("Download file by index " + file_id);
-        parent.currentProgress = 0;
         if(parent.lastDownloadedIndex != file_id) {
-            parent.downloadFileByIndex(file_id);
+            mModel.downloadFileByIndex(file_id);
             // wait for done
-            while (parent.currentProgress != -1){
+            while (parent.mModel.currentProgress != -1){
                 safeSleep(1000);
-                parent.logMessageDJI("Waiting for current progress: " + parent.currentProgress);
+                parent.logMessageDJI("Waiting for current progress: " + parent.mModel.currentProgress);
             };
         }
         if(!parent.downloadError){
