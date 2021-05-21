@@ -1,3 +1,18 @@
+# RosettaDrone 2 fork with unofficial Mini 2 Support
+
+Uses Frida to Support the Mini 2 by spoofing the DroneType as Mavic Air 2 and the Camera as Mavic Mini
+
+Known Issues:
+- No Yaw limits for Gimbal, potential damage source
+- Simulator disconnect while flight makes the gimbal go crazy sometimes, unknown if this can cause potential damage. Persists on short restarts, on coldstart usually works a few times.
+- IMU shows abnormal, but no issues occur. Doesnt happen with Mavic Mini Camera spoofed
+- Mavic Mini Camera doesnt lets you set raw etc in the UX SDK, however its possible to set it in the DJI Fly app and it just keeps the values
+
+**Use on your own risk.**
+
+You will need to additionally have https://gist.github.com/m4xw/bcd66abb39f711399f7ff2e5b6be20e3 on your SDCard.
+The location is specified in gadget.config.so (fake shared lib, just a json)
+
 # RosettaDrone 2 is now updated to DJI SDK 4.14 beta 1...
 
 Rosetta Drone 2 tested on **DJI Air, Mavic 2 x and Matrice 210 V2, Mavic Pro, Mavic AIR series

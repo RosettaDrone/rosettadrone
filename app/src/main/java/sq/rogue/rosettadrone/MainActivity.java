@@ -60,7 +60,9 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -83,6 +85,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.preference.PreferenceManager;
+
+import dji.common.camera.ResolutionAndFrameRate;
 import dji.common.camera.SettingsDefinitions;
 import dji.common.error.DJIError;
 import dji.common.error.DJISDKError;
@@ -542,6 +546,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         setContentView(R.layout.activity_gui);
 
         mProduct = RDApplication.getProductInstance(); // Should be set by Connection ...
+
         if(mProduct != null){
             try {
                 mProductModel = mProduct.getModel();
@@ -630,14 +635,90 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         //--------------------------------------------------------------
     }
 
+    private Thread customWaypointTask = new Thread() {
+        @Override
+        public void run() {
+            String waypointCsv = "";
+            BufferedReader br = null;
+
+            try {
+                br = new BufferedReader(new FileReader("/sdcard/waypoints.csv"));
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+                return;
+            }
+
+            try {
+                StringBuilder sb = new StringBuilder();
+                String line = br.readLine();
+
+                while (line != null) {
+                    sb.append(line);
+                    sb.append(System.lineSeparator());
+                    line = br.readLine();
+                }
+                waypointCsv = sb.toString();
+            } catch (IOException e) {
+                e.printStackTrace();
+                return;
+            } finally {
+                try {
+                    br.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    return;
+                }
+            }
+
+            String[] waypointRows = waypointCsv.split("\n", 0);
+
+            for(int i = 0; i < waypointRows.length; i++)
+            {
+                String row = waypointRows[i].trim();
+
+                Log.e(TAG, "Waypoints: Row: " + row);
+
+                if(row.startsWith(";"))
+                    continue;
+
+                String[] columns = row.split(",", 0);
+                //;latitude,longitude,altitude(m),heading(deg),curvesize(m),rotationdir,gimbalmode,gimbalpitchangle,actiontype1,actionparam1,actiontype2,actionparam2,actiontype3,actionparam3,actiontype4,actionparam4,actiontype5,actionparam5,actiontype6,actionparam6,actiontype7,actionparam7,actiontype8,actionparam8,actiontype9,actionparam9,actiontype10,actionparam10,actiontype11,actionparam11,actiontype12,actionparam12,actiontype13,actionparam13,actiontype14,actionparam14,actiontype15,actionparam15,altitudemode,speed(m/s),poi_latitude,poi_longitude,poi_altitude(m),poi_altitudemode,photo_timeinterval,photo_distinterval
+                String strGimbalPitch = columns[7];
+                float gimbalPitch = Float.parseFloat(strGimbalPitch);
+
+                // Absolute pitch
+                mModel.do_set_Gimbal(9, gimbalPitch);
+
+                String strLatitude = columns[0];
+                String strLongitude = columns[1];
+                double latitude = Double.parseDouble(strLatitude);
+                double longitude = Double.parseDouble(strLongitude);
+
+                String strAltitude = columns[2];
+                float altitude = Float.parseFloat(strAltitude);
+
+                String strHeading = columns[3];
+                float heading = Float.parseFloat(strHeading);
+
+                mModel.do_set_motion_absolute(latitude, longitude, altitude, heading, 2.5f, 2.5f, 2.5f, 2.5f, 0);
+                while(mModel.mMoveToDataTimer != null ||  mModel.photoTaken != true)
+                {
+                    ;
+                }
+            }
+           
+            mModel.do_go_home();
+        }
+    };
+
     // Start the AI Pluggin (Developed by the customers...)
     protected boolean startActivity(String pluggin) {
 
         Intent intent = getPackageManager().getLaunchIntentForPackage(pluggin);
         if (intent == null) {
-            // Bring user to the market or let them choose an app?
-            intent = new Intent(Intent.ACTION_VIEW);
-            intent.setData(Uri.parse("market://details?id=" + "com.example.remoteconfig3"));
+            // Start our Waypoint routine
+            if(!customWaypointTask.isAlive())
+                customWaypointTask.start();
         }
         if (intent != null) {
             intent.putExtra("password", "thisisrosettadrone246546101");
@@ -729,14 +810,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         }
                     });
                 }
-/*
-                mCamera.setVideoResolutionAndFrameRate(new ResolutionAndFrameRate(SettingsDefinitions.VideoResolution.RESOLUTION_1280x720,SettingsDefinitions.VideoFrameRate.FRAME_RATE_25_FPS) , djiError -> {
+
+                mCamera.setVideoResolutionAndFrameRate(new ResolutionAndFrameRate(SettingsDefinitions.VideoResolution.RESOLUTION_1280x720,SettingsDefinitions.VideoFrameRate.FRAME_RATE_60_FPS) , djiError -> {
                     if (djiError != null) {
                         Log.e(TAG, "can't change mode of camera, error: "+djiError);
                         logMessageDJI("can't change mode of camera, error: "+djiError);
                     }
                 });
-*/
+
                 //When calibration is needed or the fetch key frame is required by SDK, should use the provideTranscodedVideoFeed
                 //to receive the transcoded video feed from main camera.
                 if (mIsTranscodedVideoFeedNeeded) {
@@ -779,6 +860,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             case INSPIRE_1_PRO:
             case INSPIRE_1_RAW:     // Verified...
             case MAVIC_AIR:         // Verified...
+            case MAVIC_AIR_2:        // Verified...
                 return true;
         }
 

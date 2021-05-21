@@ -19,10 +19,8 @@ import com.MAVLink.common.msg_heartbeat;
 import com.MAVLink.common.msg_home_position;
 import com.MAVLink.common.msg_mission_ack;
 import com.MAVLink.common.msg_mission_count;
-import com.MAVLink.common.msg_mission_item;
 import com.MAVLink.common.msg_mission_item_int;
 import com.MAVLink.common.msg_mission_item_reached;
-import com.MAVLink.common.msg_mission_request;
 import com.MAVLink.common.msg_mission_request_int;
 import com.MAVLink.common.msg_mission_request_list;
 import com.MAVLink.common.msg_param_value;
@@ -55,6 +53,7 @@ import java.util.Collections;
 import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import androidx.annotation.NonNull;
 import dji.common.camera.SettingsDefinitions;
@@ -100,7 +99,6 @@ import dji.sdk.sdkmanager.DJISDKManager;
 import static com.MAVLink.common.msg_set_position_target_global_int.MAVLINK_MSG_ID_SET_POSITION_TARGET_GLOBAL_INT;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_COMPONENT_ARM_DISARM;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_DO_DIGICAM_CONTROL;
-import static com.MAVLink.enums.MAV_CMD.MAV_CMD_DO_SET_PARAMETER;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_DO_SET_SERVO;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_NAV_TAKEOFF;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_VIDEO_START_CAPTURE;
@@ -183,12 +181,12 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
     private SendVelocityDataTask mSendVirtualStickDataTask = null;
     private Timer mSendVirtualStickDataTimer = null;
-    private MoveTo mMoveToDataTask = null;
-    private Timer mMoveToDataTimer = null;
+    public MoveTo mMoveToDataTask = null;
+    public Timer mMoveToDataTimer = null;
     private Rotation m_ServoSet;
     private float m_ServoPos_pitch = 0;
     private float m_ServoPos_yaw = 0;
-
+    public boolean photoTaken = false;
     private MiniPID miniPIDSide;
     private MiniPID miniPIDFwd;
 
@@ -232,8 +230,11 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         parent.logMessageDJI("Starting FlightController...");
 
         // PID for position control...
-        miniPIDSide = new MiniPID(0.35, 0.0, 0.0);
-        miniPIDFwd = new MiniPID(0.35, 0.0, 0.0);
+        miniPIDSide = new MiniPID(0.35, 0.00008, 4.0);
+        miniPIDFwd = new MiniPID(0.35, 0.00008, 4.0);
+
+        //miniPIDSide.setOutputRampRate(0.3);
+        //miniPIDFwd.setOutputRampRate(0.3);
 
         Aircraft aircraft = (Aircraft) RDApplication.getProductInstance(); //DJISimulatorApplication.getAircraftInstance();
         if (aircraft == null || !aircraft.isConnected()) {
@@ -246,7 +247,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                 avtivemode = HardwareState.FlightModeSwitch.POSITION_THREE;
             }
 
-            mGimbal = aircraft.getGimbal();
+            mGimbal = aircraft.getGimbals().get(0);
             mFlightController = aircraft.getFlightController();
             mFlightController.setRollPitchControlMode(RollPitchControlMode.VELOCITY);
             mFlightController.setYawControlMode(YawControlMode.ANGULAR_VELOCITY);
@@ -1779,9 +1780,10 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
     void do_set_Gimbal(float channel, float value) {
         Rotation.Builder builder = new Rotation.Builder().mode(RotationMode.ABSOLUTE_ANGLE).time(2);
-        float param = (value - (float) 1500.0) / (float) 5.5;
+        float param = value;
         if ((int) channel == 9) {
             m_ServoPos_pitch = param;
+            builder.mode(RotationMode.ABSOLUTE_ANGLE);
             builder.pitch(m_ServoPos_pitch);
         } else if ((int) channel == 8) {
             builder.mode(RotationMode.RELATIVE_ANGLE);
@@ -1798,13 +1800,19 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
         m_ServoSet = builder.build();
 
+        AtomicBoolean gimbalReady = new AtomicBoolean(false);
         mGimbal.rotate(m_ServoSet, djiError -> {
             if (djiError != null)
                 parent.logMessageDJI("Error: " + djiError.toString());
 
             Log.e(TAG, "Gimbal Pos: " + m_ServoSet.getPitch() + "  :  " + m_ServoSet.getYaw());
             send_command_ack(MAV_CMD_DO_SET_SERVO, MAV_RESULT.MAV_RESULT_ACCEPTED);
+
+            gimbalReady.set(true);
         });
+
+        while(!gimbalReady.get())
+            ; // Block Thread
     }
 
     // --------------------------------------------------------------------------------
@@ -1846,6 +1854,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     // We want to move to a lat,lon,alt position, this has no support by DJI...
     public void do_set_motion_absolute(double Lat, double Lon, float alt, float head, float vx, float vy, float vz, float yaw_rate, int mask) {
         //    Log.i(TAG, "do_set_motion_absolute");
+        photoTaken = false;
 
         // Set our new destination...
         m_Destination_Lat = Lat;
@@ -1881,17 +1890,17 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
         // Start a task to do the job... if not already running...
         if (mMoveToDataTimer == null) {
-            parent.logMessageDJI("Starting new thread!");
+            parent.logMessageDJI("Starting Absolution Mission!");
 
-//            miniPIDFwd.reset();
-//            miniPIDSide.reset();
+            miniPIDFwd.reset();
+            miniPIDSide.reset();
 
             // This is a non standard trick, but we would like to know exactly when we have reached the position...
             // So we move to AUTO mode while flying to position, and then go back to GUIDED...
             // If there is another way let me know...
             mMoveToDataTask = new MoveTo();
             mMoveToDataTimer = new Timer();
-            mMoveToDataTimer.schedule(mMoveToDataTask, 100, 190);
+            mMoveToDataTimer.schedule(mMoveToDataTask, 100, 25);
             mAutonomy = true;
         } else {
             mMoveToDataTask.detection = 0;
@@ -1921,23 +1930,28 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             double yawerror;
             if ((m_Destination_Mask & 0b0000010000000000) > 0) yawerror = 0;
                 // Make the error +-180 deg. error  + is we need to turn more right...mAutonomy
-            else yawerror = rotation(m_Destination_Yaw * (180 / Math.PI), yaw);
+            else yawerror = rotation(m_Destination_Yaw, yaw);
+            
+            //yawerror = 0;
 
             // Do we move og not...
             if ((m_Destination_Mask & 0b0000000000111111) == 0x3F) dist = 0;
 
             // If we are there...
-            if ((dist < 0.2 && Math.abs(yawerror) < 1.25) || mAutonomy == false) {
-                // If we got 5 (1 sec) consecutive hits at the right spot....
+            if ((dist < 0.5 && Math.abs(yawerror) < 2.0) || mAutonomy == false) {
+                // If we got 3 consecutive hits at the right spot....
                 if (++detection > 7 || mAutonomy == false) {
                     mMoveToDataTimer.cancel();
                     mMoveToDataTimer.purge();
-                    mMoveToDataTimer = null;
                     do_set_motion_velocity(0, 0, 0, 0, 0b1111011111000111);
                     mAutonomy = false;
                     parent.logMessageDJI("At Position...");
 //                    setGCSCommandedMode(ArduCopterFlightModes.GUIDED);
                     send_command_ack(m_lastCommand, MAV_RESULT.MAV_RESULT_ACCEPTED);
+                    // Take Photo
+                    takePhoto();
+                    mMoveToDataTimer = null;
+
                     return;
                 }
             } else {
@@ -1970,35 +1984,21 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
             //------------------------------------------------
             // Make a very simple P controller...
-            final double motion_p = 0.7;
-            final double maxspeed = 2.5;  // Default speed ( should be set ...)
-            double speed = 0;
-
-            //------------------------------------------------
-            if ((m_Destination_Mask & 0b0000000000001000) == 0) speed = m_Destination_Set_vx;
-            else speed = maxspeed;
-            miniPIDFwd.setOutputLimits(speed);
+            final double motion_p = 5.0;
+            final double maxspeed = 4.0;  // Default speed ( should be set ...)
+            double speed = maxspeed;
+            miniPIDFwd.setOutputLimits(-12.0f, 12.0f);
             double fwmotion = miniPIDFwd.getOutput(-fw_dist, 0);
-
-            //------------------------------------------------
-            if ((m_Destination_Mask & 0b0000000000010000) == 0) speed = m_Destination_Set_vy;
-            else speed = maxspeed;
-            miniPIDSide.setOutputLimits(speed);
+            miniPIDSide.setOutputLimits(-12.0f, 12.0f);
             double rightmotion = miniPIDSide.getOutput(-right_dist, 0);
-
-            //------------------------------------------------
-            if ((m_Destination_Mask & 0b0000000000100000) == 0) speed = m_Destination_Set_vz;
-            else speed = maxspeed;
             double upmotion = (m_Destination_Alt - coord.getAircraftLocation().getAltitude()) * motion_p;
             if (upmotion > speed) upmotion = speed;
             if (upmotion < -speed) upmotion = -speed;
 
-            //------------------------------------------------
-            if ((m_Destination_Mask & 0b0000100000000000) == 0) speed = m_Destination_Yaw_rate;
-            else speed = maxspeed * 15;
-            double clockmotion = yawerror * motion_p;
-            if (clockmotion > speed) clockmotion = speed;
-            if (clockmotion < -speed) clockmotion = -speed;
+            speed = 100.0f;
+            double clockmotion = m_Destination_Yaw;
+            //if (clockmotion > speed) clockmotion = speed;
+            //if (clockmotion < -speed) clockmotion = -speed;
 
             //------------------------------------------------
             if ((m_Destination_Mask & 0b0000000000111111) == 0x3F) {
@@ -2012,7 +2012,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                 Log.i(TAG, "rmove: " + rmove + " fmove: " + fmove);
 
                 do_set_motion_velocity((float) fmove, (float) rmove, (float) upmotion, (float) clockmotion, 0b1111011111000111);
-//                do_set_motion_velocity((float) fwmotion, (float) rightmotion, (float) upmotion, (float) clockmotion, 0b1111011111000111);
+                //do_set_motion_velocity((float) fwmotion, (float) rightmotion, (float) upmotion, (float) clockmotion, 0b1111011111000111);
             }
         }
     }
@@ -2034,6 +2034,10 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     void do_set_motion_velocity(float x, float y, float z, float yaw, int mask) {
         //    Log.i(TAG, "do_set_motion_velocity");
 
+        mFlightController.setRollPitchControlMode(RollPitchControlMode.VELOCITY);
+        mFlightController.setYawControlMode(YawControlMode.ANGLE);
+        mFlightController.setVerticalControlMode(VerticalControlMode.VELOCITY);
+        
         // If we use yaw rate...
         if ((mask & 0b0000100000000000) == 0) {
             mYaw = yaw;
@@ -2065,6 +2069,8 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                                     if (djiError != null) {
                                         Log.i(TAG, "Velocity Mode not enabled Error: " + djiError.toString());
                                         parent.logMessageDJI("Velocity Mode not enabled Error: " + djiError.toString());
+                                    } else {
+                                        mFlightController.setVirtualStickAdvancedModeEnabled(true);
                                     }
                                 }
                         );
@@ -2082,15 +2088,15 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         if (null == mSendVirtualStickDataTimer) {
             mSendVirtualStickDataTask = new SendVelocityDataTask();
             mSendVirtualStickDataTimer = new Timer();
-            mSendVirtualStickDataTimer.schedule(mSendVirtualStickDataTask, 100, 100);
+            mSendVirtualStickDataTimer.schedule(mSendVirtualStickDataTask, 100, 50);
         } else {
-            mSendVirtualStickDataTask.repeat = 20;
+            mSendVirtualStickDataTask.repeat = 2;
         }
     }
 
     // Run the velocity command for 2 seconds...
     class SendVelocityDataTask extends TimerTask {
-        public int repeat = 20;
+        public int repeat = 2;
         private int report = 0;
 
         @Override
@@ -2111,12 +2117,37 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                     parent.logMessageDJI("Motion done!\n");
                     return;
                 }
-                if (++report > 20) {
+                if (++report > 1) {
                     report = 0;
                     Log.e(TAG, ":" + mPitch + " " + mRoll + " " + mYaw + " " + mThrottle);
 //                parent.logMessageDJI(":"+mPitch+" "+ mRoll+" "+ mYaw+" "+ mThrottle);
                 }
 
+                mFlightController.getVirtualStickModeEnabled(new CommonCallbacks.CompletionCallbackWith<Boolean>() {
+                    @Override
+                    public void onSuccess(Boolean aBoolean) {
+                        if (aBoolean == false) {
+                            // After a manual mode change, we might loose the JOYSTICK mode...
+                            if (lastMode != FlightMode.JOYSTICK) {
+                                mFlightController.setVirtualStickModeEnabled(true, djiError -> {
+                                            if (djiError != null) {
+                                                Log.i(TAG, "Velocity Mode not enabled Error: " + djiError.toString());
+                                                parent.logMessageDJI("Velocity Mode not enabled Error: " + djiError.toString());
+                                            } else {
+                                                mFlightController.setVirtualStickAdvancedModeEnabled(true);
+                                            }
+                                        }
+                                );
+                            }
+                        }
+                    }
+        
+                    @Override
+                    public void onFailure(DJIError error) {
+                        Log.e(TAG, "Can Not get VirtualStick mode...");
+                    }
+                });
+        
                 mFlightController.sendVirtualStickFlightControlData(
                         new FlightControlData(mPitch, mRoll, mYaw, mThrottle)
                         , djiError -> {
@@ -2169,11 +2200,13 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     void takePhoto() {
 
         SettingsDefinitions.ShootPhotoMode photoMode = SettingsDefinitions.ShootPhotoMode.SINGLE;
+        photoTaken = false;
 
         if (djiAircraft.getCamera() != null) {
             djiAircraft.getCamera().startShootPhoto(djiError -> {
                 if (djiError == null) {
                     parent.logMessageDJI("Took photo");
+                    photoTaken = true;
 /*
                     msg_camera_image_captured msg = new msg_camera_image_captured();
                     msg.lat = (int)(m_Latitude*10000000);
@@ -2184,11 +2217,12 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                     msg.capture_result = 1;
                     sendMessage(msg);
   */
-                    send_command_ack(MAV_CMD_DO_SET_PARAMETER, MAV_RESULT.MAV_RESULT_ACCEPTED);
-//                    send_command_ack(MAV_CMD_DO_DIGICAM_CONTROL, MAV_RESULT.MAV_RESULT_ACCEPTED);
+                    //send_command_ack(MAV_CMD_DO_SET_PARAMETER, MAV_RESULT.MAV_RESULT_ACCEPTED);
+                    send_command_ack(MAV_CMD_DO_DIGICAM_CONTROL, MAV_RESULT.MAV_RESULT_ACCEPTED);
                 } else {
                     parent.logMessageDJI("Error taking photo: " + djiError.toString());
-                    send_command_ack(MAV_CMD_DO_DIGICAM_CONTROL, MAV_RESULT.MAV_RESULT_FAILED);
+                    // resume
+                    takePhoto();
                 }
             });
         }
@@ -2445,7 +2479,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
         double dNorth = dForward * Math.cos(ro) - dRight * Math.sin(ro);
         double dEast = dForward * Math.sin(ro) + dRight * Math.cos(ro);
-        double earth_radius = 6378137.0;  // Radius of "spherical" earth
+        double earth_radius = 6371e3;  // Radius of "spherical" earth
 
         //Coordinate offsets in radians
         double dLat = dNorth / earth_radius;
@@ -2455,7 +2489,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         double newlat = lat + Math.toDegrees(dLat);
         double newlon = lon + Math.toDegrees(dLon);
 
-        parent.logMessageDJI("Was: lat " + lat + " lon " + lon + " newlat " + newlat + " newlon " + newlon);
+        //parent.logMessageDJI("Wants: lat " + lat + " lon " + lon + " newlat " + newlat + " newlon " + newlon);
         return new double[]{newlat, newlon, newalt};
     }
 
@@ -2464,7 +2498,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         double ro = Math.toRadians(yaw);
         double dNorth = dist * Math.cos(ro);
         double dEast = dist * Math.sin(ro);
-        double earth_radius = 6378137.0;  // Radius of "spherical" earth
+        double earth_radius = 6371e3;  // Radius of "spherical" earth
 
         //Coordinate offsets in radians
         double dLat = dNorth / earth_radius;
@@ -2474,7 +2508,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         double newlat = lat + Math.toDegrees(dLat);
         double newlon = lon + Math.toDegrees(dLon);
 
-        parent.logMessageDJI("Was: lat " + lat + " lon " + lon + " newlat " + newlat + " newlon " + newlon);
+        //parent.logMessageDJI("Was: lat " + lat + " lon " + lon + " newlat " + newlat + " newlon " + newlon);
         return new double[]{newlat, newlon};
     }
 }
