@@ -431,7 +431,7 @@ public class MAVLinkReceiver {
 
                 // Somehow the GOTO from QGroundControl does not issue a mission count...
                 if (mMissionItemList == null && msg_item.command == MAV_CMD_NAV_WAYPOINT) {
-                    Log.d(TAG, "Goto old... ");
+                    Log.d(TAG, "Goto... ");
                     mModel.goto_position(msg_item.x, msg_item.y, msg_item.z, 0);
                     mModel.send_command_ack(MAVLINK_MSG_ID_MISSION_ACK, MAV_RESULT.MAV_RESULT_ACCEPTED);
 

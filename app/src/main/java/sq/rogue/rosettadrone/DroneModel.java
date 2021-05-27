@@ -187,6 +187,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     private float m_ServoPos_pitch = 0;
     private float m_ServoPos_yaw = 0;
     public boolean photoTaken = false;
+    public boolean gotoNoPhoto = false;
     private MiniPID miniPIDSide;
     private MiniPID miniPIDFwd;
     private MiniPID miniPIDAtti;
@@ -992,7 +993,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     private void send_altitude() {
         msg_altitude msg = new msg_altitude();
         LocationCoordinate3D coord = djiAircraft.getFlightController().getState().getAircraftLocation();
-        msg.altitude_relative = (int) (coord.getAltitude() * 1000);
+        msg.altitude_relative = coord.getAltitude();
         m_alt = msg.altitude_relative;
         sendMessage(msg);
     }
@@ -1849,8 +1850,10 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
     // --------------------------------------------------------------------------------
     public void goto_position(double Lat, double Lon, float alt, float head) {
-        TimeLine.TimeLineGoTo(Lat, Lon, alt, (float) 2.0, head);
-        TimeLine.startTimeline();
+        //TimeLine.TimeLineGoTo(Lat, Lon, alt, (float) 2.0, head);
+        //TimeLine.startTimeline();
+        gotoNoPhoto = true;
+        do_set_motion_absolute(Lat, Lon, alt, head, 2.5f, 2.5f, 2.5f, 2.5f, 0);
     }
 
     // We want to move to a lat,lon,alt position, this has no support by DJI...
@@ -1952,7 +1955,14 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 //                    setGCSCommandedMode(ArduCopterFlightModes.GUIDED);
                     send_command_ack(m_lastCommand, MAV_RESULT.MAV_RESULT_ACCEPTED);
                     // Take Photo
-                    takePhoto();
+                    // Hack
+                    if(!gotoNoPhoto)
+                    {
+                        takePhoto();
+                    } else {
+                        gotoNoPhoto = false;
+                        photoTaken = true;
+                    }
                     mMoveToDataTimer = null;
 
                     return;
@@ -1991,11 +2001,14 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             final double maxspeed = 4.0;  // Default speed ( should be set ...)
             double speed = maxspeed;
             miniPIDFwd.setOutputLimits(-12.0f, 12.0f);
+            miniPIDFwd.setOutputFilter(0.1);
             double fwmotion = miniPIDFwd.getOutput(-fw_dist, 0);
             miniPIDSide.setOutputLimits(-12.0f, 12.0f);
+            miniPIDSide.setOutputFilter(0.1);
             double rightmotion = miniPIDSide.getOutput(-right_dist, 0);
 
             miniPIDAtti.setOutputLimits(-4.0f, 4.0f);
+            miniPIDAtti.setOutputFilter(0.1);
             double upmotion = miniPIDAtti.getOutput(coord.getAircraftLocation().getAltitude(), m_Destination_Alt);
 
             speed = 100.0f;
