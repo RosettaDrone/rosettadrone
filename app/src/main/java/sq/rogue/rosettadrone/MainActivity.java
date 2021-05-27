@@ -680,11 +680,15 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 if(row.startsWith(";"))
                     continue;
-
+                
+                // TODO: check isNumeric / if a header is present
                 String[] columns = row.split(",", 0);
                 //;latitude,longitude,altitude(m),heading(deg),curvesize(m),rotationdir,gimbalmode,gimbalpitchangle,actiontype1,actionparam1,actiontype2,actionparam2,actiontype3,actionparam3,actiontype4,actionparam4,actiontype5,actionparam5,actiontype6,actionparam6,actiontype7,actionparam7,actiontype8,actionparam8,actiontype9,actionparam9,actiontype10,actionparam10,actiontype11,actionparam11,actiontype12,actionparam12,actiontype13,actionparam13,actiontype14,actionparam14,actiontype15,actionparam15,altitudemode,speed(m/s),poi_latitude,poi_longitude,poi_altitude(m),poi_altitudemode,photo_timeinterval,photo_distinterval
                 String strGimbalPitch = columns[7];
+                String strActionType1 = columns[8];
                 float gimbalPitch = Float.parseFloat(strGimbalPitch);
+                // TODO: Iterate actionType 1-15
+                int actionType1 = Integer.parseInt(strActionType1);
 
                 // Absolute pitch
                 mModel.do_set_Gimbal(9, gimbalPitch);
@@ -699,6 +703,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 String strHeading = columns[3];
                 float heading = Float.parseFloat(strHeading);
+
+                // Take Photo
+                if(actionType1 != 1)
+                    mModel.gotoNoPhoto = true;
 
                 mModel.do_set_motion_absolute(latitude, longitude, altitude, heading, 2.5f, 2.5f, 2.5f, 2.5f, 0);
                 while(mModel.mMoveToDataTimer != null ||  mModel.photoTaken != true)
