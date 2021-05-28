@@ -188,6 +188,8 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     private float m_ServoPos_yaw = 0;
     public boolean photoTaken = false;
     public boolean gotoNoPhoto = false;
+    public double m_Curvesize = 0.0;
+    public AtomicBoolean gimbalReady = null;
     private MiniPID miniPIDSide;
     private MiniPID miniPIDFwd;
     private MiniPID miniPIDAtti;
@@ -230,6 +232,9 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
     private void initFlightController(boolean sim) {
         parent.logMessageDJI("Starting FlightController...");
+
+        // Default to true to avoid issues with set gimbal never called before taking a pic
+        gimbalReady = new AtomicBoolean(true);
 
         // PID for position control...
         miniPIDSide = new MiniPID(0.35, 0.00008, 4.0);
@@ -1782,7 +1787,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
      ********************************************/
 
     void do_set_Gimbal(float channel, float value) {
-        Rotation.Builder builder = new Rotation.Builder().mode(RotationMode.ABSOLUTE_ANGLE).time(2);
+        Rotation.Builder builder = new Rotation.Builder().mode(RotationMode.ABSOLUTE_ANGLE).time(2.0);
         float param = value;
         if ((int) channel == 9) {
             m_ServoPos_pitch = param;
@@ -1803,7 +1808,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
         m_ServoSet = builder.build();
 
-        AtomicBoolean gimbalReady = new AtomicBoolean(false);
+        gimbalReady.set(false);
         mGimbal.rotate(m_ServoSet, djiError -> {
             if (djiError != null)
                 parent.logMessageDJI("Error: " + djiError.toString());
@@ -1813,9 +1818,6 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
             gimbalReady.set(true);
         });
-
-        while(!gimbalReady.get())
-            ; // Block Thread
     }
 
     // --------------------------------------------------------------------------------
@@ -1944,9 +1946,9 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             if ((m_Destination_Mask & 0b0000000000111111) == 0x3F) dist = 0;
 
             // If we are there...
-            if ((dist < 0.5 && Math.abs(yawerror) < 2.0) || mAutonomy == false) {
-                // If we got 3 consecutive hits at the right spot....
-                if (++detection > 7 || mAutonomy == false) {
+            if (((m_Curvesize > 0.0 ? dist < m_Curvesize : dist < 0.5) && Math.abs(yawerror) < 1.0) || mAutonomy == false) {
+                // If we got 5 consecutive hits at the right spot....
+                if (++detection > 5 || mAutonomy == false) {
                     mMoveToDataTimer.cancel();
                     mMoveToDataTimer.purge();
                     do_set_motion_velocity(0, 0, 0, 0, 0b1111011111000111);
@@ -2214,6 +2216,15 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     private int pictureNum = 0;
 
     void takePhoto() {
+        // Wait till Gimbal is in Place
+        while(!gimbalReady.get())
+            ; // Block Thread
+
+        djiAircraft.getCamera().setMode(SettingsDefinitions.CameraMode.SHOOT_PHOTO, djiError -> {
+            if(djiError != null) {
+                parent.logMessageDJI("Error Setting PhotoMode: " + djiError.toString());
+            }
+        });
 
         SettingsDefinitions.ShootPhotoMode photoMode = SettingsDefinitions.ShootPhotoMode.SINGLE;
         photoTaken = false;
@@ -2421,13 +2432,20 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
      ********************************************/
 
     void startRecordingVideo() {
-        djiAircraft.getCamera().startRecordVideo(djiError -> {
-            if (djiError == null) {
-                parent.logMessageDJI("Started recording video");
-                send_command_ack(MAV_CMD_VIDEO_START_CAPTURE, MAV_RESULT.MAV_RESULT_ACCEPTED);
-            } else {
-                parent.logMessageDJI("Error starting video recording: " + djiError.toString());
+        djiAircraft.getCamera().setMode(SettingsDefinitions.CameraMode.RECORD_VIDEO, djiError -> {
+            if (djiError != null) {
+                parent.logMessageDJI("Error Setting RecordVideo Mode: " + djiError.toString());
                 send_command_ack(MAV_CMD_VIDEO_START_CAPTURE, MAV_RESULT.MAV_RESULT_FAILED);
+            } else {
+                djiAircraft.getCamera().startRecordVideo(djiError2 -> {
+                    if (djiError2 == null) {
+                        parent.logMessageDJI("Started recording video");
+                        send_command_ack(MAV_CMD_VIDEO_START_CAPTURE, MAV_RESULT.MAV_RESULT_ACCEPTED);
+                    } else {
+                        parent.logMessageDJI("Error starting video recording: " + djiError2.toString());
+                        send_command_ack(MAV_CMD_VIDEO_START_CAPTURE, MAV_RESULT.MAV_RESULT_FAILED);
+                    }
+                });
             }
         });
     }

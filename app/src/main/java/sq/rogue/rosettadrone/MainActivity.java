@@ -704,11 +704,35 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 String strHeading = columns[3];
                 float heading = Float.parseFloat(strHeading);
 
-                // Take Photo
-                if(actionType1 != 1)
-                    mModel.gotoNoPhoto = true;
+                String strCurveSize = columns[4];
+                double curveSize = Double.parseDouble(strCurveSize);
 
-                mModel.do_set_motion_absolute(latitude, longitude, altitude, heading, 2.5f, 2.5f, 2.5f, 2.5f, 0);
+                // Min dist to target
+                // Useful for fly-by
+                mModel.m_Curvesize = Math.max(curveSize, 0.5);
+
+                switch(actionType1)
+                {
+                    // Take Photo
+                    case 1:
+                        mModel.gotoNoPhoto = false;
+                        break;
+                    // Start Recording
+                    case 2:
+                        mModel.gotoNoPhoto = true;
+                        mModel.startRecordingVideo();
+                        break;
+                    // Stop Recording
+                    case 3:
+                        mModel.gotoNoPhoto = true;
+                        mModel.stopRecordingVideo();
+                        break;
+                    default:
+                        mModel.gotoNoPhoto = true;
+                        break;
+                }
+                
+                mModel.do_set_motion_absolute(latitude, longitude, altitude, heading <= 180 ? heading : -180 + ((heading) - 180), 2.5f, 2.5f, 2.5f, 2.5f, 0);
                 while(mModel.mMoveToDataTimer != null ||  mModel.photoTaken != true)
                 {
                     ;
@@ -819,12 +843,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     });
                 }
 
-                mCamera.setVideoResolutionAndFrameRate(new ResolutionAndFrameRate(SettingsDefinitions.VideoResolution.RESOLUTION_1280x720,SettingsDefinitions.VideoFrameRate.FRAME_RATE_60_FPS) , djiError -> {
+                /*mCamera.setVideoResolutionAndFrameRate(new ResolutionAndFrameRate(SettingsDefinitions.VideoResolution.RESOLUTION_1280x720,SettingsDefinitions.VideoFrameRate.FRAME_RATE_60_FPS) , djiError -> {
                     if (djiError != null) {
                         Log.e(TAG, "can't change mode of camera, error: "+djiError);
                         logMessageDJI("can't change mode of camera, error: "+djiError);
                     }
-                });
+                });*/
 
                 //When calibration is needed or the fetch key frame is required by SDK, should use the provideTranscodedVideoFeed
                 //to receive the transcoded video feed from main camera.
