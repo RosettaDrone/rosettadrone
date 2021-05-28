@@ -193,6 +193,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     private MiniPID miniPIDSide;
     private MiniPID miniPIDFwd;
     private MiniPID miniPIDAlti;
+    private MiniPID miniPIDHeading;
 
     private boolean mSafetyEnabled = true;
     private boolean mMotorsArmed = false;
@@ -240,6 +241,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         miniPIDSide = new MiniPID(0.35, 0.00008, 4.0);
         miniPIDFwd = new MiniPID(0.35, 0.00008, 4.0);
         miniPIDAlti = new MiniPID(0.35, 0.00008, 4.0);
+        miniPIDHeading = new MiniPID(1.0, 0.0, 0.0);
         
         //miniPIDSide.setOutputRampRate(0.3);
         //miniPIDFwd.setOutputRampRate(0.3);
@@ -1902,6 +1904,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             miniPIDFwd.reset();
             miniPIDSide.reset();
             miniPIDAlti.reset();
+            miniPIDHeading.reset();
 
             // This is a non standard trick, but we would like to know exactly when we have reached the position...
             // So we move to AUTO mode while flying to position, and then go back to GUIDED...
@@ -1997,26 +2000,21 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             double fw_dist = hypotenuse; //Math.max(hypotenuse,20); // Math.cos(Math.toRadians(direction)) * hypotenuse + Math.sin(Math.toRadians(direction)) * bearing_error;
             Log.i(TAG, "direction: " + direction);
 
-            //------------------------------------------------
-            // Make a very simple P controller...
-            final double motion_p = 5.0;
-            final double maxspeed = 4.0;  // Default speed ( should be set ...)
-            double speed = maxspeed;
-            miniPIDFwd.setOutputLimits(-12.0f, 12.0f);
+            miniPIDFwd.setOutputLimits(-12.0f, 12.0f); // m/s
             miniPIDFwd.setOutputFilter(0.1);
             double fwmotion = miniPIDFwd.getOutput(-fw_dist, 0);
-            miniPIDSide.setOutputLimits(-12.0f, 12.0f);
+
+            miniPIDSide.setOutputLimits(-12.0f, 12.0f); // m/s
             miniPIDSide.setOutputFilter(0.1);
             double rightmotion = miniPIDSide.getOutput(-right_dist, 0);
 
-            miniPIDAlti.setOutputLimits(-4.0f, 4.0f);
+            miniPIDAlti.setOutputLimits(-4.0f, 4.0f); // m/s
             miniPIDAlti.setOutputFilter(0.1);
             double upmotion = miniPIDAlti.getOutput(coord.getAircraftLocation().getAltitude(), m_Destination_Alt);
 
-            speed = 100.0f;
-            double clockmotion = m_Destination_Yaw;
-            //if (clockmotion > speed) clockmotion = speed;
-            //if (clockmotion < -speed) clockmotion = -speed;
+            miniPIDHeading.setOutputLimits(-100.0f, 100.0f); // °/s
+            miniPIDAlti.setOutputFilter(0.1);
+            double clockmotion = miniPIDHeading.getOutput(-yawerror, 0);
 
             //------------------------------------------------
             if ((m_Destination_Mask & 0b0000000000111111) == 0x3F) {
@@ -2053,7 +2051,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         //    Log.i(TAG, "do_set_motion_velocity");
 
         mFlightController.setRollPitchControlMode(RollPitchControlMode.VELOCITY);
-        mFlightController.setYawControlMode(YawControlMode.ANGLE);
+        mFlightController.setYawControlMode(YawControlMode.ANGULAR_VELOCITY);
         mFlightController.setVerticalControlMode(VerticalControlMode.VELOCITY);
         
         // If we use yaw rate...
