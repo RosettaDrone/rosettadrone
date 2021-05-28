@@ -192,7 +192,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     public AtomicBoolean gimbalReady = null;
     private MiniPID miniPIDSide;
     private MiniPID miniPIDFwd;
-    private MiniPID miniPIDAtti;
+    private MiniPID miniPIDAlti;
 
     private boolean mSafetyEnabled = true;
     private boolean mMotorsArmed = false;
@@ -239,7 +239,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         // PID for position control...
         miniPIDSide = new MiniPID(0.35, 0.00008, 4.0);
         miniPIDFwd = new MiniPID(0.35, 0.00008, 4.0);
-        miniPIDAtti = new MiniPID(0.35, 0.00008, 4.0);
+        miniPIDAlti = new MiniPID(0.35, 0.00008, 4.0);
         
         //miniPIDSide.setOutputRampRate(0.3);
         //miniPIDFwd.setOutputRampRate(0.3);
@@ -1901,7 +1901,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
             miniPIDFwd.reset();
             miniPIDSide.reset();
-            miniPIDAtti.reset();
+            miniPIDAlti.reset();
 
             // This is a non standard trick, but we would like to know exactly when we have reached the position...
             // So we move to AUTO mode while flying to position, and then go back to GUIDED...
@@ -2009,9 +2009,9 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             miniPIDSide.setOutputFilter(0.1);
             double rightmotion = miniPIDSide.getOutput(-right_dist, 0);
 
-            miniPIDAtti.setOutputLimits(-4.0f, 4.0f);
-            miniPIDAtti.setOutputFilter(0.1);
-            double upmotion = miniPIDAtti.getOutput(coord.getAircraftLocation().getAltitude(), m_Destination_Alt);
+            miniPIDAlti.setOutputLimits(-4.0f, 4.0f);
+            miniPIDAlti.setOutputFilter(0.1);
+            double upmotion = miniPIDAlti.getOutput(coord.getAircraftLocation().getAltitude(), m_Destination_Alt);
 
             speed = 100.0f;
             double clockmotion = m_Destination_Yaw;
