@@ -189,6 +189,8 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     public boolean photoTaken = false;
     public boolean gotoNoPhoto = false;
     public double m_Curvesize = 0.0;
+    public double m_POI_Lat = 0;
+    public double m_POI_Lon = 0;
     public AtomicBoolean gimbalReady = null;
     private MiniPID miniPIDSide;
     private MiniPID miniPIDFwd;
@@ -833,6 +835,11 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         msg_autopilot_version msg = new msg_autopilot_version();
         msg.capabilities = MAV_PROTOCOL_CAPABILITY.MAV_PROTOCOL_CAPABILITY_COMMAND_INT;
         msg.capabilities |= MAV_PROTOCOL_CAPABILITY.MAV_PROTOCOL_CAPABILITY_MISSION_INT;
+        msg.os_sw_version = 0x040107;
+        msg.middleware_sw_version = 0x040107;
+        msg.flight_sw_version = 0x040107;
+        msg.compid = 0;
+        
         sendMessage(msg);
     }
 
@@ -1937,11 +1944,17 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             double yaw = coord.getAttitude().yaw;
             if (yaw < 0) yaw = yaw + 360.0;
 
+            double brngPoi = m_Destination_Yaw;
+            if(m_POI_Lon != 0.0 && m_POI_Lat != 0.0)
+            {
+                brngPoi = getBearingBetweenWaypoints(m_POI_Lat, m_POI_Lon, local_lat, local_lon);
+            }
+
             // If yaw is masked then do not change yaw...
             double yawerror;
             if ((m_Destination_Mask & 0b0000010000000000) > 0) yawerror = 0;
                 // Make the error +-180 deg. error  + is we need to turn more right...mAutonomy
-            else yawerror = rotation(m_Destination_Yaw, yaw);
+            else yawerror = rotation(brngPoi, yaw);
             
             //yawerror = 0;
 

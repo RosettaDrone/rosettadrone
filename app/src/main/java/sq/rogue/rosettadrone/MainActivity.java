@@ -693,6 +693,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 // Absolute pitch
                 mModel.do_set_Gimbal(9, gimbalPitch);
 
+                String strPOILatitude = columns[40];
+                String strPOILongitude = columns[41];
+                // Disabled is 0 / 0
+                double poiLatitude = Double.parseDouble(strPOILatitude);
+                double poiLongitude = Double.parseDouble(strPOILongitude);
+
                 String strLatitude = columns[0];
                 String strLongitude = columns[1];
                 double latitude = Double.parseDouble(strLatitude);
@@ -732,6 +738,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         break;
                 }
                 
+                mModel.m_POI_Lat = poiLatitude;
+                mModel.m_POI_Lon = poiLongitude;
+
+                Log.e(TAG, "Waypoints: m_POI_Lon: " + poiLongitude + " m_POI_Lat: " + poiLatitude);
+
                 mModel.do_set_motion_absolute(latitude, longitude, altitude, heading <= 180 ? heading : -180 + ((heading) - 180), 2.5f, 2.5f, 2.5f, 2.5f, 0);
                 while(mModel.mMoveToDataTimer != null ||  mModel.photoTaken != true)
                 {

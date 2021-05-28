@@ -33,6 +33,7 @@ import dji.common.mission.waypoint.WaypointMissionGotoWaypointMode;
 import dji.common.mission.waypoint.WaypointMissionHeadingMode;
 import dji.common.mission.waypoint.WaypointMissionState;
 
+import static com.MAVLink.ardupilotmega.msg_autopilot_version_request.MAVLINK_MSG_ID_AUTOPILOT_VERSION_REQUEST;
 import static com.MAVLink.common.msg_command_int.MAVLINK_MSG_ID_COMMAND_INT;
 import static com.MAVLink.common.msg_command_long.MAVLINK_MSG_ID_COMMAND_LONG;
 import static com.MAVLink.common.msg_heartbeat.MAVLINK_MSG_ID_HEARTBEAT;
@@ -117,6 +118,12 @@ public class MAVLinkReceiver {
         }
 
         switch (msg.msgid) {
+            case MAVLINK_MSG_ID_AUTOPILOT_VERSION_REQUEST:
+                Log.d(TAG, "send_autopilot_version...");
+                mModel.send_command_ack(MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES, MAV_RESULT.MAV_RESULT_ACCEPTED);
+                mModel.send_autopilot_version();
+                break;
+                
             case MAVLINK_MSG_ID_HEARTBEAT:
                 this.mTimeStampLastGCSHeartbeat = System.currentTimeMillis();
                 break;
@@ -171,6 +178,7 @@ public class MAVLinkReceiver {
                         mModel.send_home_position();
                         break;
                     case MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES:
+                        Log.d(TAG, "send_autopilot_version...");
                         mModel.send_autopilot_version();
                         break;
                     case MAV_CMD_VIDEO_START_CAPTURE:
