@@ -57,7 +57,7 @@ public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
     public static final String VIDEO_ENCODING_FORMAT = "video/avc";
     private HandlerThread  handlerThreadNew;
     private Handler handlerNew;
-    private final boolean DEBUG = true;
+    private final boolean DEBUG = false;
     private static DJIVideoStreamDecoder instance;
     private Queue<DJIFrame> frameQueue;
     private HandlerThread dataHandlerThread;

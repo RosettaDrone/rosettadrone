@@ -30,6 +30,8 @@ import android.util.Log;
 import android.util.TypedValue;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
@@ -104,6 +106,7 @@ import sq.rogue.rosettadrone.logs.LogFragment;
 import sq.rogue.rosettadrone.settings.SettingsActivity;
 import sq.rogue.rosettadrone.settings.Waypoint1Activity;
 import sq.rogue.rosettadrone.settings.Waypoint2Activity;
+import sq.rogue.rosettadrone.video.DJIVideoStreamDecoder;
 import sq.rogue.rosettadrone.video.NativeHelper;
 import sq.rogue.rosettadrone.video.VideoService;
 
@@ -176,8 +179,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private VideoFeeder.VideoFeed standardVideoFeeder;
     protected VideoFeeder.VideoDataListener mReceivedVideoDataListener;
-    private TextureView videostreamPreviewTtView;
-    private TextureView videostreamPreviewTtViewSmall;
+    private SurfaceView videostreamPreviewTtView;
+    private SurfaceView videostreamPreviewTtViewSmall;
     private Camera mCamera;
     private DJICodecManager mCodecManager;
     private int videoViewWidth;
@@ -350,10 +353,22 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
 
         //    if(compare_height == 0) {
-        videostreamPreviewTtView.setSurfaceTextureListener(mSurfaceTextureListener);
+        videostreamPreviewTtView.getHolder().addCallback(mSurfaceCallback);
+        videostreamPreviewTtView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                float rate = VideoFeeder.getInstance().getTranscodingDataRate();
+                if (rate < 10) {
+                    VideoFeeder.getInstance().setTranscodingDataRate(10.0f);
+                } else {
+                    VideoFeeder.getInstance().setTranscodingDataRate(3.0f);
+                }
+            }
+        });
+
         //    }
         //    else {
-        //        videostreamPreviewTtViewSmall.setSurfaceTextureListener(mSurfaceTextureListener);
+        //        videostreamPreviewTtViewSmall.getHolder().addCallback(mSurfaceCallback);
         //    }
         // If we use a camera... Remove Listeners if needed...
 
@@ -691,6 +706,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 int actionType1 = Integer.parseInt(strActionType1);
 
                 // Absolute pitch
+                //if(gimbalPitch < 0.0)
                 mModel.do_set_Gimbal(9, gimbalPitch);
 
                 String strPOILatitude = columns[40];
@@ -717,6 +733,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 // Useful for fly-by
                 mModel.m_Curvesize = Math.max(curveSize, 0.5);
 
+                // Enable Cruising Mode (early handoff to next waypoint via curvesize rudimentary implementation)
+                mModel.m_CruisingMode = false; // true;
+
                 switch(actionType1)
                 {
                     // Take Photo
@@ -741,7 +760,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 mModel.m_POI_Lat = poiLatitude;
                 mModel.m_POI_Lon = poiLongitude;
 
-                Log.e(TAG, "Waypoints: m_POI_Lon: " + poiLongitude + " m_POI_Lat: " + poiLatitude);
+                Log.d(TAG, "Waypoints: m_POI_Lon: " + poiLongitude + " m_POI_Lat: " + poiLatitude);
 
                 mModel.do_set_motion_absolute(latitude, longitude, altitude, heading <= 180 ? heading : -180 + ((heading) - 180), 2.5f, 2.5f, 2.5f, 2.5f, 0);
                 while(mModel.mMoveToDataTimer != null ||  mModel.photoTaken != true)
@@ -819,14 +838,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         // For newer drones...
         mReceivedVideoDataListener = (videoBuffer, size) -> {
             if (m_videoMode == 2) {
-                if (mCodecManager != null) {
-                    mCodecManager.sendDataToDecoder(videoBuffer, size);
-                }
                 // Send raw H264 to the FFMPEG parser...
-                if (mExternalVideoOut == true) {
-//                    Log.e(TAG, "Video size:: "+size);
-                    NativeHelper.getInstance().parse(videoBuffer, size, 0);
-                }
+                // TODO: Dont break mExternalVideoOut
+                DJIVideoStreamDecoder.getInstance().parse(videoBuffer, size);
             } else {
                 // Send H.264 to the NAIL generator...
                 if (mExternalVideoOut == true) {
@@ -918,56 +932,29 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
      * by the camera needed to get video to the UDP handler...
      */
 
-    private TextureView.SurfaceTextureListener mSurfaceTextureListener = new TextureView.SurfaceTextureListener() {
+    private SurfaceHolder.Callback mSurfaceCallback = new SurfaceHolder.Callback() {
         @Override
-        public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-            Log.d(TAG, "real onSurfaceTextureAvailable: width " + width + " height " + height);
-            if (compare_height == 1) {
-                height = ((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 86, getResources().getDisplayMetrics()));
-                width = ((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 164, getResources().getDisplayMetrics()));
+        public void surfaceCreated(SurfaceHolder holder) {
+            NativeHelper.getInstance().init();
+            DJIVideoStreamDecoder.getInstance().init(getApplicationContext(), holder.getSurface());
+            DJIVideoStreamDecoder.getInstance().resume();
+        }
 
-            }
-            /*else if(compare_height==0){
-                width = LayoutParams.WRAP_CONTENT;
-                height = LayoutParams.WRAP_CONTENT;
-            }*/
+        @Override
+        public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
             videoViewWidth = width;
             videoViewHeight = height;
-
-            Log.d(TAG, "real onSurfaceTextureAvailable: width " + videoViewWidth + " height " + videoViewHeight + " Mode: " + compare_height);
-            if (mCodecManager == null) {
-                mCodecManager = new DJICodecManager(getApplicationContext(), surface, width, height);
-            }
-            /*
-            else{
-                mCodecManager.cleanSurface();
-                mCodecManager.destroyCodec();
-                mCodecManager = new DJICodecManager(getApplicationContext(), surface, width, height);
-            }
-            */
+            Log.d(TAG, "real onSurfaceTextureAvailable4: width " + videoViewWidth + " height " + videoViewHeight);
+            DJIVideoStreamDecoder.getInstance().changeSurface(holder.getSurface());
 
         }
 
         @Override
-        public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
-            videoViewWidth = width;
-            videoViewHeight = height;
-
-            Log.d(TAG, "real onSurfaceTextureAvailable2: width " + videoViewWidth + " height " + videoViewHeight);
-        }
-
-        @Override
-        public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
-            Log.e(TAG, "onSurfaceTextureDestroyed");
-            if (mCodecManager != null) {
-                mCodecManager.cleanSurface();
+        public void surfaceDestroyed(SurfaceHolder holder) {
+                DJIVideoStreamDecoder.getInstance().stop();
+                // ohno
+                //NativeHelper.getInstance().release();
             }
-            return false;
-        }
-
-        @Override
-        public void onSurfaceTextureUpdated(SurfaceTexture surface) {
-        }
     };
 
     //---------------------------------------------------------------------------------------
@@ -1295,7 +1282,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
 */
             //    safeSleep(200);
-            videostreamPreviewTtViewSmall.setSurfaceTextureListener(mSurfaceTextureListener);
+            videostreamPreviewTtViewSmall.getHolder().addCallback(mSurfaceCallback);
             videostreamPreviewTtViewSmall.setVisibility(View.VISIBLE);
 //            videostreamPreviewTtViewSmall.setAlpha((float)0.4);
             //        videostreamPreviewTtViewSmall.requestFocus(); // .buildLayer();
@@ -1306,7 +1293,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             videoViewWidth = ((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 164, getResources().getDisplayMetrics()));
             mCodecManager = new DJICodecManager(getApplicationContext(), surfaceT, videoViewWidth, videoViewHeight);
             videostreamPreviewTtViewSmall.setSurfaceTexture(surfaceT);
-            videostreamPreviewTtViewSmall.setSurfaceTextureListener(mSurfaceTextureListener);
+            videostreamPreviewTtViewSmall.getHolder().addCallback(mSurfaceCallback);
             videostreamPreviewTtViewSmall.setVisibility(View.VISIBLE);
 */
             video_layout_small.setZ(100.f);
@@ -1329,18 +1316,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
 */
             //         safeSleep(200);
-            videostreamPreviewTtView.setSurfaceTextureListener(mSurfaceTextureListener);
+            videostreamPreviewTtView.getHolder().addCallback(mSurfaceCallback);
             //          videostreamPreviewTtView.buildLayer();
             videostreamPreviewTtView.setVisibility(View.VISIBLE);
             //       videostreamPreviewTtView.requestFocus();
             //   videostreamPreviewTtViewSmall.setAlpha((float)0.4);
 
 
-            //       videostreamPreviewTtViewSmall.setSurfaceTextureListener(mSurfaceTextureListener);
-            //          mSurfaceTextureListener.onSurfaceTextureAvailable(surfaceT, videoViewWidth, videoViewHeight);
+            //       videostreamPreviewTtViewSmall.getHolder().addCallback(mSurfaceCallback);
+            //          mSurfaceCallback.onSurfaceTextureAvailable(surfaceT, videoViewWidth, videoViewHeight);
             //     videostreamPreviewTtView.setVisibility(View.VISIBLE);
 
-            //   videostreamPreviewTtView.setSurfaceTextureListener(mSurfaceTextureListener);
+            //   videostreamPreviewTtView.getHolder().addCallback(mSurfaceCallback);
             //        videostreamPreviewTtViewSmall.clearFocus();  //
 
 
@@ -1926,8 +1913,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             return false;
         }
 
-        return VideoFeeder.getInstance().isFetchKeyFrameNeeded() || VideoFeeder.getInstance()
-                .isLensDistortionCalibrationNeeded();
+        return VideoFeeder.getInstance().isFetchKeyFrameNeeded() || VideoFeeder.getInstance().isLensDistortionCalibrationNeeded();
     }
 
     //---------------------------------------------------------------------------------------
