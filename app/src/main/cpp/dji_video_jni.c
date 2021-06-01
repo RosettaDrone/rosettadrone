@@ -150,6 +150,9 @@ int parse(JNIEnv *env, jobject obj, uint8_t *pBuff, int videosize, uint64_t pts)
              	m_pCodecPaser->frame_num
              	);
 */
+            if(packet.data[4] == 100)
+                m_pCodecPaser->key_frame = 1;
+                
             invokeFrameDataCallback(
                     env,
                     obj,
