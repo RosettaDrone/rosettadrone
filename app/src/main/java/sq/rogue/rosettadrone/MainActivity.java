@@ -769,6 +769,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
             }
            
+            mModel.m_CruisingMode = false;
+            mModel.m_POI_Lat = 0.0;
+            mModel.m_POI_Lon = 0.0;
+
             mModel.do_go_home();
         }
     };
