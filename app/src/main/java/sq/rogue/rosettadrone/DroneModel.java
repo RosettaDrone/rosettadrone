@@ -191,6 +191,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     public double m_Curvesize = 0.0;
     public double m_POI_Lat = 0;
     public double m_POI_Lon = 0;
+    public boolean m_CruisingMode = false;
     public AtomicBoolean gimbalReady = null;
     private MiniPID miniPIDSide;
     private MiniPID miniPIDFwd;
@@ -243,7 +244,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         miniPIDSide = new MiniPID(0.35, 0.00008, 4.0);
         miniPIDFwd = new MiniPID(0.35, 0.00008, 4.0);
         miniPIDAlti = new MiniPID(0.35, 0.00008, 4.0);
-        miniPIDHeading = new MiniPID(1.0, 0.0, 0.0);
+        miniPIDHeading = new MiniPID(1.0, 0.00001, 2.0);
         
         //miniPIDSide.setOutputRampRate(0.3);
         //miniPIDFwd.setOutputRampRate(0.3);
@@ -1796,7 +1797,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
      ********************************************/
 
     void do_set_Gimbal(float channel, float value) {
-        Rotation.Builder builder = new Rotation.Builder().mode(RotationMode.ABSOLUTE_ANGLE).time(2.0);
+        Rotation.Builder builder = new Rotation.Builder().mode(RotationMode.ABSOLUTE_ANGLE).time(1.25);
         float param = value;
         if ((int) channel == 9) {
             m_ServoPos_pitch = param;
@@ -1908,17 +1909,20 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         if (mMoveToDataTimer == null) {
             parent.logMessageDJI("Starting Absolution Mission!");
 
-            miniPIDFwd.reset();
-            miniPIDSide.reset();
-            miniPIDAlti.reset();
-            miniPIDHeading.reset();
+            if(!m_CruisingMode)
+            {
+                miniPIDFwd.reset();
+                miniPIDSide.reset();
+                miniPIDAlti.reset();
+                miniPIDHeading.reset();
+            }
 
             // This is a non standard trick, but we would like to know exactly when we have reached the position...
             // So we move to AUTO mode while flying to position, and then go back to GUIDED...
             // If there is another way let me know...
             mMoveToDataTask = new MoveTo();
             mMoveToDataTimer = new Timer();
-            mMoveToDataTimer.schedule(mMoveToDataTask, 100, 25);
+            mMoveToDataTimer.schedule(mMoveToDataTask, 0, 25);
             mAutonomy = true;
         } else {
             mMoveToDataTask.detection = 0;
@@ -1927,6 +1931,8 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
     class MoveTo extends TimerTask {
         public int detection = 0;  // Wi might fly past the point so we look for consecutive hits...
+        public int detectionTriggerLimit = 5;
+        public double detectionYawErrorLimit = 2.0;
 
         @Override
         public void run() {
@@ -1962,13 +1968,17 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             if ((m_Destination_Mask & 0b0000000000111111) == 0x3F) dist = 0;
 
             // If we are there...
-            if (((m_Curvesize > 0.0 ? dist < m_Curvesize : dist < 0.5) && Math.abs(yawerror) < 1.0) || mAutonomy == false) {
-                // If we got 5 consecutive hits at the right spot....
-                if (++detection > 5 || mAutonomy == false) {
+            if ((m_Curvesize > 0.0 ? (dist < m_Curvesize) : (dist < 0.5)) && (m_CruisingMode ? (Math.abs(yawerror) < 5.0) : (Math.abs(yawerror) < detectionYawErrorLimit)) || mAutonomy == false) {
+                // If we got x consecutive hits at the right spot....
+                detection++;
+                if((m_CruisingMode && detection > 1) || detection > detectionTriggerLimit || mAutonomy == false) {
                     mMoveToDataTimer.cancel();
                     mMoveToDataTimer.purge();
-                    do_set_motion_velocity(0, 0, 0, 0, 0b1111011111000111);
-                    mAutonomy = false;
+                    if(!m_CruisingMode)
+                    {
+                        do_set_motion_velocity(0, 0, 0, 0, 0b1111011111000111);
+                        mAutonomy = false;
+                    }
                     parent.logMessageDJI("At Position...");
 //                    setGCSCommandedMode(ArduCopterFlightModes.GUIDED);
                     send_command_ack(m_lastCommand, MAV_RESULT.MAV_RESULT_ACCEPTED);
@@ -2013,21 +2023,41 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             double fw_dist = hypotenuse; //Math.max(hypotenuse,20); // Math.cos(Math.toRadians(direction)) * hypotenuse + Math.sin(Math.toRadians(direction)) * bearing_error;
             Log.i(TAG, "direction: " + direction);
 
-            miniPIDFwd.setOutputLimits(-12.0f, 12.0f); // m/s
+            if(m_CruisingMode)
+            {
+                miniPIDFwd.setP(1.0);
+                miniPIDSide.setP(1.0);
+                miniPIDAlti.setP(1.0);
+                miniPIDHeading.setP(1.0);
+
+                miniPIDFwd.setOutputLimits(-3.0f, 3.0f); // m/s
+                miniPIDSide.setOutputLimits(-3.0f, 3.0f); // m/s
+                miniPIDHeading.setOutputFilter(0.7);
+            } else {
+                miniPIDFwd.setP(0.35);
+                miniPIDSide.setP(0.35);
+                miniPIDAlti.setP(0.35);
+                miniPIDHeading.setP(1.0);
+
+                miniPIDFwd.setOutputLimits(-12.0f, 12.0f); // m/s
+                miniPIDSide.setOutputLimits(-12.0f, 12.0f); // m/s
+                miniPIDHeading.setOutputFilter(0.1);
+            }
+            
             miniPIDFwd.setOutputFilter(0.1);
             double fwmotion = miniPIDFwd.getOutput(-fw_dist, 0);
 
-            miniPIDSide.setOutputLimits(-12.0f, 12.0f); // m/s
             miniPIDSide.setOutputFilter(0.1);
             double rightmotion = miniPIDSide.getOutput(-right_dist, 0);
 
-            miniPIDAlti.setOutputLimits(-4.0f, 4.0f); // m/s
+            miniPIDAlti.setOutputLimits(-3.0f, 4.0f); // m/s
             miniPIDAlti.setOutputFilter(0.1);
             double upmotion = miniPIDAlti.getOutput(coord.getAircraftLocation().getAltitude(), m_Destination_Alt);
 
-            miniPIDHeading.setOutputLimits(-100.0f, 100.0f); // °/s
-            miniPIDAlti.setOutputFilter(0.1);
-            double clockmotion = miniPIDHeading.getOutput(-yawerror, 0);
+            miniPIDHeading.setOutputLimits(-75.0f, 75.0f); // °/s
+
+            double clockmotion = 0.0;
+            clockmotion = miniPIDHeading.getOutput(-yawerror, 0);
 
             //------------------------------------------------
             if ((m_Destination_Mask & 0b0000000000111111) == 0x3F) {
@@ -2117,7 +2147,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         if (null == mSendVirtualStickDataTimer) {
             mSendVirtualStickDataTask = new SendVelocityDataTask();
             mSendVirtualStickDataTimer = new Timer();
-            mSendVirtualStickDataTimer.schedule(mSendVirtualStickDataTask, 100, 50);
+            mSendVirtualStickDataTimer.schedule(mSendVirtualStickDataTask, 0, 50);
         } else {
             mSendVirtualStickDataTask.repeat = 2;
         }
@@ -2136,13 +2166,17 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                     mSendVirtualStickDataTimer.purge();
                     mSendVirtualStickDataTimer = null;
 
-                    // After a manual mode change, we might loose the JOYSTICK mode...
-                    mFlightController.setVirtualStickModeEnabled(false, djiError -> {
-                                if (djiError != null)
-                                    parent.logMessageDJI("Velocity Mode not disabled Error: " + djiError.toString());
-                            }
-                    );
-                    lastMode = FlightMode.GPS_ATTI;
+                    if(!m_CruisingMode)
+                    {
+                        mFlightController.setVirtualStickModeEnabled(false, djiError -> {
+                                    if (djiError != null)
+                                        parent.logMessageDJI("Velocity Mode not disabled Error: " + djiError.toString());
+                                }
+                        );
+
+                        lastMode = FlightMode.GPS_ATTI;
+                    }
+                    
                     parent.logMessageDJI("Motion done!\n");
                     return;
                 }
