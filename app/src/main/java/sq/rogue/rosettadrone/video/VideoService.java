@@ -106,7 +106,7 @@ public class VideoService extends Service implements NativeHelper.NativeDataList
 
     private void initVideoStreamDecoder() {
         NativeHelper.getInstance().init();
-        NativeHelper.getInstance().setDataListener(this);
+        //NativeHelper.getInstance().setDataListener(this);
     }
 
     private void initPacketizer(String ip, int videoPort, int videoBitrate, int encodeSpeed) {
