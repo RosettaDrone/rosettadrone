@@ -102,6 +102,7 @@ import dji.sdk.codec.DJICodecManager;
 import dji.sdk.products.Aircraft;
 import dji.sdk.sdkmanager.DJISDKInitEvent;
 import dji.sdk.sdkmanager.DJISDKManager;
+
 import sq.rogue.rosettadrone.logs.LogFragment;
 import sq.rogue.rosettadrone.settings.SettingsActivity;
 import sq.rogue.rosettadrone.settings.Waypoint1Activity;
@@ -700,18 +701,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 String[] columns = row.split(",", 0);
                 //;latitude,longitude,altitude(m),heading(deg),curvesize(m),rotationdir,gimbalmode,gimbalpitchangle,actiontype1,actionparam1,actiontype2,actionparam2,actiontype3,actionparam3,actiontype4,actionparam4,actiontype5,actionparam5,actiontype6,actionparam6,actiontype7,actionparam7,actiontype8,actionparam8,actiontype9,actionparam9,actiontype10,actionparam10,actiontype11,actionparam11,actiontype12,actionparam12,actiontype13,actionparam13,actiontype14,actionparam14,actiontype15,actionparam15,altitudemode,speed(m/s),poi_latitude,poi_longitude,poi_altitude(m),poi_altitudemode,photo_timeinterval,photo_distinterval
                 String strGimbalPitch = columns[7];
-                String strActionType1 = columns[8];
                 float gimbalPitch = Float.parseFloat(strGimbalPitch);
-                // TODO: Iterate actionType 1-15
-                int actionType1 = Integer.parseInt(strActionType1);
 
                 // Absolute pitch
                 //if(gimbalPitch < 0.0)
                 mModel.do_set_Gimbal(9, gimbalPitch);
 
+                String strWantedSpeed = columns[39];
                 String strPOILatitude = columns[40];
                 String strPOILongitude = columns[41];
                 // Disabled is 0 / 0
+                double wantedSpeed = Double.parseDouble(strWantedSpeed);
                 double poiLatitude = Double.parseDouble(strPOILatitude);
                 double poiLongitude = Double.parseDouble(strPOILongitude);
 
@@ -734,27 +734,43 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 mModel.m_Curvesize = Math.max(curveSize, 0.5);
 
                 // Enable Cruising Mode (early handoff to next waypoint via curvesize rudimentary implementation)
-                mModel.m_CruisingMode = false; // true;
+                mModel.m_CruisingMode = wantedSpeed <= 3.0;
 
-                switch(actionType1)
+                mModel.gotoNoPhoto = true;
+                mModel.m_Stay = false;
+
+                // Handle some actions first, reset them so 2nd pass doesnt execute them
+                for(int x = 0; x < 15; x += 2)
                 {
-                    // Take Photo
-                    case 1:
-                        mModel.gotoNoPhoto = false;
-                        break;
-                    // Start Recording
-                    case 2:
-                        mModel.gotoNoPhoto = true;
-                        mModel.startRecordingVideo();
-                        break;
-                    // Stop Recording
-                    case 3:
-                        mModel.gotoNoPhoto = true;
-                        mModel.stopRecordingVideo();
-                        break;
-                    default:
-                        mModel.gotoNoPhoto = true;
-                        break;
+                    String strActionType = columns[8 + x];
+                    int actionType = Integer.parseInt(strActionType);
+
+                    String strActionParam = columns[8 + x + 1];
+                    int actionParam = Integer.parseInt(strActionParam);
+
+                    // Disabled or in 2nd Pass
+                    if(actionType == -1 || actionType == 2 || actionType == 3)
+                        continue;
+                    
+                    switch(actionType)
+                    {
+                        // Stay for, Early Pass
+                        case 0:
+                            // Set velocity zero after reaching the target
+                            mModel.m_Stay = true;
+                            // Dont erase
+                            continue;
+                        // Take Photo
+                        case 1:
+                            mModel.gotoNoPhoto = false;
+                            break;
+                        default:
+                            break;
+                    }
+
+                    // Block 2nd execution
+                    columns[8 + x] = "-1";
+                    columns[8 + x + 1] = "-1";
                 }
                 
                 mModel.m_POI_Lat = poiLatitude;
@@ -766,6 +782,44 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 while(mModel.mMoveToDataTimer != null ||  mModel.photoTaken != true)
                 {
                     ;
+                }
+                
+                // 2nd Pass
+                for(int x = 0; x < 15; x += 2)
+                {
+                    String strActionType = columns[8 + x];
+                    int actionType = Integer.parseInt(strActionType);
+
+                    String strActionParam = columns[8 + x + 1];
+                    int actionParam = Integer.parseInt(strActionParam);
+
+                    if(actionType == -1)
+                        continue;
+                    
+                    switch(actionType)
+                    {
+                        // Start Recording
+                        case 2:
+                            mModel.startRecordingVideo();
+                            break;
+                        // Stop Recording
+                        case 3:
+                            mModel.stopRecordingVideo();
+                            break;
+                        // Stay for
+                        case 0:
+                            try
+                            {
+                                Thread.sleep(actionParam);
+                            }
+                            catch(InterruptedException ex)
+                            {
+                                Thread.currentThread().interrupt();
+                            }
+                            break;
+                        default:
+                            break;
+                    }
                 }
             }
            
@@ -872,7 +926,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     });
                 }
 
-                /*mCamera.setVideoResolutionAndFrameRate(new ResolutionAndFrameRate(SettingsDefinitions.VideoResolution.RESOLUTION_1280x720,SettingsDefinitions.VideoFrameRate.FRAME_RATE_60_FPS) , djiError -> {
+                /*mCamera.setVideoResolutionAndFrameRate(new ResolutionAndFrameRate(SettingsDefinitions.VideoResolution.RESOLUTION_3840x2160,SettingsDefinitions.VideoFrameRate.FRAME_RATE_29_DOT_970_FPS) , djiError -> {
                     if (djiError != null) {
                         Log.e(TAG, "can't change mode of camera, error: "+djiError);
                         logMessageDJI("can't change mode of camera, error: "+djiError);

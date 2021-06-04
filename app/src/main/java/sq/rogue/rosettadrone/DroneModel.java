@@ -192,6 +192,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     public double m_POI_Lat = 0;
     public double m_POI_Lon = 0;
     public boolean m_CruisingMode = false;
+    public boolean m_Stay = false;
     public AtomicBoolean gimbalReady = null;
     private MiniPID miniPIDSide;
     private MiniPID miniPIDFwd;
@@ -1974,7 +1975,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                 if((m_CruisingMode && detection > 1) || detection > detectionTriggerLimit || mAutonomy == false) {
                     mMoveToDataTimer.cancel();
                     mMoveToDataTimer.purge();
-                    if(!m_CruisingMode)
+                    if(!m_CruisingMode || m_Stay)
                     {
                         do_set_motion_velocity(0, 0, 0, 0, 0b1111011111000111);
                         mAutonomy = false;
@@ -2039,8 +2040,8 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                 miniPIDAlti.setP(0.35);
                 miniPIDHeading.setP(1.0);
 
-                miniPIDFwd.setOutputLimits(-12.0f, 12.0f); // m/s
-                miniPIDSide.setOutputLimits(-12.0f, 12.0f); // m/s
+                miniPIDFwd.setOutputLimits(-10.0f, 10.0f); // m/s
+                miniPIDSide.setOutputLimits(-10.0f, 10.0f); // m/s
                 miniPIDHeading.setOutputFilter(0.1);
             }
             
@@ -2050,7 +2051,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             miniPIDSide.setOutputFilter(0.1);
             double rightmotion = miniPIDSide.getOutput(-right_dist, 0);
 
-            miniPIDAlti.setOutputLimits(-3.0f, 4.0f); // m/s
+            miniPIDAlti.setOutputLimits(-3.0f, 3.0f); // m/s
             miniPIDAlti.setOutputFilter(0.1);
             double upmotion = miniPIDAlti.getOutput(coord.getAircraftLocation().getAltitude(), m_Destination_Alt);
 
@@ -2496,6 +2497,10 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     void stopRecordingVideo() {
+        // If we dont sync it will cause a flightcontroller crash on Mini 2 if we startRecordingVideo instantly after
+        // Happens only after a few minutes of recording footage
+        AtomicBoolean waitStopRecording = new AtomicBoolean(true);
+
         djiAircraft.getCamera().stopRecordVideo(djiError -> {
             if (djiError == null) {
                 parent.logMessageDJI("Stopped recording video");
@@ -2504,7 +2509,31 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                 parent.logMessageDJI("Error stopping video recording: " + djiError.toString());
                 send_command_ack(MAV_CMD_VIDEO_STOP_CAPTURE, MAV_RESULT.MAV_RESULT_FAILED);
             }
+            waitStopRecording.set(false);
         });
+
+        while(waitStopRecording.get())
+        {
+            try
+            {
+                Thread.sleep(10);
+            }
+            catch(InterruptedException ex)
+            {
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        // Stupid FC Crash... additional wait since a sync to the record isn't enough apparently
+        // Min 1 second, 1.5 just to be safe..
+        try
+        {
+            Thread.sleep(1500);
+        }
+        catch(InterruptedException ex)
+        {
+            Thread.currentThread().interrupt();
+        }
     }
 
     double getBearingBetweenWaypoints(double lat2, double lon2, double lat1, double lon1) {
