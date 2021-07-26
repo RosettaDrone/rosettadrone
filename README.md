@@ -1,5 +1,5 @@
 # Interesting news: If you use an Apple M1 computer, with the latest Android Studio, you can run RosettaDrone II in the simulator!!!
-I do not think all the DJI stuff works, but at least we can debug quite som stuff.
+I do not think all the DJI stuff works, but at least we can debug quite some stuff.
 ![Image of Sim screen](Sim.png)
 
 # RosettaDrone 2 is now updated to DJI SDK 4.14 beta 1...
