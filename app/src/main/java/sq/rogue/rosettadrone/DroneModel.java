@@ -57,6 +57,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import androidx.annotation.NonNull;
 import dji.common.camera.SettingsDefinitions;
+import dji.common.camera.SystemState;
 import dji.common.error.DJIError;
 import dji.common.flightcontroller.Attitude;
 import dji.common.flightcontroller.ConnectionFailSafeBehavior;
@@ -187,6 +188,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     private float m_ServoPos_pitch = 0;
     private float m_ServoPos_yaw = 0;
     public boolean photoTaken = false;
+    public boolean photoTakenError = false;
     public boolean gotoNoPhoto = false;
     public double m_Curvesize = 0.0;
     public double m_POI_Lat = 0;
@@ -198,7 +200,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     private MiniPID miniPIDFwd;
     private MiniPID miniPIDAlti;
     private MiniPID miniPIDHeading;
-
+    private SystemState m_lastSystemState = null;
     private boolean mSafetyEnabled = true;
     private boolean mMotorsArmed = false;
     private FollowMeMissionOperator fmmo;
@@ -686,6 +688,23 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
         djiAircraft.getAirLink().setUplinkSignalQualityCallback(i -> mUplinkQuality = i);
 
+        djiAircraft.getCamera().setSystemStateCallback(systemState -> {
+            if(m_lastSystemState == null)
+                m_lastSystemState = systemState;
+
+            boolean err = systemState.isOverheating() || systemState.hasError();
+            if((m_lastSystemState.isStoringPhoto() && !systemState.isStoringPhoto()) || ((m_lastSystemState.isShootingSinglePhoto() || m_lastSystemState.isShootingSinglePhotoInRAWFormat()) && !systemState.isShootingSinglePhoto() && !systemState.isShootingSinglePhotoInRAWFormat() && !systemState.isStoringPhoto()) || err)
+            {
+                if(photoTaken == false)
+                {
+                    photoTaken = true;
+                }
+                photoTakenError = err;
+            }
+
+            m_lastSystemState = systemState;
+        });
+        
         initMissionOperator();
 
         return true;
@@ -1991,6 +2010,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                     } else {
                         gotoNoPhoto = false;
                         photoTaken = true;
+                        photoTakenError = false;
                     }
                     mMoveToDataTimer = null;
 
@@ -2274,12 +2294,12 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
         SettingsDefinitions.ShootPhotoMode photoMode = SettingsDefinitions.ShootPhotoMode.SINGLE;
         photoTaken = false;
+        photoTakenError = false;
 
         if (djiAircraft.getCamera() != null) {
             djiAircraft.getCamera().startShootPhoto(djiError -> {
                 if (djiError == null) {
-                    parent.logMessageDJI("Took photo");
-                    photoTaken = true;
+                    parent.logMessageDJI("Requested Photo");
 /*
                     msg_camera_image_captured msg = new msg_camera_image_captured();
                     msg.lat = (int)(m_Latitude*10000000);
@@ -2293,12 +2313,19 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                     //send_command_ack(MAV_CMD_DO_SET_PARAMETER, MAV_RESULT.MAV_RESULT_ACCEPTED);
                     send_command_ack(MAV_CMD_DO_DIGICAM_CONTROL, MAV_RESULT.MAV_RESULT_ACCEPTED);
                 } else {
-                    parent.logMessageDJI("Error taking photo: " + djiError.toString());
-                    // resume
+                    parent.logMessageDJI("Error requesting photo: " + djiError.toString());
+                    // try again
                     takePhoto();
                 }
             });
         }
+
+        /*while(!photoTaken)
+        {
+            if(photoTakenError)
+                takePhoto(); // Retry on storage error, user needs to kill the app on full storage
+            safeSleep(250);
+        }*/
     }
 
     /********************************************
