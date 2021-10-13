@@ -4,7 +4,8 @@ Uses Frida to Support the Mini 2 by spoofing the DroneType as Mavic Air 2 and th
 
 Known Issues:
 - No Yaw limits for Gimbal, potential damage source
-- Simulator disconnect while flight makes the gimbal go crazy sometimes, unknown if this can cause potential damage. Persists on short restarts, on coldstart usually works a few times.
+- Simulator without cooling can cause overheating
+- Rear LED becomes disabled without resetting drone parameters
 - IMU shows abnormal, but no issues occur. Doesnt happen with Mavic Mini Camera spoofed
 - Mavic Mini Camera doesnt lets you set raw etc in the UX SDK, however its possible to set it in the DJI Fly app and it just keeps the values
 
