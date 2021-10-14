@@ -511,11 +511,12 @@ public class MAVLinkReceiver {
         mModel.setGCSCommandedMode(flightMode);
 
         if (flightMode == ArduCopterFlightModes.AUTO) {
-            if (mModel.getWaypointMissionOperator().getCurrentState() == WaypointMissionState.EXECUTION_PAUSED) {
+            if (mModel.m_activeWaypointMission != null && mModel.pauseWaypointMission) {
                 Log.d(TAG, "Resuming mission");
                 mModel.resumeWaypointMission();
-            } else if (mModel.getWaypointMissionOperator().getCurrentState() == WaypointMissionState.READY_TO_EXECUTE)
+            } else if(mModel.m_activeWaypointMission != null) {
                 mModel.startWaypointMission();
+            }
         } else if (flightMode == ArduCopterFlightModes.BRAKE) {
             mModel.pauseWaypointMission();
             mModel.setGCSCommandedMode(flightMode);
