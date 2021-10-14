@@ -216,6 +216,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     public FlightController mFlightController;
     private Gimbal mGimbal = null;
     private Rotation mRotation = null;
+    private boolean m_Sim = false;
 
     private Model m_model;
 
@@ -227,6 +228,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     DroneModel(MainActivity parent, DatagramSocket socket, boolean sim) {
         this.parent = parent;
         this.socket = socket;
+        this.m_Sim = sim;
         initFlightController(sim);
     }
 
@@ -769,6 +771,9 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         /**************************************************
          * Called whenever airlink quality changes        *
          **************************************************/
+        // Airlink takes a while to become accessible apparently on reconnect
+        while(djiAircraft.getAirLink() == null)
+            safeSleep(100);
 
         djiAircraft.getAirLink().setDownlinkSignalQualityCallback(i -> mDownlinkQuality = i);
 
@@ -797,6 +802,20 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             m_lastSystemState = systemState;
         });
         
+        if (this.m_Sim) {
+            LocationCoordinate2D pos = getSimPos2D();
+
+            mFlightController.getSimulator()
+                    .start(InitializationData.createInstance(pos, 10, 10),
+                            djiError -> {
+                                if (djiError != null) {
+                                    parent.logMessageDJI(djiError.getDescription());
+                                } else {
+                                    parent.logMessageDJI("Start Simulator Success");
+                                }
+                            });
+        }
+
         initMissionOperator();
 
         return true;
