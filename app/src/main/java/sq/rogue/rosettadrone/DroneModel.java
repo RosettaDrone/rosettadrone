@@ -87,6 +87,7 @@ import dji.common.mission.followme.FollowMeMission;
 import dji.common.mission.followme.FollowMeMissionState;
 import dji.common.mission.waypoint.Waypoint;
 import dji.common.mission.waypoint.WaypointAction;
+import dji.common.mission.waypoint.WaypointActionType;
 import dji.common.mission.waypoint.WaypointMission;
 import dji.common.mission.waypoint.WaypointMissionState;
 import dji.common.model.LocationCoordinate2D;
@@ -111,6 +112,7 @@ import static com.MAVLink.enums.MAV_CMD.MAV_CMD_NAV_TAKEOFF;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_VIDEO_START_CAPTURE;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_VIDEO_STOP_CAPTURE;
 import static com.MAVLink.enums.MAV_COMPONENT.MAV_COMP_ID_AUTOPILOT1;
+import static dji.common.mission.waypoint.WaypointActionType.STAY;
 import static sq.rogue.rosettadrone.util.getTimestampMicroseconds;
 import static sq.rogue.rosettadrone.util.safeSleep;
 
@@ -520,6 +522,13 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             java.util.List<dji.common.mission.waypoint.Waypoint> waypointList = m_activeWaypointMission.getWaypointList();
             
             for (int i = 0; i < waypointList.size(); i++) {
+                // Reset Stateful deciders
+                gotoNoPhoto = true;
+                m_Stay = false;
+                m_CruisingMode = false;
+                m_POI_Lat = 0.0;
+                m_POI_Lon = 0.0;
+
                 if(pauseWaypointMission)
                 {
                     while(pauseWaypointMission)
@@ -530,13 +539,6 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
                 if(stopWaypointMission)
                 {
-                    // Reset Stateful deciders
-                    gotoNoPhoto = true;
-                    m_Stay = false;
-                    m_CruisingMode = false;
-                    m_POI_Lat = 0.0;
-                    m_POI_Lon = 0.0;
-
                     return;
                 }
 
@@ -545,10 +547,13 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
                 java.util.List<dji.common.mission.waypoint.WaypointAction> currentActions = currentTask.waypointActions;
                 /**
-                 STAY(0),
-                 START_TAKE_PHOTO(1),
-                 START_RECORD(2),
-                 STOP_RECORD(3),
+                Implemented:
+                 //STAY(0),
+                 //START_TAKE_PHOTO(1),
+                 //START_RECORD(2),
+                 //STOP_RECORD(3),
+                 
+                 TODO:
                  ROTATE_AIRCRAFT(4),
                  GIMBAL_PITCH(5),
                  CAMERA_ZOOM(7),
@@ -557,6 +562,22 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                  FINE_TUNE_GIMBAL_PITCH(16),
                  RESET_GIMBAL_YAW(17);
                  */
+                
+                for (int x = 0; x < currentActions.size(); x++) {
+                    dji.common.mission.waypoint.WaypointAction currentAction = currentActions.get(x);
+                    switch(currentAction.actionType)
+                    {
+                        case STAY:
+                            m_Stay = true;
+                            break;
+                        case START_TAKE_PHOTO:
+                            gotoNoPhoto = false;
+                            break;
+
+                        default:
+                            break;
+                    }
+                }
 
                 // Task
                 {
@@ -577,12 +598,6 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                     float targetCurveSize = currentTask.cornerRadiusInMeters;
                     m_Curvesize = Math.max(targetCurveSize, 0.5);
 
-                    // Reset other Stateful deciders
-                    m_POI_Lat = 0.0;
-                    m_POI_Lon = 0.0;
-                    gotoNoPhoto = true;
-                    m_Stay = false;
-
                     Log.d(TAG, "Waypoints: targetLongitude: " + targetLongitude + " targetLatitude: " + targetLatitude);
 
                     // Takeoff to first wp altitude
@@ -596,6 +611,25 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                     while(mMoveToDataTimer != null || photoTaken != true)
                     {
                         ;
+                    }
+
+                    for (int x = 0; x < currentActions.size(); x++) {
+                        dji.common.mission.waypoint.WaypointAction currentAction = currentActions.get(x);
+                        switch(currentAction.actionType)
+                        {
+                            case START_RECORD:
+                                startRecordingVideo();
+                                break;
+                            case STOP_RECORD:
+                                stopRecordingVideo();
+                                break;
+                            case STAY:
+                                safeSleep(currentAction.actionParam);
+                                break;
+
+                            default:
+                                break;
+                        }
                     }
                 }
             }

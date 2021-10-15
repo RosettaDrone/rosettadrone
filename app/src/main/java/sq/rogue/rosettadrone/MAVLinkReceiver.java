@@ -653,9 +653,11 @@ public class MAVLinkReceiver {
 
                 case MAV_CMD.MAV_CMD_IMAGE_START_CAPTURE:
                     Log.d(TAG, "MAV_CMD_IMAGE_START_CAPTURE");
-                    currentWP = new Waypoint(m.x/10000000.0, m.y/10000000.0, m.z); // TODO check altitude conversion
+                    // Cant add a new WP since wp.xyz are garbage & NaN
+                    // Add to last WP entry
+                    int lastIndex = dji_wps.indexOf(currentWP);
                     currentWP.addAction(new WaypointAction(WaypointActionType.START_TAKE_PHOTO, 0));
-                    dji_wps.add(currentWP);
+                    dji_wps.set(lastIndex, currentWP);
                     break;
 
                 case MAV_CMD.MAV_CMD_DO_SET_CAM_TRIGG_DIST:
@@ -714,7 +716,7 @@ public class MAVLinkReceiver {
 
             ArrayList<Waypoint> correctedWps;
 
-            if (triggerDistanceEnabled) {
+            /*if (triggerDistanceEnabled) {
                 Log.d(TAG, "ADDING SURVEY WAYPOINTS");
                 correctedWps = addSurveyWaypoints(dji_wps, triggerDistance);
                 mBuilder.flightPathMode(WaypointMissionFlightPathMode.NORMAL);
@@ -726,12 +728,12 @@ public class MAVLinkReceiver {
                     mModel.send_command_ack(MAVLINK_MSG_ID_MISSION_ACK, MAV_RESULT.MAV_RESULT_FAILED);
                     return;
                 }
-            }
+            }*/
 
-            logWaypointstoRD(correctedWps);
-            Log.d(TAG, "WP size " + correctedWps.size());
+            logWaypointstoRD(dji_wps);
+            Log.d(TAG, "WP size " + dji_wps.size());
             safeSleep(200);
-            mBuilder.waypointList(correctedWps).waypointCount(correctedWps.size());
+            mBuilder.waypointList(dji_wps).waypointCount(dji_wps.size());
             safeSleep(200);
             WaypointMission builtMission = mBuilder.build();
             safeSleep(200);
@@ -748,7 +750,7 @@ public class MAVLinkReceiver {
         Log.d(TAG, "Waypoints with intermediate wps");
         Log.d(TAG, "==============================");
         for (Waypoint wp : wps)
-            Log.d(TAG, "WP: "+wp.coordinate.getLatitude() + ", " + wp.coordinate.getLongitude() + ", " + wp.altitude);
+            Log.d(TAG, "WP: "+wp.coordinate.getLatitude() + ", " + wp.coordinate.getLongitude() + ", " + wp.altitude + ", " + wp.heading);
     }
 
     private ArrayList<Waypoint> addSurveyWaypoints(ArrayList<Waypoint> wpIn, float triggerDistance) {
