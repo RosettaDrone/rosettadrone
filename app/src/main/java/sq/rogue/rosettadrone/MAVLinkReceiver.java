@@ -621,6 +621,14 @@ public class MAVLinkReceiver {
                         currentWP.cornerRadiusInMeters = flightPathRadius;
                     }
 
+                    // If we use trigger distance, for now just add a stay & photo action
+                    // Ideally feed them pre-processed for now
+                    if(triggerDistanceEnabled)
+                    {
+                        currentWP.addAction(new WaypointAction(WaypointActionType.STAY, 0));
+                        currentWP.addAction(new WaypointAction(WaypointActionType.START_TAKE_PHOTO, 0));
+                    }
+
                     dji_wps.add(currentWP);
                 break;
 
@@ -669,6 +677,7 @@ public class MAVLinkReceiver {
                             triggerDistance = m.param1;
                         } else {
                             triggerDistance = 0;
+                            triggerDistanceEnabled = false;
                         }
                     }
                     break;

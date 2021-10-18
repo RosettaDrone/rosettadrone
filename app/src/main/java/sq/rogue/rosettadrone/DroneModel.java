@@ -573,7 +573,11 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                         case START_TAKE_PHOTO:
                             gotoNoPhoto = false;
                             break;
-
+                        case GIMBAL_PITCH:
+                            // TODO
+                            // Doublecheck vals
+                            //currentTask.gimbalPitch = currentAction.actionParam;
+                            break;
                         default:
                             break;
                     }
@@ -589,8 +593,9 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
                     float targetAltitude = currentTask.altitude;
 
-                    float targetGimbalPitch = currentTask.gimbalPitch;
-                    do_set_Gimbal(9, targetGimbalPitch);
+                    // Lets just do it manually for now
+                    //float targetGimbalPitch = currentTask.gimbalPitch;
+                    //do_set_Gimbal(9, targetGimbalPitch);
 
                     float targetSpeed = currentTask.speed;
                     m_CruisingMode = targetSpeed <= 3.0;
@@ -605,7 +610,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                     {
                         do_takeoff(targetAltitude);
                     }*/
-
+                    
                     // Goto Action
                     do_set_motion_absolute(targetLatitude, targetLongitude, targetAltitude, targetHeading <= 180 ? targetHeading : -180 + ((targetHeading) - 180), 2.5f, 2.5f, 2.5f, 2.5f, 0);
                     while(mMoveToDataTimer != null || photoTaken != true)
