@@ -1009,7 +1009,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         @Override
         public void surfaceDestroyed(SurfaceHolder holder) {
-                DJIVideoStreamDecoder.getInstance().stop();
+                //DJIVideoStreamDecoder.getInstance().stop();
                 // ohno
                 //NativeHelper.getInstance().release();
             }

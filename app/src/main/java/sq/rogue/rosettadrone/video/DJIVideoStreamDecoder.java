@@ -592,6 +592,10 @@ public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
             DJIFrame newFrame = new DJIFrame(data, size, currentTime, currentTime, isKeyFrame, frameNum, frameIndex, width, height);
             dataHandler.obtainMessage(MSG_FRAME_QUEUE_IN, newFrame).sendToTarget();
 
+            // Pass raw Data further for streaming purposes, not a Yuv..
+            if (yuvDataListener != null) {
+                yuvDataListener.onYuvDataReceived(null,  ByteBuffer.wrap(data), size,  width, height);
+            }
         }
     }
 }

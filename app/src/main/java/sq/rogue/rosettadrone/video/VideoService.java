@@ -24,6 +24,7 @@ import java.util.Arrays;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
+import sq.rogue.rosettadrone.video.DJIVideoStreamDecoder;
 
 public class VideoService extends Service implements NativeHelper.NativeDataListener {
 
@@ -106,6 +107,9 @@ public class VideoService extends Service implements NativeHelper.NativeDataList
 
     private void initVideoStreamDecoder() {
         NativeHelper.getInstance().init();
+        DJIVideoStreamDecoder.getInstance().setYuvDataListener((mediaFormat, byteBuffer, size, w, h) -> {
+            this.onDataRecv(byteBuffer.array(), size, 0, false, 0, 0);
+        });
         //NativeHelper.getInstance().setDataListener(this);
     }
 
