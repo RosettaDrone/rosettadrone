@@ -57,7 +57,7 @@ public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
     public static final String VIDEO_ENCODING_FORMAT = "video/avc";
     private HandlerThread  handlerThreadNew;
     private Handler handlerNew;
-    private final boolean DEBUG = false;
+    private final boolean DEBUG = true;
     private static DJIVideoStreamDecoder instance;
     private Queue<DJIFrame> frameQueue;
     private HandlerThread dataHandlerThread;
@@ -213,7 +213,7 @@ public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
      * @return Resource ID of the IDR frame
      */
     public int getIframeRawId(Model pModel, int width) {
-        return R.raw.iframe_1280x720_wm220;
+        return R.raw.iframe_1280x720_wm160;
     }
 
     /** Get default black IDR frame.
@@ -291,6 +291,9 @@ public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
             loge("init codec failed, do it again: " + e);
             e.printStackTrace();
         }
+
+        // Hack request last Keyframe
+        NativeHelper.getInstance().release();
     }
 
     private void startDataHandler() {
@@ -428,8 +431,9 @@ public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
             return;
         }
         if (!hasIFrameInQueue) { // check the I frame flag
-            if (inputFrame.frameNum != 0 && !inputFrame.isKeyFrame) {
-                loge("the timing for setting iframe has not yet come frameNum: " + inputFrame.frameNum );
+            if (inputFrame.frameNum != 1 && !inputFrame.isKeyFrame) {
+                // Hack request last Keyframe
+                NativeHelper.getInstance().release();
                 return;
             }
             byte[] defaultKeyFrame = null;
@@ -438,7 +442,25 @@ public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
             } catch (IOException e) {
                 loge("get default key frame error: " + e.getMessage());
             }
-             if (inputFrame.isKeyFrame) {
+                
+            if (defaultKeyFrame != null) {
+                DJIFrame iFrame = new DJIFrame(
+                        defaultKeyFrame,
+                        defaultKeyFrame.length,
+                        inputFrame.pts,
+                        System.currentTimeMillis(),
+                        inputFrame.isKeyFrame,
+                        0,
+                        inputFrame.frameIndex - 1,
+                        inputFrame.width,
+                        inputFrame.height
+                );
+                frameQueue.clear();
+                frameQueue.offer(iFrame); // Queue in the I frame.
+                logd("add iframe success!!!!");
+                hasIFrameInQueue = true;
+            }
+             else if (inputFrame.isKeyFrame) {
                 hasIFrameInQueue = true;
             } else {
                 loge("input key frame failed");

@@ -933,6 +933,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     }
                 });*/
 
+                NativeHelper.getInstance().init();
                 //When calibration is needed or the fetch key frame is required by SDK, should use the provideTranscodedVideoFeed
                 //to receive the transcoded video feed from main camera.
                 if (mIsTranscodedVideoFeedNeeded) {
@@ -993,7 +994,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private SurfaceHolder.Callback mSurfaceCallback = new SurfaceHolder.Callback() {
         @Override
         public void surfaceCreated(SurfaceHolder holder) {
-            NativeHelper.getInstance().init();
             DJIVideoStreamDecoder.getInstance().init(getApplicationContext(), holder.getSurface());
             DJIVideoStreamDecoder.getInstance().resume();
         }

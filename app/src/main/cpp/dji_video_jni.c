@@ -26,7 +26,7 @@ AVFrame *m_pYUVFrame;
 AVCodecContext *m_pCodecCtx;
 AVCodec *m_pAVCodec;
 AVCodecParserContext *m_pCodecPaser;
-
+static int requestLastKeyframe = 0;
 jmethodID dataCallbackMID;
 
 //FIX
@@ -65,6 +65,7 @@ void invokeFrameDataCallback(JNIEnv *env, jobject obj, uint8_t *buf, int size, i
                            width, height);
 }
 
+static AVPacket lastKeyframe;
 /**
  * Initialize the ffmpeg and software decoder.
  */
@@ -77,7 +78,7 @@ Java_sq_rogue_rosettadrone_video_NativeHelper_init(JNIEnv *env, jobject obj) {
         av_register_all();
         isFFmpegInitialized = 1;
     }
-    m_pAVCodec = avcodec_find_decoder(AV_CODEC_ID_H264);
+    m_pAVCodec = avcodec_find_encoder(AV_CODEC_ID_H264);
     m_pCodecCtx = avcodec_alloc_context3(m_pAVCodec);
     m_pCodecPaser = av_parser_init(AV_CODEC_ID_H264);
     if (m_pAVCodec == NULL || m_pCodecCtx == NULL) {
@@ -88,9 +89,13 @@ Java_sq_rogue_rosettadrone_video_NativeHelper_init(JNIEnv *env, jobject obj) {
     if (m_pAVCodec->capabilities & CODEC_CAP_TRUNCATED)
         m_pCodecCtx->flags |= CODEC_FLAG_TRUNCATED;
 
+    m_pCodecCtx->gop_size = 8;
     m_pCodecCtx->thread_count = 4;
     m_pCodecCtx->thread_type = FF_THREAD_FRAME;
 
+    av_opt_set(m_pCodecCtx->priv_data, "preset", "ultrafast", 0);
+    av_opt_set(m_pCodecCtx->priv_data, "tune", "zerolatency", 0);
+    
     if (avcodec_open2(m_pCodecCtx, m_pAVCodec, NULL) < 0) {
         m_pAVCodec = NULL;
         return 0;
@@ -102,6 +107,9 @@ Java_sq_rogue_rosettadrone_video_NativeHelper_init(JNIEnv *env, jobject obj) {
         LOGD(" CDecoder avcodec_alloc_frame() == NULL ");
         return 0;
     }
+
+
+    av_init_packet(&lastKeyframe);
     LOGD("CDecoder::prepare()2");
     return 1;
 }
@@ -113,7 +121,7 @@ int parse(JNIEnv *env, jobject obj, uint8_t *pBuff, int videosize, uint64_t pts)
     int paserLength_In = videosize;
     int paserLen;
     int decode_data_length;
-    int got_picture = 0;
+    static int got_picture = 0;
     uint8_t *pFrameBuff = (uint8_t *) pBuff;
 
     while (paserLength_In > 0) {
@@ -135,9 +143,8 @@ int parse(JNIEnv *env, jobject obj, uint8_t *pBuff, int videosize, uint64_t pts)
         paserLength_In -= paserLen;
         pFrameBuff += paserLen;
 
-        if (packet.size > 0 & m_pCodecPaser->width_in_pixel > 10 &
-            m_pCodecPaser->height_in_pixel > 10) {
-/*
+        if (packet.size > 0) {
+
              LOGD(
              	"packet size=%d, pts=%lld, width_in_pixel=%d, height_in_pixel=%d, key_frame=%d, frame_has_sps=%d, frame_has_pps=%d, frame_num=%d",
              	packet.size,
@@ -149,22 +156,41 @@ int parse(JNIEnv *env, jobject obj, uint8_t *pBuff, int videosize, uint64_t pts)
              	m_pCodecPaser->frame_has_pps,
              	m_pCodecPaser->frame_num
              	);
-*/
-            if(packet.data[4] == 100)
-                m_pCodecPaser->key_frame = 1;
-                
-            invokeFrameDataCallback(
-                    env,
-                    obj,
-                    packet.data,
-                    packet.size,
-                    m_pCodecPaser->frame_num,
-                    m_pCodecPaser->key_frame,
-                    m_pCodecPaser->width_in_pixel,
-                    m_pCodecPaser->height_in_pixel
-            );
+
+            if(m_pCodecPaser->key_frame)
+            {
+                av_free_packet(&lastKeyframe);
+                av_copy_packet(&lastKeyframe, &packet);
+            }
+
+            if(requestLastKeyframe)
+            {
+                requestLastKeyframe = 0;
+                invokeFrameDataCallback(
+                        env,
+                        obj,
+                        lastKeyframe.data,
+                        lastKeyframe.size,
+                        m_pCodecPaser->frame_num,
+                        1,
+                        m_pCodecPaser->width_in_pixel,
+                        m_pCodecPaser->height_in_pixel
+                );
+            } else {
+                invokeFrameDataCallback(
+                        env,
+                        obj,
+                        packet.data,
+                        packet.size,
+                        m_pCodecPaser->frame_num,
+                        m_pCodecPaser->key_frame,
+                        m_pCodecPaser->width_in_pixel,
+                        m_pCodecPaser->height_in_pixel
+                );
+            }
 
         }
+
         av_free_packet(&packet);
     }
 
@@ -241,14 +267,16 @@ Java_sq_rogue_rosettadrone_video_NativeHelper_parse(JNIEnv *env, jobject obj, jb
  */
 JNIEXPORT jboolean
 Java_sq_rogue_rosettadrone_video_NativeHelper_release(JNIEnv *env, jobject obj) {
-    if (m_pCodecCtx) {
+    /*if (m_pCodecCtx) {
         avcodec_close(m_pCodecCtx);
         m_pCodecCtx = NULL;
     }
 
     av_free(m_pYUVFrame);
     av_free(m_pCodecCtx);
-    av_parser_close(m_pCodecPaser);
+    av_parser_close(m_pCodecPaser);*/
+
+    requestLastKeyframe = 1;
 
     return 1;
 }

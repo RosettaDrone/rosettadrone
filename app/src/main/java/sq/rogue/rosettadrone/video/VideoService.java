@@ -106,7 +106,6 @@ public class VideoService extends Service implements NativeHelper.NativeDataList
     }
 
     private void initVideoStreamDecoder() {
-        NativeHelper.getInstance().init();
         DJIVideoStreamDecoder.getInstance().setYuvDataListener((mediaFormat, byteBuffer, size, w, h) -> {
             this.onDataRecv(byteBuffer.array(), size, 0, false, 0, 0);
         });
