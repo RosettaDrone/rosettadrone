@@ -21,6 +21,7 @@ import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -83,6 +84,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
@@ -323,21 +325,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         super.onResume();
 
         setDroneParameters();
-/*
-        if (mDroneDetails != null) {
-            String droneID = prefs.getString("pref_drone_id", "1");
-            String rtlAlt = prefs.getString("pref_drone_rtl_altitude", "60") + "m";
 
-            float dronebattery = mMavlinkReceiver.mModel.get_drone_battery_prosentage();
-            float controlerbattery = mMavlinkReceiver.mModel.get_controller_battery_prosentage();
-
-            String text = "Drone Battery:       " + "\t\t" + dronebattery + "%"  + "\t" + "ID: " + "\t\t" + droneID + System.getProperty("line.separator") +
-                    "Controller Battery:  " + "\t" + controlerbattery + "%"  + "\t" + "RTL:" + "\t" + rtlAlt;
-
-//            String text = "ID:" + "\t" + droneID + System.getProperty("line.separator") + "RTL:" + "\t" + rtlAlt;
-            mDroneDetails.setText(text);
-        }
- */
         if (prefs.getBoolean("pref_enable_video", true)) {
             mExternalVideoOut = true;
         } else {
@@ -353,25 +341,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         }
 
-        //    if(compare_height == 0) {
         videostreamPreviewTtView.getHolder().addCallback(mSurfaceCallback);
-        videostreamPreviewTtView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                float rate = VideoFeeder.getInstance().getTranscodingDataRate();
-                if (rate < 10) {
-                    VideoFeeder.getInstance().setTranscodingDataRate(10.0f);
-                } else {
-                    VideoFeeder.getInstance().setTranscodingDataRate(3.0f);
-                }
-            }
-        });
-
-        //    }
-        //    else {
-        //        videostreamPreviewTtViewSmall.getHolder().addCallback(mSurfaceCallback);
-        //    }
-        // If we use a camera... Remove Listeners if needed...
 
         if (mCamera != null) {
             if (!mExternalVideoOut) {
@@ -895,16 +865,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         // The callback for receiving the raw H264 video data for camera live view
         // For newer drones...
         mReceivedVideoDataListener = (videoBuffer, size) -> {
-            if (m_videoMode == 2) {
-                // Send raw H264 to the FFMPEG parser...
-                // TODO: Dont break mExternalVideoOut
-                DJIVideoStreamDecoder.getInstance().parse(videoBuffer, size);
-            } else {
-                // Send H.264 to the NAIL generator...
-                if (mExternalVideoOut == true) {
-                    NativeHelper.getInstance().parse(videoBuffer, size, 1);
-                }
-            }
+            DJIVideoStreamDecoder.getInstance().parse(videoBuffer, size);
         };
 
         if (null == product || !product.isConnected()) {
@@ -986,33 +947,28 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         return false;
     }
 
-    /**
-     * Init a fake texture view to for the codec manager, so that the video raw data can be received
-     * by the camera needed to get video to the UDP handler...
-     */
-
     private SurfaceHolder.Callback mSurfaceCallback = new SurfaceHolder.Callback() {
+        @RequiresApi(api = Build.VERSION_CODES.M)
         @Override
         public void surfaceCreated(SurfaceHolder holder) {
+            // Inits decoder or changes surface
             DJIVideoStreamDecoder.getInstance().init(getApplicationContext(), holder.getSurface());
             DJIVideoStreamDecoder.getInstance().resume();
         }
 
+        @RequiresApi(api = Build.VERSION_CODES.M)
         @Override
         public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
             videoViewWidth = width;
             videoViewHeight = height;
-            Log.d(TAG, "real onSurfaceTextureAvailable4: width " + videoViewWidth + " height " + videoViewHeight);
+            Log.d(TAG, "surfaceChanged: width " + videoViewWidth + " height " + videoViewHeight);
             DJIVideoStreamDecoder.getInstance().changeSurface(holder.getSurface());
 
         }
 
         @Override
         public void surfaceDestroyed(SurfaceHolder holder) {
-                //DJIVideoStreamDecoder.getInstance().stop();
-                // ohno
-                //NativeHelper.getInstance().release();
-            }
+        }
     };
 
     //---------------------------------------------------------------------------------------
@@ -1331,29 +1287,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (compare_height == 0) {
             logMessageDJI("Set Small screen...");
             videostreamPreviewTtView.clearFocus();
+            // Hide, keeps surface
+            videostreamPreviewTtView.setVisibility(View.INVISIBLE);
+            // Add new surface callback, will eventually update codec surface
+            videostreamPreviewTtViewSmall.getHolder().addCallback(mSurfaceCallback);
+            // Set Visible
+            videostreamPreviewTtViewSmall.setVisibility(View.VISIBLE);
+            // Wait a bit
+            safeSleep(200);
+            // Hide, destroys old surface
             videostreamPreviewTtView.setVisibility(View.GONE);
-/*
-            if ( mCodecManager != null) {
-                mCodecManager.cleanSurface();
-                mCodecManager.destroyCodec();
-                mCodecManager=null;
-            }
-*/
-            //    safeSleep(200);
-            videostreamPreviewTtViewSmall.getHolder().addCallback(mSurfaceCallback);
-            videostreamPreviewTtViewSmall.setVisibility(View.VISIBLE);
-//            videostreamPreviewTtViewSmall.setAlpha((float)0.4);
-            //        videostreamPreviewTtViewSmall.requestFocus(); // .buildLayer();
 
-            //         videostreamPreviewTtView.clearFocus();  //
-/*
-            videoViewHeight = ((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 86, getResources().getDisplayMetrics()));
-            videoViewWidth = ((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 164, getResources().getDisplayMetrics()));
-            mCodecManager = new DJICodecManager(getApplicationContext(), surfaceT, videoViewWidth, videoViewHeight);
-            videostreamPreviewTtViewSmall.setSurfaceTexture(surfaceT);
-            videostreamPreviewTtViewSmall.getHolder().addCallback(mSurfaceCallback);
-            videostreamPreviewTtViewSmall.setVisibility(View.VISIBLE);
-*/
             video_layout_small.setZ(100.f);
             map_layout.setZ(0.f);
 
@@ -1364,30 +1308,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             compare_height = 1;
         } else {
             logMessageDJI("Set Main screen...");
+
             videostreamPreviewTtViewSmall.clearFocus();
-            videostreamPreviewTtViewSmall.setVisibility(View.GONE);
-/*
-            if ( mCodecManager != null) {
-                mCodecManager.cleanSurface();
-                mCodecManager.destroyCodec();
-                mCodecManager = null;
-            }
-*/
-            //         safeSleep(200);
+            // Hide, keeps surface
+            videostreamPreviewTtViewSmall.setVisibility(View.INVISIBLE);
+            // Add new surface callback, will eventually update codec surface
             videostreamPreviewTtView.getHolder().addCallback(mSurfaceCallback);
-            //          videostreamPreviewTtView.buildLayer();
+            // Set Visible
             videostreamPreviewTtView.setVisibility(View.VISIBLE);
-            //       videostreamPreviewTtView.requestFocus();
-            //   videostreamPreviewTtViewSmall.setAlpha((float)0.4);
-
-
-            //       videostreamPreviewTtViewSmall.getHolder().addCallback(mSurfaceCallback);
-            //          mSurfaceCallback.onSurfaceTextureAvailable(surfaceT, videoViewWidth, videoViewHeight);
-            //     videostreamPreviewTtView.setVisibility(View.VISIBLE);
-
-            //   videostreamPreviewTtView.getHolder().addCallback(mSurfaceCallback);
-            //        videostreamPreviewTtViewSmall.clearFocus();  //
-
+            // Wait a bit
+            safeSleep(200);
+            // Hide, destroys old surface
+            videostreamPreviewTtViewSmall.setVisibility(View.GONE);
 
             video_layout_small.setZ(0.f);
             map_layout.setZ(100.f);

@@ -12,6 +12,8 @@ import android.os.Message;
 import android.util.Log;
 import android.view.Surface;
 
+import androidx.annotation.RequiresApi;
+
 import dji.common.product.Model;
 import dji.log.DJILog;
 import dji.midware.data.model.P3.DataCameraGetPushStateInfo;
@@ -65,6 +67,7 @@ public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
     private Context context;
     private MediaCodec codec;
     private Surface surface;
+    private boolean isInitialized = false;
 
     public int frameIndex = -1;
     private long currentTime;
@@ -155,6 +158,7 @@ public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
     }
 
     private DJIVideoStreamDecoder() {
+        isInitialized = false;
         createTime = System.currentTimeMillis();
         frameQueue = new ArrayBlockingQueue<DJIFrame>(BUF_QUEUE_SIZE);
         startDataHandler();
@@ -185,7 +189,15 @@ public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
      * any yuv data if a surface is configured into, which mean that if you want the yuv frames, you
      * should set "null" surface when calling the "configure" method of MediaCodec.
      */
+    @RequiresApi(api = Build.VERSION_CODES.M)
     public void init(Context context, Surface surface) {
+        if(isInitialized)
+        {
+            this.changeSurface(surface);
+            return;
+        }
+
+        this.isInitialized = true;
         this.context = context;
         this.surface = surface;
         NativeHelper.getInstance().setDataListener(this);
@@ -291,9 +303,6 @@ public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
             loge("init codec failed, do it again: " + e);
             e.printStackTrace();
         }
-
-        // Hack request last Keyframe
-        NativeHelper.getInstance().release();
     }
 
     private void startDataHandler() {
@@ -386,12 +395,11 @@ public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
      * should set "null" surface when calling the "configure" method of MediaCodec.
      * @param surface
      */
+    @RequiresApi(api = Build.VERSION_CODES.M)
     public void changeSurface(Surface surface) {
         if (this.surface != surface) {
             this.surface = surface;
-            if (dataHandler != null && !dataHandler.hasMessages(MSG_INIT_CODEC)) {
-                dataHandler.sendEmptyMessage(MSG_INIT_CODEC);
-            }
+            codec.setOutputSurface(surface);
         }
     }
 
@@ -432,8 +440,6 @@ public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
         }
         if (!hasIFrameInQueue) { // check the I frame flag
             if (inputFrame.frameNum != 1 && !inputFrame.isKeyFrame) {
-                // Hack request last Keyframe
-                NativeHelper.getInstance().release();
                 return;
             }
             byte[] defaultKeyFrame = null;
