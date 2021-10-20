@@ -404,7 +404,9 @@ public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
             this.surface = surface;
             if(surface == null)
                 surface = this.outputSurface.getSurface();
-            codec.setOutputSurface(surface);
+
+            if(codec != null)
+                codec.setOutputSurface(surface);
         }
     }
 
