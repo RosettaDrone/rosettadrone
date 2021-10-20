@@ -28,6 +28,7 @@ import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 
 import dji.sdk.base.BaseProduct;
+import sq.rogue.rosettadrone.MainActivity;
 import sq.rogue.rosettadrone.R;
 
 /**
@@ -67,6 +68,7 @@ public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
     private Context context;
     private MediaCodec codec;
     private Surface surface;
+    private MainActivity.CodecOutputSurface outputSurface;
     private boolean isInitialized = false;
 
     public int frameIndex = -1;
@@ -190,7 +192,7 @@ public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
      * should set "null" surface when calling the "configure" method of MediaCodec.
      */
     @RequiresApi(api = Build.VERSION_CODES.M)
-    public void init(Context context, Surface surface) {
+    public void init(Context context, Surface surface, MainActivity.CodecOutputSurface offscreenSurface) {
         if(isInitialized)
         {
             this.changeSurface(surface);
@@ -200,6 +202,7 @@ public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
         this.isInitialized = true;
         this.context = context;
         this.surface = surface;
+        this.outputSurface = offscreenSurface;
         NativeHelper.getInstance().setDataListener(this);
         if (dataHandler != null && !dataHandler.hasMessages(MSG_INIT_CODEC)) {
             dataHandler.sendEmptyMessage(MSG_INIT_CODEC);
@@ -399,6 +402,8 @@ public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
     public void changeSurface(Surface surface) {
         if (this.surface != surface) {
             this.surface = surface;
+            if(surface == null)
+                surface = this.outputSurface.getSurface();
             codec.setOutputSurface(surface);
         }
     }
@@ -552,6 +557,8 @@ public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
                 // All the output buffer must be release no matter whether the yuv data is output or
                 // not, so that the codec can reuse the buffer.
                 codec.releaseOutputBuffer(outIndex, true);
+                this.outputSurface.awaitNewImage();
+                this.outputSurface.drawImage(true);
             } else if (outIndex == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
                 // The output buffer set is changed. So the decoder should be reinitialized and the
                 // output buffers should be retrieved.

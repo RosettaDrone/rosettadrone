@@ -198,6 +198,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     protected VideoFeeder.VideoDataListener mReceivedVideoDataListener;
     private SurfaceView videostreamPreviewTtView;
     private SurfaceView videostreamPreviewTtViewSmall;
+    private CodecOutputSurface mCodecOutputSurface;
     
     private Camera mCamera;
     private DJICodecManager mCodecManager;
@@ -244,6 +245,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     };
 
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     private void initPacketizer() {
         Log.e(TAG, "initPacketizer");
         String address = "127.0.0.1";
@@ -288,6 +290,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         videostreamPreviewTtView.getHolder().addCallback(mSurfaceCallback);
         videostreamPreviewTtView.setVisibility(View.VISIBLE);
+
+        // Dehardcode
+        mCodecOutputSurface = new CodecOutputSurface(1280, 720);
+
+        // Create decoder with off-screen buf
+        DJIVideoStreamDecoder.getInstance().init(getApplicationContext(), mCodecOutputSurface.getSurface(), mCodecOutputSurface);
+        DJIVideoStreamDecoder.getInstance().resume();
     }
 
     // After the service have started...
@@ -968,7 +977,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         @Override
         public void surfaceCreated(SurfaceHolder holder) {
             // Inits decoder or changes surface
-            DJIVideoStreamDecoder.getInstance().init(getApplicationContext(), holder.getSurface());
+            // Change to on-screen surface if not already initialized
+            DJIVideoStreamDecoder.getInstance().init(getApplicationContext(), holder.getSurface(), mCodecOutputSurface);
             DJIVideoStreamDecoder.getInstance().resume();
         }
 
@@ -982,8 +992,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         }
 
+        @RequiresApi(api = Build.VERSION_CODES.M)
         @Override
         public void surfaceDestroyed(SurfaceHolder holder) {
+            // Switch to off-screen surface
+            DJIVideoStreamDecoder.getInstance().changeSurface(mCodecOutputSurface.getSurface());
         }
     };
 
@@ -1303,16 +1316,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (compare_height == 0) {
             logMessageDJI("Set Small screen...");
             videostreamPreviewTtView.clearFocus();
-            // Hide, keeps surface
-            videostreamPreviewTtView.setVisibility(View.INVISIBLE);
-            // Add new surface callback, will eventually update codec surface
+            // Hide, switch surface off-screen
+            videostreamPreviewTtView.setVisibility(View.GONE);
+            // Add new surface callback, will eventually update codec surface to on-screen
             videostreamPreviewTtViewSmall.getHolder().addCallback(mSurfaceCallback);
             // Set Visible
             videostreamPreviewTtViewSmall.setVisibility(View.VISIBLE);
             // Wait a bit
             safeSleep(200);
-            // Hide, destroys old surface
-            videostreamPreviewTtView.setVisibility(View.GONE);
 
             video_layout_small.setZ(100.f);
             map_layout.setZ(0.f);
@@ -1326,16 +1337,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             logMessageDJI("Set Main screen...");
 
             videostreamPreviewTtViewSmall.clearFocus();
-            // Hide, keeps surface
-            videostreamPreviewTtViewSmall.setVisibility(View.INVISIBLE);
-            // Add new surface callback, will eventually update codec surface
+            // Hide, switch surface off-screen
+            videostreamPreviewTtViewSmall.setVisibility(View.GONE);
+            // Add new surface callback, will eventually update codec surface to on-screen
             videostreamPreviewTtView.getHolder().addCallback(mSurfaceCallback);
             // Set Visible
-            videostreamPreviewTtView.setVisibility(View.VISIBLE);
+            videostreamPreviewTtView.setVisibility(View.VISIBLE);;
             // Wait a bit
             safeSleep(200);
-            // Hide, destroys old surface
-            videostreamPreviewTtViewSmall.setVisibility(View.GONE);
 
             video_layout_small.setZ(0.f);
             map_layout.setZ(100.f);
@@ -1935,7 +1944,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
      * By default, the Surface will be using a BufferQueue in asynchronous mode, so we
      * can potentially drop frames.
      */
-    private static class CodecOutputSurface
+    public static class CodecOutputSurface
             implements SurfaceTexture.OnFrameAvailableListener {
         private STextureRender mTextureRender;
         private SurfaceTexture mSurfaceTexture;
@@ -2058,6 +2067,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         }
 
+        public SurfaceTexture getSurfaceTexture()
+        {
+            return this.mSurfaceTexture;
+        }
+        
         /**
          * Discard all resources held by this class, notably the EGL context.
          */
