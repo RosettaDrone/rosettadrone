@@ -265,7 +265,7 @@ public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
             return;
         }
         if (codec != null) {
-            releaseCodec();
+            return;
         }
         loge("initVideoDecoder----------------------------------------------------------");
         loge("initVideoDecoder video width = " + width + "  height = " + height);
@@ -405,8 +405,9 @@ public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
             if(surface == null)
                 surface = this.outputSurface.getSurface();
 
-            if(codec != null)
+            if(codec != null) {
                 codec.setOutputSurface(surface);
+            }
         }
     }
 
@@ -511,14 +512,15 @@ public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
      */
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     private void decodeFrame() throws Exception {
-        DJIFrame inputFrame = frameQueue.poll();
-        if (inputFrame == null) {
-            return;
-        }
         if (codec == null) {
             if (dataHandler != null && !dataHandler.hasMessages(MSG_INIT_CODEC)) {
                 dataHandler.sendEmptyMessage(MSG_INIT_CODEC);
             }
+            return;
+        }
+
+        DJIFrame inputFrame = frameQueue.poll();
+        if (inputFrame == null) {
             return;
         }
 
@@ -560,11 +562,11 @@ public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
                 // not, so that the codec can reuse the buffer.
                 codec.releaseOutputBuffer(outIndex, true);
                 
-                if(this.surface == this.outputSurface.getSurface())
+                /*if(this.surface == this.outputSurface.getSurface())
                 {
                     this.outputSurface.awaitNewImage();
                     this.outputSurface.drawImage(true);
-                }
+                }*/
             } else if (outIndex == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
                 // The output buffer set is changed. So the decoder should be reinitialized and the
                 // output buffers should be retrieved.

@@ -1933,6 +1933,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     //---------------------------------------------------------------------------------------
     //endregion
+    // TODO: Move to own file, credit sources
     /**
      * Holds state associated with a Surface used for MediaCodec decoder output.
      * <p>
