@@ -557,8 +557,12 @@ public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
                 // All the output buffer must be release no matter whether the yuv data is output or
                 // not, so that the codec can reuse the buffer.
                 codec.releaseOutputBuffer(outIndex, true);
-                this.outputSurface.awaitNewImage();
-                this.outputSurface.drawImage(true);
+                
+                if(this.surface == this.outputSurface.getSurface())
+                {
+                    this.outputSurface.awaitNewImage();
+                    this.outputSurface.drawImage(true);
+                }
             } else if (outIndex == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
                 // The output buffer set is changed. So the decoder should be reinitialized and the
                 // output buffers should be retrieved.
