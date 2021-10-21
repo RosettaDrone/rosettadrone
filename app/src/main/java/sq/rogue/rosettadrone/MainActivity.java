@@ -110,6 +110,7 @@ import dji.common.error.DJIError;
 import dji.common.error.DJISDKError;
 import dji.common.model.LocationCoordinate2D;
 import dji.common.product.Model;
+import dji.midware.usb.P3.UsbAccessoryService;
 import dji.sdk.base.BaseComponent;
 import dji.sdk.base.BaseProduct;
 import dji.sdk.camera.Camera;
@@ -199,6 +200,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private SurfaceView videostreamPreviewTtView;
     private SurfaceView videostreamPreviewTtViewSmall;
     private CodecOutputSurface mCodecOutputSurface;
+    private CodecOutputSurface mTranscodeOutputSurface;
     
     private Camera mCamera;
     private DJICodecManager mCodecManager;
@@ -280,6 +282,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mIsTranscodedVideoFeedNeeded = isTranscodedVideoFeedNeeded();
         if (mIsTranscodedVideoFeedNeeded) {
             // The one were we get transcode data...
+            mVideoBitrate = 40;
             VideoFeeder.getInstance().setTranscodingDataRate(mVideoBitrate);
             logMessageDJI("set rate to " + mVideoBitrate);
         }
@@ -293,10 +296,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         // Dehardcode
         mCodecOutputSurface = new CodecOutputSurface(1280, 720);
+        mTranscodeOutputSurface = new CodecOutputSurface(1280, 720);
 
         // Create decoder with off-screen buf
         DJIVideoStreamDecoder.getInstance().init(getApplicationContext(), mCodecOutputSurface.getSurface(), mCodecOutputSurface);
         DJIVideoStreamDecoder.getInstance().resume();
+
+        mCodecManager = new DJICodecManager(getApplicationContext(), mTranscodeOutputSurface.getSurfaceTexture(), 1280, 720, UsbAccessoryService.VideoStreamSource.Camera);
     }
 
     // After the service have started...
@@ -449,10 +455,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             mDJIHandler.removeCallbacksAndMessages(null);
         }
 
-        if (mCodecManager != null) {
+        /*if (mCodecManager != null) {
             mCodecManager.cleanSurface();
             mCodecManager.destroyCodec();
-        }
+        }*/
         doUnbindService();
 
         //Intent intent = getIntent();
@@ -910,6 +916,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             logMessageDJI("can't change mode of camera, error: " + djiError.getDescription());
                         }
                     });
+
+                    mCamera.setHDLiveViewEnabled(true, djiError -> {});
                 }
 
                 /*mCamera.setVideoResolutionAndFrameRate(new ResolutionAndFrameRate(SettingsDefinitions.VideoResolution.RESOLUTION_3840x2160,SettingsDefinitions.VideoFrameRate.FRAME_RATE_29_DOT_970_FPS) , djiError -> {
@@ -980,6 +988,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             // Change to on-screen surface if not already initialized
             DJIVideoStreamDecoder.getInstance().init(getApplicationContext(), holder.getSurface(), mCodecOutputSurface);
             DJIVideoStreamDecoder.getInstance().resume();
+
+            //mCodecManager = new DJICodecManager(getApplicationContext(), null, 1280, 720, UsbAccessoryService.VideoStreamSource.Camera);
         }
 
         @RequiresApi(api = Build.VERSION_CODES.M)
@@ -997,6 +1007,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         public void surfaceDestroyed(SurfaceHolder holder) {
             // Switch to off-screen surface
             DJIVideoStreamDecoder.getInstance().changeSurface(mCodecOutputSurface.getSurface());
+            /*if(mCodecManager != null)
+            {
+                mCodecManager = null;
+            }*/
         }
     };
 
@@ -1928,7 +1942,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             return false;
         }
 
-        return VideoFeeder.getInstance().isFetchKeyFrameNeeded() || VideoFeeder.getInstance().isLensDistortionCalibrationNeeded();
+        return true;
+        //return VideoFeeder.getInstance().isFetchKeyFrameNeeded() || VideoFeeder.getInstance().isLensDistortionCalibrationNeeded();
     }
 
     //---------------------------------------------------------------------------------------

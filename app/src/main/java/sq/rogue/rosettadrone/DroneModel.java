@@ -820,10 +820,10 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
         // Deal with OcuSync
         // if()...
-        djiAircraft.getAirLink().getOcuSyncLink().setChannelSelectionMode(ChannelSelectionMode.AUTO, djiError ->  { if(djiError != null)  Log.d(TAG, djiError.toString());});
-        djiAircraft.getAirLink().getOcuSyncLink().setFrequencyBand(OcuSyncFrequencyBand.FREQUENCY_BAND_DUAL, djiError ->  { if(djiError != null)  Log.d(TAG, djiError.toString());});
-        djiAircraft.getAirLink().getOcuSyncLink().setChannelBandwidth(OcuSyncBandwidth.Bandwidth20MHz, djiError -> { if(djiError != null)  Log.d(TAG, djiError.toString());});
-        
+        djiAircraft.getAirLink().getOcuSyncLink().setChannelSelectionMode(ChannelSelectionMode.AUTO, djiError ->  { if(djiError != null)  Log.e(TAG, djiError.toString());});
+        djiAircraft.getAirLink().getOcuSyncLink().setFrequencyBand(OcuSyncFrequencyBand.FREQUENCY_BAND_DUAL, djiError ->  { if(djiError != null)  Log.e(TAG, djiError.toString());});
+        djiAircraft.getAirLink().getOcuSyncLink().setChannelBandwidth(OcuSyncBandwidth.Bandwidth20MHz, djiError -> { if(djiError != null)  Log.e(TAG, djiError.toString());});
+
         djiAircraft.getCamera().setSystemStateCallback(systemState -> {
             if(m_lastSystemState == null)
                 m_lastSystemState = systemState;
@@ -2142,7 +2142,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                 offset *= -1;
             }
 
-            Log.i(TAG, "diff: " + diff + "brng: " + brng + " hypotenuse: " + hypotenuse + " offset: " + offset + " pol: " + pol);
+            //Log.i(TAG, "diff: " + diff + "brng: " + brng + " hypotenuse: " + hypotenuse + " offset: " + offset + " pol: " + pol);
 
             // Drone heading - Waypoint bearing... to 0-360 deg...
             double direction = rotation(brng, yaw);
@@ -2150,7 +2150,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             // Find the X and Y distance from the hypotenuse and the direction...
             double right_dist = offset; //Math.max(offset,20); // bearing_error; //Math.sin(Math.toRadians(direction)) * hypotenuse + Math.cos(Math.toRadians(direction)) * bearing_error ;
             double fw_dist = hypotenuse; //Math.max(hypotenuse,20); // Math.cos(Math.toRadians(direction)) * hypotenuse + Math.sin(Math.toRadians(direction)) * bearing_error;
-            Log.i(TAG, "direction: " + direction);
+            //Log.i(TAG, "direction: " + direction);
 
             if(m_CruisingMode)
             {
@@ -2194,10 +2194,10 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                 do_set_motion_velocity((float) 0, (float) 0, (float) 0, (float) clockmotion, 0b1111011111111111);
             } else {
 
-                Log.i(TAG, "fwmotion: " + fwmotion + " rightmotion: " + rightmotion);
+               // Log.i(TAG, "fwmotion: " + fwmotion + " rightmotion: " + rightmotion);
                 double fmove = Math.cos(Math.toRadians(direction)) * fwmotion - Math.sin(Math.toRadians(direction)) * rightmotion;
                 double rmove = Math.sin(Math.toRadians(direction)) * fwmotion + Math.cos(Math.toRadians(direction)) * rightmotion;
-                Log.i(TAG, "rmove: " + rmove + " fmove: " + fmove);
+                //Log.i(TAG, "rmove: " + rmove + " fmove: " + fmove);
 
                 do_set_motion_velocity((float) fmove, (float) rmove, (float) upmotion, (float) clockmotion, 0b1111011111000111);
                 //do_set_motion_velocity((float) fwmotion, (float) rightmotion, (float) upmotion, (float) clockmotion, 0b1111011111000111);
@@ -2311,7 +2311,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                 }
                 if (++report > 1) {
                     report = 0;
-                    Log.e(TAG, ":" + mPitch + " " + mRoll + " " + mYaw + " " + mThrottle);
+                    //Log.e(TAG, ":" + mPitch + " " + mRoll + " " + mYaw + " " + mThrottle);
 //                parent.logMessageDJI(":"+mPitch+" "+ mRoll+" "+ mYaw+" "+ mThrottle);
                 }
 
@@ -2391,8 +2391,9 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
     void takePhoto() {
         // Wait till Gimbal is in Place
-        while(!gimbalReady.get())
-            ; // Block Thread
+        //while(!gimbalReady.get())
+        //    ; // Block Thread
+        safeSleep(100);
 
         djiAircraft.getCamera().setMode(SettingsDefinitions.CameraMode.SHOOT_PHOTO, djiError -> {
             if(djiError != null) {

@@ -78,7 +78,7 @@ Java_sq_rogue_rosettadrone_video_NativeHelper_init(JNIEnv *env, jobject obj) {
         av_register_all();
         isFFmpegInitialized = 1;
     }
-    m_pAVCodec = avcodec_find_encoder(AV_CODEC_ID_H264);
+    m_pAVCodec = avcodec_find_decoder(AV_CODEC_ID_H264);
     m_pCodecCtx = avcodec_alloc_context3(m_pAVCodec);
     m_pCodecPaser = av_parser_init(AV_CODEC_ID_H264);
     if (m_pAVCodec == NULL || m_pCodecCtx == NULL) {
@@ -145,7 +145,7 @@ int parse(JNIEnv *env, jobject obj, uint8_t *pBuff, int videosize, uint64_t pts)
 
         if (packet.size > 0) {
 
-             LOGD(
+             /*LOGD(
              	"packet size=%d, pts=%lld, width_in_pixel=%d, height_in_pixel=%d, key_frame=%d, frame_has_sps=%d, frame_has_pps=%d, frame_num=%d",
              	packet.size,
              	pts,
@@ -155,7 +155,7 @@ int parse(JNIEnv *env, jobject obj, uint8_t *pBuff, int videosize, uint64_t pts)
              	m_pCodecPaser->frame_has_sps,
              	m_pCodecPaser->frame_has_pps,
              	m_pCodecPaser->frame_num
-             	);
+             	);*/
 
             if(m_pCodecPaser->key_frame)
             {
@@ -242,11 +242,11 @@ Java_sq_rogue_rosettadrone_video_NativeHelper_parse(JNIEnv *env, jobject obj, jb
         // Removing the aud bytes.
         if (size >= fillersize2 &&
             memcmp(fillerbuffer2, buff + size - fillersize2, fillersize2) == 0) {
-            LOGD("Remove filler+AUD");
+            //LOGD("Remove filler+AUD");
             parse(env, obj, buff, size - fillersize2, pts);
         } else if (size >= audaudsize2 &&
                    memcmp(audaudbuffer2, buff + size - audaudsize2, audaudsize2) == 0) {
-            LOGD("Remove AUD+AUD");
+            //LOGD("Remove AUD+AUD");
             parse(env, obj, buff, size - audaudsize2, pts);
         } else if (size >= audsize2 && memcmp(audbuffer2, buff + size - audsize2, audsize2) == 0) {
             //    LOGD("Remove AUD");

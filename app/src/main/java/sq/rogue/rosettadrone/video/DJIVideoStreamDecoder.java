@@ -52,7 +52,7 @@ import sq.rogue.rosettadrone.R;
  */
 public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
     private static final String TAG = DJIVideoStreamDecoder.class.getSimpleName();
-    private static final int BUF_QUEUE_SIZE = 60;
+    private static final int BUF_QUEUE_SIZE = 120;
     private static final int MSG_INIT_CODEC = 0;
     private static final int MSG_FRAME_QUEUE_IN = 1;
     private static final int MSG_DECODE_FRAME = 2;
@@ -60,7 +60,7 @@ public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
     public static final String VIDEO_ENCODING_FORMAT = "video/avc";
     private HandlerThread  handlerThreadNew;
     private Handler handlerNew;
-    private final boolean DEBUG = true;
+    private final boolean DEBUG = false;
     private static DJIVideoStreamDecoder instance;
     private Queue<DJIFrame> frameQueue;
     private HandlerThread dataHandlerThread;
@@ -71,7 +71,7 @@ public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
     private MainActivity.CodecOutputSurface outputSurface;
     private boolean isInitialized = false;
 
-    public int frameIndex = -1;
+    public long frameIndex = -1;
     private long currentTime;
     public int width;
     public int height;
@@ -195,6 +195,7 @@ public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
     public void init(Context context, Surface surface, MainActivity.CodecOutputSurface offscreenSurface) {
         if(isInitialized)
         {
+            NativeHelper.getInstance().setDataListener(this);
             this.changeSurface(surface);
             return;
         }
@@ -228,7 +229,7 @@ public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
      * @return Resource ID of the IDR frame
      */
     public int getIframeRawId(Model pModel, int width) {
-        return R.raw.iframe_1280x720_wm160;
+        return R.raw.iframe_1280x720_wm230;
     }
 
     /** Get default black IDR frame.
@@ -262,7 +263,10 @@ public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
      */
     private void initCodec() {
         if (width == 0 || height == 0) {
-            return;
+            width = 1280;
+            height = 720;
+            this.width = width;
+            this.height = height;
         }
         if (codec != null) {
             return;
@@ -448,6 +452,7 @@ public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
         }
         if (!hasIFrameInQueue) { // check the I frame flag
             if (inputFrame.frameNum != 1 && !inputFrame.isKeyFrame) {
+                loge("Time to set keyframe hasnt come yet");
                 return;
             }
             byte[] defaultKeyFrame = null;
@@ -457,7 +462,7 @@ public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
                 loge("get default key frame error: " + e.getMessage());
             }
                 
-            if (defaultKeyFrame != null) {
+            if (!inputFrame.isKeyFrame && defaultKeyFrame != null) {
                 DJIFrame iFrame = new DJIFrame(
                         defaultKeyFrame,
                         defaultKeyFrame.length,
@@ -490,10 +495,6 @@ public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
     	    * However, on some devices, that is not the case.
     	    * So, reset the codec in order to fix this issue.
     	    */
-            loge("init decoder for the 1st time or when resolution changes");
-            if (dataHandler != null && !dataHandler.hasMessages(MSG_INIT_CODEC)) {
-                dataHandler.sendEmptyMessage(MSG_INIT_CODEC);
-            }
         }
         // Queue in the input frame.
         if (this.frameQueue.offer(inputFrame)){
@@ -531,7 +532,8 @@ public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
 
         // Decode the frame using MediaCodec
         if (inIndex >= 0) {
-            Log.d(TAG, "decodeFrame: index=" + inIndex);
+            if(DEBUG)
+                Log.d(TAG, "decodeFrame: index=" + inIndex);
             ByteBuffer buffer = codec.getInputBuffer(inIndex);
             buffer.clear();
             buffer.limit(buffer.position() + inputFrame.size);
@@ -557,6 +559,10 @@ public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
                     if (yuvDataListener != null) {
                         yuvDataListener.onYuvDataReceived(codec.getOutputFormat(), yuvDataBuf, bufferInfo.size - bufferInfo.offset,  width, height);
                     }
+                }
+                else if(surface != null && yuvDataListener != null)
+                {
+                    yuvDataListener.onYuvDataReceived(null,  ByteBuffer.wrap(inputFrame.videoBuffer), inputFrame.size,  inputFrame.width, inputFrame.height);
                 }
                 // All the output buffer must be release no matter whether the yuv data is output or
                 // not, so that the codec can reuse the buffer.
@@ -625,20 +631,15 @@ public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
             return;
         }
         
-        if (data.length != size) {
-            loge( "recv data size: " + size + ", data lenght: " + data.length);
-        } else {
+      //  if (data.length != size) {
+      //      loge( "recv data size: " + size + ", data lenght: " + data.length);
+       // } else {
             logd( "recv data size: " + size + ", frameNum: "+frameNum+", isKeyframe: "+isKeyFrame+"," +
                     " width: "+width+", height: " + height);
             currentTime = System.currentTimeMillis();
             frameIndex ++;
             DJIFrame newFrame = new DJIFrame(data, size, currentTime, currentTime, isKeyFrame, frameNum, frameIndex, width, height);
             dataHandler.obtainMessage(MSG_FRAME_QUEUE_IN, newFrame).sendToTarget();
-
-            // Pass raw Data further for streaming purposes, not a Yuv..
-            if (yuvDataListener != null) {
-                yuvDataListener.onYuvDataReceived(null,  ByteBuffer.wrap(data), size,  width, height);
-            }
-        }
+      //  }
     }
 }
