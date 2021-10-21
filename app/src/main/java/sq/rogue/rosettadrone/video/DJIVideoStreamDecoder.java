@@ -52,7 +52,7 @@ import sq.rogue.rosettadrone.R;
  */
 public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
     private static final String TAG = DJIVideoStreamDecoder.class.getSimpleName();
-    private static final int BUF_QUEUE_SIZE = 120;
+    private static final int BUF_QUEUE_SIZE = 60;
     private static final int MSG_INIT_CODEC = 0;
     private static final int MSG_FRAME_QUEUE_IN = 1;
     private static final int MSG_DECODE_FRAME = 2;
@@ -451,7 +451,7 @@ public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
             return;
         }
         if (!hasIFrameInQueue) { // check the I frame flag
-            if (inputFrame.frameNum != 1 && !inputFrame.isKeyFrame) {
+            /*if (inputFrame.frameNum != 1 && !inputFrame.isKeyFrame) {
                 loge("Time to set keyframe hasnt come yet");
                 return;
             }
@@ -479,7 +479,7 @@ public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
                 logd("add iframe success!!!!");
                 hasIFrameInQueue = true;
             }
-             else if (inputFrame.isKeyFrame) {
+             else */if (inputFrame.isKeyFrame) {
                 hasIFrameInQueue = true;
             } else {
                 loge("input key frame failed");
@@ -637,7 +637,7 @@ public class DJIVideoStreamDecoder implements NativeHelper.NativeDataListener {
             logd( "recv data size: " + size + ", frameNum: "+frameNum+", isKeyframe: "+isKeyFrame+"," +
                     " width: "+width+", height: " + height);
             currentTime = System.currentTimeMillis();
-            frameIndex ++;
+            frameIndex = frameNum;
             DJIFrame newFrame = new DJIFrame(data, size, currentTime, currentTime, isKeyFrame, frameNum, frameIndex, width, height);
             dataHandler.obtainMessage(MSG_FRAME_QUEUE_IN, newFrame).sendToTarget();
       //  }

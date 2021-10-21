@@ -282,7 +282,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mIsTranscodedVideoFeedNeeded = isTranscodedVideoFeedNeeded();
         if (mIsTranscodedVideoFeedNeeded) {
             // The one were we get transcode data...
-            mVideoBitrate = 40;
+            mVideoBitrate = 10;
             VideoFeeder.getInstance().setTranscodingDataRate(mVideoBitrate);
             logMessageDJI("set rate to " + mVideoBitrate);
         }
