@@ -615,7 +615,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                     do_set_motion_absolute(targetLatitude, targetLongitude, targetAltitude, targetHeading <= 180 ? targetHeading : -180 + ((targetHeading) - 180), 2.5f, 2.5f, 2.5f, 2.5f, 0);
                     while(mMoveToDataTimer != null || photoTaken != true)
                     {
-                        ;
+                        safeSleep(100);
                     }
 
                     for (int x = 0; x < currentActions.size(); x++) {
@@ -823,7 +823,9 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         djiAircraft.getAirLink().getOcuSyncLink().setChannelSelectionMode(ChannelSelectionMode.AUTO, djiError ->  { if(djiError != null)  Log.e(TAG, djiError.toString());});
         djiAircraft.getAirLink().getOcuSyncLink().setFrequencyBand(OcuSyncFrequencyBand.FREQUENCY_BAND_DUAL, djiError ->  { if(djiError != null)  Log.e(TAG, djiError.toString());});
         djiAircraft.getAirLink().getOcuSyncLink().setChannelBandwidth(OcuSyncBandwidth.Bandwidth20MHz, djiError -> { if(djiError != null)  Log.e(TAG, djiError.toString());});
-
+        djiAircraft.getAirLink().getOcuSyncLink().setVideoDataRateCallback(v -> {
+            VideoFeeder.getInstance().setTranscodingDataRate(v);
+        });
         djiAircraft.getCamera().setSystemStateCallback(systemState -> {
             if(m_lastSystemState == null)
                 m_lastSystemState = systemState;
@@ -2050,7 +2052,8 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             // If there is another way let me know...
             mMoveToDataTask = new MoveTo();
             mMoveToDataTimer = new Timer();
-            mMoveToDataTimer.schedule(mMoveToDataTask, 0, 25);
+
+            mMoveToDataTimer.schedule(mMoveToDataTask, 100, 50);
             mAutonomy = true;
         } else {
             mMoveToDataTask.detection = 0;

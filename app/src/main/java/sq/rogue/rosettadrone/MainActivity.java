@@ -201,7 +201,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private SurfaceView videostreamPreviewTtViewSmall;
     private CodecOutputSurface mCodecOutputSurface;
     private CodecOutputSurface mTranscodeOutputSurface;
-    
+
     private Camera mCamera;
     private DJICodecManager mCodecManager;
     private int videoViewWidth;
@@ -303,6 +303,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         DJIVideoStreamDecoder.getInstance().resume();
 
         mCodecManager = new DJICodecManager(getApplicationContext(), mTranscodeOutputSurface.getSurfaceTexture(), 1280, 720, UsbAccessoryService.VideoStreamSource.Camera);
+
+        /*mCodecManager.enabledYuvData(true);
+        mCodecManager.setYuvDataCallback((mediaFormat, byteBuffer, i, i1, i2) -> {
+            mTranscodeOutputSurface.awaitNewImage();
+            mTranscodeOutputSurface.drawImage(true);
+            return;
+        });*/
     }
 
     // After the service have started...

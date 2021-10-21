@@ -26,7 +26,6 @@ AVFrame *m_pYUVFrame;
 AVCodecContext *m_pCodecCtx;
 AVCodec *m_pAVCodec;
 AVCodecParserContext *m_pCodecPaser;
-static int requestLastKeyframe = 0;
 jmethodID dataCallbackMID;
 
 //FIX
@@ -157,38 +156,16 @@ int parse(JNIEnv *env, jobject obj, uint8_t *pBuff, int videosize, uint64_t pts)
              	m_pCodecPaser->frame_num
              	);*/
 
-            if(m_pCodecPaser->key_frame)
-            {
-                av_free_packet(&lastKeyframe);
-                av_copy_packet(&lastKeyframe, &packet);
-            }
-
-            if(requestLastKeyframe)
-            {
-                requestLastKeyframe = 0;
-                invokeFrameDataCallback(
-                        env,
-                        obj,
-                        lastKeyframe.data,
-                        lastKeyframe.size,
-                        m_pCodecPaser->frame_num,
-                        1,
-                        m_pCodecPaser->width_in_pixel,
-                        m_pCodecPaser->height_in_pixel
-                );
-            } else {
-                invokeFrameDataCallback(
-                        env,
-                        obj,
-                        packet.data,
-                        packet.size,
-                        m_pCodecPaser->frame_num,
-                        m_pCodecPaser->key_frame,
-                        m_pCodecPaser->width_in_pixel,
-                        m_pCodecPaser->height_in_pixel
-                );
-            }
-
+            invokeFrameDataCallback(
+                    env,
+                    obj,
+                    packet.data,
+                    packet.size,
+                    m_pCodecPaser->frame_num,
+                    m_pCodecPaser->key_frame,
+                    m_pCodecPaser->width_in_pixel,
+                    m_pCodecPaser->height_in_pixel
+            );
         }
 
         av_free_packet(&packet);
@@ -267,16 +244,14 @@ Java_sq_rogue_rosettadrone_video_NativeHelper_parse(JNIEnv *env, jobject obj, jb
  */
 JNIEXPORT jboolean
 Java_sq_rogue_rosettadrone_video_NativeHelper_release(JNIEnv *env, jobject obj) {
-    /*if (m_pCodecCtx) {
+    if (m_pCodecCtx) {
         avcodec_close(m_pCodecCtx);
         m_pCodecCtx = NULL;
     }
 
     av_free(m_pYUVFrame);
     av_free(m_pCodecCtx);
-    av_parser_close(m_pCodecPaser);*/
-
-    requestLastKeyframe = 1;
+    av_parser_close(m_pCodecPaser);
 
     return 1;
 }
