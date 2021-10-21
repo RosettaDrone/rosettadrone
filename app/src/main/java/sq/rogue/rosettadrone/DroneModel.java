@@ -823,9 +823,9 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         djiAircraft.getAirLink().getOcuSyncLink().setChannelSelectionMode(ChannelSelectionMode.AUTO, djiError ->  { if(djiError != null)  Log.e(TAG, djiError.toString());});
         djiAircraft.getAirLink().getOcuSyncLink().setFrequencyBand(OcuSyncFrequencyBand.FREQUENCY_BAND_DUAL, djiError ->  { if(djiError != null)  Log.e(TAG, djiError.toString());});
         djiAircraft.getAirLink().getOcuSyncLink().setChannelBandwidth(OcuSyncBandwidth.Bandwidth20MHz, djiError -> { if(djiError != null)  Log.e(TAG, djiError.toString());});
-       // djiAircraft.getAirLink().getOcuSyncLink().setVideoDataRateCallback(v -> {
-           // VideoFeeder.getInstance().setTranscodingDataRate(v);
-       // });
+        //djiAircraft.getAirLink().getOcuSyncLink().setVideoDataRateCallback(v -> {
+        //   VideoFeeder.getInstance().setTranscodingDataRate(v);
+        //});
 
         djiAircraft.getCamera().setSystemStateCallback(systemState -> {
             if(m_lastSystemState == null)

@@ -282,7 +282,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mIsTranscodedVideoFeedNeeded = isTranscodedVideoFeedNeeded();
         if (mIsTranscodedVideoFeedNeeded) {
             // The one were we get transcode data...
-            mVideoBitrate = 10;
+            mVideoBitrate = 20;
             VideoFeeder.getInstance().setTranscodingDataRate(mVideoBitrate);
             logMessageDJI("set rate to " + mVideoBitrate);
         }
@@ -298,11 +298,42 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mCodecOutputSurface = new CodecOutputSurface(1280, 720);
         mTranscodeOutputSurface = new CodecOutputSurface(1280, 720);
 
+        NativeHelper.getInstance().init();
         // Create decoder with off-screen buf
         DJIVideoStreamDecoder.getInstance().init(getApplicationContext(), mCodecOutputSurface.getSurface(), mCodecOutputSurface);
+
+        mReceivedVideoDataListener = (videoBuffer, size) -> {
+            DJIVideoStreamDecoder.getInstance().parse(videoBuffer, size);
+        };
+
+        //When calibration is needed or the fetch key frame is required by SDK, should use the provideTranscodedVideoFeed
+        //to receive the transcoded video feed from main camera.
+        if (mIsTranscodedVideoFeedNeeded) {
+            if (standardVideoFeeder == null)
+                standardVideoFeeder = VideoFeeder.getInstance().provideTranscodedVideoFeed();
+            if (mExternalVideoOut) {
+                for (VideoFeeder.VideoDataListener listener : standardVideoFeeder.getListeners()) {
+                    standardVideoFeeder.removeVideoDataListener(listener);
+                }
+                standardVideoFeeder.addVideoDataListener(mReceivedVideoDataListener);
+                logMessageDJI("Transcode Video !!!!!!!");
+            }
+        } else {
+            final VideoFeeder.VideoFeed videoFeeder = VideoFeeder.getInstance().getPrimaryVideoFeed();
+            if (mExternalVideoOut && videoFeeder != null) {
+                for (VideoFeeder.VideoDataListener listener : videoFeeder.getListeners()) {
+                    videoFeeder.removeVideoDataListener(listener);
+                }
+                videoFeeder.addVideoDataListener(mReceivedVideoDataListener);
+                logMessageDJI("Do NOT Transcode Video !!!!!!!");
+            }
+        }
+
         DJIVideoStreamDecoder.getInstance().resume();
 
+        // CodecManager is required for VideoFeeder to provideTranscodedVideoFeed, WTF
         mCodecManager = new DJICodecManager(getApplicationContext(), mTranscodeOutputSurface.getSurfaceTexture(), 1280, 720, UsbAccessoryService.VideoStreamSource.Camera);
+        mCodecManager.resetDecoder();
 
         /*mCodecManager.enabledYuvData(true);
         mCodecManager.setYuvDataCallback((mediaFormat, byteBuffer, i, i1, i2) -> {
@@ -617,7 +648,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
         deleteApplicationDirectory();
         initLogs();
-        initPacketizer();
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -626,6 +656,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         initFlightController();
 
         DJISDKManager.getInstance().registerApp(this, mDJISDKManagerCallback);
+
+        initPacketizer();
 
         //--------------------------------------------------------------
         // Make the safety switch....
@@ -789,7 +821,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 mModel.do_set_motion_absolute(latitude, longitude, altitude, heading <= 180 ? heading : -180 + ((heading) - 180), 2.5f, 2.5f, 2.5f, 2.5f, 0);
                 while(mModel.mMoveToDataTimer != null ||  mModel.photoTaken != true)
                 {
-                    ;
+                    safeSleep(100);
                 }
                 
                 // 2nd Pass
@@ -900,12 +932,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         }
 
-        // The callback for receiving the raw H264 video data for camera live view
-        // For newer drones...
-        mReceivedVideoDataListener = (videoBuffer, size) -> {
-            DJIVideoStreamDecoder.getInstance().parse(videoBuffer, size);
-        };
-
         if (null == product || !product.isConnected()) {
             mCamera = null;
         } else {
@@ -917,14 +943,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             if (!product.getModel().equals(Model.UNKNOWN_AIRCRAFT)) {
                 mCamera = product.getCamera();
                 if (mCamera != null) {
-                    mCamera.setMode(SettingsDefinitions.CameraMode.SHOOT_PHOTO, djiError -> {
-                        if (djiError != null) {
-                            Log.e(TAG, "can't change mode of camera, error: " + djiError.getDescription());
-                            logMessageDJI("can't change mode of camera, error: " + djiError.getDescription());
-                        }
-                    });
-
-                    mCamera.setHDLiveViewEnabled(true, djiError -> {});
+                    // Switch modes around to ensure video feed...
+                    mCamera.setMode(SettingsDefinitions.CameraMode.RECORD_VIDEO, djiError -> {mCamera.setMode(SettingsDefinitions.CameraMode.SHOOT_PHOTO, djiError2 -> {mCamera.setHDLiveViewEnabled(true, djiError3 -> {});});});
+                    safeSleep(1000);
                 }
 
                 /*mCamera.setVideoResolutionAndFrameRate(new ResolutionAndFrameRate(SettingsDefinitions.VideoResolution.RESOLUTION_3840x2160,SettingsDefinitions.VideoFrameRate.FRAME_RATE_29_DOT_970_FPS) , djiError -> {
@@ -933,30 +954,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         logMessageDJI("can't change mode of camera, error: "+djiError);
                     }
                 });*/
-
-                NativeHelper.getInstance().init();
-                //When calibration is needed or the fetch key frame is required by SDK, should use the provideTranscodedVideoFeed
-                //to receive the transcoded video feed from main camera.
-                if (mIsTranscodedVideoFeedNeeded) {
-                    if (standardVideoFeeder == null)
-                        standardVideoFeeder = VideoFeeder.getInstance().provideTranscodedVideoFeed();
-                    if (mExternalVideoOut) {
-                        for (VideoFeeder.VideoDataListener listener : standardVideoFeeder.getListeners()) {
-                            standardVideoFeeder.removeVideoDataListener(listener);
-                        }
-                        standardVideoFeeder.addVideoDataListener(mReceivedVideoDataListener);
-                        logMessageDJI("Transcode Video !!!!!!!");
-                    }
-                } else {
-                    final VideoFeeder.VideoFeed videoFeeder = VideoFeeder.getInstance().getPrimaryVideoFeed();
-                    if (mExternalVideoOut && videoFeeder != null) {
-                        for (VideoFeeder.VideoDataListener listener : videoFeeder.getListeners()) {
-                            videoFeeder.removeVideoDataListener(listener);
-                        }
-                        videoFeeder.addVideoDataListener(mReceivedVideoDataListener);
-                        logMessageDJI("Do NOT Transcode Video !!!!!!!");
-                    }
-                }
             }
         }
     }
@@ -991,10 +988,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         @RequiresApi(api = Build.VERSION_CODES.M)
         @Override
         public void surfaceCreated(SurfaceHolder holder) {
-            // Inits decoder or changes surface
-            // Change to on-screen surface if not already initialized
-            DJIVideoStreamDecoder.getInstance().init(getApplicationContext(), holder.getSurface(), mCodecOutputSurface);
-            DJIVideoStreamDecoder.getInstance().resume();
+            // Change to on-screen surface
+            DJIVideoStreamDecoder.getInstance().changeSurface(holder.getSurface());
 
             //mCodecManager = new DJICodecManager(getApplicationContext(), null, 1280, 720, UsbAccessoryService.VideoStreamSource.Camera);
         }
@@ -1014,6 +1009,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         public void surfaceDestroyed(SurfaceHolder holder) {
             // Switch to off-screen surface
             DJIVideoStreamDecoder.getInstance().changeSurface(mCodecOutputSurface.getSurface());
+            //mCodecManager.resetDecoder();
             /*if(mCodecManager != null)
             {
                 mCodecManager = null;
