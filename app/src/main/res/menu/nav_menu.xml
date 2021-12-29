@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!-- Icon made by Freepik at flaticon.com -->
+    <item
+        android:id="@+id/action_dji"
+        android:enabled="true"
+        android:icon="@drawable/ic_drone"
+        android:title="@string/dji"
+        android:textColor="@color/white"
+        app:showAsAction="ifRoom" />
+
+    <!-- Icon made by Pixel Perfect at flaticon.com -->
+    <item
+        android:id="@+id/action_gcs_up"
+        android:enabled="true"
+        android:icon="@drawable/ic_up_arrow_white_24dp"
+        android:title="@string/gcs"
+        android:textColor="@color/white"
+        app:showAsAction="ifRoom" />
+
+    <!-- Icon made by Pixel Perfect at flaticon.com -->
+    <item
+        android:id="@+id/action_gcs_down"
+        android:enabled="true"
+        android:icon="@drawable/ic_down_arrow_white_24dp"
+        android:title="@string/gcs"
+        android:textColor="@color/white"
+        app:showAsAction="ifRoom" />
+
+
+</menu>
