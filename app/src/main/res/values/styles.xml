@@ -1,0 +1,55 @@
+<resources>
+
+    <style name="AppDialog" parent="Theme.AppCompat.Light.Dialog">
+        <item name="windowActionBar">false</item>
+        <item name="android:windowNoTitle">true</item>
+
+        <item name="colorAccent">@color/secondary</item>
+        <!--item RadioButton or CheckBox color-->
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryDark">@color/primary_dark</item>
+    </style>
+
+    <style name="AppTheme.Dark" parent="Theme.AppCompat">
+        <!--<item name="iconSettings">@drawable/ic_settings_white_24dp</item>-->
+
+        <item name="colorPrimary">@color/dark_primary_dark</item>
+        <item name="colorPrimaryDark">@color/black</item>
+        <item name="colorAccent">@color/primary</item>
+
+        <item name="android:navigationBarColor">@color/black</item>
+        <!--<item name="colorControlHighlight">@color/primary_dark</item>-->
+
+    </style>
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryDark">@color/primary_dark</item>
+        <item name="colorAccent">@color/secondary</item>
+
+        <item name="android:navigationBarColor">@color/primary_dark</item>
+
+    </style>
+
+    <style name="MapTheme" parent="AppTheme">
+        <item name="android:textColorSecondary">@color/colorAccent</item>
+    </style>
+
+    <!-- SettingsActivity Theme  -->
+    <style name="AppTheme.Settings" parent="AppTheme">
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Material</item>
+    </style>
+
+    <style name="CustomDialog" parent="android:Theme.Dialog">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+    </style>
+
+    <style name="UXSDKMapWidgetTheme" parent="@style/Base.Theme.AppCompat.Light.Dialog.Alert">
+        <item name="colorAccent">@color/uxsdk_blue</item>
+        <item name="android:textColorSecondary">@color/uxsdk_blue</item>
+    </style>
+
+</resources>
