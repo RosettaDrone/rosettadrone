@@ -116,7 +116,7 @@ public class Waypoint2Activity extends FragmentActivity implements View.OnClickL
 
     @Override
     protected void onDestroy() {
-        unregisterReceiver(mReceiver);
+ //       unregisterReceiver(mReceiver);
         removeListener();
         super.onDestroy();
     }
@@ -198,9 +198,9 @@ public class Waypoint2Activity extends FragmentActivity implements View.OnClickL
 
         setContentView(R.layout.activity_waypoint2);
 
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(DJISimulatorApplication.FLAG_CONNECTION_CHANGE);
-        registerReceiver(mReceiver, filter);
+ //       IntentFilter filter = new IntentFilter();
+ //       filter.addAction(DJISimulatorApplication.FLAG_CONNECTION_CHANGE);
+ //       registerReceiver(mReceiver, filter);
 
         if (getWaypointMissionOperator() == null) {
             setResultToToast("Not support Waypoint2.0");
@@ -426,7 +426,7 @@ public class Waypoint2Activity extends FragmentActivity implements View.OnClickL
         //Create MarkerOptions object
         final MarkerOptions markerOptions = new MarkerOptions();
         markerOptions.position(pos);
-        markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.aircraft));
+        markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_drone));
 
         runOnUiThread(new Runnable() {
             @Override
@@ -718,7 +718,7 @@ public class Waypoint2Activity extends FragmentActivity implements View.OnClickL
                 .setMissionID(new Random().nextInt(65535))
                 .setFinishedAction(mFinishedAction)
                 .setGotoFirstWaypointMode(firstMode)
-                .setMaxFlightSpeed(mSpeed)
+                .setMaxFlightSpeed((float)12.0)  //mSpeed)
                 .setAutoFlightSpeed(mSpeed);
 
         getWaypointMissionOperator().loadMission(waypointMissionBuilder.build(), new CommonCallbacks.CompletionCallback<DJIWaypointV2Error>() {

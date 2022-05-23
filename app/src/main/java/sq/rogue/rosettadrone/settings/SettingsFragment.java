@@ -196,7 +196,43 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Shared
             }
         });
 
-        findPreference("pref_sim_pos_lat").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+        findPreference("pref_email_name1").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object newValue) {
+                MainActivity.FLAG_PREFS_CHANGED = true;
+                MainActivity.FLAG_APP_REPORT_EMAIL = true;
+                return true;
+            }
+        });
+        findPreference("pref_email_name2").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object newValue) {
+                MainActivity.FLAG_PREFS_CHANGED = true;
+                MainActivity.FLAG_APP_REPORT_EMAIL = true;
+                return true;
+            }
+        });
+
+        findPreference("pref_email_name3").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object newValue) {
+                MainActivity.FLAG_PREFS_CHANGED = true;
+                MainActivity.FLAG_APP_REPORT_EMAIL = true;
+                return true;
+            }
+        });
+
+        findPreference("pref_email_name4").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object newValue) {
+                MainActivity.FLAG_PREFS_CHANGED = true;
+                MainActivity.FLAG_APP_REPORT_EMAIL = true;
+                return true;
+            }
+        });
+
+
+        findPreference("pref_external_video").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
             @Override
             public boolean onPreferenceChange(Preference preference, Object newValue) {
                 try {
@@ -212,11 +248,28 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Shared
                 return false;
             }
         });
+
+        findPreference("pref_sim_pos_lat").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object newValue) {
+                try {
+                    if (Double.parseDouble((String) newValue) >= -90 && Double.parseDouble((String) newValue) <= 90) {
+                        MainActivity.FLAG_PREFS_CHANGED = true;
+                        MainActivity.FLAG_VIDEO_ADDRESS_CHANGED = true;
+                        return true;
+                    }
+                } catch (NumberFormatException ignored) {
+                }
+                NotificationHandler.notifyAlert(SettingsFragment.this.getActivity(), TYPE_APP_NAME,
+                        null, null);
+                return false;
+            }
+        });
         findPreference("pref_sim_pos_lon").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
             @Override
             public boolean onPreferenceChange(Preference preference, Object newValue) {
                 try {
-                    if (Integer.parseInt((String) newValue) >= 1 && Integer.parseInt((String) newValue) <= 65535) {
+                    if (Double.parseDouble((String) newValue) >= 0 && Double.parseDouble((String) newValue) <= 180) {
                         MainActivity.FLAG_PREFS_CHANGED = true;
                         MainActivity.FLAG_VIDEO_ADDRESS_CHANGED = true;
                         return true;

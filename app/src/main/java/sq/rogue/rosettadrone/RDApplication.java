@@ -7,6 +7,9 @@ import com.secneo.sdk.Helper;
 
 import dji.sdk.base.BaseProduct;
 import dji.sdk.sdkmanager.DJISDKManager;
+import dji.sdk.camera.Camera;
+import dji.sdk.products.Aircraft;
+import dji.sdk.products.HandHeld;
 
 public class RDApplication extends Application {
 
@@ -58,6 +61,17 @@ public class RDApplication extends Application {
             simulatorApplication = new DJISimulatorApplication();
             simulatorApplication.setContext(this);
         }
+    }
+
+    public static synchronized Camera getCameraInstance() {
+        if (getProductInstance() == null) return null;
+        Camera camera = null;
+        if (getProductInstance() instanceof Aircraft){
+            camera = ((Aircraft) getProductInstance()).getCamera();
+        } else if (getProductInstance() instanceof HandHeld) {
+            camera = ((HandHeld) getProductInstance()).getCamera();
+        }
+        return camera;
     }
 }
 

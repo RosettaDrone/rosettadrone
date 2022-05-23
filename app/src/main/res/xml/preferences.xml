@@ -14,6 +14,38 @@
             android:title="@string/pref_drone_id" />
 
         <PreferenceCategory
+            android:key="drone_name_prefs"
+            android:title="App Name">
+
+            <androidx.preference.EditTextPreference
+                android:defaultValue="RosettaDrone 2"
+                android:key="pref_app_name"
+                android:title="@string/pref_app" />
+        </PreferenceCategory>
+
+        <PreferenceCategory
+            android:title="Report Email[s]:">
+            <androidx.preference.EditTextPreference
+                android:defaultValue=" "
+                android:key="pref_email_name1"
+                android:title="@string/pref_email1" />
+            <androidx.preference.EditTextPreference
+                android:defaultValue=" "
+                android:key="pref_email_name2"
+                android:title="@string/pref_email2" />
+            android:title="Report Email 3:">
+            <androidx.preference.EditTextPreference
+                android:defaultValue=" "
+                android:key="pref_email_name3"
+                android:title="@string/pref_email3" />
+            android:title="Report Email 4:">
+            <androidx.preference.EditTextPreference
+                android:defaultValue=" "
+                android:key="pref_email_name4"
+                android:title="@string/pref_email4" />
+        </PreferenceCategory>
+
+        <PreferenceCategory
             android:key="drone_rtl_prefs"
             android:title="@string/pref_drone_rtl_cat">
             <androidx.preference.EditTextPreference
@@ -42,16 +74,15 @@
                 android:defaultValue="2" />
         </PreferenceCategory>
 
+
         <PreferenceCategory
-            android:key="drone_name_prefs"
-            android:title="App Name">
-
+            android:title="Use External H.264 input">
             <androidx.preference.EditTextPreference
-                android:defaultValue="RosettaDrone 2"
-                android:key="pref_app_name"
-                android:title="@string/pref_app" />
-
+                android:defaultValue="0"
+                android:key="pref_external_video"
+                android:title="Port Number" />
         </PreferenceCategory>
+
         <PreferenceCategory
             android:key="drone_heading_prefs"
             android:title="@string/pref_drone_heading_cat">
@@ -64,7 +95,7 @@
                 android:defaultValue="0"
                 android:enabled="false" />
         </PreferenceCategory>
-v
+
         <PreferenceCategory
             android:key="sim_pos_prefs"
             android:title="Sim Settings">
@@ -136,6 +167,34 @@ v
                 android:title="@string/pref_drone_landing_protection"
                 android:defaultValue="true" />
         </PreferenceCategory>
+
+
+        <PreferenceCategory
+            android:key="ai_prefs"
+            android:title="@string/ai_settings"
+            android:tooltipText="Will enable sending mission data back out to the AI module, rather than to the DJI drone.">
+
+            <androidx.preference.SwitchPreferenceCompat
+                android:defaultValue="false"
+                android:key="pref_ai_telemetry_enabled"
+                android:title="@string/pref_ai_telemetry" />
+
+            <androidx.preference.EditTextPreference
+                android:defaultValue="127.0.0.1"
+                android:dependency="pref_ai_telemetry_enabled"
+                android:digits="0123456789."
+                android:inputType="number"
+                android:key="pref_ai_ip"
+                android:title="@string/pref_ai_ip" />
+
+            <androidx.preference.EditTextPreference
+                android:dependency="pref_ai_telemetry_enabled"
+            android:defaultValue="2000"
+                android:key="pref_ai_port"
+                android:title="@string/pref_ai_port" />
+
+        </PreferenceCategory>
+
 
     </androidx.preference.PreferenceScreen>
 

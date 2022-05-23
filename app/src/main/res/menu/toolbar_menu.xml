@@ -18,6 +18,13 @@
         android:title="@string/settings" />
 
     <item
+        android:id="@+id/action_AI"
+        android:orderInCategory="502"
+        app:showAsAction="never"
+        android:onClick="onMenuItemClick"
+        android:title="@string/AIsettings" />
+
+    <item
         android:id="@+id/action_waypoint1"
         android:orderInCategory="503"
         app:showAsAction="never"

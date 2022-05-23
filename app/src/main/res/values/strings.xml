@@ -3,6 +3,10 @@
 
     <!-- Drone -->
     <string name="pref_drone_id">ID</string>
+    <string name="pref_email1">Email Address 1</string>
+    <string name="pref_email2">Email Address 2</string>
+    <string name="pref_email3">Email Address 3</string>
+    <string name="pref_email4">Email Address 4</string>
 
     <!-- Drone RTL -->
     <string name="pref_drone_rtl_cat">RTL/RTH</string>
@@ -83,7 +87,10 @@
 
     <!-- Network -->
     <string name="pref_gcs_ip">GCS IP address</string>
+    <string name="pref_ai_ip">AI Assist IP address</string>
     <string name="pref_telem_port">Telemetry port</string>
+    <string name="pref_ai_port">AI Assist port</string>
+    <string name="pref_ai_telemetry">Enable AI Assist</string>
     <string name="pref_secondary_telemetry">Enable secondary telemetry output</string>
     <string name="pref_secondary_telemetry_ip">Secondary telemetry IP</string>
     <string name="pref_secondary_telemetry_port">Secondary telemetry port</string>
@@ -134,14 +141,20 @@
     <string name="safety_on">SAFETY ENABLED</string>
     <string name="safety_off">SAFETY DISABLED - READY TO FLY</string>
     <string name="safety_launch">Disable safety to takeoff.</string>
+    <string name="hold">Please wait while image is grabbed!</string>
+    <string name="ai_not_active">AI not activated in setup menu!</string>
+    <string name="ai_uploaded_active">AI mission sent to AI module!</string>
+    <string name="release">Report Sent!</string>
 
 
     <!-- Preference Menus -->
     <string name="settings">Settings</string>
+    <string name="AIsettings">AI Settings</string>
     <string name="drone_settings">Drone Configuration</string>
 
     <!-- Preference Groupings -->
     <string name="telemetry_settings">Telemetry</string>
+    <string name="ai_settings">AI Assist</string>
     <string name="video_settings">Video</string>
     <string name="log_settings">Logs</string>
 

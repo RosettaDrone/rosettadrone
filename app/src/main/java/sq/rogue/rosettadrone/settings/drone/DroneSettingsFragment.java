@@ -82,6 +82,7 @@ public class DroneSettingsFragment extends PreferenceFragmentCompat implements S
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
         setPreferencesFromResource(R.xml.preferences, rootKey);
+
         setListeners();
     }
 
@@ -152,10 +153,44 @@ public class DroneSettingsFragment extends PreferenceFragmentCompat implements S
                 return false;
             }
         });
-        findPreference("pref_drone_multi_mode").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+
+        findPreference("pref_ai_port").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object newValue) {
+                try {
+                    if (Integer.parseInt((String) newValue) >= 1000 && Integer.parseInt((String) newValue) <= 32000) {
+                        MainActivity.FLAG_PREFS_CHANGED = true;
+                        MainActivity.FLAG_DRONE_AI_PORT_CHANGED = true;
+                        return true;
+                    }
+                } catch (NumberFormatException ignored) {
+                }
+                return false;
+            }
+        });
+        findPreference("pref_ai_telemetry_enabled").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
             @Override
             public boolean onPreferenceChange(Preference preference, Object newValue) {
 
+                MainActivity.FLAG_PREFS_CHANGED = true;
+                MainActivity.FLAG_DRONE_AI_ENABLED_CHANGED = true;
+                return true;
+            }
+        });
+        findPreference("pref_ai_ip").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object newValue) {
+
+                MainActivity.FLAG_PREFS_CHANGED = true;
+                MainActivity.FLAG_DRONE_AI_IP_CHANGED = true;
+                return true;
+            }
+        });
+
+        findPreference("pref_drone_multi_mode").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object newValue)
+            {
                 MainActivity.FLAG_PREFS_CHANGED = true;
                 MainActivity.FLAG_DRONE_MULTI_MODE_CHANGED = true;
                 return true;
@@ -163,8 +198,8 @@ public class DroneSettingsFragment extends PreferenceFragmentCompat implements S
         });
         findPreference("pref_drone_leds").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
             @Override
-            public boolean onPreferenceChange(Preference preference, Object newValue) {
-
+            public boolean onPreferenceChange(Preference preference, Object newValue)
+            {
                 MainActivity.FLAG_PREFS_CHANGED = true;
                 MainActivity.FLAG_DRONE_LEDS_CHANGED = true;
                 return true;
@@ -183,7 +218,6 @@ public class DroneSettingsFragment extends PreferenceFragmentCompat implements S
         findPreference("pref_drone_flight_path_radius").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
             @Override
             public boolean onPreferenceChange(Preference preference, Object newValue) {
-
                 try {
                     if (Float.parseFloat((String) newValue) >= .2f && Float.parseFloat((String) newValue) <= 1000) {
                         MainActivity.FLAG_PREFS_CHANGED = true;

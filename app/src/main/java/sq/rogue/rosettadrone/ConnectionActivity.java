@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.hardware.usb.UsbManager;
 import android.media.Ringtone;
@@ -67,6 +68,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
     private Button mBtnTest;
     private int hiddenkey = 0;
     private Handler mUIHandler;
+    private static boolean running = false;
 
     private KeyListener firmVersionListener = new KeyListener() {
         @Override
@@ -158,14 +160,26 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if(this.running == false){
+            Log.v(TAG, "First time ... Registrer Receiver");
+            this.running = true;
+        }
+
         checkAndRequestPermissions();
+
+        //---------------- Force Landscape ether ways...
+        this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+
         setContentView(R.layout.activity_connection);
         initUI();
 
         // Register the broadcast receiver for receiving the device connection's changes.
+        Log.v(TAG, "Registrer Receiver");
         IntentFilter filter = new IntentFilter();
         filter.addAction(DJISimulatorApplication.FLAG_CONNECTION_CHANGE);
         registerReceiver(mReceiver, filter);
+
     }
 
     protected BroadcastReceiver mReceiver = new BroadcastReceiver() {
@@ -197,6 +211,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         if (KeyManager.getInstance() != null) {
             KeyManager.getInstance().removeListener(firmVersionListener);
         }
+        unregisterReceiver(mReceiver);
         super.onDestroy();
     }
 
@@ -270,6 +285,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         mTextModelAvailable = (TextView) findViewById(R.id.text_model_available);
         mTextProduct = (TextView) findViewById(R.id.text_product_info);
 
+
         mBtnOpen = (Button) findViewById(R.id.btn_start);
         mBtnOpen.setOnClickListener(this);
         mBtnOpen.setEnabled(false);
@@ -299,7 +315,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         @Override
         public void run() {
             Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-            Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), notification);
+            Ringtone r = RingtoneManager. getRingtone(getApplicationContext(), notification);
             r.play();
 
             mBtnOpen.setEnabled(true);
@@ -322,9 +338,9 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
             mTextConnectionStatus.setText("Status: " + str + " connected");
 
             if (null != mProduct.getModel()) {
-                mTextProduct.setText("" + mProduct.getModel().getDisplayName());
+                mTextModelAvailable.setText("" + mProduct.getModel().getDisplayName());
             } else {
-                mTextProduct.setText(R.string.product_information);
+                mTextModelAvailable.setText("Model Not Available");
             }
             if (KeyManager.getInstance() != null) {
                 KeyManager.getInstance().addListener(firmkey, firmVersionListener);
@@ -356,7 +372,16 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
                     lTextConnectionStatus.setText("TestMode");
                     mUIHandler = new Handler(Looper.getMainLooper());
                     mUIHandler.postDelayed(startApp, 50);
-                    hiddenkey = 6;
+                 //   hiddenkey = 6;
+                }
+                if (hiddenkey >= 10) {
+                    showToast("TestMode disabled...");
+                    TextView lTextConnectionStatus = (TextView) findViewById(R.id.text_model_test);
+                    lTextConnectionStatus.setText("NormalMode");
+
+//                    mUIHandler = new Handler(Looper.getMainLooper());
+//                    mUIHandler.postDelayed(startApp, 50);
+                    hiddenkey = 0;
                 }
                 break;
 
@@ -380,6 +405,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
                 mBtnOpen.setEnabled(false);
                 unregisterReceiver(mReceiver);
 
+                Log.v(TAG, "Start Maintask");
                 Intent intent = new Intent(this, MainActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 startActivityIfNeeded(intent,0);
