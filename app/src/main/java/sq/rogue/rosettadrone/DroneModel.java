@@ -50,6 +50,7 @@ import java.net.PortUnreachableException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -216,7 +217,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     private boolean mMotorsArmed = false;
     private FollowMeMissionOperator fmmo;
     public FlightController mFlightController;
-    private Gimbal mGimbal = null;
+    private List<Gimbal> mGimbalList = null;
     private Rotation mRotation = null;
     private boolean m_Sim = false;
 
@@ -276,7 +277,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                 avtivemode = HardwareState.FlightModeSwitch.POSITION_THREE;
             }
 
-            mGimbal = aircraft.getGimbals().get(0);
+            mGimbalList = aircraft.getGimbals();
             mFlightController = aircraft.getFlightController();
             mFlightController.setRollPitchControlMode(RollPitchControlMode.VELOCITY);
             mFlightController.setYawControlMode(YawControlMode.ANGULAR_VELOCITY);
@@ -1942,7 +1943,8 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             send_command_ack(MAV_CMD_DO_SET_SERVO, MAV_RESULT.MAV_RESULT_UNSUPPORTED);
             return;
         }
-        if (mGimbal == null) {
+        if (mGimbalList == null) {
+            // Some Race on Init or no Gimbal? TODO: Try reinit later?
             send_command_ack(MAV_CMD_DO_SET_SERVO, MAV_RESULT.MAV_RESULT_TEMPORARILY_REJECTED);
             return;
         }
@@ -1950,7 +1952,8 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         m_ServoSet = builder.build();
 
         gimbalReady.set(false);
-        mGimbal.rotate(m_ServoSet, djiError -> {
+        // Just get first for now
+        mGimbalList.get(0).rotate(m_ServoSet, djiError -> {
             if (djiError != null)
                 parent.logMessageDJI("Error: " + djiError.toString());
 
