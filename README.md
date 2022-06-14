@@ -108,21 +108,26 @@ def set_servo(servo,val):
     
 # Building from source
 
-1. Clone or download the repository.
+1. Install git lfs as specified at https://github.com/git-lfs/git-lfs/wiki/Installation
 
-2. In Android Studio, select **File->New->Import Project** and navigate to the downloaded folder.
+2. Clone or download the repository.
+
+3. In Android Studio, select **File->New->Import Project** and navigate to the downloaded folder.
  
-3. Sign up for the DJI Developer Program at https://developer.dji.com/mobile-sdk/ and create an Application key. The package name should be sq.rogue.rosettadrone.
+4. Sign up for the DJI Developer Program at https://developer.dji.com/mobile-sdk/ and create an Application key. The package name should be sq.rogue.rosettadrone.
+
+5. Generate Google Maps API key using instructions at https://developers.google.com/maps/documentation/javascript/get-api-key#creating-api-keys 
  
-4. Create a new file called keys.xml in the /values folder, and insert the following:
+6. Create a new file called keys.xml in the /app/src/main/res/values/ folder, and insert the following:
     ```
     <?xml version="1.0" encoding="utf-8"?>
     <resources>
         <string name="dji_key">INSERT KEY HERE</string>
+        <string name="google_key">INSERT KEY HERE</string>
     </resources>
     ```
     
-5. Run **Build->Make Project**
+7. Run **Build->Make Project**
 
 # DJI-Mavlink Translation Notes
 
