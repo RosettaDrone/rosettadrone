@@ -293,7 +293,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         ((TextView) findViewById(R.id.textView2)).setText(getResources().getString(R.string.sdk_version, DJISDKManager.getInstance().getSDKVersion()));
         
         // From here on SDK hooks will be active
-        System.loadLibrary("gadget");
+        //System.loadLibrary("gadget");
     }
 
     private Runnable startApp = new Runnable() {
