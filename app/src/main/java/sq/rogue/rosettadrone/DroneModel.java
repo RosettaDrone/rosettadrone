@@ -9,6 +9,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.widget.Toast;
+import dji.common.util.CommonCallbacks.CompletionCallbackWith;
 
 import com.MAVLink.MAVLinkPacket;
 import com.MAVLink.Messages.MAVLinkMessage;
@@ -445,14 +446,32 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     void setForwardLEDsEnabled(final boolean enabled) {
-        LEDsSettings.Builder Tmp = new LEDsSettings.Builder().frontLEDsOn(enabled);
-        assert Tmp != null;
-        djiAircraft.getFlightController().setLEDsEnabledSettings(Tmp.build(), djiError -> {
-            if (djiError == null) {
-                parent.logMessageDJI("Front LEDs set to " + enabled);
+        djiAircraft.getFlightController().getLEDsEnabledSettings(new CommonCallbacks.CompletionCallbackWith<LEDsSettings>() {
+            @Override
+            public void onSuccess(LEDsSettings ledsSettings) {
+                LEDsSettings.Builder builder = new LEDsSettings.Builder();
+                builder.frontLEDsOn(enabled);
+                builder.beaconsOn(ledsSettings.areBeaconsOn());
+                builder.rearLEDsOn(ledsSettings.areRearLEDsOn());
+                builder.statusIndicatorOn(true);
+                djiAircraft.getFlightController().setLEDsEnabledSettings(
+                        builder.build(),
+                        new CommonCallbacks.CompletionCallback() {
+                            @Override
+                            public void onResult(DJIError error) {
+                                if (error == null) {
+                                    Log.d(TAG, "LEDs settings successfully set");
+                                } else {
+                                    Log.e(TAG, "Failed to set LEDs settings: " + error.getDescription());
+                                }
+                            }
+                        }
+                );
+            }
 
-            } else {
-                parent.logMessageDJI("Error setting front LEDs" + djiError.getDescription());
+            @Override
+            public void onFailure(DJIError djiError) {
+                parent.logMessageDJI("Error while getting LEDs Settings: " + djiError.getDescription());
             }
         });
     }
