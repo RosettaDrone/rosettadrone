@@ -1,3 +1,7 @@
+Adam Dabdoub is now coresponsible for this project, welcome !!!!
+Hopfully he got more time that I have over the last year :-)
+
+
 # RosettaDrone 2 is now updated to DJI SDK 4.16.1...
 
 Rosetta Drone 2 tested on **DJI Air, Mavic 2 x and Matrice 210 V2, Mavic Pro, Mavic AIR series
