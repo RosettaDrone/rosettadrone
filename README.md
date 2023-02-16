@@ -1,4 +1,6 @@
-# What's new in RosettaDrone 3?
+# Welcome to Rosetta Drone 3
+
+## What's New
 
 This new version implements a MissionManager that speaks native MAVLink and uses VirtualSticks to support the DJI Mini series.
 
@@ -20,7 +22,7 @@ Rosetta has been tested on:
 
 ## Hacking on Rosetta
 
-If you want to contribute, please check this [recomendations]([link](https://docs.google.com/document/d/1wR56Mvd2OsT82kxMOD7f_3-c6yJGBtLaT8LuVrmC5wI/edit?usp=sharing)).
+If you want to contribute, please check this [important recomendations](https://docs.google.com/document/d/1wR56Mvd2OsT82kxMOD7f_3-c6yJGBtLaT8LuVrmC5wI/edit?usp=sharing).
 
 ## The project works with QGroundcontrol, goto and joystic is implemented
 
