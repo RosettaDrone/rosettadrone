@@ -1,18 +1,34 @@
-# RosettaDrone 2 is now updated to DJI SDK 4.16.1...
+# What's new in RosettaDrone 3?
 
-Rosetta Drone 2 tested on **DJI Air, Mavic 2 x and Matrice 210 V2, Mavic Pro, Mavic AIR series
-and supports Android 5.1 and newer, with DJI SDK 4.14 and Androidx lib
+This new version implements a MissionManager that speaks native MAVLink and uses VirtualSticks to support the DJI Mini series.
 
-=======
+The MissionManager can also be used for other DJI drones that already support WayPoints and MissionControl onboard. 
+This can be an interesting alternative for improving the features offerd by their flightcontrollers (closes source firmware).
 
-## The project works with QGroundcontrol, goto and joystic is implemented.
+## Supported Drones
+
+Rosetta has been tested on:
+* DJI Mini
+* DJI Mini SE
+* DJI Mini 2
+* DJI Mini 2 SE
+* DJI Air
+* Mavic 2
+* Mavic Pro
+* Mavic AIR series
+* Matrice 210 V2
+
+## Hacking on Rosetta
+
+If you want to contribute, please check this [recomendations]([link](https://docs.google.com/document/d/1wR56Mvd2OsT82kxMOD7f_3-c6yJGBtLaT8LuVrmC5wI/edit?usp=sharing)).
+
+## The project works with QGroundcontrol, goto and joystic is implemented
 
 ### **Please create issues and create PR on this fork.** 
 
 ![Image of Opening screen](images/IMG_4176.png)
 Opening screen, requires DJI login first time...
   
-
 This version has implemented the new video stream method in DJI SDK that require quite a few modifications. It also includes all the latest libraries, and Androidx.
 In the unstable code there is also the DJI simulator, to enable testing in the lab. Android Studio is now updated to 3.6
 
