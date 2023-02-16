@@ -1,3 +1,8 @@
+/**
+ * Uses MissionControl class.
+ * Not supported by DJI MINI series (Curiously they support the TakeOffAction, but not the GoToAction)
+ */
+
 package sq.rogue.rosettadrone;
 
 import android.util.Log;
@@ -262,7 +267,7 @@ public class TimeLineMissionControlView {
     }
 
     // Takeoff and climbe to "alt" located at "lat,lon" rotating "yaw" degrees relative...
-    void TimeLineGoTo(double lat, double lon, float alt, float speed, float yaw) {
+    void TimeLineGoTo(double lat, double lon, float alt) {
         List<TimelineElement> elements = new ArrayList<>();
 
         missionControl = MissionControl.getInstance();
