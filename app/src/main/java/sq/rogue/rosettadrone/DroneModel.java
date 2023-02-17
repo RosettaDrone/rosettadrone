@@ -358,7 +358,13 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                 avtivemode = HardwareState.FlightModeSwitch.POSITION_THREE;
             }
 
-            useMissionManager = (m_model == Model.MAVIC_MINI || m_model == Model.DJI_MINI_SE || m_model == Model.DJI_MINI_2);
+            // This models don't support waypoint missions onboard, only using our MissionManager
+            useMissionManager = m_model == Model.MAVIC_MINI
+                    || m_model == Model.DJI_MINI_SE
+                    || m_model == Model.DJI_MINI_2
+                    || m_model == Model.DJI_AIR_2S
+                    ;
+
             useMissionControlClass = !useMissionManager;
 
             mGimbal = m_aircraft.getGimbal();
