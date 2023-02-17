@@ -10,7 +10,6 @@ import com.MAVLink.common.msg_mission_count;
 import com.MAVLink.common.msg_mission_item;
 import com.MAVLink.common.msg_mission_item_int;
 import com.MAVLink.common.msg_mission_request;
-import com.MAVLink.common.msg_mission_request_int;
 import com.MAVLink.common.msg_param_request_read;
 import com.MAVLink.common.msg_param_set;
 import com.MAVLink.common.msg_set_mode;
@@ -19,22 +18,17 @@ import com.MAVLink.common.msg_file_transfer_protocol;
 import com.MAVLink.common.msg_set_position_target_local_ned;
 import com.MAVLink.enums.MAV_CMD;
 import com.MAVLink.enums.MAV_MISSION_RESULT;
-import com.MAVLink.enums.MAV_MISSION_TYPE;
 import com.MAVLink.enums.MAV_RESULT;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 
-import java.io.File;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 
-import dji.common.flightcontroller.FlightControllerState;
 import dji.common.mission.waypoint.Waypoint;
 import dji.common.mission.waypoint.WaypointAction;
 import dji.common.mission.waypoint.WaypointActionType;
@@ -43,8 +37,8 @@ import dji.common.mission.waypoint.WaypointMissionFinishedAction;
 import dji.common.mission.waypoint.WaypointMissionFlightPathMode;
 import dji.common.mission.waypoint.WaypointMissionGotoWaypointMode;
 import dji.common.mission.waypoint.WaypointMissionHeadingMode;
-import dji.common.mission.waypoint.WaypointMissionState;
 
+import static com.MAVLink.ardupilotmega.msg_autopilot_version_request.MAVLINK_MSG_ID_AUTOPILOT_VERSION_REQUEST;
 import static com.MAVLink.common.msg_command_int.MAVLINK_MSG_ID_COMMAND_INT;
 import static com.MAVLink.common.msg_command_long.MAVLINK_MSG_ID_COMMAND_LONG;
 import static com.MAVLink.common.msg_heartbeat.MAVLINK_MSG_ID_HEARTBEAT;
@@ -61,6 +55,7 @@ import static com.MAVLink.common.msg_mission_set_current.MAVLINK_MSG_ID_MISSION_
 import static com.MAVLink.common.msg_param_request_list.MAVLINK_MSG_ID_PARAM_REQUEST_LIST;
 import static com.MAVLink.common.msg_param_request_read.MAVLINK_MSG_ID_PARAM_REQUEST_READ;
 import static com.MAVLink.common.msg_param_set.MAVLINK_MSG_ID_PARAM_SET;
+import static com.MAVLink.common.msg_request_data_stream.MAVLINK_MSG_ID_REQUEST_DATA_STREAM;
 import static com.MAVLink.common.msg_set_mode.MAVLINK_MSG_ID_SET_MODE;
 import static com.MAVLink.common.msg_set_position_target_global_int.MAVLINK_MSG_ID_SET_POSITION_TARGET_GLOBAL_INT;
 import static com.MAVLink.common.msg_set_position_target_local_ned.MAVLINK_MSG_ID_SET_POSITION_TARGET_LOCAL_NED;
@@ -80,6 +75,7 @@ import static com.MAVLink.enums.MAV_CMD.MAV_CMD_NAV_RETURN_TO_LAUNCH;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_NAV_TAKEOFF;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_NAV_WAYPOINT;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES;
+import static com.MAVLink.enums.MAV_CMD.MAV_CMD_SET_MESSAGE_INTERVAL;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_VIDEO_START_CAPTURE;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_VIDEO_STOP_CAPTURE;
 import static com.MAVLink.enums.MAV_MISSION_TYPE.MAV_MISSION_TYPE_MISSION;
@@ -95,8 +91,6 @@ import static sq.rogue.rosettadrone.util.TYPE_WAYPOINT_MIN_SPEED;
 import static com.MAVLink.enums.MAV_PROTOCOL_CAPABILITY.MAV_PROTOCOL_CAPABILITY_FTP;
 import static com.google.android.material.snackbar.BaseTransientBottomBar.LENGTH_LONG;
 
-import static sq.rogue.rosettadrone.util.safeSleep;
-
 public class MAVLinkReceiver {
 
     public int AIactivityPort = 7001;
@@ -105,29 +99,24 @@ public class MAVLinkReceiver {
     public boolean AIenabled = false;
     public boolean AIstat = false;
 
-    private static final int MAV_MISSION_ACCEPTED = 0;
     private final String TAG = this.getClass().getSimpleName();
 
-    private float m_autoFlightSpeed = 2.0f;
-    private float m_maxFlightSpeed = 12.0f;
-
-    private final int WP_STATE_INACTIVE = 0;
-    private final int WP_STATE_REQ_COUNT = 1;
-    private final int WP_STATE_REQ_WP = 2;
+    private final float m_autoFlightSpeed = 2.0f;
+    private final float m_maxFlightSpeed = 5.0f;
     private final int MAX_WAYPOINT_DISTANCE = 475;
     public boolean curvedFlightPath = true;
     public float flightPathRadius = .2f;
     DroneModel mModel;
     FTPManager ftpManager;
     private long mTimeStampLastGCSHeartbeat = 0;
-    private int mNumGCSWaypoints = 0;
-    private int wpState = 0;
+    private boolean isReceivingMission = false; // Used to distinguish a direct flyto command from a mission item
+    private int mNumGCSWaypoints = 0; // Expected number of mission items
     private MainActivity parent;
     private WaypointMission.Builder mBuilder;
-    private ArrayList<msg_mission_item_int> mMissionItemList;
+    private ArrayList<msg_mission_item_int> mMissionItemList; // MAV Mission Item List
     private boolean isHome = true;
 
-//    private ArrayList<String> aiWP = new ArrayList<String>();
+    //    private ArrayList<String> aiWP = new ArrayList<String>();
     private String[] aiWP = new String[100]; // Max 100 wp in an AI mission for now...
 
     public MAVLinkReceiver(MainActivity parent, DroneModel model) {
@@ -138,17 +127,18 @@ public class MAVLinkReceiver {
 
     public void process(MAVLinkMessage msg) {
 
-        // IS 0 is hart beat...
-        if (msg.msgid != 0) {
-            Log.d(TAG, msg.toString());
-        //    Log.d(TAG, "Message: " + msg);
-            //          Log.d(TAG, String.valueOf(msg));
-            //       Log.d(TAG, String.valueOf(msg.msgid));
+        if (msg.msgid == MAVLINK_MSG_ID_HEARTBEAT) {
+            this.mTimeStampLastGCSHeartbeat = System.currentTimeMillis();
+            return;
         }
 
+        Log.d(TAG, "Received Cmd: " + msg.toString());
+
         switch (msg.msgid) {
-            case MAVLINK_MSG_ID_HEARTBEAT:
-                this.mTimeStampLastGCSHeartbeat = System.currentTimeMillis();
+            case MAVLINK_MSG_ID_AUTOPILOT_VERSION_REQUEST:
+                Log.d(TAG, "send_autopilot_version...");
+                mModel.send_command_ack(MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES, MAV_RESULT.MAV_RESULT_ACCEPTED);
+                mModel.send_autopilot_version();
                 break;
 
             case MAVLINK_MSG_ID_COMMAND_LONG:
@@ -158,30 +148,32 @@ public class MAVLinkReceiver {
                     return;
                 }
 
-//                if (mModel.isSafetyEnabled()) {
-//                    Log.d(TAG, parent.getResources().getString(R.string.safety_launch));
-//                    return;
-//                }
-
                 switch (msg_cmd.command)
                 {
+                    case MAV_CMD_SET_MESSAGE_INTERVAL:
+                        // msg_cmd.param1;
+                        mModel.send_command_ack(MAV_CMD_SET_MESSAGE_INTERVAL, MAV_RESULT.MAV_RESULT_ACCEPTED);
+                        break;
+
                     case MAV_CMD_COMPONENT_ARM_DISARM:
                         if (msg_cmd.param1 == 1)
                             mModel.armMotors();
                         else
                             mModel.disarmMotors();
                         break;
+
                     case MAV_CMD_DO_SET_MODE:
                         changeFlightMode((int) msg_cmd.param2);
+                        mModel.send_command_ack(MAV_CMD_DO_SET_MODE, MAV_RESULT.MAV_RESULT_ACCEPTED);
                         break;
+
                     case MAV_CMD_NAV_LOITER_UNLIM:
                         //                     mModel.set_flight_mode(ATTI);
                         break;
                     case MAV_CMD_NAV_TAKEOFF:
                         Log.d(TAG, "ALT = " + msg_cmd.param7);
-                        mModel.mAirBorn = 0;
-                        mModel.do_takeoff(msg_cmd.param7 * (float) 1000.0);
                         mModel.send_command_ack(MAV_CMD_NAV_TAKEOFF, MAV_RESULT.MAV_RESULT_IN_PROGRESS);
+                        mModel.doTakeOff(msg_cmd.param7);
                         break;
                     case MAV_CMD_NAV_LAND:
                         mModel.do_land();
@@ -211,12 +203,14 @@ public class MAVLinkReceiver {
                         break;
                     case MAV_CMD_DO_DIGICAM_CONTROL:
                         // DEPRECATED but still used by QGC
-                    //    mModel.do_set_Gimbal(9, (float)((-30.0*5.5)+1500.0)); // TODO:: Default point somewhat down... To be removed when Camera setting in mission works....
+                        //    mModel.do_set_Gimbal(9, (float)((-30.0*5.5)+1500.0)); // TODO:: Default point somewhat down... To be removed when Camera setting in mission works....
                         mModel.takePhoto();
                         break;
+
                     case MAV_CMD_MISSION_START:
                         mModel.startWaypointMission();
                         break;
+
                     case MAV_CMD_OVERRIDE_GOTO:
                         parent.logMessageDJI("Received MAV: MAV_CMD_OVERRIDE_GOTO");
                         if (mModel.getSystemId() != msg_cmd.target_system) {
@@ -307,6 +301,7 @@ public class MAVLinkReceiver {
                 msg_set_mode msg_set_mode = (msg_set_mode) msg;
                 Log.d(TAG, "MAVLINK_MSG_ID_SET_MODE: " + msg_set_mode.custom_mode);
                 changeFlightMode((int) msg_set_mode.custom_mode);
+                mModel.send_command_ack(MAVLINK_MSG_ID_SET_MODE, MAV_RESULT.MAV_RESULT_ACCEPTED);
                 break;
 
             /**************************************************************
@@ -409,7 +404,6 @@ public class MAVLinkReceiver {
 
             case MAVLINK_MSG_ID_MISSION_REQUEST_LIST:
                 mModel.send_mission_count();
-
                 break;
 
             case MAVLINK_MSG_ID_MISSION_REQUEST_PARTIAL_LIST:
@@ -437,25 +431,28 @@ public class MAVLinkReceiver {
 
             // Start load new mission...
             case MAVLINK_MSG_ID_MISSION_COUNT:
-
                 // Is this message to this system...
                 msg_mission_count msg_count = (msg_mission_count) msg;
                 if (mModel.getSystemId() != msg_count.target_system) {
                     return;
                 }
 
-                // Flush old mission...
-                if (mModel.getWaypointMissionOperator().getLoadedMission() != null) {
-                    mModel.getWaypointMissionOperator().getLoadedMission().getWaypointList().clear();
-                }
+                isReceivingMission = true;
 
-                // Generate new empty mission...
-                generateNewMission();
+                if(!mModel.useMissionManager) {
+                    // Flush old mission...
+                    if (mModel.getWaypointMissionOperator().getLoadedMission() != null) {
+                        mModel.getWaypointMissionOperator().getLoadedMission().getWaypointList().clear();
+                    }
+
+                    // Generate new empty mission...
+                    generateNewMission();
+                }
 
                 // Get the expected counter...
                 Log.d(TAG, "Expect: Mission Counter: " + msg_count.count);
                 mNumGCSWaypoints = msg_count.count;
-                wpState = WP_STATE_REQ_WP;
+
                 mMissionItemList = new ArrayList<msg_mission_item_int>();
 
                 // Request first mission ithem...
@@ -464,98 +461,31 @@ public class MAVLinkReceiver {
                 break;
 
             case MAVLINK_MSG_ID_MISSION_ITEM_INT:  // 0x73
-            {
-                // Is this message to this system...
-                msg_mission_item_int msg_item = (msg_mission_item_int) msg;
-                Log.d(TAG, "Add mission: " + msg_item.seq);
-
-                if (mModel.getSystemId() != msg_item.target_system) {
-                    break;
-                }
-                Log.d(TAG, "To this system... ");
-
-                // Somehow the GOTO from QGroundControl does not issue a mission count...
-                if (mMissionItemList == null && msg_item.command == MAV_CMD_NAV_WAYPOINT) {
-                    Log.d(TAG, "Goto... ");
-                    mModel.goto_position(msg_item.x/10000000.0, msg_item.y/10000000.0, msg_item.z, 0);
-                    mModel.send_command_ack(MAVLINK_MSG_ID_MISSION_ACK, MAV_RESULT.MAV_RESULT_ACCEPTED);
-                }
-                else {
-                    if (mMissionItemList == null) {
-                        Log.d(TAG, "Error Sequence error!");
-                        mModel.send_command_ack(MAVLINK_MSG_ID_MISSION_ACK, MAV_RESULT.MAV_RESULT_DENIED);
-                    }
-                    else {
-                        mMissionItemList.add(msg_item);
-
-                        // We are done fetching a complete mission from the GCS...
-                        if (msg_item.seq == mNumGCSWaypoints - 1) {
-                       //     mModel.send_command_ack(MAVLINK_MSG_ID_MISSION_ACK, MAV_RESULT.MAV_RESULT_ACCEPTED);
-                            Log.d(TAG, "Mission Loaded from host...!");
-                            wpState = WP_STATE_INACTIVE;
-                            finalizeNewMission();
-                        } else {
-                            Log.d(TAG, "Mission REQ: " +msg_item.seq + 1);
-                            mModel.request_mission_item((msg_item.seq + 1));
-                        }
-                    }
-                }
-            }
-            break;
+                processMsgItemMessage((msg_mission_item_int)msg);
+                break;
 
             case MAVLINK_MSG_ID_MISSION_ITEM:  // 39
-            {
-                // Is this message to this system...
-                msg_mission_item msg_item = (msg_mission_item) msg;
-                if (mModel.getSystemId() != msg_item.target_system) {
-                    break;
-                }
-                Log.d(TAG, "Add mission: " + msg_item.seq);
-
-                // Somehow the GOTO from QGroundControl does not issue a mission count...
-                if (mMissionItemList == null && msg_item.command == MAV_CMD_NAV_WAYPOINT) {
-                    Log.d(TAG, "Goto old... ");
-                    mModel.goto_position(msg_item.x, msg_item.y, msg_item.z, 0);
-                    mModel.send_command_ack(MAVLINK_MSG_ID_MISSION_ACK, MAV_RESULT.MAV_RESULT_ACCEPTED);
-
-                } else {
-                    if (mMissionItemList == null) {
-                        Log.d(TAG, "Error Sequence error!");
-                        mModel.send_command_ack(MAVLINK_MSG_ID_MISSION_ACK, MAV_RESULT.MAV_RESULT_DENIED);
-                    }
-                    else {
-                        msg_mission_item_int msg_item_f = new msg_mission_item_int();
-
-                        msg_item_f.param1=msg_item.param1;
-                        msg_item_f.param2=msg_item.param2;
-                        msg_item_f.param3=msg_item.param3;
-                        msg_item_f.param4=msg_item.param4;
-                        msg_item_f.x=(int)(msg_item.x*10000000.0);
-                        msg_item_f.y=(int)(msg_item.y*10000000.0);
-                        msg_item_f.z=msg_item.z;
-                        msg_item_f.seq=msg_item.seq;
-                        msg_item_f.command=msg_item.command;
-                        msg_item_f.target_system=msg_item.target_system;
-                        msg_item_f.target_component=msg_item.target_component;
-                        msg_item_f.frame=msg_item.frame;
-                        msg_item_f.current=msg_item.current;
-                        msg_item_f.autocontinue=msg_item.autocontinue;
-                        msg_item_f.mission_type=msg_item.mission_type;
-
-                        mMissionItemList.add(msg_item_f);
-                        // We are done fetching a complete mission from the GCS...
-                        if (msg_item.seq == mNumGCSWaypoints - 1) {
-                            wpState = WP_STATE_INACTIVE;
-                            finalizeNewMission();
-                        } else {
-                            Log.d(TAG, "Mission REQ: " +msg_item.seq + 1);
-                            mModel.request_mission_item((msg_item.seq + 1));
-                        }
-                    }
-                }
-            }
-            break;
-
+                // Used by QGC for the "Go to Location" action
+                // DEPRECATED: Replaced by MISSION_ITEM_INT (2020-06)
+                msg_mission_item msg_item = (msg_mission_item)msg;
+                msg_mission_item_int msgItemInt = new msg_mission_item_int();
+                msgItemInt.param1 = msg_item.param1;
+                msgItemInt.param2 = msg_item.param2;
+                msgItemInt.param3 = msg_item.param3;
+                msgItemInt.param4 = msg_item.param4;
+                msgItemInt.x = (int) (msg_item.x * 10000000.0);
+                msgItemInt.y = (int) (msg_item.y * 10000000.0);
+                msgItemInt.z = msg_item.z;
+                msgItemInt.seq = msg_item.seq;
+                msgItemInt.command = msg_item.command;
+                msgItemInt.target_system = msg_item.target_system;
+                msgItemInt.target_component = msg_item.target_component;
+                msgItemInt.frame = msg_item.frame;
+                msgItemInt.current = msg_item.current;
+                msgItemInt.autocontinue = msg_item.autocontinue;
+                msgItemInt.mission_type = msg_item.mission_type;
+                processMsgItemMessage(msgItemInt);
+                break;
 
             /**************************************************************
              * These messages from GCS direct a mission-related action    *
@@ -578,10 +508,58 @@ public class MAVLinkReceiver {
                 msg_file_transfer_protocol msg_ftp_item = (msg_file_transfer_protocol) msg;
                 ftpManager.manage_ftp(msg_ftp_item);
                 break;
-            default:
-                parent.logMessageDJI("Received (unkown) message");
-                parent.logMessageDJI( String.valueOf(msg.msgid));
+
+            case MAVLINK_MSG_ID_REQUEST_DATA_STREAM:
+                // DEPRECATED: Replaced by SET_MESSAGE_INTERVAL (2015-08)
+                // Sent by QGC
                 break;
+
+            default:
+                // SEE: https://hamishwillee.gitbooks.io/ham_mavdevguide/content/en/messages/common.html
+                parent.logMessageDJI("Received unknown message #" + msg.msgid);
+                break;
+        }
+    }
+
+    void denyMissionItem() {
+        isReceivingMission = false;
+        mModel.send_command_ack(MAVLINK_MSG_ID_MISSION_ACK, MAV_RESULT.MAV_RESULT_DENIED);
+    }
+
+    void processMsgItemMessage(msg_mission_item_int msg_item) {
+        if (mModel.getSystemId() != msg_item.target_system) {
+            return;
+        }
+
+        if (msg_item.command == MAV_CMD_NAV_WAYPOINT && !isReceivingMission) {
+            // QGC sends MAV_CMD_NAV_WAYPOINT outside a mission (isReceivingMission = false) to command an immediate FlyTo.
+            mModel.missionManager.pauseMission();
+            mModel.goto_position(msg_item.x / 10000000.0, msg_item.y / 10000000.0, msg_item.z);
+            mModel.send_mission_ack(MAV_MISSION_RESULT.MAV_MISSION_ACCEPTED);
+
+        } else {
+            Log.d(TAG, "Add mission item #" + msg_item.seq);
+
+            if (mMissionItemList == null) {
+                Log.d(TAG, "Error Sequence error!");
+                denyMissionItem();
+
+            } else {
+                // Store mission item
+                mMissionItemList.add(msg_item);
+
+                // TODO: Necessary? QGC doesn't check this.
+                // mModel.send_command_ack(MAVLINK_MSG_ID_MISSION_ACK, MAV_RESULT.MAV_RESULT_ACCEPTED);
+
+                if (msg_item.seq == mNumGCSWaypoints - 1) {
+                    // We are done fetching a complete mission from the GCS
+                    finalizeNewMission();
+
+                } else {
+                    Log.d(TAG, "Mission REQ: " +msg_item.seq + 1);
+                    mModel.request_mission_item((msg_item.seq + 1));
+                }
+            }
         }
     }
 
@@ -591,24 +569,20 @@ public class MAVLinkReceiver {
     }
 
     private void changeFlightMode(int flightMode) {
-        mModel.setGCSCommandedMode(flightMode);
+        mModel.setGcsFlightMode(flightMode);
 
         if (flightMode == ArduCopterFlightModes.AUTO) {
-            if (mModel.getWaypointMissionOperator().getCurrentState() == WaypointMissionState.EXECUTION_PAUSED) {
-                Log.d(TAG, "Resuming mission");
-                mModel.resumeWaypointMission();
-            } else if (mModel.getWaypointMissionOperator().getCurrentState() == WaypointMissionState.READY_TO_EXECUTE)
-                mModel.startWaypointMission();
+            mModel.startOrResumeWaypointMission();
+
         } else if (flightMode == ArduCopterFlightModes.BRAKE) {
             mModel.pauseWaypointMission();
-            mModel.setGCSCommandedMode(flightMode);
-        } else if (flightMode == ArduCopterFlightModes.RTL)
+
+        } else if (flightMode == ArduCopterFlightModes.RTL) {
             mModel.do_go_home();
-        else if (flightMode == ArduCopterFlightModes.LAND)
+
+        } else if (flightMode == ArduCopterFlightModes.LAND) {
             mModel.do_land();
-
-        mModel.send_command_ack(MAV_CMD_DO_SET_MODE, MAV_RESULT.MAV_RESULT_ACCEPTED);
-
+        }
     }
 
     // Generate a new Mission element, with default speed...
@@ -630,6 +604,7 @@ public class MAVLinkReceiver {
     }
 
     protected void finalizeNewMission() {
+        isReceivingMission = false;
         ArrayList<Waypoint> dji_wps = new ArrayList<Waypoint>();
         Waypoint currentWP = null;
 
@@ -650,8 +625,14 @@ public class MAVLinkReceiver {
 //            currentWP = new Waypoint(mModel.get_current_lat(), mModel.get_current_lon(), mModel.get_current_alt());
 //        }
 
-        if (AIstat == true)
-        {
+        if(mModel.useMissionManager) {
+            mModel.missionManager.setMission(mMissionItemList);
+            parent.logMessageDJI("Mission uploaded and ready to execute (using VirtualSticks)");
+            mModel.send_mission_ack(MAV_MISSION_RESULT.MAV_MISSION_ACCEPTED);
+            return;
+
+        } else if (AIstat == true) {
+            // TODO: Move code to AIClass
 //            aiWP = "";
             int num = 0;
 
@@ -691,7 +672,7 @@ public class MAVLinkReceiver {
                             DatagramPacket p = new DatagramPacket(byteArrray, byteArrray.length, address, AIactivityPort);
                             try {
                                 mSocketUDP.send(p);
-               //                 mSocketUDP.close();  // It this needed / wanted...
+                                //                 mSocketUDP.close();  // It this needed / wanted...
                             } catch (IOException e) {
                                 Log.e(TAG, "Error sending AI datagram socket", e);
                             }
@@ -762,17 +743,17 @@ public class MAVLinkReceiver {
                             Log.d(TAG, "= " + m.z);
                         }
 
-                        if ((m.z) > 500) {  // TODO:  Shuld reqest max altitude not assume 500...
+                        if ((m.z) > 500) {  // TODO: Should request max altitude instead of assuming 500...
                             parent.runOnUiThread(() -> NotificationHandler.notifyAlert(parent, TYPE_WAYPOINT_MAX_ALTITUDE, null, null));
                             stopUpload = true;
-                            mModel.send_command_ack(MAVLINK_MSG_ID_MISSION_ACK, MAV_RESULT.MAV_RESULT_DENIED);
+                            denyMissionItem();
                             Log.d(TAG, "Waypoint error 2");
                             break; // waypoint_loop;
 
-                        } else if ((m.z) < -200) {  // TODO:  hmm so we can not take off from a mountain and fly down?? ...
+                        } else if ((m.z) < -200) {  // TODO: hmm so we can not take off from a mountain and fly down?? ...
                             parent.runOnUiThread(() -> NotificationHandler.notifyAlert(parent, TYPE_WAYPOINT_MIN_ALTITUDE, null, null));
                             stopUpload = true;
-                            mModel.send_command_ack(MAVLINK_MSG_ID_MISSION_ACK, MAV_RESULT.MAV_RESULT_DENIED);
+                            denyMissionItem();
                             Log.d(TAG, "Waypoint error 3");
                             break; // waypoint_loop;
                         }
@@ -791,7 +772,15 @@ public class MAVLinkReceiver {
                         if (curvedFlightPath) {
                             currentWP.cornerRadiusInMeters = flightPathRadius;
                         }
-                        Log.d(TAG, "Waypoint OK");
+
+                        // If we use trigger distance, for now just add a stay & photo action
+                        // Ideally feed them pre-processed for now
+                        if(triggerDistanceEnabled)
+                        {
+                            currentWP.addAction(new WaypointAction(WaypointActionType.STAY, 0));
+                            currentWP.addAction(new WaypointAction(WaypointActionType.START_TAKE_PHOTO, 0));
+                        }
+
                         dji_wps.add(currentWP);
                         break;
 
@@ -897,7 +886,7 @@ public class MAVLinkReceiver {
                 correctedWps = addIntermediateWaypoints(dji_wps);
                 if( correctedWps == null){
                     Log.d(TAG, "Only 1 Waypoint error...");
-                    mModel.send_command_ack(MAVLINK_MSG_ID_MISSION_ACK, MAV_RESULT.MAV_RESULT_FAILED);
+                    denyMissionItem();
                     return;
                 }
             }
@@ -908,7 +897,7 @@ public class MAVLinkReceiver {
             mBuilder.waypointList(correctedWps).waypointCount(correctedWps.size());
 //            safeSleep(200);
             WaypointMission builtMission = mBuilder.build();
-  //          safeSleep(200);
+            //          safeSleep(200);
             mModel.setWaypointMission(builtMission);
 //            safeSleep(200);
         }

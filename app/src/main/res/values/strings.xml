@@ -140,7 +140,7 @@
     <string name="safety">SAFETY</string>
     <string name="safety_on">SAFETY ENABLED</string>
     <string name="safety_off">SAFETY DISABLED - READY TO FLY</string>
-    <string name="safety_launch">Disable safety to takeoff.</string>
+    <string name="safety_launch">Disable safety mode</string>
     <string name="hold">Please wait while image is grabbed!</string>
     <string name="ai_not_active">AI not activated in setup menu!</string>
     <string name="ai_uploaded_active">AI mission sent to AI module!</string>
