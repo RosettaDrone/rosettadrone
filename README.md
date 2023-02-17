@@ -20,6 +20,8 @@ Rosetta has been tested on:
 * Mavic AIR series
 * Matrice 210 V2
 
+Rosetta uses DJI SDK 4.16.1
+
 ## Hacking on Rosetta
 
 If you want to contribute, please check this [important recomendations](https://docs.google.com/document/d/1wR56Mvd2OsT82kxMOD7f_3-c6yJGBtLaT8LuVrmC5wI/edit?usp=sharing).
