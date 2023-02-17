@@ -24,7 +24,8 @@ Rosetta uses DJI SDK 4.16.1
 
 ## Hacking on Rosetta
 
-If you want to contribute, please check this [important recomendations](https://docs.google.com/document/d/1wR56Mvd2OsT82kxMOD7f_3-c6yJGBtLaT8LuVrmC5wI/edit?usp=sharing).
+* If you want to contribute, please check this [important recomendations](https://docs.google.com/document/d/1wR56Mvd2OsT82kxMOD7f_3-c6yJGBtLaT8LuVrmC5wI/edit?usp=sharing).
+* Here is some [documentation](https://github.com/lilfish/Delta-FlowerPower/wiki/Drone-app) from a forked project.
 
 ## The project works with QGroundcontrol, goto and joystic is implemented
 
@@ -67,15 +68,11 @@ Latency video:
 * Report telemetry in QGC like position, attitude, relative altitude, heading, and battery remaining
 * Command Return-to-Launch from QGC
 * View drone video feeds in QGC or forward RTP to an IP address of your choice (currently Mavic Pro 2 only)
-* Create and fly waypoint missions
+* Create and fly waypoint missions (with and without VirtualSticks)
 * Fly by joystick and QGS
 * Fly from Python in DroneKit
 * Use Mavproxy to connect both QGC and DroneKit at the same time
 * Use Gstreamer/OpenCV/FFMPEG and DroneKit to create complex AI functions
-
-
-
-
 
 # Usage
 
@@ -234,5 +231,3 @@ Rosetta Drone 2 is licensed under BSD3. For particularities related to U.S. fede
 Rosetta Drone 2 uses a modified version of DJI's [Android Video Stream Decoding Sample](https://developer.dji.com/mobile-sdk/documentation/sample-code/index.html), which is released under the MIT License.
 
 Video RTP packing uses code modified from the [libstreamer](https://github.com/fyhertz/libstreaming) library, licensed under Apache 2.
- 
-
