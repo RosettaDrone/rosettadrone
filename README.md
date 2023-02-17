@@ -38,10 +38,10 @@ In the unstable code there is also the DJI simulator, to enable testing in the l
 
 Rosetta Drone is a Mavlink wrapper for the DJI SDK, which allows users to fly DJI drones using Mavlink-speaking ground control stations. In theory it should work with any Mavlink GCS, but all testing so far has been done with QGroundControl. 
 
-*** IMPORTANT SAFETY NOTE *** Due to imperfect translation between DJI and Mavlink, props may begin spinning at unexpected times. Always treat props as if they are live. Use Rosetta Drone's "safety" feature, which *should* prevent the drone from acknowledging unexpected GCS arm or takeoff commands.
+*** IMPORTANT SAFETY NOTE *** Stay always away from the propellers. Use Rosetta Drone's "Safe Mode" to prevent the drone from unexpectly arming or taking off. When testing a new Rosetta version, test it first using the simulator.
 
-The user assumes all responsibility for prevention of harm or damage. This is an evolving, experimental app. See "Known issues" below before use.
-
+This Software is experimental and under constant development. By using this Software, you agree to assume all responsibility for eventual harm or damage.
+See "Known issues" below before use.
 
 ![Image of Opening screen](images/MicrosoftTeams-image.png)
 DJI-Rosettadrone-QGC live over 4G-LTE
