@@ -839,6 +839,50 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         // Disable takeoff by default... This however it not how DJI does it, so we must delay this action...
         Handler mTimerHandler = new Handler(Looper.getMainLooper());
         mTimerHandler.postDelayed(enablesafety, 3000);
+
+        // TestMode
+        if(RDApplication.isTestMode) {
+            BaseProduct dummyProduct = new DummyProduct(new DJISDKManager.SDKManagerCallback() {
+
+                @Override
+                public void onRegister(DJIError djiError) {
+
+                }
+
+                @Override
+                public void onProductDisconnect() {
+
+                }
+
+                @Override
+                public void onProductConnect(BaseProduct baseProduct) {
+
+                }
+
+                @Override
+                public void onProductChanged(BaseProduct baseProduct) {
+
+                }
+
+                @Override
+                public void onComponentChange(BaseProduct.ComponentKey componentKey, BaseComponent baseComponent, BaseComponent baseComponent1) {
+
+                }
+
+                @Override
+                public void onInitProcess(DJISDKInitEvent djisdkInitEvent, int i) {
+
+                }
+
+                @Override
+                public void onDatabaseDownloadProgress(long l, long l1) {
+
+                }
+            });
+            mProduct = dummyProduct;
+            //RDApplication.updateProduct(dummyProduct);
+            onDroneConnected();
+        }
     }
 
     // Toggle AI mission mode...
@@ -1061,7 +1105,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             case MAVIC_PRO:
             case INSPIRE_1:
             case Spark:
-            case MAVIC_AIR_2:
+            case MAVIC_AIR_2:       // Confirmed. https://github.com/The1only/rosettadrone/issues/108
             case INSPIRE_1_PRO:
             case INSPIRE_1_RAW:     // Verified...
             case MAVIC_AIR:         // Verified...

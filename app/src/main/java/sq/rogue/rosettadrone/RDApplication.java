@@ -16,6 +16,7 @@ public class RDApplication extends Application {
     private static BaseProduct mProduct;
     private static DJISimulatorApplication simulatorApplication;
     private static boolean m_sim = false;
+    public static boolean isTestMode = false;
 
     // True if simulate...
     public static boolean getSim() {

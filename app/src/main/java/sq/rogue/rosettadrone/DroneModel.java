@@ -2011,7 +2011,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
      * @return True if command was accepted
      */
     boolean checkSafeMode(final int cmd) {
-        if (mSafetyEnabled && !isSimulator) {
+        if (mSafetyEnabled && !isSimulator && !RDApplication.isTestMode) {
             parent.logMessageDJI(parent.getResources().getString(R.string.safety_launch));
             send_text(parent.getResources().getString(R.string.safety_launch));
             send_command_ack(cmd, MAV_RESULT.MAV_RESULT_DENIED);
