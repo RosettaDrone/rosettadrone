@@ -205,13 +205,21 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
 */
     }
 
+    void safeUnregisterBroadcast() {
+        try {
+            unregisterReceiver(mReceiver);
+        } catch(java.lang.IllegalArgumentException e) {
+            // Just ignore. Happens when using TestMode
+        }
+    }
+
     @Override
     protected void onDestroy() {
         Log.v(TAG, "onDestroy");
         if (KeyManager.getInstance() != null) {
             KeyManager.getInstance().removeListener(firmVersionListener);
         }
-        unregisterReceiver(mReceiver);
+        safeUnregisterBroadcast();
         super.onDestroy();
     }
 
@@ -403,7 +411,8 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
             }
             case R.id.btn_start: {
                 mBtnOpen.setEnabled(false);
-                unregisterReceiver(mReceiver);
+
+                safeUnregisterBroadcast();
 
                 Log.v(TAG, "Start Maintask");
                 Intent intent = new Intent(this, MainActivity.class);
