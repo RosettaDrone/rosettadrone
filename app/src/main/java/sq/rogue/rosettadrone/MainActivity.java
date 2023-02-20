@@ -706,6 +706,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         Log.e(TAG, "onCreate()");
         super.onCreate(savedInstanceState);
 
+        if(RDApplication.isTestMode) {
+            DummyProduct.createInstance();
+        }
+
         //---------------- Hide top bar ---
         Objects.requireNonNull(getSupportActionBar()).hide();
         //---------------- Force Landscape ether ways...
@@ -840,47 +844,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         Handler mTimerHandler = new Handler(Looper.getMainLooper());
         mTimerHandler.postDelayed(enablesafety, 3000);
 
-        // TestMode
         if(RDApplication.isTestMode) {
-            BaseProduct dummyProduct = new DummyProduct(new DJISDKManager.SDKManagerCallback() {
-
-                @Override
-                public void onRegister(DJIError djiError) {
-
-                }
-
-                @Override
-                public void onProductDisconnect() {
-
-                }
-
-                @Override
-                public void onProductConnect(BaseProduct baseProduct) {
-
-                }
-
-                @Override
-                public void onProductChanged(BaseProduct baseProduct) {
-
-                }
-
-                @Override
-                public void onComponentChange(BaseProduct.ComponentKey componentKey, BaseComponent baseComponent, BaseComponent baseComponent1) {
-
-                }
-
-                @Override
-                public void onInitProcess(DJISDKInitEvent djisdkInitEvent, int i) {
-
-                }
-
-                @Override
-                public void onDatabaseDownloadProgress(long l, long l1) {
-
-                }
-            });
-            mProduct = dummyProduct;
-            //RDApplication.updateProduct(dummyProduct);
             onDroneConnected();
         }
     }

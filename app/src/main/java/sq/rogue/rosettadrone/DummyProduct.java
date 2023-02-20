@@ -16,11 +16,13 @@ import dji.common.battery.LowVoltageBehavior;
 import dji.common.battery.PairingState;
 import dji.common.battery.WarningRecord;
 import dji.common.error.DJIError;
+import dji.common.flightcontroller.Attitude;
 import dji.common.flightcontroller.ConnectionFailSafeBehavior;
 import dji.common.flightcontroller.ControlGimbalBehavior;
 import dji.common.flightcontroller.ControlMode;
 import dji.common.flightcontroller.FlightControllerState;
 import dji.common.flightcontroller.FlightOrientationMode;
+import dji.common.flightcontroller.GPSSignalLevel;
 import dji.common.flightcontroller.IOStateOnBoard;
 import dji.common.flightcontroller.LEDsSettings;
 import dji.common.flightcontroller.NavigationSatelliteSystem;
@@ -49,13 +51,57 @@ import dji.common.remotecontroller.RCMode;
 import dji.common.remotecontroller.RequestGimbalControlResult;
 import dji.common.remotecontroller.ResponseForGimbalControl;
 import dji.common.util.CommonCallbacks;
+import dji.sdk.base.BaseComponent;
+import dji.sdk.base.BaseProduct;
 import dji.sdk.battery.Battery;
 import dji.sdk.flightcontroller.FlightController;
 import dji.sdk.products.Aircraft;
 import dji.sdk.remotecontroller.RemoteController;
+import dji.sdk.sdkmanager.DJISDKInitEvent;
 import dji.sdk.sdkmanager.DJISDKManager;
 
 public class DummyProduct extends Aircraft {
+
+    public static void createInstance() {
+        BaseProduct dummyProduct = new DummyProduct(new DJISDKManager.SDKManagerCallback() {
+
+            @Override
+            public void onRegister(DJIError djiError) {
+
+            }
+
+            @Override
+            public void onProductDisconnect() {
+
+            }
+
+            @Override
+            public void onProductConnect(BaseProduct baseProduct) {
+
+            }
+
+            @Override
+            public void onProductChanged(BaseProduct baseProduct) {
+
+            }
+
+            @Override
+            public void onComponentChange(BaseProduct.ComponentKey componentKey, BaseComponent baseComponent, BaseComponent baseComponent1) {
+
+            }
+
+            @Override
+            public void onInitProcess(DJISDKInitEvent djisdkInitEvent, int i) {
+
+            }
+
+            @Override
+            public void onDatabaseDownloadProgress(long l, long l1) {
+
+            }
+        });
+        RDApplication.updateProduct(dummyProduct);
+    }
 
     private class DummyBattery extends Battery {
 
@@ -404,6 +450,12 @@ public class DummyProduct extends Aircraft {
         @Override
         public FlightControllerState getState() {
             FlightControllerState state = new FlightControllerState();
+            state.setSatelliteCount(10);
+            state.setAircraftHeadDirection(0);
+            state.setGPSSignalLevel(GPSSignalLevel.LEVEL_10);
+
+            Attitude attitude = new Attitude(1,2,3);
+            state.setAttitude(attitude);
             return state;
         }
 
@@ -958,5 +1010,10 @@ public class DummyProduct extends Aircraft {
     @Override
     public Model getModel() {
         return Model.MAVIC_MINI;
+    }
+
+    @Override
+    public boolean isConnected() {
+        return true;
     }
 }
