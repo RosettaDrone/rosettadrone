@@ -2,10 +2,10 @@
 
 ## What's New
 
-This new version implements a MissionManager that speaks native MAVLink and uses VirtualSticks to support the DJI Mini series.
+This new version implements a MissionManager that speaks native MAVLink and uses VirtualSticks to support the DJI Mini series and other DJI drones without on-board waypoint missions.
 
-The MissionManager can also be used for other DJI drones that already support WayPoints and MissionControl onboard. 
-This can be an interesting alternative for improving the features offerd by their flightcontrollers (closes source firmware).
+The MissionManager can also be used for DJI drones that support DJI's WayPoints and MissionControl onboard. 
+This can be an interesting alternative for improving the features offerd by their flightcontrollers.
 
 ## Supported Drones
 
@@ -20,16 +20,19 @@ Rosetta has been tested on:
 * Mavic AIR series
 * Matrice 210 V2
 
-Rosetta uses DJI SDK 4.16.1
+Rosetta is compatible with:
+* QGroundControl
+* ArduCopter SITL
+* DJI SDK 4.16.1
+* Dronekit-Python (AI scripting)
 
 ## Hacking on Rosetta
 
 * If you want to contribute, please check this [important recomendations](https://docs.google.com/document/d/1wR56Mvd2OsT82kxMOD7f_3-c6yJGBtLaT8LuVrmC5wI/edit?usp=sharing).
 * Here is some [documentation](https://github.com/lilfish/Delta-FlowerPower/wiki/Drone-app) from a forked project.
+* Rosetta can be tested without a Drone (press 5 times on the logo). For MAVLink and GUI testing.
 
-## The project works with QGroundcontrol, goto and joystic is implemented
-
-### **Please create issues and create PR on this fork.** 
+### **Please create issues and PR on this fork.** 
 
 ![Image of Opening screen](images/IMG_4176.png)
 Opening screen, requires DJI login first time...
@@ -83,6 +86,7 @@ Latency video:
 2. Start Rosetta Drone. The DJI light in the top-right will turn green if the app is successfully communicating with your drone.
 
 3. If you wish to use QGroundControl on an external device, click the Gear icon to access Settings, check **Use GCS on an external device**, then specify an IP address.
+Additionally a second telemetry connection con be configured to run AI scripts using DroneKit Python.
 
 4. Start QGroundControl. A telemetry connection should be immediately established, and the GCS light in Rosetta Drone will turn green. 
 Note that if you are using QGroundControl on the same device as Rosetta drone, the GCS light may not turn green if QGC is in the background. 
@@ -96,12 +100,13 @@ Note that if you are using QGroundControl on the same device as Rosetta drone, t
     c. Change **UDP Port** to 5600.
 
 6. Takeoff is recommended using the RC transmitter. To arm or takeoff from the GCS, click the **SAFETY ENABLED** button. It will turn green and say **READY TO FLY**. Then use the QGroundControl **Takeoff** or **Start Mission** function.
+Takeoff and missions should also work fine using QGC.
 
-7. After flight, ensure the safety is enabled before approaching props.
+7. After flight, ensure Safe Mode is enabled before approaching propellers.
 
 8. Support is added for Pan and Tilt of camera gimbal by using RC channel 8 and 9.
 
-###Add this to you're Dronekit python script:
+### Add this to you're Dronekit python script:
 
 def set_servo(servo,val):
     msg = vehicle.message_factory.command_long_encode(
@@ -117,10 +122,9 @@ def set_servo(servo,val):
     
     And then use: set_servo(8,-45.0) to set the gimbal....
 
-
 9. Support for **joystick** is added and tested with QGroundcontrol, using the now built in simulator.
 
-10. By taping on the drone icon 5 times, you enable test mode and can open the software with no drone connected. For GUI work.
+10. By taping on the drone icon 5 times, you enable test mode and can open the software with no drone connected. Useful for testing MAVLink communication and GUI.
 
     
 # Building from source
@@ -152,7 +156,7 @@ Anyone who speaks multiple languages knows that translations are rarely perfect.
 
 - The **ARM** button in QGC does not work, by design. Sending a "Takeoff" or "Start Mission" command from QGC will arm the motors and takeoff.
 
-- DJI reports heading in True, which Rosetta drone 2 passes along in vfr_hud.hdg. The mavlink protocol does not specify magnetic or true.
+- DJI reports heading in True, which Rosetta passes along in vfr_hud.hdg. The mavlink protocol does not specify magnetic or true.
 
 - DJI and Mavlink use different scales to characterise GPS accuracy. DJI also does not report hdop or vdop.
 
@@ -204,10 +208,6 @@ Anyone who speaks multiple languages knows that translations are rarely perfect.
 - Add more actions to mission waypoint
 
 - Test and prepare official relase, add to play store.
-
-
-
-
 
 
 # Known Issues for Developers
