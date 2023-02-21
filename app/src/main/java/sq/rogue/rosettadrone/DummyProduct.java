@@ -25,6 +25,7 @@ import dji.common.flightcontroller.FlightOrientationMode;
 import dji.common.flightcontroller.GPSSignalLevel;
 import dji.common.flightcontroller.IOStateOnBoard;
 import dji.common.flightcontroller.LEDsSettings;
+import dji.common.flightcontroller.LocationCoordinate3D;
 import dji.common.flightcontroller.NavigationSatelliteSystem;
 import dji.common.flightcontroller.NavigationSystemError;
 import dji.common.flightcontroller.OSDKEnabledState;
@@ -452,10 +453,17 @@ public class DummyProduct extends Aircraft {
             FlightControllerState state = new FlightControllerState();
             state.setSatelliteCount(10);
             state.setAircraftHeadDirection(0);
-            state.setGPSSignalLevel(GPSSignalLevel.LEVEL_10);
+            state.setGPSSignalLevel(GPSSignalLevel.LEVEL_5);
 
             Attitude attitude = new Attitude(1,2,3);
             state.setAttitude(attitude);
+
+            state.setAircraftLocation(new LocationCoordinate3D(1, 2, 3));
+
+            state.setVelocityX(0.001f);
+            state.setVelocityY(0.002f);
+            state.setVelocityZ(0.003f);
+
             return state;
         }
 
