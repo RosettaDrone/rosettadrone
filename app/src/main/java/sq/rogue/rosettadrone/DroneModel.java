@@ -2309,12 +2309,19 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
             double dist = getRangeBetweenWaypoints_m(m_Destination_Lat, m_Destination_Lon, m_Destination_Alt, local_lat, local_lon, coord.getAircraftLocation().getAltitude());
 
+            double dist2D = 0;
+            if (yawDirection == YawDirection.TARGET) {
+                dist2D = getRangeBetweenWaypoints_m(m_Destination_Lat, m_Destination_Lon, 0, local_lat, local_lon,0);
+            } else if (yawDirection == YawDirection.POI) {
+                dist2D = getRangeBetweenWaypoints_m(poiLat, poiLon, 0, local_lat, local_lon, 0);
+            }
+
             double yaw = angleDjiToMav(coord.getAttitude().yaw);
             double targetYaw;
             double yawerror; // [-180, 180] (from left to right)
 
             if(yawDirection == YawDirection.KEEP
-                    || yawDirection == YawDirection.TARGET && dist < 0.3   // If we are close to the target => stop looking at it in order to avoid erratic yaw rotations (eg: if we passed the target for 0.00001 mm we would have to turn in 180°)
+                    || (yawDirection == YawDirection.TARGET || yawDirection == YawDirection.POI) && dist2D < 0.3   // If we are close to the target => stop looking at it in order to avoid erratic yaw rotations (eg: if we passed the target for 0.00001 mm we would have to turn in 180°)
                     || yawDirection == YawDirection.FIXED && (m_Destination_Mask & 0b0000010000000000) > 0
             ) {
                 yawerror = 0;
