@@ -2,7 +2,10 @@
 
 Rosetta Drone is a MAVLink wrapper for the DJI SDK, which allows users to fly DJI drones using MAVLink-speaking ground control stations. In theory it should work with any MAVLink GCS.
 
-*** IMPORTANT SAFETY NOTE *** Stay always away from the propellers. Use Rosetta Drone's "Safe Mode" to prevent the drone from unexpectly arming or taking off. When testing a new Rosetta version, test it first using the simulator.
+*** IMPORTANT SAFETY NOTE ***
+
+Stay always away from the propellers. Use Rosetta Drone's "Safe Mode" to prevent the drone from unexpectly arming or taking off.
+When testing a new Rosetta version, test it first using the simulator.
 
 This Software is experimental and under constant development. By using this Software, you agree to assume all responsibility for eventual harm or damage.
 See "Known issues" below before use.
@@ -12,7 +15,7 @@ See "Known issues" below before use.
 
 This new version implements a MissionManager that speaks native MAVLink and uses VirtualSticks to support the DJI Mini series and other DJI drones without on-board waypoint missions.
 
-The MissionManager can also be used for DJI drones that support DJI's WayPoints and MissionControl onboard. 
+The MissionManager can also be used with DJI drones that support WayPoints and MissionControl onboard. 
 This can be an interesting alternative for improving the features offerd by their flightcontrollers.
 
 
@@ -36,7 +39,7 @@ Rosetta is compatible with:
 * Dronekit-Python (AI scripting)
 * MavProxy
 * DJI SDK 4.16.1
-* MAVSDK is not compatible at the moment
+* MAVSDK [is not compatible](https://github.com/The1only/rosettadrone/issues/120) at the moment.
 
 ## Hacking on Rosetta
 
