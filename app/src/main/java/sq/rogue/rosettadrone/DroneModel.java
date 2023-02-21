@@ -358,7 +358,13 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                 avtivemode = HardwareState.FlightModeSwitch.POSITION_THREE;
             }
 
-            useMissionManager = (m_model == Model.MAVIC_MINI || m_model == Model.DJI_MINI_SE || m_model == Model.DJI_MINI_2);
+            // This models don't support waypoint missions onboard, only using our MissionManager
+            useMissionManager = m_model == Model.MAVIC_MINI
+                    || m_model == Model.DJI_MINI_SE
+                    || m_model == Model.DJI_MINI_2
+                    || m_model == Model.DJI_AIR_2S
+                    ;
+
             useMissionControlClass = !useMissionManager;
 
             mGimbal = m_aircraft.getGimbal();
@@ -2005,7 +2011,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
      * @return True if command was accepted
      */
     boolean checkSafeMode(final int cmd) {
-        if (mSafetyEnabled && !isSimulator) {
+        if (mSafetyEnabled && !isSimulator && !RDApplication.isTestMode) {
             parent.logMessageDJI(parent.getResources().getString(R.string.safety_launch));
             send_text(parent.getResources().getString(R.string.safety_launch));
             send_command_ack(cmd, MAV_RESULT.MAV_RESULT_DENIED);

@@ -706,6 +706,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         Log.e(TAG, "onCreate()");
         super.onCreate(savedInstanceState);
 
+        if(RDApplication.isTestMode) {
+            DummyProduct.createInstance();
+        }
+
         //---------------- Hide top bar ---
         Objects.requireNonNull(getSupportActionBar()).hide();
         //---------------- Force Landscape ether ways...
@@ -839,6 +843,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         // Disable takeoff by default... This however it not how DJI does it, so we must delay this action...
         Handler mTimerHandler = new Handler(Looper.getMainLooper());
         mTimerHandler.postDelayed(enablesafety, 3000);
+
+        if(RDApplication.isTestMode) {
+            onDroneConnected();
+        }
     }
 
     // Toggle AI mission mode...
@@ -1057,10 +1065,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             case Phantom_3_4K:
             case MAVIC_MINI:
             case DJI_MINI_SE:
+            case DJI_AIR_2S:        // To be confirmed
             case MAVIC_PRO:
             case INSPIRE_1:
             case Spark:
-            case MAVIC_AIR_2:
+            case MAVIC_AIR_2:       // Confirmed. https://github.com/The1only/rosettadrone/issues/108
             case INSPIRE_1_PRO:
             case INSPIRE_1_RAW:     // Verified...
             case MAVIC_AIR:         // Verified...
