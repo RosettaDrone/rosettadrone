@@ -1831,8 +1831,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         @Override
         protected Integer doInBackground(Integer... ints2) {
-            Log.d("TERJE", "doInBackground()");
-
             try {
                 createTelemetrySocket();
                 mainActivityWeakReference.get().mMavlinkParser = new Parser();
@@ -1901,7 +1899,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                 if (mainActivityWeakReference.get().prefs.getBoolean("pref_log_mavlink", false))
                                     mainActivityWeakReference.get().logMessageFromGCS(msg.toString());
 
-                           //     Log.d("TERJE", "process...()");
                                 mainActivityWeakReference.get().mMavlinkReceiver.process(msg);
                             }
                         }

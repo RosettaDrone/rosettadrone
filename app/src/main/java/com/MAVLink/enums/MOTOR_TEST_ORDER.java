@@ -7,12 +7,12 @@
 package com.MAVLink.enums;
 
 /**
- *
+ * Sequence that motors are tested when using MAV_CMD_DO_MOTOR_TEST.
  */
 public class MOTOR_TEST_ORDER {
-    public static final int MOTOR_TEST_ORDER_DEFAULT = 0; /* default autopilot motor test method | */
-    public static final int MOTOR_TEST_ORDER_SEQUENCE = 1; /* motor numbers are specified as their index in a predefined vehicle-specific sequence | */
-    public static final int MOTOR_TEST_ORDER_BOARD = 2; /* motor numbers are specified as the output as labeled on the board | */
-    public static final int MOTOR_TEST_ORDER_ENUM_END = 3; /*  | */
+   public static final int MOTOR_TEST_ORDER_DEFAULT = 0; /* Default autopilot motor test method. | */
+   public static final int MOTOR_TEST_ORDER_SEQUENCE = 1; /* Motor numbers are specified as their index in a predefined vehicle-specific sequence. | */
+   public static final int MOTOR_TEST_ORDER_BOARD = 2; /* Motor numbers are specified as the output as labeled on the board. | */
+   public static final int MOTOR_TEST_ORDER_ENUM_END = 3; /*  | */
 }
             

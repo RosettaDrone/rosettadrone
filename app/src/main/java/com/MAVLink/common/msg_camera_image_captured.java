@@ -6,13 +6,20 @@
 
 // MESSAGE CAMERA_IMAGE_CAPTURED PACKING
 package com.MAVLink.common;
-
 import com.MAVLink.MAVLinkPacket;
 import com.MAVLink.Messages.MAVLinkMessage;
 import com.MAVLink.Messages.MAVLinkPayload;
+import com.MAVLink.Messages.Units;
+import com.MAVLink.Messages.Description;
 
 /**
- * Information about a captured image
+ * Information about a captured image. This is emitted every time a message is captured.
+        MAV_CMD_REQUEST_MESSAGE can be used to (re)request this message for a specific sequence number or range of sequence numbers:
+        MAV_CMD_REQUEST_MESSAGE.param2 indicates the sequence number the first image to send, or set to -1 to send the message for all sequence numbers.
+        MAV_CMD_REQUEST_MESSAGE.param3 is used to specify a range of messages to send:
+        set to 0 (default) to send just the the message for the sequence number in param 2,
+        set to -1 to send the message for the sequence number in param 2 and all the following sequence numbers,
+        set to the sequence number of the final message in the range.
  */
 public class msg_camera_image_captured extends MAVLinkMessage {
 
@@ -20,104 +27,119 @@ public class msg_camera_image_captured extends MAVLinkMessage {
     public static final int MAVLINK_MSG_LENGTH = 255;
     private static final long serialVersionUID = MAVLINK_MSG_ID_CAMERA_IMAGE_CAPTURED;
 
-
+    
     /**
      * Timestamp (time since UNIX epoch) in UTC. 0 for unknown.
      */
+    @Description("Timestamp (time since UNIX epoch) in UTC. 0 for unknown.")
+    @Units("us")
     public long time_utc;
-
+    
     /**
      * Timestamp (time since system boot).
      */
+    @Description("Timestamp (time since system boot).")
+    @Units("ms")
     public long time_boot_ms;
-
+    
     /**
      * Latitude where image was taken
      */
+    @Description("Latitude where image was taken")
+    @Units("degE7")
     public int lat;
-
+    
     /**
      * Longitude where capture was taken
      */
+    @Description("Longitude where capture was taken")
+    @Units("degE7")
     public int lon;
-
+    
     /**
      * Altitude (MSL) where image was taken
      */
+    @Description("Altitude (MSL) where image was taken")
+    @Units("mm")
     public int alt;
-
+    
     /**
      * Altitude above ground
      */
+    @Description("Altitude above ground")
+    @Units("mm")
     public int relative_alt;
-
+    
     /**
-     * Quaternion of camera orientation (w, x, y, z order, zero-rotation is 0, 0, 0, 0)
+     * Quaternion of camera orientation (w, x, y, z order, zero-rotation is 1, 0, 0, 0)
      */
+    @Description("Quaternion of camera orientation (w, x, y, z order, zero-rotation is 1, 0, 0, 0)")
+    @Units("")
     public float q[] = new float[4];
-
+    
     /**
-     * Zero based index of this image (image count since armed -1)
+     * Zero based index of this image (i.e. a new image will have index CAMERA_CAPTURE_STATUS.image count -1)
      */
+    @Description("Zero based index of this image (i.e. a new image will have index CAMERA_CAPTURE_STATUS.image count -1)")
+    @Units("")
     public int image_index;
-
+    
     /**
-     * Camera ID (1 for first, 2 for second, etc.)
+     * Deprecated/unused. Component IDs are used to differentiate multiple cameras.
      */
+    @Description("Deprecated/unused. Component IDs are used to differentiate multiple cameras.")
+    @Units("")
     public short camera_id;
-
+    
     /**
      * Boolean indicating success (1) or failure (0) while capturing this image.
      */
+    @Description("Boolean indicating success (1) or failure (0) while capturing this image.")
+    @Units("")
     public byte capture_result;
-
+    
     /**
      * URL of image taken. Either local storage or http://foo.jpg if camera provides an HTTP interface.
      */
+    @Description("URL of image taken. Either local storage or http://foo.jpg if camera provides an HTTP interface.")
+    @Units("")
     public byte file_url[] = new byte[205];
-
+    
 
     /**
      * Generates the payload for a mavlink message for a message of this type
-     *
      * @return
      */
+    @Override
     public MAVLinkPacket pack() {
-        MAVLinkPacket packet = new MAVLinkPacket(MAVLINK_MSG_LENGTH);
-        packet.sysid = 255;
-        packet.compid = 190;
+        MAVLinkPacket packet = new MAVLinkPacket(MAVLINK_MSG_LENGTH,isMavlink2);
+        packet.sysid = sysid;
+        packet.compid = compid;
         packet.msgid = MAVLINK_MSG_ID_CAMERA_IMAGE_CAPTURED;
 
         packet.payload.putUnsignedLong(time_utc);
-
         packet.payload.putUnsignedInt(time_boot_ms);
-
         packet.payload.putInt(lat);
-
         packet.payload.putInt(lon);
-
         packet.payload.putInt(alt);
-
         packet.payload.putInt(relative_alt);
-
-
+        
         for (int i = 0; i < q.length; i++) {
             packet.payload.putFloat(q[i]);
         }
-
-
+                    
         packet.payload.putInt(image_index);
-
         packet.payload.putUnsignedByte(camera_id);
-
         packet.payload.putByte(capture_result);
-
-
+        
         for (int i = 0; i < file_url.length; i++) {
             packet.payload.putByte(file_url[i]);
         }
-
-
+                    
+        
+        if (isMavlink2) {
+            
+        }
         return packet;
     }
 
@@ -126,77 +148,117 @@ public class msg_camera_image_captured extends MAVLinkMessage {
      *
      * @param payload The message to decode
      */
+    @Override
     public void unpack(MAVLinkPayload payload) {
         payload.resetIndex();
 
         this.time_utc = payload.getUnsignedLong();
-
         this.time_boot_ms = payload.getUnsignedInt();
-
         this.lat = payload.getInt();
-
         this.lon = payload.getInt();
-
         this.alt = payload.getInt();
-
         this.relative_alt = payload.getInt();
-
-
+        
         for (int i = 0; i < this.q.length; i++) {
             this.q[i] = payload.getFloat();
         }
-
-
+                
         this.image_index = payload.getInt();
-
         this.camera_id = payload.getUnsignedByte();
-
         this.capture_result = payload.getByte();
-
-
+        
         for (int i = 0; i < this.file_url.length; i++) {
             this.file_url[i] = payload.getByte();
         }
-
-
+                
+        
+        if (isMavlink2) {
+            
+        }
     }
 
     /**
      * Constructor for a new message, just initializes the msgid
      */
     public msg_camera_image_captured() {
-        msgid = MAVLINK_MSG_ID_CAMERA_IMAGE_CAPTURED;
+        this.msgid = MAVLINK_MSG_ID_CAMERA_IMAGE_CAPTURED;
+    }
+
+    /**
+     * Constructor for a new message, initializes msgid and all payload variables
+     */
+    public msg_camera_image_captured( long time_utc, long time_boot_ms, int lat, int lon, int alt, int relative_alt, float[] q, int image_index, short camera_id, byte capture_result, byte[] file_url) {
+        this.msgid = MAVLINK_MSG_ID_CAMERA_IMAGE_CAPTURED;
+
+        this.time_utc = time_utc;
+        this.time_boot_ms = time_boot_ms;
+        this.lat = lat;
+        this.lon = lon;
+        this.alt = alt;
+        this.relative_alt = relative_alt;
+        this.q = q;
+        this.image_index = image_index;
+        this.camera_id = camera_id;
+        this.capture_result = capture_result;
+        this.file_url = file_url;
+        
+    }
+
+    /**
+     * Constructor for a new message, initializes everything
+     */
+    public msg_camera_image_captured( long time_utc, long time_boot_ms, int lat, int lon, int alt, int relative_alt, float[] q, int image_index, short camera_id, byte capture_result, byte[] file_url, int sysid, int compid, boolean isMavlink2) {
+        this.msgid = MAVLINK_MSG_ID_CAMERA_IMAGE_CAPTURED;
+        this.sysid = sysid;
+        this.compid = compid;
+        this.isMavlink2 = isMavlink2;
+
+        this.time_utc = time_utc;
+        this.time_boot_ms = time_boot_ms;
+        this.lat = lat;
+        this.lon = lon;
+        this.alt = alt;
+        this.relative_alt = relative_alt;
+        this.q = q;
+        this.image_index = image_index;
+        this.camera_id = camera_id;
+        this.capture_result = capture_result;
+        this.file_url = file_url;
+        
     }
 
     /**
      * Constructor for a new message, initializes the message with the payload
      * from a mavlink packet
+     *
      */
     public msg_camera_image_captured(MAVLinkPacket mavLinkPacket) {
+        this.msgid = MAVLINK_MSG_ID_CAMERA_IMAGE_CAPTURED;
+
         this.sysid = mavLinkPacket.sysid;
         this.compid = mavLinkPacket.compid;
-        this.msgid = MAVLINK_MSG_ID_CAMERA_IMAGE_CAPTURED;
+        this.isMavlink2 = mavLinkPacket.isMavlink2;
         unpack(mavLinkPacket.payload);
     }
 
-
+                         
     /**
-     * Sets the buffer of this message with a string, adds the necessary padding
-     */
+    * Sets the buffer of this message with a string, adds the necessary padding
+    */
     public void setFile_Url(String str) {
         int len = Math.min(str.length(), 205);
-        for (int i = 0; i < len; i++) {
+        for (int i=0; i<len; i++) {
             file_url[i] = (byte) str.charAt(i);
         }
 
-        for (int i = len; i < 205; i++) {            // padding for the rest of the buffer
+        for (int i=len; i<205; i++) {            // padding for the rest of the buffer
             file_url[i] = 0;
         }
     }
 
     /**
-     * Gets the message, formated as a string
-     */
+    * Gets the message, formatted as a string
+    */
     public String getFile_Url() {
         StringBuffer buf = new StringBuffer();
         for (int i = 0; i < 205; i++) {
@@ -208,12 +270,21 @@ public class msg_camera_image_captured extends MAVLinkMessage {
         return buf.toString();
 
     }
-
+                         
     /**
      * Returns a string with the MSG name and data
      */
+    @Override
     public String toString() {
-        return "MAVLINK_MSG_ID_CAMERA_IMAGE_CAPTURED - sysid:" + sysid + " compid:" + compid + " time_utc:" + time_utc + " time_boot_ms:" + time_boot_ms + " lat:" + lat + " lon:" + lon + " alt:" + alt + " relative_alt:" + relative_alt + " q:" + q + " image_index:" + image_index + " camera_id:" + camera_id + " capture_result:" + capture_result + " file_url:" + file_url + "";
+        return "MAVLINK_MSG_ID_CAMERA_IMAGE_CAPTURED - sysid:"+sysid+" compid:"+compid+" time_utc:"+time_utc+" time_boot_ms:"+time_boot_ms+" lat:"+lat+" lon:"+lon+" alt:"+alt+" relative_alt:"+relative_alt+" q:"+q+" image_index:"+image_index+" camera_id:"+camera_id+" capture_result:"+capture_result+" file_url:"+file_url+"";
+    }
+
+    /**
+     * Returns a human-readable string of the name of the message
+     */
+    @Override
+    public String name() {
+        return "MAVLINK_MSG_ID_CAMERA_IMAGE_CAPTURED";
     }
 }
         

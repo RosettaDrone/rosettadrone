@@ -6,10 +6,11 @@
 
 // MESSAGE ORBIT_EXECUTION_STATUS PACKING
 package com.MAVLink.common;
-
 import com.MAVLink.MAVLinkPacket;
 import com.MAVLink.Messages.MAVLinkMessage;
 import com.MAVLink.Messages.MAVLinkPayload;
+import com.MAVLink.Messages.Units;
+import com.MAVLink.Messages.Description;
 
 /**
  * Vehicle status report that is sent out while orbit execution is in progress (see MAV_CMD_DO_ORBIT).
@@ -20,61 +21,71 @@ public class msg_orbit_execution_status extends MAVLinkMessage {
     public static final int MAVLINK_MSG_LENGTH = 25;
     private static final long serialVersionUID = MAVLINK_MSG_ID_ORBIT_EXECUTION_STATUS;
 
-
+    
     /**
-     * Timestamp (UNIX Epoch time or time since system boot). The receiving end can infer timestamp format (since 1.1.1970 or since system boot) by checking for the magnitude the number.
+     * Timestamp (UNIX Epoch time or time since system boot). The receiving end can infer timestamp format (since 1.1.1970 or since system boot) by checking for the magnitude of the number.
      */
+    @Description("Timestamp (UNIX Epoch time or time since system boot). The receiving end can infer timestamp format (since 1.1.1970 or since system boot) by checking for the magnitude of the number.")
+    @Units("us")
     public long time_usec;
-
+    
     /**
      * Radius of the orbit circle. Positive values orbit clockwise, negative values orbit counter-clockwise.
      */
+    @Description("Radius of the orbit circle. Positive values orbit clockwise, negative values orbit counter-clockwise.")
+    @Units("m")
     public float radius;
-
+    
     /**
      * X coordinate of center point. Coordinate system depends on frame field: local = x position in meters * 1e4, global = latitude in degrees * 1e7.
      */
+    @Description("X coordinate of center point. Coordinate system depends on frame field: local = x position in meters * 1e4, global = latitude in degrees * 1e7.")
+    @Units("")
     public int x;
-
+    
     /**
      * Y coordinate of center point.  Coordinate system depends on frame field: local = x position in meters * 1e4, global = latitude in degrees * 1e7.
      */
+    @Description("Y coordinate of center point.  Coordinate system depends on frame field: local = x position in meters * 1e4, global = latitude in degrees * 1e7.")
+    @Units("")
     public int y;
-
+    
     /**
      * Altitude of center point. Coordinate system depends on frame field.
      */
+    @Description("Altitude of center point. Coordinate system depends on frame field.")
+    @Units("m")
     public float z;
-
+    
     /**
      * The coordinate system of the fields: x, y, z.
      */
+    @Description("The coordinate system of the fields: x, y, z.")
+    @Units("")
     public short frame;
-
+    
 
     /**
      * Generates the payload for a mavlink message for a message of this type
-     *
      * @return
      */
+    @Override
     public MAVLinkPacket pack() {
-        MAVLinkPacket packet = new MAVLinkPacket(MAVLINK_MSG_LENGTH);
-        packet.sysid = 255;
-        packet.compid = 190;
+        MAVLinkPacket packet = new MAVLinkPacket(MAVLINK_MSG_LENGTH,isMavlink2);
+        packet.sysid = sysid;
+        packet.compid = compid;
         packet.msgid = MAVLINK_MSG_ID_ORBIT_EXECUTION_STATUS;
 
         packet.payload.putUnsignedLong(time_usec);
-
         packet.payload.putFloat(radius);
-
         packet.payload.putInt(x);
-
         packet.payload.putInt(y);
-
         packet.payload.putFloat(z);
-
         packet.payload.putUnsignedByte(frame);
-
+        
+        if (isMavlink2) {
+            
+        }
         return packet;
     }
 
@@ -83,47 +94,91 @@ public class msg_orbit_execution_status extends MAVLinkMessage {
      *
      * @param payload The message to decode
      */
+    @Override
     public void unpack(MAVLinkPayload payload) {
         payload.resetIndex();
 
         this.time_usec = payload.getUnsignedLong();
-
         this.radius = payload.getFloat();
-
         this.x = payload.getInt();
-
         this.y = payload.getInt();
-
         this.z = payload.getFloat();
-
         this.frame = payload.getUnsignedByte();
-
+        
+        if (isMavlink2) {
+            
+        }
     }
 
     /**
      * Constructor for a new message, just initializes the msgid
      */
     public msg_orbit_execution_status() {
-        msgid = MAVLINK_MSG_ID_ORBIT_EXECUTION_STATUS;
+        this.msgid = MAVLINK_MSG_ID_ORBIT_EXECUTION_STATUS;
+    }
+
+    /**
+     * Constructor for a new message, initializes msgid and all payload variables
+     */
+    public msg_orbit_execution_status( long time_usec, float radius, int x, int y, float z, short frame) {
+        this.msgid = MAVLINK_MSG_ID_ORBIT_EXECUTION_STATUS;
+
+        this.time_usec = time_usec;
+        this.radius = radius;
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.frame = frame;
+        
+    }
+
+    /**
+     * Constructor for a new message, initializes everything
+     */
+    public msg_orbit_execution_status( long time_usec, float radius, int x, int y, float z, short frame, int sysid, int compid, boolean isMavlink2) {
+        this.msgid = MAVLINK_MSG_ID_ORBIT_EXECUTION_STATUS;
+        this.sysid = sysid;
+        this.compid = compid;
+        this.isMavlink2 = isMavlink2;
+
+        this.time_usec = time_usec;
+        this.radius = radius;
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.frame = frame;
+        
     }
 
     /**
      * Constructor for a new message, initializes the message with the payload
      * from a mavlink packet
+     *
      */
     public msg_orbit_execution_status(MAVLinkPacket mavLinkPacket) {
+        this.msgid = MAVLINK_MSG_ID_ORBIT_EXECUTION_STATUS;
+
         this.sysid = mavLinkPacket.sysid;
         this.compid = mavLinkPacket.compid;
-        this.msgid = MAVLINK_MSG_ID_ORBIT_EXECUTION_STATUS;
+        this.isMavlink2 = mavLinkPacket.isMavlink2;
         unpack(mavLinkPacket.payload);
     }
 
-
+                
     /**
      * Returns a string with the MSG name and data
      */
+    @Override
     public String toString() {
-        return "MAVLINK_MSG_ID_ORBIT_EXECUTION_STATUS - sysid:" + sysid + " compid:" + compid + " time_usec:" + time_usec + " radius:" + radius + " x:" + x + " y:" + y + " z:" + z + " frame:" + frame + "";
+        return "MAVLINK_MSG_ID_ORBIT_EXECUTION_STATUS - sysid:"+sysid+" compid:"+compid+" time_usec:"+time_usec+" radius:"+radius+" x:"+x+" y:"+y+" z:"+z+" frame:"+frame+"";
+    }
+
+    /**
+     * Returns a human-readable string of the name of the message
+     */
+    @Override
+    public String name() {
+        return "MAVLINK_MSG_ID_ORBIT_EXECUTION_STATUS";
     }
 }
         

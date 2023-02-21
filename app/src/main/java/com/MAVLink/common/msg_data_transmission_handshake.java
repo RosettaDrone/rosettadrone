@@ -6,10 +6,11 @@
 
 // MESSAGE DATA_TRANSMISSION_HANDSHAKE PACKING
 package com.MAVLink.common;
-
 import com.MAVLink.MAVLinkPacket;
 import com.MAVLink.Messages.MAVLinkMessage;
 import com.MAVLink.Messages.MAVLinkPayload;
+import com.MAVLink.Messages.Units;
+import com.MAVLink.Messages.Description;
 
 /**
  * Handshake message to initiate, control and stop image streaming when using the Image Transmission Protocol: https://mavlink.io/en/services/image_transmission.html.
@@ -20,68 +21,79 @@ public class msg_data_transmission_handshake extends MAVLinkMessage {
     public static final int MAVLINK_MSG_LENGTH = 13;
     private static final long serialVersionUID = MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE;
 
-
+    
     /**
      * total data size (set on ACK only).
      */
+    @Description("total data size (set on ACK only).")
+    @Units("bytes")
     public long size;
-
+    
     /**
      * Width of a matrix or image.
      */
+    @Description("Width of a matrix or image.")
+    @Units("")
     public int width;
-
+    
     /**
      * Height of a matrix or image.
      */
+    @Description("Height of a matrix or image.")
+    @Units("")
     public int height;
-
+    
     /**
      * Number of packets being sent (set on ACK only).
      */
+    @Description("Number of packets being sent (set on ACK only).")
+    @Units("")
     public int packets;
-
+    
     /**
      * Type of requested/acknowledged data.
      */
+    @Description("Type of requested/acknowledged data.")
+    @Units("")
     public short type;
-
+    
     /**
      * Payload size per packet (normally 253 byte, see DATA field size in message ENCAPSULATED_DATA) (set on ACK only).
      */
+    @Description("Payload size per packet (normally 253 byte, see DATA field size in message ENCAPSULATED_DATA) (set on ACK only).")
+    @Units("bytes")
     public short payload;
-
+    
     /**
      * JPEG quality. Values: [1-100].
      */
+    @Description("JPEG quality. Values: [1-100].")
+    @Units("%")
     public short jpg_quality;
-
+    
 
     /**
      * Generates the payload for a mavlink message for a message of this type
-     *
      * @return
      */
+    @Override
     public MAVLinkPacket pack() {
-        MAVLinkPacket packet = new MAVLinkPacket(MAVLINK_MSG_LENGTH);
-        packet.sysid = 255;
-        packet.compid = 190;
+        MAVLinkPacket packet = new MAVLinkPacket(MAVLINK_MSG_LENGTH,isMavlink2);
+        packet.sysid = sysid;
+        packet.compid = compid;
         packet.msgid = MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE;
 
         packet.payload.putUnsignedInt(size);
-
         packet.payload.putUnsignedShort(width);
-
         packet.payload.putUnsignedShort(height);
-
         packet.payload.putUnsignedShort(packets);
-
         packet.payload.putUnsignedByte(type);
-
         packet.payload.putUnsignedByte(payload);
-
         packet.payload.putUnsignedByte(jpg_quality);
-
+        
+        if (isMavlink2) {
+            
+        }
         return packet;
     }
 
@@ -90,49 +102,94 @@ public class msg_data_transmission_handshake extends MAVLinkMessage {
      *
      * @param payload The message to decode
      */
+    @Override
     public void unpack(MAVLinkPayload payload) {
         payload.resetIndex();
 
         this.size = payload.getUnsignedInt();
-
         this.width = payload.getUnsignedShort();
-
         this.height = payload.getUnsignedShort();
-
         this.packets = payload.getUnsignedShort();
-
         this.type = payload.getUnsignedByte();
-
         this.payload = payload.getUnsignedByte();
-
         this.jpg_quality = payload.getUnsignedByte();
-
+        
+        if (isMavlink2) {
+            
+        }
     }
 
     /**
      * Constructor for a new message, just initializes the msgid
      */
     public msg_data_transmission_handshake() {
-        msgid = MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE;
+        this.msgid = MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE;
+    }
+
+    /**
+     * Constructor for a new message, initializes msgid and all payload variables
+     */
+    public msg_data_transmission_handshake( long size, int width, int height, int packets, short type, short payload, short jpg_quality) {
+        this.msgid = MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE;
+
+        this.size = size;
+        this.width = width;
+        this.height = height;
+        this.packets = packets;
+        this.type = type;
+        this.payload = payload;
+        this.jpg_quality = jpg_quality;
+        
+    }
+
+    /**
+     * Constructor for a new message, initializes everything
+     */
+    public msg_data_transmission_handshake( long size, int width, int height, int packets, short type, short payload, short jpg_quality, int sysid, int compid, boolean isMavlink2) {
+        this.msgid = MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE;
+        this.sysid = sysid;
+        this.compid = compid;
+        this.isMavlink2 = isMavlink2;
+
+        this.size = size;
+        this.width = width;
+        this.height = height;
+        this.packets = packets;
+        this.type = type;
+        this.payload = payload;
+        this.jpg_quality = jpg_quality;
+        
     }
 
     /**
      * Constructor for a new message, initializes the message with the payload
      * from a mavlink packet
+     *
      */
     public msg_data_transmission_handshake(MAVLinkPacket mavLinkPacket) {
+        this.msgid = MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE;
+
         this.sysid = mavLinkPacket.sysid;
         this.compid = mavLinkPacket.compid;
-        this.msgid = MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE;
+        this.isMavlink2 = mavLinkPacket.isMavlink2;
         unpack(mavLinkPacket.payload);
     }
 
-
+                  
     /**
      * Returns a string with the MSG name and data
      */
+    @Override
     public String toString() {
-        return "MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE - sysid:" + sysid + " compid:" + compid + " size:" + size + " width:" + width + " height:" + height + " packets:" + packets + " type:" + type + " payload:" + payload + " jpg_quality:" + jpg_quality + "";
+        return "MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE - sysid:"+sysid+" compid:"+compid+" size:"+size+" width:"+width+" height:"+height+" packets:"+packets+" type:"+type+" payload:"+payload+" jpg_quality:"+jpg_quality+"";
+    }
+
+    /**
+     * Returns a human-readable string of the name of the message
+     */
+    @Override
+    public String name() {
+        return "MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE";
     }
 }
         

@@ -6,13 +6,14 @@
 
 // MESSAGE LOG_REQUEST_LIST PACKING
 package com.MAVLink.common;
-
 import com.MAVLink.MAVLinkPacket;
 import com.MAVLink.Messages.MAVLinkMessage;
 import com.MAVLink.Messages.MAVLinkPayload;
+import com.MAVLink.Messages.Units;
+import com.MAVLink.Messages.Description;
 
 /**
- * Request a list of available logs. On some systems calling this may stop on-board logging until LOG_REQUEST_END is called.
+ * Request a list of available logs. On some systems calling this may stop on-board logging until LOG_REQUEST_END is called. If there are no log files available this request shall be answered with one LOG_ENTRY message with id = 0 and num_logs = 0.
  */
 public class msg_log_request_list extends MAVLinkMessage {
 
@@ -20,47 +21,55 @@ public class msg_log_request_list extends MAVLinkMessage {
     public static final int MAVLINK_MSG_LENGTH = 6;
     private static final long serialVersionUID = MAVLINK_MSG_ID_LOG_REQUEST_LIST;
 
-
+    
     /**
      * First log id (0 for first available)
      */
+    @Description("First log id (0 for first available)")
+    @Units("")
     public int start;
-
+    
     /**
      * Last log id (0xffff for last available)
      */
+    @Description("Last log id (0xffff for last available)")
+    @Units("")
     public int end;
-
+    
     /**
      * System ID
      */
+    @Description("System ID")
+    @Units("")
     public short target_system;
-
+    
     /**
      * Component ID
      */
+    @Description("Component ID")
+    @Units("")
     public short target_component;
-
+    
 
     /**
      * Generates the payload for a mavlink message for a message of this type
-     *
      * @return
      */
+    @Override
     public MAVLinkPacket pack() {
-        MAVLinkPacket packet = new MAVLinkPacket(MAVLINK_MSG_LENGTH);
-        packet.sysid = 255;
-        packet.compid = 190;
+        MAVLinkPacket packet = new MAVLinkPacket(MAVLINK_MSG_LENGTH,isMavlink2);
+        packet.sysid = sysid;
+        packet.compid = compid;
         packet.msgid = MAVLINK_MSG_ID_LOG_REQUEST_LIST;
 
         packet.payload.putUnsignedShort(start);
-
         packet.payload.putUnsignedShort(end);
-
         packet.payload.putUnsignedByte(target_system);
-
         packet.payload.putUnsignedByte(target_component);
-
+        
+        if (isMavlink2) {
+            
+        }
         return packet;
     }
 
@@ -69,43 +78,85 @@ public class msg_log_request_list extends MAVLinkMessage {
      *
      * @param payload The message to decode
      */
+    @Override
     public void unpack(MAVLinkPayload payload) {
         payload.resetIndex();
 
         this.start = payload.getUnsignedShort();
-
         this.end = payload.getUnsignedShort();
-
         this.target_system = payload.getUnsignedByte();
-
         this.target_component = payload.getUnsignedByte();
-
+        
+        if (isMavlink2) {
+            
+        }
     }
 
     /**
      * Constructor for a new message, just initializes the msgid
      */
     public msg_log_request_list() {
-        msgid = MAVLINK_MSG_ID_LOG_REQUEST_LIST;
+        this.msgid = MAVLINK_MSG_ID_LOG_REQUEST_LIST;
+    }
+
+    /**
+     * Constructor for a new message, initializes msgid and all payload variables
+     */
+    public msg_log_request_list( int start, int end, short target_system, short target_component) {
+        this.msgid = MAVLINK_MSG_ID_LOG_REQUEST_LIST;
+
+        this.start = start;
+        this.end = end;
+        this.target_system = target_system;
+        this.target_component = target_component;
+        
+    }
+
+    /**
+     * Constructor for a new message, initializes everything
+     */
+    public msg_log_request_list( int start, int end, short target_system, short target_component, int sysid, int compid, boolean isMavlink2) {
+        this.msgid = MAVLINK_MSG_ID_LOG_REQUEST_LIST;
+        this.sysid = sysid;
+        this.compid = compid;
+        this.isMavlink2 = isMavlink2;
+
+        this.start = start;
+        this.end = end;
+        this.target_system = target_system;
+        this.target_component = target_component;
+        
     }
 
     /**
      * Constructor for a new message, initializes the message with the payload
      * from a mavlink packet
+     *
      */
     public msg_log_request_list(MAVLinkPacket mavLinkPacket) {
+        this.msgid = MAVLINK_MSG_ID_LOG_REQUEST_LIST;
+
         this.sysid = mavLinkPacket.sysid;
         this.compid = mavLinkPacket.compid;
-        this.msgid = MAVLINK_MSG_ID_LOG_REQUEST_LIST;
+        this.isMavlink2 = mavLinkPacket.isMavlink2;
         unpack(mavLinkPacket.payload);
     }
 
-
+            
     /**
      * Returns a string with the MSG name and data
      */
+    @Override
     public String toString() {
-        return "MAVLINK_MSG_ID_LOG_REQUEST_LIST - sysid:" + sysid + " compid:" + compid + " start:" + start + " end:" + end + " target_system:" + target_system + " target_component:" + target_component + "";
+        return "MAVLINK_MSG_ID_LOG_REQUEST_LIST - sysid:"+sysid+" compid:"+compid+" start:"+start+" end:"+end+" target_system:"+target_system+" target_component:"+target_component+"";
+    }
+
+    /**
+     * Returns a human-readable string of the name of the message
+     */
+    @Override
+    public String name() {
+        return "MAVLINK_MSG_ID_LOG_REQUEST_LIST";
     }
 }
         

@@ -13,6 +13,7 @@ import dji.sdk.products.HandHeld;
 
 public class RDApplication extends Application {
 
+    public static boolean useMavLink2 = true; // MAVSDK only speaks MAVLink 2
     private static BaseProduct mProduct;
     private static DJISimulatorApplication simulatorApplication;
     private static boolean m_sim = false;

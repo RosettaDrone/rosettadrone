@@ -6,10 +6,11 @@
 
 // MESSAGE DEBUG PACKING
 package com.MAVLink.common;
-
 import com.MAVLink.MAVLinkPacket;
 import com.MAVLink.Messages.MAVLinkMessage;
 import com.MAVLink.Messages.MAVLinkPayload;
+import com.MAVLink.Messages.Units;
+import com.MAVLink.Messages.Description;
 
 /**
  * Send a debug value. The index is used to discriminate between values. These values show up in the plot of QGroundControl as DEBUG N.
@@ -20,40 +21,47 @@ public class msg_debug extends MAVLinkMessage {
     public static final int MAVLINK_MSG_LENGTH = 9;
     private static final long serialVersionUID = MAVLINK_MSG_ID_DEBUG;
 
-
+    
     /**
      * Timestamp (time since system boot).
      */
+    @Description("Timestamp (time since system boot).")
+    @Units("ms")
     public long time_boot_ms;
-
+    
     /**
      * DEBUG value
      */
+    @Description("DEBUG value")
+    @Units("")
     public float value;
-
+    
     /**
      * index of debug variable
      */
+    @Description("index of debug variable")
+    @Units("")
     public short ind;
-
+    
 
     /**
      * Generates the payload for a mavlink message for a message of this type
-     *
      * @return
      */
+    @Override
     public MAVLinkPacket pack() {
-        MAVLinkPacket packet = new MAVLinkPacket(MAVLINK_MSG_LENGTH);
-        packet.sysid = 255;
-        packet.compid = 190;
+        MAVLinkPacket packet = new MAVLinkPacket(MAVLINK_MSG_LENGTH,isMavlink2);
+        packet.sysid = sysid;
+        packet.compid = compid;
         packet.msgid = MAVLINK_MSG_ID_DEBUG;
 
         packet.payload.putUnsignedInt(time_boot_ms);
-
         packet.payload.putFloat(value);
-
         packet.payload.putUnsignedByte(ind);
-
+        
+        if (isMavlink2) {
+            
+        }
         return packet;
     }
 
@@ -62,41 +70,82 @@ public class msg_debug extends MAVLinkMessage {
      *
      * @param payload The message to decode
      */
+    @Override
     public void unpack(MAVLinkPayload payload) {
         payload.resetIndex();
 
         this.time_boot_ms = payload.getUnsignedInt();
-
         this.value = payload.getFloat();
-
         this.ind = payload.getUnsignedByte();
-
+        
+        if (isMavlink2) {
+            
+        }
     }
 
     /**
      * Constructor for a new message, just initializes the msgid
      */
     public msg_debug() {
-        msgid = MAVLINK_MSG_ID_DEBUG;
+        this.msgid = MAVLINK_MSG_ID_DEBUG;
+    }
+
+    /**
+     * Constructor for a new message, initializes msgid and all payload variables
+     */
+    public msg_debug( long time_boot_ms, float value, short ind) {
+        this.msgid = MAVLINK_MSG_ID_DEBUG;
+
+        this.time_boot_ms = time_boot_ms;
+        this.value = value;
+        this.ind = ind;
+        
+    }
+
+    /**
+     * Constructor for a new message, initializes everything
+     */
+    public msg_debug( long time_boot_ms, float value, short ind, int sysid, int compid, boolean isMavlink2) {
+        this.msgid = MAVLINK_MSG_ID_DEBUG;
+        this.sysid = sysid;
+        this.compid = compid;
+        this.isMavlink2 = isMavlink2;
+
+        this.time_boot_ms = time_boot_ms;
+        this.value = value;
+        this.ind = ind;
+        
     }
 
     /**
      * Constructor for a new message, initializes the message with the payload
      * from a mavlink packet
+     *
      */
     public msg_debug(MAVLinkPacket mavLinkPacket) {
+        this.msgid = MAVLINK_MSG_ID_DEBUG;
+
         this.sysid = mavLinkPacket.sysid;
         this.compid = mavLinkPacket.compid;
-        this.msgid = MAVLINK_MSG_ID_DEBUG;
+        this.isMavlink2 = mavLinkPacket.isMavlink2;
         unpack(mavLinkPacket.payload);
     }
 
-
+          
     /**
      * Returns a string with the MSG name and data
      */
+    @Override
     public String toString() {
-        return "MAVLINK_MSG_ID_DEBUG - sysid:" + sysid + " compid:" + compid + " time_boot_ms:" + time_boot_ms + " value:" + value + " ind:" + ind + "";
+        return "MAVLINK_MSG_ID_DEBUG - sysid:"+sysid+" compid:"+compid+" time_boot_ms:"+time_boot_ms+" value:"+value+" ind:"+ind+"";
+    }
+
+    /**
+     * Returns a human-readable string of the name of the message
+     */
+    @Override
+    public String name() {
+        return "MAVLINK_MSG_ID_DEBUG";
     }
 }
         

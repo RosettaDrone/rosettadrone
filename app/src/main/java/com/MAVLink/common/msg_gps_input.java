@@ -6,10 +6,11 @@
 
 // MESSAGE GPS_INPUT PACKING
 package com.MAVLink.common;
-
 import com.MAVLink.MAVLinkPacket;
 import com.MAVLink.Messages.MAVLinkMessage;
 import com.MAVLink.Messages.MAVLinkPayload;
+import com.MAVLink.Messages.Units;
+import com.MAVLink.Messages.Description;
 
 /**
  * GPS sensor input message.  This is a raw sensor value sent by the GPS. This is NOT the global position estimate of the system.
@@ -20,152 +21,175 @@ public class msg_gps_input extends MAVLinkMessage {
     public static final int MAVLINK_MSG_LENGTH = 65;
     private static final long serialVersionUID = MAVLINK_MSG_ID_GPS_INPUT;
 
-
+    
     /**
-     * Timestamp (UNIX Epoch time or time since system boot). The receiving end can infer timestamp format (since 1.1.1970 or since system boot) by checking for the magnitude the number.
+     * Timestamp (UNIX Epoch time or time since system boot). The receiving end can infer timestamp format (since 1.1.1970 or since system boot) by checking for the magnitude of the number.
      */
+    @Description("Timestamp (UNIX Epoch time or time since system boot). The receiving end can infer timestamp format (since 1.1.1970 or since system boot) by checking for the magnitude of the number.")
+    @Units("us")
     public long time_usec;
-
+    
     /**
      * GPS time (from start of GPS week)
      */
+    @Description("GPS time (from start of GPS week)")
+    @Units("ms")
     public long time_week_ms;
-
+    
     /**
      * Latitude (WGS84)
      */
+    @Description("Latitude (WGS84)")
+    @Units("degE7")
     public int lat;
-
+    
     /**
      * Longitude (WGS84)
      */
+    @Description("Longitude (WGS84)")
+    @Units("degE7")
     public int lon;
-
+    
     /**
      * Altitude (MSL). Positive for up.
      */
+    @Description("Altitude (MSL). Positive for up.")
+    @Units("m")
     public float alt;
-
+    
     /**
-     * GPS HDOP horizontal dilution of position
+     * GPS HDOP horizontal dilution of position (unitless). If unknown, set to: UINT16_MAX
      */
+    @Description("GPS HDOP horizontal dilution of position (unitless). If unknown, set to: UINT16_MAX")
+    @Units("")
     public float hdop;
-
+    
     /**
-     * GPS VDOP vertical dilution of position
+     * GPS VDOP vertical dilution of position (unitless). If unknown, set to: UINT16_MAX
      */
+    @Description("GPS VDOP vertical dilution of position (unitless). If unknown, set to: UINT16_MAX")
+    @Units("")
     public float vdop;
-
+    
     /**
      * GPS velocity in north direction in earth-fixed NED frame
      */
+    @Description("GPS velocity in north direction in earth-fixed NED frame")
+    @Units("m/s")
     public float vn;
-
+    
     /**
      * GPS velocity in east direction in earth-fixed NED frame
      */
+    @Description("GPS velocity in east direction in earth-fixed NED frame")
+    @Units("m/s")
     public float ve;
-
+    
     /**
      * GPS velocity in down direction in earth-fixed NED frame
      */
+    @Description("GPS velocity in down direction in earth-fixed NED frame")
+    @Units("m/s")
     public float vd;
-
+    
     /**
      * GPS speed accuracy
      */
+    @Description("GPS speed accuracy")
+    @Units("m/s")
     public float speed_accuracy;
-
+    
     /**
      * GPS horizontal accuracy
      */
+    @Description("GPS horizontal accuracy")
+    @Units("m")
     public float horiz_accuracy;
-
+    
     /**
      * GPS vertical accuracy
      */
+    @Description("GPS vertical accuracy")
+    @Units("m")
     public float vert_accuracy;
-
+    
     /**
      * Bitmap indicating which GPS input flags fields to ignore.  All other fields must be provided.
      */
+    @Description("Bitmap indicating which GPS input flags fields to ignore.  All other fields must be provided.")
+    @Units("")
     public int ignore_flags;
-
+    
     /**
      * GPS week number
      */
+    @Description("GPS week number")
+    @Units("")
     public int time_week;
-
+    
     /**
      * ID of the GPS for multiple GPS inputs
      */
+    @Description("ID of the GPS for multiple GPS inputs")
+    @Units("")
     public short gps_id;
-
+    
     /**
      * 0-1: no fix, 2: 2D fix, 3: 3D fix. 4: 3D with DGPS. 5: 3D with RTK
      */
+    @Description("0-1: no fix, 2: 2D fix, 3: 3D fix. 4: 3D with DGPS. 5: 3D with RTK")
+    @Units("")
     public short fix_type;
-
+    
     /**
      * Number of satellites visible.
      */
+    @Description("Number of satellites visible.")
+    @Units("")
     public short satellites_visible;
-
+    
     /**
      * Yaw of vehicle relative to Earth's North, zero means not available, use 36000 for north
      */
+    @Description("Yaw of vehicle relative to Earth's North, zero means not available, use 36000 for north")
+    @Units("cdeg")
     public int yaw;
-
+    
 
     /**
      * Generates the payload for a mavlink message for a message of this type
-     *
      * @return
      */
+    @Override
     public MAVLinkPacket pack() {
-        MAVLinkPacket packet = new MAVLinkPacket(MAVLINK_MSG_LENGTH);
-        packet.sysid = 255;
-        packet.compid = 190;
+        MAVLinkPacket packet = new MAVLinkPacket(MAVLINK_MSG_LENGTH,isMavlink2);
+        packet.sysid = sysid;
+        packet.compid = compid;
         packet.msgid = MAVLINK_MSG_ID_GPS_INPUT;
 
         packet.payload.putUnsignedLong(time_usec);
-
         packet.payload.putUnsignedInt(time_week_ms);
-
         packet.payload.putInt(lat);
-
         packet.payload.putInt(lon);
-
         packet.payload.putFloat(alt);
-
         packet.payload.putFloat(hdop);
-
         packet.payload.putFloat(vdop);
-
         packet.payload.putFloat(vn);
-
         packet.payload.putFloat(ve);
-
         packet.payload.putFloat(vd);
-
         packet.payload.putFloat(speed_accuracy);
-
         packet.payload.putFloat(horiz_accuracy);
-
         packet.payload.putFloat(vert_accuracy);
-
         packet.payload.putUnsignedShort(ignore_flags);
-
         packet.payload.putUnsignedShort(time_week);
-
         packet.payload.putUnsignedByte(gps_id);
-
         packet.payload.putUnsignedByte(fix_type);
-
         packet.payload.putUnsignedByte(satellites_visible);
-
-        packet.payload.putUnsignedShort(yaw);
-
+        
+        if (isMavlink2) {
+             packet.payload.putUnsignedShort(yaw);
+            
+        }
         return packet;
     }
 
@@ -174,73 +198,130 @@ public class msg_gps_input extends MAVLinkMessage {
      *
      * @param payload The message to decode
      */
+    @Override
     public void unpack(MAVLinkPayload payload) {
         payload.resetIndex();
 
         this.time_usec = payload.getUnsignedLong();
-
         this.time_week_ms = payload.getUnsignedInt();
-
         this.lat = payload.getInt();
-
         this.lon = payload.getInt();
-
         this.alt = payload.getFloat();
-
         this.hdop = payload.getFloat();
-
         this.vdop = payload.getFloat();
-
         this.vn = payload.getFloat();
-
         this.ve = payload.getFloat();
-
         this.vd = payload.getFloat();
-
         this.speed_accuracy = payload.getFloat();
-
         this.horiz_accuracy = payload.getFloat();
-
         this.vert_accuracy = payload.getFloat();
-
         this.ignore_flags = payload.getUnsignedShort();
-
         this.time_week = payload.getUnsignedShort();
-
         this.gps_id = payload.getUnsignedByte();
-
         this.fix_type = payload.getUnsignedByte();
-
         this.satellites_visible = payload.getUnsignedByte();
-
-        this.yaw = payload.getUnsignedShort();
-
+        
+        if (isMavlink2) {
+             this.yaw = payload.getUnsignedShort();
+            
+        }
     }
 
     /**
      * Constructor for a new message, just initializes the msgid
      */
     public msg_gps_input() {
-        msgid = MAVLINK_MSG_ID_GPS_INPUT;
+        this.msgid = MAVLINK_MSG_ID_GPS_INPUT;
+    }
+
+    /**
+     * Constructor for a new message, initializes msgid and all payload variables
+     */
+    public msg_gps_input( long time_usec, long time_week_ms, int lat, int lon, float alt, float hdop, float vdop, float vn, float ve, float vd, float speed_accuracy, float horiz_accuracy, float vert_accuracy, int ignore_flags, int time_week, short gps_id, short fix_type, short satellites_visible, int yaw) {
+        this.msgid = MAVLINK_MSG_ID_GPS_INPUT;
+
+        this.time_usec = time_usec;
+        this.time_week_ms = time_week_ms;
+        this.lat = lat;
+        this.lon = lon;
+        this.alt = alt;
+        this.hdop = hdop;
+        this.vdop = vdop;
+        this.vn = vn;
+        this.ve = ve;
+        this.vd = vd;
+        this.speed_accuracy = speed_accuracy;
+        this.horiz_accuracy = horiz_accuracy;
+        this.vert_accuracy = vert_accuracy;
+        this.ignore_flags = ignore_flags;
+        this.time_week = time_week;
+        this.gps_id = gps_id;
+        this.fix_type = fix_type;
+        this.satellites_visible = satellites_visible;
+        this.yaw = yaw;
+        
+    }
+
+    /**
+     * Constructor for a new message, initializes everything
+     */
+    public msg_gps_input( long time_usec, long time_week_ms, int lat, int lon, float alt, float hdop, float vdop, float vn, float ve, float vd, float speed_accuracy, float horiz_accuracy, float vert_accuracy, int ignore_flags, int time_week, short gps_id, short fix_type, short satellites_visible, int yaw, int sysid, int compid, boolean isMavlink2) {
+        this.msgid = MAVLINK_MSG_ID_GPS_INPUT;
+        this.sysid = sysid;
+        this.compid = compid;
+        this.isMavlink2 = isMavlink2;
+
+        this.time_usec = time_usec;
+        this.time_week_ms = time_week_ms;
+        this.lat = lat;
+        this.lon = lon;
+        this.alt = alt;
+        this.hdop = hdop;
+        this.vdop = vdop;
+        this.vn = vn;
+        this.ve = ve;
+        this.vd = vd;
+        this.speed_accuracy = speed_accuracy;
+        this.horiz_accuracy = horiz_accuracy;
+        this.vert_accuracy = vert_accuracy;
+        this.ignore_flags = ignore_flags;
+        this.time_week = time_week;
+        this.gps_id = gps_id;
+        this.fix_type = fix_type;
+        this.satellites_visible = satellites_visible;
+        this.yaw = yaw;
+        
     }
 
     /**
      * Constructor for a new message, initializes the message with the payload
      * from a mavlink packet
+     *
      */
     public msg_gps_input(MAVLinkPacket mavLinkPacket) {
+        this.msgid = MAVLINK_MSG_ID_GPS_INPUT;
+
         this.sysid = mavLinkPacket.sysid;
         this.compid = mavLinkPacket.compid;
-        this.msgid = MAVLINK_MSG_ID_GPS_INPUT;
+        this.isMavlink2 = mavLinkPacket.isMavlink2;
         unpack(mavLinkPacket.payload);
     }
 
-
+                                          
     /**
      * Returns a string with the MSG name and data
      */
+    @Override
     public String toString() {
-        return "MAVLINK_MSG_ID_GPS_INPUT - sysid:" + sysid + " compid:" + compid + " time_usec:" + time_usec + " time_week_ms:" + time_week_ms + " lat:" + lat + " lon:" + lon + " alt:" + alt + " hdop:" + hdop + " vdop:" + vdop + " vn:" + vn + " ve:" + ve + " vd:" + vd + " speed_accuracy:" + speed_accuracy + " horiz_accuracy:" + horiz_accuracy + " vert_accuracy:" + vert_accuracy + " ignore_flags:" + ignore_flags + " time_week:" + time_week + " gps_id:" + gps_id + " fix_type:" + fix_type + " satellites_visible:" + satellites_visible + " yaw:" + yaw + "";
+        return "MAVLINK_MSG_ID_GPS_INPUT - sysid:"+sysid+" compid:"+compid+" time_usec:"+time_usec+" time_week_ms:"+time_week_ms+" lat:"+lat+" lon:"+lon+" alt:"+alt+" hdop:"+hdop+" vdop:"+vdop+" vn:"+vn+" ve:"+ve+" vd:"+vd+" speed_accuracy:"+speed_accuracy+" horiz_accuracy:"+horiz_accuracy+" vert_accuracy:"+vert_accuracy+" ignore_flags:"+ignore_flags+" time_week:"+time_week+" gps_id:"+gps_id+" fix_type:"+fix_type+" satellites_visible:"+satellites_visible+" yaw:"+yaw+"";
+    }
+
+    /**
+     * Returns a human-readable string of the name of the message
+     */
+    @Override
+    public String name() {
+        return "MAVLINK_MSG_ID_GPS_INPUT";
     }
 }
         

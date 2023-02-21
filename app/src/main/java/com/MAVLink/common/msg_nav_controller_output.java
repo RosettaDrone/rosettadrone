@@ -6,13 +6,14 @@
 
 // MESSAGE NAV_CONTROLLER_OUTPUT PACKING
 package com.MAVLink.common;
-
 import com.MAVLink.MAVLinkPacket;
 import com.MAVLink.Messages.MAVLinkMessage;
 import com.MAVLink.Messages.MAVLinkPayload;
+import com.MAVLink.Messages.Units;
+import com.MAVLink.Messages.Description;
 
 /**
- * The state of the fixed wing navigation and position controller.
+ * The state of the navigation and position controller.
  */
 public class msg_nav_controller_output extends MAVLinkMessage {
 
@@ -20,75 +21,87 @@ public class msg_nav_controller_output extends MAVLinkMessage {
     public static final int MAVLINK_MSG_LENGTH = 26;
     private static final long serialVersionUID = MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT;
 
-
+    
     /**
      * Current desired roll
      */
+    @Description("Current desired roll")
+    @Units("deg")
     public float nav_roll;
-
+    
     /**
      * Current desired pitch
      */
+    @Description("Current desired pitch")
+    @Units("deg")
     public float nav_pitch;
-
+    
     /**
      * Current altitude error
      */
+    @Description("Current altitude error")
+    @Units("m")
     public float alt_error;
-
+    
     /**
      * Current airspeed error
      */
+    @Description("Current airspeed error")
+    @Units("m/s")
     public float aspd_error;
-
+    
     /**
      * Current crosstrack error on x-y plane
      */
+    @Description("Current crosstrack error on x-y plane")
+    @Units("m")
     public float xtrack_error;
-
+    
     /**
      * Current desired heading
      */
+    @Description("Current desired heading")
+    @Units("deg")
     public short nav_bearing;
-
+    
     /**
      * Bearing to current waypoint/target
      */
+    @Description("Bearing to current waypoint/target")
+    @Units("deg")
     public short target_bearing;
-
+    
     /**
      * Distance to active waypoint
      */
+    @Description("Distance to active waypoint")
+    @Units("m")
     public int wp_dist;
-
+    
 
     /**
      * Generates the payload for a mavlink message for a message of this type
-     *
      * @return
      */
+    @Override
     public MAVLinkPacket pack() {
-        MAVLinkPacket packet = new MAVLinkPacket(MAVLINK_MSG_LENGTH);
-        packet.sysid = 255;
-        packet.compid = 190;
+        MAVLinkPacket packet = new MAVLinkPacket(MAVLINK_MSG_LENGTH,isMavlink2);
+        packet.sysid = sysid;
+        packet.compid = compid;
         packet.msgid = MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT;
 
         packet.payload.putFloat(nav_roll);
-
         packet.payload.putFloat(nav_pitch);
-
         packet.payload.putFloat(alt_error);
-
         packet.payload.putFloat(aspd_error);
-
         packet.payload.putFloat(xtrack_error);
-
         packet.payload.putShort(nav_bearing);
-
         packet.payload.putShort(target_bearing);
-
         packet.payload.putUnsignedShort(wp_dist);
-
+        
+        if (isMavlink2) {
+            
+        }
         return packet;
     }
 
@@ -97,51 +110,97 @@ public class msg_nav_controller_output extends MAVLinkMessage {
      *
      * @param payload The message to decode
      */
+    @Override
     public void unpack(MAVLinkPayload payload) {
         payload.resetIndex();
 
         this.nav_roll = payload.getFloat();
-
         this.nav_pitch = payload.getFloat();
-
         this.alt_error = payload.getFloat();
-
         this.aspd_error = payload.getFloat();
-
         this.xtrack_error = payload.getFloat();
-
         this.nav_bearing = payload.getShort();
-
         this.target_bearing = payload.getShort();
-
         this.wp_dist = payload.getUnsignedShort();
-
+        
+        if (isMavlink2) {
+            
+        }
     }
 
     /**
      * Constructor for a new message, just initializes the msgid
      */
     public msg_nav_controller_output() {
-        msgid = MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT;
+        this.msgid = MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT;
+    }
+
+    /**
+     * Constructor for a new message, initializes msgid and all payload variables
+     */
+    public msg_nav_controller_output( float nav_roll, float nav_pitch, float alt_error, float aspd_error, float xtrack_error, short nav_bearing, short target_bearing, int wp_dist) {
+        this.msgid = MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT;
+
+        this.nav_roll = nav_roll;
+        this.nav_pitch = nav_pitch;
+        this.alt_error = alt_error;
+        this.aspd_error = aspd_error;
+        this.xtrack_error = xtrack_error;
+        this.nav_bearing = nav_bearing;
+        this.target_bearing = target_bearing;
+        this.wp_dist = wp_dist;
+        
+    }
+
+    /**
+     * Constructor for a new message, initializes everything
+     */
+    public msg_nav_controller_output( float nav_roll, float nav_pitch, float alt_error, float aspd_error, float xtrack_error, short nav_bearing, short target_bearing, int wp_dist, int sysid, int compid, boolean isMavlink2) {
+        this.msgid = MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT;
+        this.sysid = sysid;
+        this.compid = compid;
+        this.isMavlink2 = isMavlink2;
+
+        this.nav_roll = nav_roll;
+        this.nav_pitch = nav_pitch;
+        this.alt_error = alt_error;
+        this.aspd_error = aspd_error;
+        this.xtrack_error = xtrack_error;
+        this.nav_bearing = nav_bearing;
+        this.target_bearing = target_bearing;
+        this.wp_dist = wp_dist;
+        
     }
 
     /**
      * Constructor for a new message, initializes the message with the payload
      * from a mavlink packet
+     *
      */
     public msg_nav_controller_output(MAVLinkPacket mavLinkPacket) {
+        this.msgid = MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT;
+
         this.sysid = mavLinkPacket.sysid;
         this.compid = mavLinkPacket.compid;
-        this.msgid = MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT;
+        this.isMavlink2 = mavLinkPacket.isMavlink2;
         unpack(mavLinkPacket.payload);
     }
 
-
+                    
     /**
      * Returns a string with the MSG name and data
      */
+    @Override
     public String toString() {
-        return "MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT - sysid:" + sysid + " compid:" + compid + " nav_roll:" + nav_roll + " nav_pitch:" + nav_pitch + " alt_error:" + alt_error + " aspd_error:" + aspd_error + " xtrack_error:" + xtrack_error + " nav_bearing:" + nav_bearing + " target_bearing:" + target_bearing + " wp_dist:" + wp_dist + "";
+        return "MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT - sysid:"+sysid+" compid:"+compid+" nav_roll:"+nav_roll+" nav_pitch:"+nav_pitch+" alt_error:"+alt_error+" aspd_error:"+aspd_error+" xtrack_error:"+xtrack_error+" nav_bearing:"+nav_bearing+" target_bearing:"+target_bearing+" wp_dist:"+wp_dist+"";
+    }
+
+    /**
+     * Returns a human-readable string of the name of the message
+     */
+    @Override
+    public String name() {
+        return "MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT";
     }
 }
         

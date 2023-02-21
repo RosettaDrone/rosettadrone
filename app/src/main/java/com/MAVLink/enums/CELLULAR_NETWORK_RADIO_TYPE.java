@@ -10,11 +10,11 @@ package com.MAVLink.enums;
  * Cellular network radio type
  */
 public class CELLULAR_NETWORK_RADIO_TYPE {
-    public static final int CELLULAR_NETWORK_RADIO_TYPE_NONE = 0; /*  | */
-    public static final int CELLULAR_NETWORK_RADIO_TYPE_GSM = 1; /*  | */
-    public static final int CELLULAR_NETWORK_RADIO_TYPE_CDMA = 2; /*  | */
-    public static final int CELLULAR_NETWORK_RADIO_TYPE_WCDMA = 3; /*  | */
-    public static final int CELLULAR_NETWORK_RADIO_TYPE_LTE = 4; /*  | */
-    public static final int CELLULAR_NETWORK_RADIO_TYPE_ENUM_END = 5; /*  | */
+   public static final int CELLULAR_NETWORK_RADIO_TYPE_NONE = 0; /*  | */
+   public static final int CELLULAR_NETWORK_RADIO_TYPE_GSM = 1; /*  | */
+   public static final int CELLULAR_NETWORK_RADIO_TYPE_CDMA = 2; /*  | */
+   public static final int CELLULAR_NETWORK_RADIO_TYPE_WCDMA = 3; /*  | */
+   public static final int CELLULAR_NETWORK_RADIO_TYPE_LTE = 4; /*  | */
+   public static final int CELLULAR_NETWORK_RADIO_TYPE_ENUM_END = 5; /*  | */
 }
             

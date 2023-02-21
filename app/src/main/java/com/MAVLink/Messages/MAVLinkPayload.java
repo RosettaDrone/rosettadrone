@@ -8,6 +8,9 @@ package com.MAVLink.Messages;
 
 import java.nio.ByteBuffer;
 
+/**
+ * Wrapper around {@link ByteBuffer} to represent a MAVLink message payload
+ */
 public class MAVLinkPayload {
 
     private static final byte UNSIGNED_BYTE_MIN_VALUE = 0;
@@ -22,16 +25,13 @@ public class MAVLinkPayload {
     private static final long UNSIGNED_LONG_MIN_VALUE = 0;
 
     public static final int MAX_PAYLOAD_SIZE = 255;
-
+    
     public final ByteBuffer payload;
     public int index;
 
-    public MAVLinkPayload(int payloadSize) {
-        if (payloadSize > MAX_PAYLOAD_SIZE) {
-            payload = ByteBuffer.allocate(MAX_PAYLOAD_SIZE);
-        } else {
-            payload = ByteBuffer.allocate(payloadSize);
-        }
+    public MAVLinkPayload() {
+       // This has to be larger than the received payloadSize since MAVLINK V2 will truncate the payloads to the last non-zero value
+       payload = ByteBuffer.allocate(MAX_PAYLOAD_SIZE);
     }
 
     public ByteBuffer getData() {
@@ -57,16 +57,11 @@ public class MAVLinkPayload {
         return result;
     }
 
-    // TERJE BUGG....
     public short getUnsignedByte() {
         short result = 0;
-        if (payload.array().length > index) {
-            result |= payload.get(index + 0) & 0xFF;
-            index += 1;
-        } else {
-            // ERROR::::
-        }
-        return result;
+        result |= payload.get(index + 0) & 0xFF;
+        index += 1;
+        return result; 
     }
 
     public short getShort() {
@@ -119,10 +114,10 @@ public class MAVLinkPayload {
         return result;
     }
 
-    public long getUnsignedLong() {
+    public long getUnsignedLong(){
         return getLong();
     }
-
+    
     public long getLongReverse() {
         long result = 0;
         result |= (payload.get(index + 0) & 0xFFL) << 56;
@@ -143,8 +138,8 @@ public class MAVLinkPayload {
 
     public double getDouble() {
         return Double.longBitsToDouble(getLong());
-    }
-
+    }   
+    
     public void putByte(byte data) {
         add(data);
     }

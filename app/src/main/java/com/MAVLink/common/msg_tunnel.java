@@ -6,10 +6,11 @@
 
 // MESSAGE TUNNEL PACKING
 package com.MAVLink.common;
-
 import com.MAVLink.MAVLinkPacket;
 import com.MAVLink.Messages.MAVLinkMessage;
 import com.MAVLink.Messages.MAVLinkPayload;
+import com.MAVLink.Messages.Units;
+import com.MAVLink.Messages.Description;
 
 /**
  * Message for transporting "arbitrary" variable-length data from one component to another (broadcast is not forbidden, but discouraged). The encoding of the data is usually extension specific, i.e. determined by the source, and is usually not documented as part of the MAVLink specification.
@@ -20,58 +21,67 @@ public class msg_tunnel extends MAVLinkMessage {
     public static final int MAVLINK_MSG_LENGTH = 133;
     private static final long serialVersionUID = MAVLINK_MSG_ID_TUNNEL;
 
-
+    
     /**
      * A code that identifies the content of the payload (0 for unknown, which is the default). If this code is less than 32768, it is a 'registered' payload type and the corresponding code should be added to the MAV_TUNNEL_PAYLOAD_TYPE enum. Software creators can register blocks of types as needed. Codes greater than 32767 are considered local experiments and should not be checked in to any widely distributed codebase.
      */
+    @Description("A code that identifies the content of the payload (0 for unknown, which is the default). If this code is less than 32768, it is a 'registered' payload type and the corresponding code should be added to the MAV_TUNNEL_PAYLOAD_TYPE enum. Software creators can register blocks of types as needed. Codes greater than 32767 are considered local experiments and should not be checked in to any widely distributed codebase.")
+    @Units("")
     public int payload_type;
-
+    
     /**
      * System ID (can be 0 for broadcast, but this is discouraged)
      */
+    @Description("System ID (can be 0 for broadcast, but this is discouraged)")
+    @Units("")
     public short target_system;
-
+    
     /**
      * Component ID (can be 0 for broadcast, but this is discouraged)
      */
+    @Description("Component ID (can be 0 for broadcast, but this is discouraged)")
+    @Units("")
     public short target_component;
-
+    
     /**
      * Length of the data transported in payload
      */
+    @Description("Length of the data transported in payload")
+    @Units("")
     public short payload_length;
-
+    
     /**
      * Variable length payload. The payload length is defined by payload_length. The entire content of this block is opaque unless you understand the encoding specified by payload_type.
      */
+    @Description("Variable length payload. The payload length is defined by payload_length. The entire content of this block is opaque unless you understand the encoding specified by payload_type.")
+    @Units("")
     public short payload[] = new short[128];
-
+    
 
     /**
      * Generates the payload for a mavlink message for a message of this type
-     *
      * @return
      */
+    @Override
     public MAVLinkPacket pack() {
-        MAVLinkPacket packet = new MAVLinkPacket(MAVLINK_MSG_LENGTH);
-        packet.sysid = 255;
-        packet.compid = 190;
+        MAVLinkPacket packet = new MAVLinkPacket(MAVLINK_MSG_LENGTH,isMavlink2);
+        packet.sysid = sysid;
+        packet.compid = compid;
         packet.msgid = MAVLINK_MSG_ID_TUNNEL;
 
         packet.payload.putUnsignedShort(payload_type);
-
         packet.payload.putUnsignedByte(target_system);
-
         packet.payload.putUnsignedByte(target_component);
-
         packet.payload.putUnsignedByte(payload_length);
-
-
+        
         for (int i = 0; i < payload.length; i++) {
             packet.payload.putUnsignedByte(payload[i]);
         }
-
-
+                    
+        
+        if (isMavlink2) {
+            
+        }
         return packet;
     }
 
@@ -80,49 +90,92 @@ public class msg_tunnel extends MAVLinkMessage {
      *
      * @param payload The message to decode
      */
+    @Override
     public void unpack(MAVLinkPayload payload) {
         payload.resetIndex();
 
         this.payload_type = payload.getUnsignedShort();
-
         this.target_system = payload.getUnsignedByte();
-
         this.target_component = payload.getUnsignedByte();
-
         this.payload_length = payload.getUnsignedByte();
-
-
+        
         for (int i = 0; i < this.payload.length; i++) {
             this.payload[i] = payload.getUnsignedByte();
         }
-
-
+                
+        
+        if (isMavlink2) {
+            
+        }
     }
 
     /**
      * Constructor for a new message, just initializes the msgid
      */
     public msg_tunnel() {
-        msgid = MAVLINK_MSG_ID_TUNNEL;
+        this.msgid = MAVLINK_MSG_ID_TUNNEL;
+    }
+
+    /**
+     * Constructor for a new message, initializes msgid and all payload variables
+     */
+    public msg_tunnel( int payload_type, short target_system, short target_component, short payload_length, short[] payload) {
+        this.msgid = MAVLINK_MSG_ID_TUNNEL;
+
+        this.payload_type = payload_type;
+        this.target_system = target_system;
+        this.target_component = target_component;
+        this.payload_length = payload_length;
+        this.payload = payload;
+        
+    }
+
+    /**
+     * Constructor for a new message, initializes everything
+     */
+    public msg_tunnel( int payload_type, short target_system, short target_component, short payload_length, short[] payload, int sysid, int compid, boolean isMavlink2) {
+        this.msgid = MAVLINK_MSG_ID_TUNNEL;
+        this.sysid = sysid;
+        this.compid = compid;
+        this.isMavlink2 = isMavlink2;
+
+        this.payload_type = payload_type;
+        this.target_system = target_system;
+        this.target_component = target_component;
+        this.payload_length = payload_length;
+        this.payload = payload;
+        
     }
 
     /**
      * Constructor for a new message, initializes the message with the payload
      * from a mavlink packet
+     *
      */
     public msg_tunnel(MAVLinkPacket mavLinkPacket) {
+        this.msgid = MAVLINK_MSG_ID_TUNNEL;
+
         this.sysid = mavLinkPacket.sysid;
         this.compid = mavLinkPacket.compid;
-        this.msgid = MAVLINK_MSG_ID_TUNNEL;
+        this.isMavlink2 = mavLinkPacket.isMavlink2;
         unpack(mavLinkPacket.payload);
     }
 
-
+              
     /**
      * Returns a string with the MSG name and data
      */
+    @Override
     public String toString() {
-        return "MAVLINK_MSG_ID_TUNNEL - sysid:" + sysid + " compid:" + compid + " payload_type:" + payload_type + " target_system:" + target_system + " target_component:" + target_component + " payload_length:" + payload_length + " payload:" + payload + "";
+        return "MAVLINK_MSG_ID_TUNNEL - sysid:"+sysid+" compid:"+compid+" payload_type:"+payload_type+" target_system:"+target_system+" target_component:"+target_component+" payload_length:"+payload_length+" payload:"+payload+"";
+    }
+
+    /**
+     * Returns a human-readable string of the name of the message
+     */
+    @Override
+    public String name() {
+        return "MAVLINK_MSG_ID_TUNNEL";
     }
 }
         

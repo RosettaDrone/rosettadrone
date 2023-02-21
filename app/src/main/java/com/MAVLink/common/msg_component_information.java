@@ -6,99 +6,88 @@
 
 // MESSAGE COMPONENT_INFORMATION PACKING
 package com.MAVLink.common;
-
 import com.MAVLink.MAVLinkPacket;
 import com.MAVLink.Messages.MAVLinkMessage;
 import com.MAVLink.Messages.MAVLinkPayload;
+import com.MAVLink.Messages.Units;
+import com.MAVLink.Messages.Description;
 
 /**
- * Information about a component. For camera components instead use CAMERA_INFORMATION, and for autopilots use AUTOPILOT_VERSION. Components including GCSes should consider supporting requests of this message via MAV_CMD_REQUEST_MESSAGE.
+ * 
+        Component information message, which may be requested using MAV_CMD_REQUEST_MESSAGE.
+      
  */
 public class msg_component_information extends MAVLinkMessage {
 
     public static final int MAVLINK_MSG_ID_COMPONENT_INFORMATION = 395;
-    public static final int MAVLINK_MSG_LENGTH = 222;
+    public static final int MAVLINK_MSG_LENGTH = 212;
     private static final long serialVersionUID = MAVLINK_MSG_ID_COMPONENT_INFORMATION;
 
-
+    
     /**
      * Timestamp (time since system boot).
      */
+    @Description("Timestamp (time since system boot).")
+    @Units("ms")
     public long time_boot_ms;
-
+    
     /**
-     * Version of the component firmware (v << 24 & 0xff = Dev, v << 16 & 0xff = Patch, v << 8 & 0xff = Minor, v & 0xff = Major)
+     * CRC32 of the general metadata file (general_metadata_uri).
      */
-    public long firmware_version;
-
+    @Description("CRC32 of the general metadata file (general_metadata_uri).")
+    @Units("")
+    public long general_metadata_file_crc;
+    
     /**
-     * Version of the component hardware (v << 24 & 0xff = Dev, v << 16 & 0xff = Patch, v << 8 & 0xff = Minor, v & 0xff = Major)
+     * CRC32 of peripherals metadata file (peripherals_metadata_uri).
      */
-    public long hardware_version;
-
+    @Description("CRC32 of peripherals metadata file (peripherals_metadata_uri).")
+    @Units("")
+    public long peripherals_metadata_file_crc;
+    
     /**
-     * Bitmap of component capability flags.
+     * MAVLink FTP URI for the general metadata file (COMP_METADATA_TYPE_GENERAL), which may be compressed with xz. The file contains general component metadata, and may contain URI links for additional metadata (see COMP_METADATA_TYPE). The information is static from boot, and may be generated at compile time. The string needs to be zero terminated.
      */
-    public long capability_flags;
-
+    @Description("MAVLink FTP URI for the general metadata file (COMP_METADATA_TYPE_GENERAL), which may be compressed with xz. The file contains general component metadata, and may contain URI links for additional metadata (see COMP_METADATA_TYPE). The information is static from boot, and may be generated at compile time. The string needs to be zero terminated.")
+    @Units("")
+    public byte general_metadata_uri[] = new byte[100];
+    
     /**
-     * Component definition version (iteration)
+     * (Optional) MAVLink FTP URI for the peripherals metadata file (COMP_METADATA_TYPE_PERIPHERALS), which may be compressed with xz. This contains data about 'attached components' such as UAVCAN nodes. The peripherals are in a separate file because the information must be generated dynamically at runtime. The string needs to be zero terminated.
      */
-    public int component_definition_version;
-
-    /**
-     * Name of the component vendor
-     */
-    public short vendor_name[] = new short[32];
-
-    /**
-     * Name of the component model
-     */
-    public short model_name[] = new short[32];
-
-    /**
-     * Component definition URI (if any, otherwise only basic functions will be available). The XML format is not yet specified and work in progress.
-     */
-    public byte component_definition_uri[] = new byte[140];
-
+    @Description("(Optional) MAVLink FTP URI for the peripherals metadata file (COMP_METADATA_TYPE_PERIPHERALS), which may be compressed with xz. This contains data about 'attached components' such as UAVCAN nodes. The peripherals are in a separate file because the information must be generated dynamically at runtime. The string needs to be zero terminated.")
+    @Units("")
+    public byte peripherals_metadata_uri[] = new byte[100];
+    
 
     /**
      * Generates the payload for a mavlink message for a message of this type
-     *
      * @return
      */
+    @Override
     public MAVLinkPacket pack() {
-        MAVLinkPacket packet = new MAVLinkPacket(MAVLINK_MSG_LENGTH);
-        packet.sysid = 255;
-        packet.compid = 190;
+        MAVLinkPacket packet = new MAVLinkPacket(MAVLINK_MSG_LENGTH,isMavlink2);
+        packet.sysid = sysid;
+        packet.compid = compid;
         packet.msgid = MAVLINK_MSG_ID_COMPONENT_INFORMATION;
 
         packet.payload.putUnsignedInt(time_boot_ms);
-
-        packet.payload.putUnsignedInt(firmware_version);
-
-        packet.payload.putUnsignedInt(hardware_version);
-
-        packet.payload.putUnsignedInt(capability_flags);
-
-        packet.payload.putUnsignedShort(component_definition_version);
-
-
-        for (int i = 0; i < vendor_name.length; i++) {
-            packet.payload.putUnsignedByte(vendor_name[i]);
+        packet.payload.putUnsignedInt(general_metadata_file_crc);
+        packet.payload.putUnsignedInt(peripherals_metadata_file_crc);
+        
+        for (int i = 0; i < general_metadata_uri.length; i++) {
+            packet.payload.putByte(general_metadata_uri[i]);
         }
-
-
-        for (int i = 0; i < model_name.length; i++) {
-            packet.payload.putUnsignedByte(model_name[i]);
+                    
+        
+        for (int i = 0; i < peripherals_metadata_uri.length; i++) {
+            packet.payload.putByte(peripherals_metadata_uri[i]);
         }
-
-
-        for (int i = 0; i < component_definition_uri.length; i++) {
-            packet.payload.putByte(component_definition_uri[i]);
+                    
+        
+        if (isMavlink2) {
+            
         }
-
-
         return packet;
     }
 
@@ -107,90 +96,154 @@ public class msg_component_information extends MAVLinkMessage {
      *
      * @param payload The message to decode
      */
+    @Override
     public void unpack(MAVLinkPayload payload) {
         payload.resetIndex();
 
         this.time_boot_ms = payload.getUnsignedInt();
-
-        this.firmware_version = payload.getUnsignedInt();
-
-        this.hardware_version = payload.getUnsignedInt();
-
-        this.capability_flags = payload.getUnsignedInt();
-
-        this.component_definition_version = payload.getUnsignedShort();
-
-
-        for (int i = 0; i < this.vendor_name.length; i++) {
-            this.vendor_name[i] = payload.getUnsignedByte();
+        this.general_metadata_file_crc = payload.getUnsignedInt();
+        this.peripherals_metadata_file_crc = payload.getUnsignedInt();
+        
+        for (int i = 0; i < this.general_metadata_uri.length; i++) {
+            this.general_metadata_uri[i] = payload.getByte();
         }
-
-
-        for (int i = 0; i < this.model_name.length; i++) {
-            this.model_name[i] = payload.getUnsignedByte();
+                
+        
+        for (int i = 0; i < this.peripherals_metadata_uri.length; i++) {
+            this.peripherals_metadata_uri[i] = payload.getByte();
         }
-
-
-        for (int i = 0; i < this.component_definition_uri.length; i++) {
-            this.component_definition_uri[i] = payload.getByte();
+                
+        
+        if (isMavlink2) {
+            
         }
-
-
     }
 
     /**
      * Constructor for a new message, just initializes the msgid
      */
     public msg_component_information() {
-        msgid = MAVLINK_MSG_ID_COMPONENT_INFORMATION;
+        this.msgid = MAVLINK_MSG_ID_COMPONENT_INFORMATION;
+    }
+
+    /**
+     * Constructor for a new message, initializes msgid and all payload variables
+     */
+    public msg_component_information( long time_boot_ms, long general_metadata_file_crc, long peripherals_metadata_file_crc, byte[] general_metadata_uri, byte[] peripherals_metadata_uri) {
+        this.msgid = MAVLINK_MSG_ID_COMPONENT_INFORMATION;
+
+        this.time_boot_ms = time_boot_ms;
+        this.general_metadata_file_crc = general_metadata_file_crc;
+        this.peripherals_metadata_file_crc = peripherals_metadata_file_crc;
+        this.general_metadata_uri = general_metadata_uri;
+        this.peripherals_metadata_uri = peripherals_metadata_uri;
+        
+    }
+
+    /**
+     * Constructor for a new message, initializes everything
+     */
+    public msg_component_information( long time_boot_ms, long general_metadata_file_crc, long peripherals_metadata_file_crc, byte[] general_metadata_uri, byte[] peripherals_metadata_uri, int sysid, int compid, boolean isMavlink2) {
+        this.msgid = MAVLINK_MSG_ID_COMPONENT_INFORMATION;
+        this.sysid = sysid;
+        this.compid = compid;
+        this.isMavlink2 = isMavlink2;
+
+        this.time_boot_ms = time_boot_ms;
+        this.general_metadata_file_crc = general_metadata_file_crc;
+        this.peripherals_metadata_file_crc = peripherals_metadata_file_crc;
+        this.general_metadata_uri = general_metadata_uri;
+        this.peripherals_metadata_uri = peripherals_metadata_uri;
+        
     }
 
     /**
      * Constructor for a new message, initializes the message with the payload
      * from a mavlink packet
+     *
      */
     public msg_component_information(MAVLinkPacket mavLinkPacket) {
+        this.msgid = MAVLINK_MSG_ID_COMPONENT_INFORMATION;
+
         this.sysid = mavLinkPacket.sysid;
         this.compid = mavLinkPacket.compid;
-        this.msgid = MAVLINK_MSG_ID_COMPONENT_INFORMATION;
+        this.isMavlink2 = mavLinkPacket.isMavlink2;
         unpack(mavLinkPacket.payload);
     }
 
-
+           
     /**
-     * Sets the buffer of this message with a string, adds the necessary padding
-     */
-    public void setComponent_Definition_Uri(String str) {
-        int len = Math.min(str.length(), 140);
-        for (int i = 0; i < len; i++) {
-            component_definition_uri[i] = (byte) str.charAt(i);
+    * Sets the buffer of this message with a string, adds the necessary padding
+    */
+    public void setGeneral_Metadata_Uri(String str) {
+        int len = Math.min(str.length(), 100);
+        for (int i=0; i<len; i++) {
+            general_metadata_uri[i] = (byte) str.charAt(i);
         }
 
-        for (int i = len; i < 140; i++) {            // padding for the rest of the buffer
-            component_definition_uri[i] = 0;
+        for (int i=len; i<100; i++) {            // padding for the rest of the buffer
+            general_metadata_uri[i] = 0;
         }
     }
 
     /**
-     * Gets the message, formated as a string
-     */
-    public String getComponent_Definition_Uri() {
+    * Gets the message, formatted as a string
+    */
+    public String getGeneral_Metadata_Uri() {
         StringBuffer buf = new StringBuffer();
-        for (int i = 0; i < 140; i++) {
-            if (component_definition_uri[i] != 0)
-                buf.append((char) component_definition_uri[i]);
+        for (int i = 0; i < 100; i++) {
+            if (general_metadata_uri[i] != 0)
+                buf.append((char) general_metadata_uri[i]);
             else
                 break;
         }
         return buf.toString();
 
     }
+                          
+    /**
+    * Sets the buffer of this message with a string, adds the necessary padding
+    */
+    public void setPeripherals_Metadata_Uri(String str) {
+        int len = Math.min(str.length(), 100);
+        for (int i=0; i<len; i++) {
+            peripherals_metadata_uri[i] = (byte) str.charAt(i);
+        }
 
+        for (int i=len; i<100; i++) {            // padding for the rest of the buffer
+            peripherals_metadata_uri[i] = 0;
+        }
+    }
+
+    /**
+    * Gets the message, formatted as a string
+    */
+    public String getPeripherals_Metadata_Uri() {
+        StringBuffer buf = new StringBuffer();
+        for (int i = 0; i < 100; i++) {
+            if (peripherals_metadata_uri[i] != 0)
+                buf.append((char) peripherals_metadata_uri[i]);
+            else
+                break;
+        }
+        return buf.toString();
+
+    }
+                         
     /**
      * Returns a string with the MSG name and data
      */
+    @Override
     public String toString() {
-        return "MAVLINK_MSG_ID_COMPONENT_INFORMATION - sysid:" + sysid + " compid:" + compid + " time_boot_ms:" + time_boot_ms + " firmware_version:" + firmware_version + " hardware_version:" + hardware_version + " capability_flags:" + capability_flags + " component_definition_version:" + component_definition_version + " vendor_name:" + vendor_name + " model_name:" + model_name + " component_definition_uri:" + component_definition_uri + "";
+        return "MAVLINK_MSG_ID_COMPONENT_INFORMATION - sysid:"+sysid+" compid:"+compid+" time_boot_ms:"+time_boot_ms+" general_metadata_file_crc:"+general_metadata_file_crc+" peripherals_metadata_file_crc:"+peripherals_metadata_file_crc+" general_metadata_uri:"+general_metadata_uri+" peripherals_metadata_uri:"+peripherals_metadata_uri+"";
+    }
+
+    /**
+     * Returns a human-readable string of the name of the message
+     */
+    @Override
+    public String name() {
+        return "MAVLINK_MSG_ID_COMPONENT_INFORMATION";
     }
 }
         

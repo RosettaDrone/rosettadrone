@@ -6,10 +6,11 @@
 
 // MESSAGE OBSTACLE_DISTANCE PACKING
 package com.MAVLink.common;
-
 import com.MAVLink.MAVLinkPacket;
 import com.MAVLink.Messages.MAVLinkMessage;
 import com.MAVLink.Messages.MAVLinkPayload;
+import com.MAVLink.Messages.Units;
+import com.MAVLink.Messages.Description;
 
 /**
  * Obstacle distances in front of the sensor, starting from the left in increment degrees to the right
@@ -20,86 +21,99 @@ public class msg_obstacle_distance extends MAVLinkMessage {
     public static final int MAVLINK_MSG_LENGTH = 167;
     private static final long serialVersionUID = MAVLINK_MSG_ID_OBSTACLE_DISTANCE;
 
-
+    
     /**
-     * Timestamp (UNIX Epoch time or time since system boot). The receiving end can infer timestamp format (since 1.1.1970 or since system boot) by checking for the magnitude the number.
+     * Timestamp (UNIX Epoch time or time since system boot). The receiving end can infer timestamp format (since 1.1.1970 or since system boot) by checking for the magnitude of the number.
      */
+    @Description("Timestamp (UNIX Epoch time or time since system boot). The receiving end can infer timestamp format (since 1.1.1970 or since system boot) by checking for the magnitude of the number.")
+    @Units("us")
     public long time_usec;
-
+    
     /**
      * Distance of obstacles around the vehicle with index 0 corresponding to north + angle_offset, unless otherwise specified in the frame. A value of 0 is valid and means that the obstacle is practically touching the sensor. A value of max_distance +1 means no obstacle is present. A value of UINT16_MAX for unknown/not used. In a array element, one unit corresponds to 1cm.
      */
+    @Description("Distance of obstacles around the vehicle with index 0 corresponding to north + angle_offset, unless otherwise specified in the frame. A value of 0 is valid and means that the obstacle is practically touching the sensor. A value of max_distance +1 means no obstacle is present. A value of UINT16_MAX for unknown/not used. In a array element, one unit corresponds to 1cm.")
+    @Units("cm")
     public int distances[] = new int[72];
-
+    
     /**
      * Minimum distance the sensor can measure.
      */
+    @Description("Minimum distance the sensor can measure.")
+    @Units("cm")
     public int min_distance;
-
+    
     /**
      * Maximum distance the sensor can measure.
      */
+    @Description("Maximum distance the sensor can measure.")
+    @Units("cm")
     public int max_distance;
-
+    
     /**
      * Class id of the distance sensor type.
      */
+    @Description("Class id of the distance sensor type.")
+    @Units("")
     public short sensor_type;
-
+    
     /**
      * Angular width in degrees of each array element. Increment direction is clockwise. This field is ignored if increment_f is non-zero.
      */
+    @Description("Angular width in degrees of each array element. Increment direction is clockwise. This field is ignored if increment_f is non-zero.")
+    @Units("deg")
     public short increment;
-
+    
     /**
      * Angular width in degrees of each array element as a float. If non-zero then this value is used instead of the uint8_t increment field. Positive is clockwise direction, negative is counter-clockwise.
      */
+    @Description("Angular width in degrees of each array element as a float. If non-zero then this value is used instead of the uint8_t increment field. Positive is clockwise direction, negative is counter-clockwise.")
+    @Units("deg")
     public float increment_f;
-
+    
     /**
      * Relative angle offset of the 0-index element in the distances array. Value of 0 corresponds to forward. Positive is clockwise direction, negative is counter-clockwise.
      */
+    @Description("Relative angle offset of the 0-index element in the distances array. Value of 0 corresponds to forward. Positive is clockwise direction, negative is counter-clockwise.")
+    @Units("deg")
     public float angle_offset;
-
+    
     /**
      * Coordinate frame of reference for the yaw rotation and offset of the sensor data. Defaults to MAV_FRAME_GLOBAL, which is north aligned. For body-mounted sensors use MAV_FRAME_BODY_FRD, which is vehicle front aligned.
      */
+    @Description("Coordinate frame of reference for the yaw rotation and offset of the sensor data. Defaults to MAV_FRAME_GLOBAL, which is north aligned. For body-mounted sensors use MAV_FRAME_BODY_FRD, which is vehicle front aligned.")
+    @Units("")
     public short frame;
-
+    
 
     /**
      * Generates the payload for a mavlink message for a message of this type
-     *
      * @return
      */
+    @Override
     public MAVLinkPacket pack() {
-        MAVLinkPacket packet = new MAVLinkPacket(MAVLINK_MSG_LENGTH);
-        packet.sysid = 255;
-        packet.compid = 190;
+        MAVLinkPacket packet = new MAVLinkPacket(MAVLINK_MSG_LENGTH,isMavlink2);
+        packet.sysid = sysid;
+        packet.compid = compid;
         packet.msgid = MAVLINK_MSG_ID_OBSTACLE_DISTANCE;
 
         packet.payload.putUnsignedLong(time_usec);
-
-
+        
         for (int i = 0; i < distances.length; i++) {
             packet.payload.putUnsignedShort(distances[i]);
         }
-
-
+                    
         packet.payload.putUnsignedShort(min_distance);
-
         packet.payload.putUnsignedShort(max_distance);
-
         packet.payload.putUnsignedByte(sensor_type);
-
         packet.payload.putUnsignedByte(increment);
-
-        packet.payload.putFloat(increment_f);
-
-        packet.payload.putFloat(angle_offset);
-
-        packet.payload.putUnsignedByte(frame);
-
+        
+        if (isMavlink2) {
+             packet.payload.putFloat(increment_f);
+             packet.payload.putFloat(angle_offset);
+             packet.payload.putUnsignedByte(frame);
+            
+        }
         return packet;
     }
 
@@ -108,57 +122,104 @@ public class msg_obstacle_distance extends MAVLinkMessage {
      *
      * @param payload The message to decode
      */
+    @Override
     public void unpack(MAVLinkPayload payload) {
         payload.resetIndex();
 
         this.time_usec = payload.getUnsignedLong();
-
-
+        
         for (int i = 0; i < this.distances.length; i++) {
             this.distances[i] = payload.getUnsignedShort();
         }
-
-
+                
         this.min_distance = payload.getUnsignedShort();
-
         this.max_distance = payload.getUnsignedShort();
-
         this.sensor_type = payload.getUnsignedByte();
-
         this.increment = payload.getUnsignedByte();
-
-        this.increment_f = payload.getFloat();
-
-        this.angle_offset = payload.getFloat();
-
-        this.frame = payload.getUnsignedByte();
-
+        
+        if (isMavlink2) {
+             this.increment_f = payload.getFloat();
+             this.angle_offset = payload.getFloat();
+             this.frame = payload.getUnsignedByte();
+            
+        }
     }
 
     /**
      * Constructor for a new message, just initializes the msgid
      */
     public msg_obstacle_distance() {
-        msgid = MAVLINK_MSG_ID_OBSTACLE_DISTANCE;
+        this.msgid = MAVLINK_MSG_ID_OBSTACLE_DISTANCE;
+    }
+
+    /**
+     * Constructor for a new message, initializes msgid and all payload variables
+     */
+    public msg_obstacle_distance( long time_usec, int[] distances, int min_distance, int max_distance, short sensor_type, short increment, float increment_f, float angle_offset, short frame) {
+        this.msgid = MAVLINK_MSG_ID_OBSTACLE_DISTANCE;
+
+        this.time_usec = time_usec;
+        this.distances = distances;
+        this.min_distance = min_distance;
+        this.max_distance = max_distance;
+        this.sensor_type = sensor_type;
+        this.increment = increment;
+        this.increment_f = increment_f;
+        this.angle_offset = angle_offset;
+        this.frame = frame;
+        
+    }
+
+    /**
+     * Constructor for a new message, initializes everything
+     */
+    public msg_obstacle_distance( long time_usec, int[] distances, int min_distance, int max_distance, short sensor_type, short increment, float increment_f, float angle_offset, short frame, int sysid, int compid, boolean isMavlink2) {
+        this.msgid = MAVLINK_MSG_ID_OBSTACLE_DISTANCE;
+        this.sysid = sysid;
+        this.compid = compid;
+        this.isMavlink2 = isMavlink2;
+
+        this.time_usec = time_usec;
+        this.distances = distances;
+        this.min_distance = min_distance;
+        this.max_distance = max_distance;
+        this.sensor_type = sensor_type;
+        this.increment = increment;
+        this.increment_f = increment_f;
+        this.angle_offset = angle_offset;
+        this.frame = frame;
+        
     }
 
     /**
      * Constructor for a new message, initializes the message with the payload
      * from a mavlink packet
+     *
      */
     public msg_obstacle_distance(MAVLinkPacket mavLinkPacket) {
+        this.msgid = MAVLINK_MSG_ID_OBSTACLE_DISTANCE;
+
         this.sysid = mavLinkPacket.sysid;
         this.compid = mavLinkPacket.compid;
-        this.msgid = MAVLINK_MSG_ID_OBSTACLE_DISTANCE;
+        this.isMavlink2 = mavLinkPacket.isMavlink2;
         unpack(mavLinkPacket.payload);
     }
 
-
+                      
     /**
      * Returns a string with the MSG name and data
      */
+    @Override
     public String toString() {
-        return "MAVLINK_MSG_ID_OBSTACLE_DISTANCE - sysid:" + sysid + " compid:" + compid + " time_usec:" + time_usec + " distances:" + distances + " min_distance:" + min_distance + " max_distance:" + max_distance + " sensor_type:" + sensor_type + " increment:" + increment + " increment_f:" + increment_f + " angle_offset:" + angle_offset + " frame:" + frame + "";
+        return "MAVLINK_MSG_ID_OBSTACLE_DISTANCE - sysid:"+sysid+" compid:"+compid+" time_usec:"+time_usec+" distances:"+distances+" min_distance:"+min_distance+" max_distance:"+max_distance+" sensor_type:"+sensor_type+" increment:"+increment+" increment_f:"+increment_f+" angle_offset:"+angle_offset+" frame:"+frame+"";
+    }
+
+    /**
+     * Returns a human-readable string of the name of the message
+     */
+    @Override
+    public String name() {
+        return "MAVLINK_MSG_ID_OBSTACLE_DISTANCE";
     }
 }
         

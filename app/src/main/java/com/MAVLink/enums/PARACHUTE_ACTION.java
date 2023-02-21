@@ -7,12 +7,12 @@
 package com.MAVLink.enums;
 
 /**
- *
+ * Parachute actions. Trigger release and enable/disable auto-release.
  */
 public class PARACHUTE_ACTION {
-    public static final int PARACHUTE_DISABLE = 0; /* Disable parachute release. | */
-    public static final int PARACHUTE_ENABLE = 1; /* Enable parachute release. | */
-    public static final int PARACHUTE_RELEASE = 2; /* Release parachute. | */
-    public static final int PARACHUTE_ACTION_ENUM_END = 3; /*  | */
+   public static final int PARACHUTE_DISABLE = 0; /* Disable auto-release of parachute (i.e. release triggered by crash detectors). | */
+   public static final int PARACHUTE_ENABLE = 1; /* Enable auto-release of parachute. | */
+   public static final int PARACHUTE_RELEASE = 2; /* Release parachute and kill motors. | */
+   public static final int PARACHUTE_ACTION_ENUM_END = 3; /*  | */
 }
             

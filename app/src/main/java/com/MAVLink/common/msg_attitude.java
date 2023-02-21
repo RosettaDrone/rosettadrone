@@ -6,13 +6,14 @@
 
 // MESSAGE ATTITUDE PACKING
 package com.MAVLink.common;
-
 import com.MAVLink.MAVLinkPacket;
 import com.MAVLink.Messages.MAVLinkMessage;
 import com.MAVLink.Messages.MAVLinkPayload;
+import com.MAVLink.Messages.Units;
+import com.MAVLink.Messages.Description;
 
 /**
- * The attitude in the aeronautical frame (right-handed, Z-down, X-front, Y-right).
+ * The attitude in the aeronautical frame (right-handed, Z-down, Y-right, X-front, ZYX, intrinsic).
  */
 public class msg_attitude extends MAVLinkMessage {
 
@@ -20,68 +21,79 @@ public class msg_attitude extends MAVLinkMessage {
     public static final int MAVLINK_MSG_LENGTH = 28;
     private static final long serialVersionUID = MAVLINK_MSG_ID_ATTITUDE;
 
-
+    
     /**
      * Timestamp (time since system boot).
      */
+    @Description("Timestamp (time since system boot).")
+    @Units("ms")
     public long time_boot_ms;
-
+    
     /**
      * Roll angle (-pi..+pi)
      */
+    @Description("Roll angle (-pi..+pi)")
+    @Units("rad")
     public float roll;
-
+    
     /**
      * Pitch angle (-pi..+pi)
      */
+    @Description("Pitch angle (-pi..+pi)")
+    @Units("rad")
     public float pitch;
-
+    
     /**
      * Yaw angle (-pi..+pi)
      */
+    @Description("Yaw angle (-pi..+pi)")
+    @Units("rad")
     public float yaw;
-
+    
     /**
      * Roll angular speed
      */
+    @Description("Roll angular speed")
+    @Units("rad/s")
     public float rollspeed;
-
+    
     /**
      * Pitch angular speed
      */
+    @Description("Pitch angular speed")
+    @Units("rad/s")
     public float pitchspeed;
-
+    
     /**
      * Yaw angular speed
      */
+    @Description("Yaw angular speed")
+    @Units("rad/s")
     public float yawspeed;
-
+    
 
     /**
      * Generates the payload for a mavlink message for a message of this type
-     *
      * @return
      */
+    @Override
     public MAVLinkPacket pack() {
-        MAVLinkPacket packet = new MAVLinkPacket(MAVLINK_MSG_LENGTH);
-        packet.sysid = 255;
-        packet.compid = 190;
+        MAVLinkPacket packet = new MAVLinkPacket(MAVLINK_MSG_LENGTH,isMavlink2);
+        packet.sysid = sysid;
+        packet.compid = compid;
         packet.msgid = MAVLINK_MSG_ID_ATTITUDE;
 
         packet.payload.putUnsignedInt(time_boot_ms);
-
         packet.payload.putFloat(roll);
-
         packet.payload.putFloat(pitch);
-
         packet.payload.putFloat(yaw);
-
         packet.payload.putFloat(rollspeed);
-
         packet.payload.putFloat(pitchspeed);
-
         packet.payload.putFloat(yawspeed);
-
+        
+        if (isMavlink2) {
+            
+        }
         return packet;
     }
 
@@ -90,49 +102,94 @@ public class msg_attitude extends MAVLinkMessage {
      *
      * @param payload The message to decode
      */
+    @Override
     public void unpack(MAVLinkPayload payload) {
         payload.resetIndex();
 
         this.time_boot_ms = payload.getUnsignedInt();
-
         this.roll = payload.getFloat();
-
         this.pitch = payload.getFloat();
-
         this.yaw = payload.getFloat();
-
         this.rollspeed = payload.getFloat();
-
         this.pitchspeed = payload.getFloat();
-
         this.yawspeed = payload.getFloat();
-
+        
+        if (isMavlink2) {
+            
+        }
     }
 
     /**
      * Constructor for a new message, just initializes the msgid
      */
     public msg_attitude() {
-        msgid = MAVLINK_MSG_ID_ATTITUDE;
+        this.msgid = MAVLINK_MSG_ID_ATTITUDE;
+    }
+
+    /**
+     * Constructor for a new message, initializes msgid and all payload variables
+     */
+    public msg_attitude( long time_boot_ms, float roll, float pitch, float yaw, float rollspeed, float pitchspeed, float yawspeed) {
+        this.msgid = MAVLINK_MSG_ID_ATTITUDE;
+
+        this.time_boot_ms = time_boot_ms;
+        this.roll = roll;
+        this.pitch = pitch;
+        this.yaw = yaw;
+        this.rollspeed = rollspeed;
+        this.pitchspeed = pitchspeed;
+        this.yawspeed = yawspeed;
+        
+    }
+
+    /**
+     * Constructor for a new message, initializes everything
+     */
+    public msg_attitude( long time_boot_ms, float roll, float pitch, float yaw, float rollspeed, float pitchspeed, float yawspeed, int sysid, int compid, boolean isMavlink2) {
+        this.msgid = MAVLINK_MSG_ID_ATTITUDE;
+        this.sysid = sysid;
+        this.compid = compid;
+        this.isMavlink2 = isMavlink2;
+
+        this.time_boot_ms = time_boot_ms;
+        this.roll = roll;
+        this.pitch = pitch;
+        this.yaw = yaw;
+        this.rollspeed = rollspeed;
+        this.pitchspeed = pitchspeed;
+        this.yawspeed = yawspeed;
+        
     }
 
     /**
      * Constructor for a new message, initializes the message with the payload
      * from a mavlink packet
+     *
      */
     public msg_attitude(MAVLinkPacket mavLinkPacket) {
+        this.msgid = MAVLINK_MSG_ID_ATTITUDE;
+
         this.sysid = mavLinkPacket.sysid;
         this.compid = mavLinkPacket.compid;
-        this.msgid = MAVLINK_MSG_ID_ATTITUDE;
+        this.isMavlink2 = mavLinkPacket.isMavlink2;
         unpack(mavLinkPacket.payload);
     }
 
-
+                  
     /**
      * Returns a string with the MSG name and data
      */
+    @Override
     public String toString() {
-        return "MAVLINK_MSG_ID_ATTITUDE - sysid:" + sysid + " compid:" + compid + " time_boot_ms:" + time_boot_ms + " roll:" + roll + " pitch:" + pitch + " yaw:" + yaw + " rollspeed:" + rollspeed + " pitchspeed:" + pitchspeed + " yawspeed:" + yawspeed + "";
+        return "MAVLINK_MSG_ID_ATTITUDE - sysid:"+sysid+" compid:"+compid+" time_boot_ms:"+time_boot_ms+" roll:"+roll+" pitch:"+pitch+" yaw:"+yaw+" rollspeed:"+rollspeed+" pitchspeed:"+pitchspeed+" yawspeed:"+yawspeed+"";
+    }
+
+    /**
+     * Returns a human-readable string of the name of the message
+     */
+    @Override
+    public String name() {
+        return "MAVLINK_MSG_ID_ATTITUDE";
     }
 }
         

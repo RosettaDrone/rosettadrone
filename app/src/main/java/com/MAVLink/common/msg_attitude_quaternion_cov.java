@@ -6,10 +6,11 @@
 
 // MESSAGE ATTITUDE_QUATERNION_COV PACKING
 package com.MAVLink.common;
-
 import com.MAVLink.MAVLinkPacket;
 import com.MAVLink.Messages.MAVLinkMessage;
 import com.MAVLink.Messages.MAVLinkPayload;
+import com.MAVLink.Messages.Units;
+import com.MAVLink.Messages.Description;
 
 /**
  * The attitude in the aeronautical frame (right-handed, Z-down, X-front, Y-right), expressed as quaternion. Quaternion order is w, x, y, z and a zero rotation would be expressed as (1 0 0 0).
@@ -20,69 +21,79 @@ public class msg_attitude_quaternion_cov extends MAVLinkMessage {
     public static final int MAVLINK_MSG_LENGTH = 72;
     private static final long serialVersionUID = MAVLINK_MSG_ID_ATTITUDE_QUATERNION_COV;
 
-
+    
     /**
-     * Timestamp (UNIX Epoch time or time since system boot). The receiving end can infer timestamp format (since 1.1.1970 or since system boot) by checking for the magnitude the number.
+     * Timestamp (UNIX Epoch time or time since system boot). The receiving end can infer timestamp format (since 1.1.1970 or since system boot) by checking for the magnitude of the number.
      */
+    @Description("Timestamp (UNIX Epoch time or time since system boot). The receiving end can infer timestamp format (since 1.1.1970 or since system boot) by checking for the magnitude of the number.")
+    @Units("us")
     public long time_usec;
-
+    
     /**
      * Quaternion components, w, x, y, z (1 0 0 0 is the null-rotation)
      */
+    @Description("Quaternion components, w, x, y, z (1 0 0 0 is the null-rotation)")
+    @Units("")
     public float q[] = new float[4];
-
+    
     /**
      * Roll angular speed
      */
+    @Description("Roll angular speed")
+    @Units("rad/s")
     public float rollspeed;
-
+    
     /**
      * Pitch angular speed
      */
+    @Description("Pitch angular speed")
+    @Units("rad/s")
     public float pitchspeed;
-
+    
     /**
      * Yaw angular speed
      */
+    @Description("Yaw angular speed")
+    @Units("rad/s")
     public float yawspeed;
-
+    
     /**
      * Row-major representation of a 3x3 attitude covariance matrix (states: roll, pitch, yaw; first three entries are the first ROW, next three entries are the second row, etc.). If unknown, assign NaN value to first element in the array.
      */
+    @Description("Row-major representation of a 3x3 attitude covariance matrix (states: roll, pitch, yaw; first three entries are the first ROW, next three entries are the second row, etc.). If unknown, assign NaN value to first element in the array.")
+    @Units("")
     public float covariance[] = new float[9];
-
+    
 
     /**
      * Generates the payload for a mavlink message for a message of this type
-     *
      * @return
      */
+    @Override
     public MAVLinkPacket pack() {
-        MAVLinkPacket packet = new MAVLinkPacket(MAVLINK_MSG_LENGTH);
-        packet.sysid = 255;
-        packet.compid = 190;
+        MAVLinkPacket packet = new MAVLinkPacket(MAVLINK_MSG_LENGTH,isMavlink2);
+        packet.sysid = sysid;
+        packet.compid = compid;
         packet.msgid = MAVLINK_MSG_ID_ATTITUDE_QUATERNION_COV;
 
         packet.payload.putUnsignedLong(time_usec);
-
-
+        
         for (int i = 0; i < q.length; i++) {
             packet.payload.putFloat(q[i]);
         }
-
-
+                    
         packet.payload.putFloat(rollspeed);
-
         packet.payload.putFloat(pitchspeed);
-
         packet.payload.putFloat(yawspeed);
-
-
+        
         for (int i = 0; i < covariance.length; i++) {
             packet.payload.putFloat(covariance[i]);
         }
-
-
+                    
+        
+        if (isMavlink2) {
+            
+        }
         return packet;
     }
 
@@ -91,55 +102,99 @@ public class msg_attitude_quaternion_cov extends MAVLinkMessage {
      *
      * @param payload The message to decode
      */
+    @Override
     public void unpack(MAVLinkPayload payload) {
         payload.resetIndex();
 
         this.time_usec = payload.getUnsignedLong();
-
-
+        
         for (int i = 0; i < this.q.length; i++) {
             this.q[i] = payload.getFloat();
         }
-
-
+                
         this.rollspeed = payload.getFloat();
-
         this.pitchspeed = payload.getFloat();
-
         this.yawspeed = payload.getFloat();
-
-
+        
         for (int i = 0; i < this.covariance.length; i++) {
             this.covariance[i] = payload.getFloat();
         }
-
-
+                
+        
+        if (isMavlink2) {
+            
+        }
     }
 
     /**
      * Constructor for a new message, just initializes the msgid
      */
     public msg_attitude_quaternion_cov() {
-        msgid = MAVLINK_MSG_ID_ATTITUDE_QUATERNION_COV;
+        this.msgid = MAVLINK_MSG_ID_ATTITUDE_QUATERNION_COV;
+    }
+
+    /**
+     * Constructor for a new message, initializes msgid and all payload variables
+     */
+    public msg_attitude_quaternion_cov( long time_usec, float[] q, float rollspeed, float pitchspeed, float yawspeed, float[] covariance) {
+        this.msgid = MAVLINK_MSG_ID_ATTITUDE_QUATERNION_COV;
+
+        this.time_usec = time_usec;
+        this.q = q;
+        this.rollspeed = rollspeed;
+        this.pitchspeed = pitchspeed;
+        this.yawspeed = yawspeed;
+        this.covariance = covariance;
+        
+    }
+
+    /**
+     * Constructor for a new message, initializes everything
+     */
+    public msg_attitude_quaternion_cov( long time_usec, float[] q, float rollspeed, float pitchspeed, float yawspeed, float[] covariance, int sysid, int compid, boolean isMavlink2) {
+        this.msgid = MAVLINK_MSG_ID_ATTITUDE_QUATERNION_COV;
+        this.sysid = sysid;
+        this.compid = compid;
+        this.isMavlink2 = isMavlink2;
+
+        this.time_usec = time_usec;
+        this.q = q;
+        this.rollspeed = rollspeed;
+        this.pitchspeed = pitchspeed;
+        this.yawspeed = yawspeed;
+        this.covariance = covariance;
+        
     }
 
     /**
      * Constructor for a new message, initializes the message with the payload
      * from a mavlink packet
+     *
      */
     public msg_attitude_quaternion_cov(MAVLinkPacket mavLinkPacket) {
+        this.msgid = MAVLINK_MSG_ID_ATTITUDE_QUATERNION_COV;
+
         this.sysid = mavLinkPacket.sysid;
         this.compid = mavLinkPacket.compid;
-        this.msgid = MAVLINK_MSG_ID_ATTITUDE_QUATERNION_COV;
+        this.isMavlink2 = mavLinkPacket.isMavlink2;
         unpack(mavLinkPacket.payload);
     }
 
-
+                
     /**
      * Returns a string with the MSG name and data
      */
+    @Override
     public String toString() {
-        return "MAVLINK_MSG_ID_ATTITUDE_QUATERNION_COV - sysid:" + sysid + " compid:" + compid + " time_usec:" + time_usec + " q:" + q + " rollspeed:" + rollspeed + " pitchspeed:" + pitchspeed + " yawspeed:" + yawspeed + " covariance:" + covariance + "";
+        return "MAVLINK_MSG_ID_ATTITUDE_QUATERNION_COV - sysid:"+sysid+" compid:"+compid+" time_usec:"+time_usec+" q:"+q+" rollspeed:"+rollspeed+" pitchspeed:"+pitchspeed+" yawspeed:"+yawspeed+" covariance:"+covariance+"";
+    }
+
+    /**
+     * Returns a human-readable string of the name of the message
+     */
+    @Override
+    public String name() {
+        return "MAVLINK_MSG_ID_ATTITUDE_QUATERNION_COV";
     }
 }
         

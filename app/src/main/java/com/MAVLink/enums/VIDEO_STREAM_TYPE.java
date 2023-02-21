@@ -10,10 +10,10 @@ package com.MAVLink.enums;
  * Video stream types
  */
 public class VIDEO_STREAM_TYPE {
-    public static final int VIDEO_STREAM_TYPE_RTSP = 0; /* Stream is RTSP | */
-    public static final int VIDEO_STREAM_TYPE_RTPUDP = 1; /* Stream is RTP UDP (URI gives the port number) | */
-    public static final int VIDEO_STREAM_TYPE_TCP_MPEG = 2; /* Stream is MPEG on TCP | */
-    public static final int VIDEO_STREAM_TYPE_MPEG_TS_H264 = 3; /* Stream is h.264 on MPEG TS (URI gives the port number) | */
-    public static final int VIDEO_STREAM_TYPE_ENUM_END = 4; /*  | */
+   public static final int VIDEO_STREAM_TYPE_RTSP = 0; /* Stream is RTSP | */
+   public static final int VIDEO_STREAM_TYPE_RTPUDP = 1; /* Stream is RTP UDP (URI gives the port number) | */
+   public static final int VIDEO_STREAM_TYPE_TCP_MPEG = 2; /* Stream is MPEG on TCP | */
+   public static final int VIDEO_STREAM_TYPE_MPEG_TS_H264 = 3; /* Stream is h.264 on MPEG TS (URI gives the port number) | */
+   public static final int VIDEO_STREAM_TYPE_ENUM_END = 4; /*  | */
 }
             

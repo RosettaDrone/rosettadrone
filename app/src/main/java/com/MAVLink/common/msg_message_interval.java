@@ -6,13 +6,18 @@
 
 // MESSAGE MESSAGE_INTERVAL PACKING
 package com.MAVLink.common;
-
 import com.MAVLink.MAVLinkPacket;
 import com.MAVLink.Messages.MAVLinkMessage;
 import com.MAVLink.Messages.MAVLinkPayload;
+import com.MAVLink.Messages.Units;
+import com.MAVLink.Messages.Description;
 
 /**
- * The interval between messages for a particular MAVLink message ID. This message is the response to the MAV_CMD_GET_MESSAGE_INTERVAL command. This interface replaces DATA_STREAM.
+ * 
+        The interval between messages for a particular MAVLink message ID.
+        This message is sent in response to the MAV_CMD_REQUEST_MESSAGE command with param1=244 (this message) and param2=message_id (the id of the message for which the interval is required).
+	It may also be sent in response to MAV_CMD_GET_MESSAGE_INTERVAL.
+	This interface replaces DATA_STREAM.
  */
 public class msg_message_interval extends MAVLinkMessage {
 
@@ -20,33 +25,39 @@ public class msg_message_interval extends MAVLinkMessage {
     public static final int MAVLINK_MSG_LENGTH = 6;
     private static final long serialVersionUID = MAVLINK_MSG_ID_MESSAGE_INTERVAL;
 
-
+    
     /**
      * The interval between two messages. A value of -1 indicates this stream is disabled, 0 indicates it is not available, > 0 indicates the interval at which it is sent.
      */
+    @Description("The interval between two messages. A value of -1 indicates this stream is disabled, 0 indicates it is not available, > 0 indicates the interval at which it is sent.")
+    @Units("us")
     public int interval_us;
-
+    
     /**
      * The ID of the requested MAVLink message. v1.0 is limited to 254 messages.
      */
+    @Description("The ID of the requested MAVLink message. v1.0 is limited to 254 messages.")
+    @Units("")
     public int message_id;
-
+    
 
     /**
      * Generates the payload for a mavlink message for a message of this type
-     *
      * @return
      */
+    @Override
     public MAVLinkPacket pack() {
-        MAVLinkPacket packet = new MAVLinkPacket(MAVLINK_MSG_LENGTH);
-        packet.sysid = 255;
-        packet.compid = 190;
+        MAVLinkPacket packet = new MAVLinkPacket(MAVLINK_MSG_LENGTH,isMavlink2);
+        packet.sysid = sysid;
+        packet.compid = compid;
         packet.msgid = MAVLINK_MSG_ID_MESSAGE_INTERVAL;
 
         packet.payload.putInt(interval_us);
-
         packet.payload.putUnsignedShort(message_id);
-
+        
+        if (isMavlink2) {
+            
+        }
         return packet;
     }
 
@@ -55,39 +66,79 @@ public class msg_message_interval extends MAVLinkMessage {
      *
      * @param payload The message to decode
      */
+    @Override
     public void unpack(MAVLinkPayload payload) {
         payload.resetIndex();
 
         this.interval_us = payload.getInt();
-
         this.message_id = payload.getUnsignedShort();
-
+        
+        if (isMavlink2) {
+            
+        }
     }
 
     /**
      * Constructor for a new message, just initializes the msgid
      */
     public msg_message_interval() {
-        msgid = MAVLINK_MSG_ID_MESSAGE_INTERVAL;
+        this.msgid = MAVLINK_MSG_ID_MESSAGE_INTERVAL;
+    }
+
+    /**
+     * Constructor for a new message, initializes msgid and all payload variables
+     */
+    public msg_message_interval( int interval_us, int message_id) {
+        this.msgid = MAVLINK_MSG_ID_MESSAGE_INTERVAL;
+
+        this.interval_us = interval_us;
+        this.message_id = message_id;
+        
+    }
+
+    /**
+     * Constructor for a new message, initializes everything
+     */
+    public msg_message_interval( int interval_us, int message_id, int sysid, int compid, boolean isMavlink2) {
+        this.msgid = MAVLINK_MSG_ID_MESSAGE_INTERVAL;
+        this.sysid = sysid;
+        this.compid = compid;
+        this.isMavlink2 = isMavlink2;
+
+        this.interval_us = interval_us;
+        this.message_id = message_id;
+        
     }
 
     /**
      * Constructor for a new message, initializes the message with the payload
      * from a mavlink packet
+     *
      */
     public msg_message_interval(MAVLinkPacket mavLinkPacket) {
+        this.msgid = MAVLINK_MSG_ID_MESSAGE_INTERVAL;
+
         this.sysid = mavLinkPacket.sysid;
         this.compid = mavLinkPacket.compid;
-        this.msgid = MAVLINK_MSG_ID_MESSAGE_INTERVAL;
+        this.isMavlink2 = mavLinkPacket.isMavlink2;
         unpack(mavLinkPacket.payload);
     }
 
-
+        
     /**
      * Returns a string with the MSG name and data
      */
+    @Override
     public String toString() {
-        return "MAVLINK_MSG_ID_MESSAGE_INTERVAL - sysid:" + sysid + " compid:" + compid + " interval_us:" + interval_us + " message_id:" + message_id + "";
+        return "MAVLINK_MSG_ID_MESSAGE_INTERVAL - sysid:"+sysid+" compid:"+compid+" interval_us:"+interval_us+" message_id:"+message_id+"";
+    }
+
+    /**
+     * Returns a human-readable string of the name of the message
+     */
+    @Override
+    public String name() {
+        return "MAVLINK_MSG_ID_MESSAGE_INTERVAL";
     }
 }
         

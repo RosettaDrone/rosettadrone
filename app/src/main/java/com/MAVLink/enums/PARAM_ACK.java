@@ -7,13 +7,13 @@
 package com.MAVLink.enums;
 
 /**
- * Result from a PARAM_EXT_SET message.
+ * Result from PARAM_EXT_SET message (or a PARAM_SET within a transaction).
  */
 public class PARAM_ACK {
-    public static final int PARAM_ACK_ACCEPTED = 0; /* Parameter value ACCEPTED and SET | */
-    public static final int PARAM_ACK_VALUE_UNSUPPORTED = 1; /* Parameter value UNKNOWN/UNSUPPORTED | */
-    public static final int PARAM_ACK_FAILED = 2; /* Parameter failed to set | */
-    public static final int PARAM_ACK_IN_PROGRESS = 3; /* Parameter value received but not yet validated or set. A subsequent PARAM_EXT_ACK will follow once operation is completed with the actual result. These are for parameters that may take longer to set. Instead of waiting for an ACK and potentially timing out, you will immediately receive this response to let you know it was received. | */
-    public static final int PARAM_ACK_ENUM_END = 4; /*  | */
+   public static final int PARAM_ACK_ACCEPTED = 0; /* Parameter value ACCEPTED and SET | */
+   public static final int PARAM_ACK_VALUE_UNSUPPORTED = 1; /* Parameter value UNKNOWN/UNSUPPORTED | */
+   public static final int PARAM_ACK_FAILED = 2; /* Parameter failed to set | */
+   public static final int PARAM_ACK_IN_PROGRESS = 3; /* Parameter value received but not yet set/accepted. A subsequent PARAM_ACK_TRANSACTION or PARAM_EXT_ACK with the final result will follow once operation is completed. This is returned immediately for parameters that take longer to set, indicating that the the parameter was received and does not need to be resent. | */
+   public static final int PARAM_ACK_ENUM_END = 4; /*  | */
 }
             

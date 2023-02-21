@@ -41,7 +41,6 @@ import com.MAVLink.common.msg_command_ack;
 import com.MAVLink.common.msg_file_transfer_protocol;
 import com.MAVLink.common.msg_global_position_int;
 import com.MAVLink.common.msg_gps_raw_int;
-import com.MAVLink.common.msg_heartbeat;
 import com.MAVLink.common.msg_home_position;
 import com.MAVLink.common.msg_mission_ack;
 import com.MAVLink.common.msg_mission_count;
@@ -68,6 +67,7 @@ import com.MAVLink.enums.MAV_PROTOCOL_CAPABILITY;
 import com.MAVLink.enums.MAV_RESULT;
 import com.MAVLink.enums.MAV_STATE;
 import com.MAVLink.enums.MAV_TYPE;
+import com.MAVLink.minimal.msg_heartbeat;
 
 import java.io.File;
 import java.io.IOException;
@@ -1776,9 +1776,12 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                                 msglist.add(msg);
                                 break;
                             case RESET_GIMBAL_YAW:
+                                /*
                                 msg.command = MAV_CMD.MAV_CMD_GIMBAL_RESET;
                                 Log.d(TAG, "Mission Action : RESET_GIMBAL_YAW");
                                 msglist.add(msg);
+                                */
+                                Log.e(TAG, "MAV_CMD_GIMBAL_RESET was deprecated?");
                                 break;
                             default:
                                 Log.d(TAG, "Mission Action : Waypoint");

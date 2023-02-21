@@ -6,10 +6,11 @@
 
 // MESSAGE SUPPORTED_TUNES PACKING
 package com.MAVLink.common;
-
 import com.MAVLink.MAVLinkPacket;
 import com.MAVLink.Messages.MAVLinkMessage;
 import com.MAVLink.Messages.MAVLinkPayload;
+import com.MAVLink.Messages.Units;
+import com.MAVLink.Messages.Description;
 
 /**
  * Tune formats supported by vehicle. This should be emitted as response to MAV_CMD_REQUEST_MESSAGE.
@@ -20,40 +21,47 @@ public class msg_supported_tunes extends MAVLinkMessage {
     public static final int MAVLINK_MSG_LENGTH = 6;
     private static final long serialVersionUID = MAVLINK_MSG_ID_SUPPORTED_TUNES;
 
-
+    
     /**
      * Bitfield of supported tune formats.
      */
+    @Description("Bitfield of supported tune formats.")
+    @Units("")
     public long format;
-
+    
     /**
      * System ID
      */
+    @Description("System ID")
+    @Units("")
     public short target_system;
-
+    
     /**
      * Component ID
      */
+    @Description("Component ID")
+    @Units("")
     public short target_component;
-
+    
 
     /**
      * Generates the payload for a mavlink message for a message of this type
-     *
      * @return
      */
+    @Override
     public MAVLinkPacket pack() {
-        MAVLinkPacket packet = new MAVLinkPacket(MAVLINK_MSG_LENGTH);
-        packet.sysid = 255;
-        packet.compid = 190;
+        MAVLinkPacket packet = new MAVLinkPacket(MAVLINK_MSG_LENGTH,isMavlink2);
+        packet.sysid = sysid;
+        packet.compid = compid;
         packet.msgid = MAVLINK_MSG_ID_SUPPORTED_TUNES;
 
         packet.payload.putUnsignedInt(format);
-
         packet.payload.putUnsignedByte(target_system);
-
         packet.payload.putUnsignedByte(target_component);
-
+        
+        if (isMavlink2) {
+            
+        }
         return packet;
     }
 
@@ -62,41 +70,82 @@ public class msg_supported_tunes extends MAVLinkMessage {
      *
      * @param payload The message to decode
      */
+    @Override
     public void unpack(MAVLinkPayload payload) {
         payload.resetIndex();
 
         this.format = payload.getUnsignedInt();
-
         this.target_system = payload.getUnsignedByte();
-
         this.target_component = payload.getUnsignedByte();
-
+        
+        if (isMavlink2) {
+            
+        }
     }
 
     /**
      * Constructor for a new message, just initializes the msgid
      */
     public msg_supported_tunes() {
-        msgid = MAVLINK_MSG_ID_SUPPORTED_TUNES;
+        this.msgid = MAVLINK_MSG_ID_SUPPORTED_TUNES;
+    }
+
+    /**
+     * Constructor for a new message, initializes msgid and all payload variables
+     */
+    public msg_supported_tunes( long format, short target_system, short target_component) {
+        this.msgid = MAVLINK_MSG_ID_SUPPORTED_TUNES;
+
+        this.format = format;
+        this.target_system = target_system;
+        this.target_component = target_component;
+        
+    }
+
+    /**
+     * Constructor for a new message, initializes everything
+     */
+    public msg_supported_tunes( long format, short target_system, short target_component, int sysid, int compid, boolean isMavlink2) {
+        this.msgid = MAVLINK_MSG_ID_SUPPORTED_TUNES;
+        this.sysid = sysid;
+        this.compid = compid;
+        this.isMavlink2 = isMavlink2;
+
+        this.format = format;
+        this.target_system = target_system;
+        this.target_component = target_component;
+        
     }
 
     /**
      * Constructor for a new message, initializes the message with the payload
      * from a mavlink packet
+     *
      */
     public msg_supported_tunes(MAVLinkPacket mavLinkPacket) {
+        this.msgid = MAVLINK_MSG_ID_SUPPORTED_TUNES;
+
         this.sysid = mavLinkPacket.sysid;
         this.compid = mavLinkPacket.compid;
-        this.msgid = MAVLINK_MSG_ID_SUPPORTED_TUNES;
+        this.isMavlink2 = mavLinkPacket.isMavlink2;
         unpack(mavLinkPacket.payload);
     }
 
-
+          
     /**
      * Returns a string with the MSG name and data
      */
+    @Override
     public String toString() {
-        return "MAVLINK_MSG_ID_SUPPORTED_TUNES - sysid:" + sysid + " compid:" + compid + " format:" + format + " target_system:" + target_system + " target_component:" + target_component + "";
+        return "MAVLINK_MSG_ID_SUPPORTED_TUNES - sysid:"+sysid+" compid:"+compid+" format:"+format+" target_system:"+target_system+" target_component:"+target_component+"";
+    }
+
+    /**
+     * Returns a human-readable string of the name of the message
+     */
+    @Override
+    public String name() {
+        return "MAVLINK_MSG_ID_SUPPORTED_TUNES";
     }
 }
         

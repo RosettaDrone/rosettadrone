@@ -10,8 +10,8 @@ package com.MAVLink.enums;
  * Stream status flags (Bitmap)
  */
 public class VIDEO_STREAM_STATUS_FLAGS {
-    public static final int VIDEO_STREAM_STATUS_FLAGS_RUNNING = 1; /* Stream is active (running) | */
-    public static final int VIDEO_STREAM_STATUS_FLAGS_THERMAL = 2; /* Stream is thermal imaging | */
-    public static final int VIDEO_STREAM_STATUS_FLAGS_ENUM_END = 3; /*  | */
+   public static final int VIDEO_STREAM_STATUS_FLAGS_RUNNING = 1; /* Stream is active (running) | */
+   public static final int VIDEO_STREAM_STATUS_FLAGS_THERMAL = 2; /* Stream is thermal imaging | */
+   public static final int VIDEO_STREAM_STATUS_FLAGS_ENUM_END = 3; /*  | */
 }
             

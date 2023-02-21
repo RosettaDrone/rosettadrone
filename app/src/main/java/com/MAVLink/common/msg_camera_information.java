@@ -6,13 +6,14 @@
 
 // MESSAGE CAMERA_INFORMATION PACKING
 package com.MAVLink.common;
-
 import com.MAVLink.MAVLinkPacket;
 import com.MAVLink.Messages.MAVLinkMessage;
 import com.MAVLink.Messages.MAVLinkPayload;
+import com.MAVLink.Messages.Units;
+import com.MAVLink.Messages.Description;
 
 /**
- * Information about a camera
+ * Information about a camera. Can be requested with a MAV_CMD_REQUEST_MESSAGE command.
  */
 public class msg_camera_information extends MAVLinkMessage {
 
@@ -20,121 +21,139 @@ public class msg_camera_information extends MAVLinkMessage {
     public static final int MAVLINK_MSG_LENGTH = 235;
     private static final long serialVersionUID = MAVLINK_MSG_ID_CAMERA_INFORMATION;
 
-
+    
     /**
      * Timestamp (time since system boot).
      */
+    @Description("Timestamp (time since system boot).")
+    @Units("ms")
     public long time_boot_ms;
-
+    
     /**
-     * Version of the camera firmware (v << 24 & 0xff = Dev, v << 16 & 0xff = Patch, v << 8 & 0xff = Minor, v & 0xff = Major)
+     * Version of the camera firmware, encoded as: (Dev & 0xff) << 24 | (Patch & 0xff) << 16 | (Minor & 0xff) << 8 | (Major & 0xff)
      */
+    @Description("Version of the camera firmware, encoded as: (Dev & 0xff) << 24 | (Patch & 0xff) << 16 | (Minor & 0xff) << 8 | (Major & 0xff)")
+    @Units("")
     public long firmware_version;
-
+    
     /**
      * Focal length
      */
+    @Description("Focal length")
+    @Units("mm")
     public float focal_length;
-
+    
     /**
      * Image sensor size horizontal
      */
+    @Description("Image sensor size horizontal")
+    @Units("mm")
     public float sensor_size_h;
-
+    
     /**
      * Image sensor size vertical
      */
+    @Description("Image sensor size vertical")
+    @Units("mm")
     public float sensor_size_v;
-
+    
     /**
      * Bitmap of camera capability flags.
      */
+    @Description("Bitmap of camera capability flags.")
+    @Units("")
     public long flags;
-
+    
     /**
      * Horizontal image resolution
      */
+    @Description("Horizontal image resolution")
+    @Units("pix")
     public int resolution_h;
-
+    
     /**
      * Vertical image resolution
      */
+    @Description("Vertical image resolution")
+    @Units("pix")
     public int resolution_v;
-
+    
     /**
      * Camera definition version (iteration)
      */
+    @Description("Camera definition version (iteration)")
+    @Units("")
     public int cam_definition_version;
-
+    
     /**
      * Name of the camera vendor
      */
+    @Description("Name of the camera vendor")
+    @Units("")
     public short vendor_name[] = new short[32];
-
+    
     /**
      * Name of the camera model
      */
+    @Description("Name of the camera model")
+    @Units("")
     public short model_name[] = new short[32];
-
+    
     /**
      * Reserved for a lens ID
      */
+    @Description("Reserved for a lens ID")
+    @Units("")
     public short lens_id;
-
+    
     /**
-     * Camera definition URI (if any, otherwise only basic functions will be available). HTTP- (http://) and MAVLink FTP- (mavlinkftp://) formatted URIs are allowed (and both must be supported by any GCS that implements the Camera Protocol).
+     * Camera definition URI (if any, otherwise only basic functions will be available). HTTP- (http://) and MAVLink FTP- (mavlinkftp://) formatted URIs are allowed (and both must be supported by any GCS that implements the Camera Protocol). The definition file may be xz compressed, which will be indicated by the file extension .xml.xz (a GCS that implements the protocol must support decompressing the file). The string needs to be zero terminated.
      */
+    @Description("Camera definition URI (if any, otherwise only basic functions will be available). HTTP- (http://) and MAVLink FTP- (mavlinkftp://) formatted URIs are allowed (and both must be supported by any GCS that implements the Camera Protocol). The definition file may be xz compressed, which will be indicated by the file extension .xml.xz (a GCS that implements the protocol must support decompressing the file). The string needs to be zero terminated.")
+    @Units("")
     public byte cam_definition_uri[] = new byte[140];
-
+    
 
     /**
      * Generates the payload for a mavlink message for a message of this type
-     *
      * @return
      */
+    @Override
     public MAVLinkPacket pack() {
-        MAVLinkPacket packet = new MAVLinkPacket(MAVLINK_MSG_LENGTH);
-        packet.sysid = 255;
-        packet.compid = 190;
+        MAVLinkPacket packet = new MAVLinkPacket(MAVLINK_MSG_LENGTH,isMavlink2);
+        packet.sysid = sysid;
+        packet.compid = compid;
         packet.msgid = MAVLINK_MSG_ID_CAMERA_INFORMATION;
 
         packet.payload.putUnsignedInt(time_boot_ms);
-
         packet.payload.putUnsignedInt(firmware_version);
-
         packet.payload.putFloat(focal_length);
-
         packet.payload.putFloat(sensor_size_h);
-
         packet.payload.putFloat(sensor_size_v);
-
         packet.payload.putUnsignedInt(flags);
-
         packet.payload.putUnsignedShort(resolution_h);
-
         packet.payload.putUnsignedShort(resolution_v);
-
         packet.payload.putUnsignedShort(cam_definition_version);
-
-
+        
         for (int i = 0; i < vendor_name.length; i++) {
             packet.payload.putUnsignedByte(vendor_name[i]);
         }
-
-
+                    
+        
         for (int i = 0; i < model_name.length; i++) {
             packet.payload.putUnsignedByte(model_name[i]);
         }
-
-
+                    
         packet.payload.putUnsignedByte(lens_id);
-
-
+        
         for (int i = 0; i < cam_definition_uri.length; i++) {
             packet.payload.putByte(cam_definition_uri[i]);
         }
-
-
+                    
+        
+        if (isMavlink2) {
+            
+        }
         return packet;
     }
 
@@ -143,84 +162,127 @@ public class msg_camera_information extends MAVLinkMessage {
      *
      * @param payload The message to decode
      */
+    @Override
     public void unpack(MAVLinkPayload payload) {
         payload.resetIndex();
 
         this.time_boot_ms = payload.getUnsignedInt();
-
         this.firmware_version = payload.getUnsignedInt();
-
         this.focal_length = payload.getFloat();
-
         this.sensor_size_h = payload.getFloat();
-
         this.sensor_size_v = payload.getFloat();
-
         this.flags = payload.getUnsignedInt();
-
         this.resolution_h = payload.getUnsignedShort();
-
         this.resolution_v = payload.getUnsignedShort();
-
         this.cam_definition_version = payload.getUnsignedShort();
-
-
+        
         for (int i = 0; i < this.vendor_name.length; i++) {
             this.vendor_name[i] = payload.getUnsignedByte();
         }
-
-
+                
+        
         for (int i = 0; i < this.model_name.length; i++) {
             this.model_name[i] = payload.getUnsignedByte();
         }
-
-
+                
         this.lens_id = payload.getUnsignedByte();
-
-
+        
         for (int i = 0; i < this.cam_definition_uri.length; i++) {
             this.cam_definition_uri[i] = payload.getByte();
         }
-
-
+                
+        
+        if (isMavlink2) {
+            
+        }
     }
 
     /**
      * Constructor for a new message, just initializes the msgid
      */
     public msg_camera_information() {
-        msgid = MAVLINK_MSG_ID_CAMERA_INFORMATION;
+        this.msgid = MAVLINK_MSG_ID_CAMERA_INFORMATION;
+    }
+
+    /**
+     * Constructor for a new message, initializes msgid and all payload variables
+     */
+    public msg_camera_information( long time_boot_ms, long firmware_version, float focal_length, float sensor_size_h, float sensor_size_v, long flags, int resolution_h, int resolution_v, int cam_definition_version, short[] vendor_name, short[] model_name, short lens_id, byte[] cam_definition_uri) {
+        this.msgid = MAVLINK_MSG_ID_CAMERA_INFORMATION;
+
+        this.time_boot_ms = time_boot_ms;
+        this.firmware_version = firmware_version;
+        this.focal_length = focal_length;
+        this.sensor_size_h = sensor_size_h;
+        this.sensor_size_v = sensor_size_v;
+        this.flags = flags;
+        this.resolution_h = resolution_h;
+        this.resolution_v = resolution_v;
+        this.cam_definition_version = cam_definition_version;
+        this.vendor_name = vendor_name;
+        this.model_name = model_name;
+        this.lens_id = lens_id;
+        this.cam_definition_uri = cam_definition_uri;
+        
+    }
+
+    /**
+     * Constructor for a new message, initializes everything
+     */
+    public msg_camera_information( long time_boot_ms, long firmware_version, float focal_length, float sensor_size_h, float sensor_size_v, long flags, int resolution_h, int resolution_v, int cam_definition_version, short[] vendor_name, short[] model_name, short lens_id, byte[] cam_definition_uri, int sysid, int compid, boolean isMavlink2) {
+        this.msgid = MAVLINK_MSG_ID_CAMERA_INFORMATION;
+        this.sysid = sysid;
+        this.compid = compid;
+        this.isMavlink2 = isMavlink2;
+
+        this.time_boot_ms = time_boot_ms;
+        this.firmware_version = firmware_version;
+        this.focal_length = focal_length;
+        this.sensor_size_h = sensor_size_h;
+        this.sensor_size_v = sensor_size_v;
+        this.flags = flags;
+        this.resolution_h = resolution_h;
+        this.resolution_v = resolution_v;
+        this.cam_definition_version = cam_definition_version;
+        this.vendor_name = vendor_name;
+        this.model_name = model_name;
+        this.lens_id = lens_id;
+        this.cam_definition_uri = cam_definition_uri;
+        
     }
 
     /**
      * Constructor for a new message, initializes the message with the payload
      * from a mavlink packet
+     *
      */
     public msg_camera_information(MAVLinkPacket mavLinkPacket) {
+        this.msgid = MAVLINK_MSG_ID_CAMERA_INFORMATION;
+
         this.sysid = mavLinkPacket.sysid;
         this.compid = mavLinkPacket.compid;
-        this.msgid = MAVLINK_MSG_ID_CAMERA_INFORMATION;
+        this.isMavlink2 = mavLinkPacket.isMavlink2;
         unpack(mavLinkPacket.payload);
     }
 
-
+                             
     /**
-     * Sets the buffer of this message with a string, adds the necessary padding
-     */
+    * Sets the buffer of this message with a string, adds the necessary padding
+    */
     public void setCam_Definition_Uri(String str) {
         int len = Math.min(str.length(), 140);
-        for (int i = 0; i < len; i++) {
+        for (int i=0; i<len; i++) {
             cam_definition_uri[i] = (byte) str.charAt(i);
         }
 
-        for (int i = len; i < 140; i++) {            // padding for the rest of the buffer
+        for (int i=len; i<140; i++) {            // padding for the rest of the buffer
             cam_definition_uri[i] = 0;
         }
     }
 
     /**
-     * Gets the message, formated as a string
-     */
+    * Gets the message, formatted as a string
+    */
     public String getCam_Definition_Uri() {
         StringBuffer buf = new StringBuffer();
         for (int i = 0; i < 140; i++) {
@@ -232,12 +294,21 @@ public class msg_camera_information extends MAVLinkMessage {
         return buf.toString();
 
     }
-
+                         
     /**
      * Returns a string with the MSG name and data
      */
+    @Override
     public String toString() {
-        return "MAVLINK_MSG_ID_CAMERA_INFORMATION - sysid:" + sysid + " compid:" + compid + " time_boot_ms:" + time_boot_ms + " firmware_version:" + firmware_version + " focal_length:" + focal_length + " sensor_size_h:" + sensor_size_h + " sensor_size_v:" + sensor_size_v + " flags:" + flags + " resolution_h:" + resolution_h + " resolution_v:" + resolution_v + " cam_definition_version:" + cam_definition_version + " vendor_name:" + vendor_name + " model_name:" + model_name + " lens_id:" + lens_id + " cam_definition_uri:" + cam_definition_uri + "";
+        return "MAVLINK_MSG_ID_CAMERA_INFORMATION - sysid:"+sysid+" compid:"+compid+" time_boot_ms:"+time_boot_ms+" firmware_version:"+firmware_version+" focal_length:"+focal_length+" sensor_size_h:"+sensor_size_h+" sensor_size_v:"+sensor_size_v+" flags:"+flags+" resolution_h:"+resolution_h+" resolution_v:"+resolution_v+" cam_definition_version:"+cam_definition_version+" vendor_name:"+vendor_name+" model_name:"+model_name+" lens_id:"+lens_id+" cam_definition_uri:"+cam_definition_uri+"";
+    }
+
+    /**
+     * Returns a human-readable string of the name of the message
+     */
+    @Override
+    public String name() {
+        return "MAVLINK_MSG_ID_CAMERA_INFORMATION";
     }
 }
         
