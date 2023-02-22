@@ -1776,11 +1776,9 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                                 msglist.add(msg);
                                 break;
                             case RESET_GIMBAL_YAW:
-                                /*
                                 msg.command = MAV_CMD.MAV_CMD_GIMBAL_RESET;
                                 Log.d(TAG, "Mission Action : RESET_GIMBAL_YAW");
                                 msglist.add(msg);
-                                */
                                 Log.e(TAG, "MAV_CMD_GIMBAL_RESET was deprecated?");
                                 break;
                             default:

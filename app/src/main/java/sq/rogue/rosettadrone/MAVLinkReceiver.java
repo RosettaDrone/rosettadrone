@@ -39,6 +39,7 @@ import dji.common.mission.waypoint.WaypointMissionGotoWaypointMode;
 import dji.common.mission.waypoint.WaypointMissionHeadingMode;
 
 // import static com.MAVLink.common.msg_autopilot_version_request.MAVLINK_MSG_ID_AUTOPILOT_VERSION_REQUEST;
+import static com.MAVLink.ardupilotmega.msg_autopilot_version_request.MAVLINK_MSG_ID_AUTOPILOT_VERSION_REQUEST;
 import static com.MAVLink.common.msg_command_int.MAVLINK_MSG_ID_COMMAND_INT;
 import static com.MAVLink.common.msg_command_long.MAVLINK_MSG_ID_COMMAND_LONG;
 import static com.MAVLink.common.msg_ping.MAVLINK_MSG_ID_PING;
@@ -136,13 +137,11 @@ public class MAVLinkReceiver {
         Log.d(TAG, "Received Cmd: " + msg.toString());
 
         switch (msg.msgid) {
-            /* TODO:
             case MAVLINK_MSG_ID_AUTOPILOT_VERSION_REQUEST:
                 Log.d(TAG, "send_autopilot_version...");
                 mModel.send_command_ack(MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES, MAV_RESULT.MAV_RESULT_ACCEPTED);
                 mModel.send_autopilot_version();
                 break;
-            */
             case MAVLINK_MSG_ID_PING:
                 // TODO: Check
                 mModel.sendMessage(msg);
