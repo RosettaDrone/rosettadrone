@@ -38,8 +38,8 @@ Rosetta is compatible with:
 * ArduCopter SITL
 * Dronekit-Python (AI scripting)
 * MavProxy
+* MAVSDK
 * DJI SDK 4.16.1
-* MAVSDK [is not compatible](https://github.com/The1only/rosettadrone/issues/120) at the moment.
 
 ## Hacking on Rosetta
 
