@@ -42,6 +42,7 @@ import dji.common.mission.waypoint.WaypointMissionHeadingMode;
 import static com.MAVLink.ardupilotmega.msg_autopilot_version_request.MAVLINK_MSG_ID_AUTOPILOT_VERSION_REQUEST;
 import static com.MAVLink.common.msg_command_int.MAVLINK_MSG_ID_COMMAND_INT;
 import static com.MAVLink.common.msg_command_long.MAVLINK_MSG_ID_COMMAND_LONG;
+import static com.MAVLink.common.msg_home_position.MAVLINK_MSG_ID_HOME_POSITION;
 import static com.MAVLink.common.msg_ping.MAVLINK_MSG_ID_PING;
 import static com.MAVLink.minimal.msg_heartbeat.MAVLINK_MSG_ID_HEARTBEAT;
 import static com.MAVLink.common.msg_manual_control.MAVLINK_MSG_ID_MANUAL_CONTROL;
@@ -142,6 +143,10 @@ public class MAVLinkReceiver {
                 mModel.send_command_ack(MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES, MAV_RESULT.MAV_RESULT_ACCEPTED);
                 mModel.send_autopilot_version();
                 break;
+
+            case MAVLINK_MSG_ID_HOME_POSITION:
+                break;
+
             case MAVLINK_MSG_ID_PING:
                 // TODO: Check
                 mModel.sendMessage(msg);
@@ -154,8 +159,7 @@ public class MAVLinkReceiver {
                     return;
                 }
 
-                switch (msg_cmd.command)
-                {
+                switch (msg_cmd.command) {
                     case MAV_CMD_SET_MESSAGE_INTERVAL:
                         // msg_cmd.param1;
                         mModel.send_command_ack(MAV_CMD_SET_MESSAGE_INTERVAL, MAV_RESULT.MAV_RESULT_ACCEPTED);
@@ -257,7 +261,7 @@ public class MAVLinkReceiver {
                                     0,
                                     0b0000111111111000);
                         }
-                        if(msg_cmd.param1 == MAV_GOTO_DO_CONTINUE) {
+                        if (msg_cmd.param1 == MAV_GOTO_DO_CONTINUE) {
                             mModel.resumeWaypointMission();
                         }
                         mModel.send_command_ack(MAV_CMD_OVERRIDE_GOTO, MAV_RESULT.MAV_RESULT_ACCEPTED);
@@ -383,17 +387,14 @@ public class MAVLinkReceiver {
                 break;
 
             case MAVLINK_MSG_ID_PARAM_REQUEST_READ:
-                msg_param_request_read msg_param_3 = (msg_param_request_read) msg;
-                //String paramStr = msg_param.getParam_Id();
-                //parent.logMessageFromGCS("***" + paramStr);
-                mModel.send_param(msg_param_3.param_index);
-                // TODO I am not able to convert the param_id bytearray into String
-//                for(int i = 0; i < mModel.getParams().size(); i++)
-//                    if(mModel.getParams().get(i).getParamName().equals(msg_param.getParam_Id())) {
-//                        mModel.send_param(i);
-//                        break;
-//                    }
-                Log.d(TAG, "Request to read param that doesn't exist");
+                int i = mModel.getParameterIndex(((msg_param_request_read) msg).getParam_Id());
+                if(i != -1) {
+                    mModel.send_param(i);
+                } else {
+                    Log.d(TAG, "Request to read param that doesn't exist");
+                    // NOT_TESTED:
+                    mModel.send_command_ack(MAVLINK_MSG_ID_PARAM_REQUEST_READ, MAV_RESULT.MAV_RESULT_DENIED);
+                }
                 break;
 
             case MAVLINK_MSG_ID_PARAM_SET:

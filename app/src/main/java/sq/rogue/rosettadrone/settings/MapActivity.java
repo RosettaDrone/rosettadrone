@@ -133,6 +133,8 @@ public class MapActivity extends FragmentActivity implements View.OnClickListene
 
     }
 
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

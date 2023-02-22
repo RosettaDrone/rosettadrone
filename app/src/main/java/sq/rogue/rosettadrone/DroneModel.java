@@ -953,17 +953,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             if (secondarySocket != null) {
                 DatagramPacket secondaryPacket = new DatagramPacket(bytes, bytes.length, secondarySocket.getInetAddress(), secondarySocket.getPort());
                 secondarySocket.send(secondaryPacket);
-//                parent.logMessageDJI("SECONDARY PACKET SENT");
             }
-//            if(msg.msgid != MAVLINK_MSG_ID_POWER_STATUS &&
-//                    msg.msgid != MAVLINK_MSG_ID_SYS_STATUS &&
-//                    msg.msgid != MAVLINK_MSG_ID_VIBRATION &&
-//                    msg.msgid != MAVLINK_MSG_ID_ATTITUDE &&
-//                    msg.msgid != MAVLINK_MSG_ID_VFR_HUD &&
-//                    msg.msgid != MAVLINK_MSG_ID_GLOBAL_POSITION_INT &&
-//                    msg.msgid != MAVLINK_MSG_ID_GPS_RAW_INT &&
-//                    msg.msgid != MAVLINK_MSG_ID_RADIO_STATUS)
-//                parent.logMessageToGCS(msg.toString());
 
         } catch (PortUnreachableException ignored) {
 
@@ -1504,6 +1494,16 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         sendMessage(msg);
     }
 
+    int getParameterIndex(String paramName) {
+        for (int i = 0; i < params.size(); i++) {
+            MAVParam p = params.get(i);
+            if (p.getParamName().equals(paramName)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     void send_param(int index) {
         MAVParam param = params.get(index);
         send_param(param.getParamName(),
@@ -1779,7 +1779,6 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                                 msg.command = MAV_CMD.MAV_CMD_GIMBAL_RESET;
                                 Log.d(TAG, "Mission Action : RESET_GIMBAL_YAW");
                                 msglist.add(msg);
-                                Log.e(TAG, "MAV_CMD_GIMBAL_RESET was deprecated?");
                                 break;
                             default:
                                 Log.d(TAG, "Mission Action : Waypoint");
