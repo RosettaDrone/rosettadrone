@@ -479,7 +479,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
     void setAIenable(final boolean enable) {
         parent.mMavlinkReceiver.AIenabled = enable;
-        parent.Set_ai_mode();
+        parent.pluginManager.setAIMode();
     }
 
     void setMaxHeight(final int height) {

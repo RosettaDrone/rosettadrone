@@ -190,6 +190,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     public SharedPreferences prefs;
     private boolean mExternalVideoOut = true;
+    private boolean trasmitRawVideo = true;
     private String mvideoIPString;
     private int videoPort;
     private int mVideoBitrate = 2;
@@ -881,7 +882,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 // Send raw H264 to the FFMPEG parser...
                 if (mExternalVideoOut == true) {
-                    NativeHelper.getInstance().parse(videoBuffer, size, 0);
+                    if(trasmitRawVideo) {
+
+                    } else {
+                        NativeHelper.getInstance().parse(videoBuffer, size, 0);
+                    }
                 }
 
             } else {
