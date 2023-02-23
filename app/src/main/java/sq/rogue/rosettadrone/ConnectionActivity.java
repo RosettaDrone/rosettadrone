@@ -17,7 +17,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -42,6 +41,9 @@ import dji.sdk.sdkmanager.DJISDKManager;
 
 public class ConnectionActivity extends Activity implements View.OnClickListener {
 
+    String modelString = "";
+    String firmwareString = "";
+
     private static final String TAG = MainActivity.class.getName();
     private static final String[] REQUIRED_PERMISSION_LIST = new String[]{
             Manifest.permission.VIBRATE,
@@ -60,9 +62,9 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
     };
 
     private static final int REQUEST_PERMISSION_CODE = 12345;
-    private TextView mTextConnectionStatus;
+    private TextView mStatusBig;
     private TextView mTextProduct;
-    private TextView mTextModelAvailable;
+    private TextView mStatusSmall;
     private Button mBtnOpen;
     private Button mBtnSim;
     private Button mBtnTest;
@@ -180,13 +182,27 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         filter.addAction(DJISimulatorApplication.FLAG_CONNECTION_CHANGE);
         registerReceiver(mReceiver, filter);
 
+        // Process extras passed to intent
+        Bundle extras = this.getIntent().getExtras();
+        if (extras != null) {
+            String mode = extras.getString("mode");
+            if(mode != null) {
+                if(mode.equals("test")) {
+                    RDApplication.isTestMode = true;
+
+                    // Start app
+                    mUIHandler = new Handler(Looper.getMainLooper());
+                    mUIHandler.postDelayed(startApp, 50);
+                }
+            }
+        }
     }
 
     protected BroadcastReceiver mReceiver = new BroadcastReceiver() {
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            mTextConnectionStatus.setText(R.string.connection_sim);
+            mStatusBig.setText(R.string.connection_sim);
             notifyStatusChange();
         }
     };
@@ -255,7 +271,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
                     Aircraft aircraft = (Aircraft) product;
                     if (aircraft.getRemoteController() != null && aircraft.getRemoteController().isConnected()) {
                         // The product is not connected, but the remote controller is connected
-                        showToast("only RC Connected");
+                        mStatusBig.setText("RC connected");
                         ret = true;
                     }
                 }
@@ -263,34 +279,28 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         }
 
         if (!ret) {
-            // The product or the remote controller are not connected.
-            showToast("Disconnected");
+            // The product nor the remote controller are not connected.
+            mStatusBig.setText("RC not connected");
+            mStatusSmall.setText("");
         }
     }
 
 
     private void updateVersion() {
-
         if (RDApplication.getProductInstance() != null) {
             final String version = RDApplication.getProductInstance().getFirmwarePackageVersion();
             this.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    if (TextUtils.isEmpty(version)) {
-                        mTextModelAvailable.setText("Model Not Available"); //Firmware version:
-                    } else {
-                        mTextModelAvailable.setText(version); //"Firmware version: " +
-                    }
+                    mStatusSmall.setText(version);
                 }
             });
         }
     }
 
-
     private void initUI() {
-
-        mTextConnectionStatus = (TextView) findViewById(R.id.text_connection_status);
-        mTextModelAvailable = (TextView) findViewById(R.id.text_model_available);
+        mStatusBig = (TextView) findViewById(R.id.text_connection_status);
+        mStatusSmall = (TextView) findViewById(R.id.text_model_available);
         mTextProduct = (TextView) findViewById(R.id.text_product_info);
 
 
@@ -327,6 +337,10 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
             r.play();
 
             mBtnOpen.setEnabled(true);
+
+            if(RDApplication.isTestMode) {
+                mBtnOpen.performClick();
+            }
         }
     };
 
@@ -342,13 +356,13 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
             mUIHandler = new Handler(Looper.getMainLooper());
             mUIHandler.postDelayed(startApp, 2000);
 
-            String str = mProduct instanceof Aircraft ? "DJIAircraft" : "DJIHandHeld";
-            mTextConnectionStatus.setText("Status: " + str + " connected");
+            String str = mProduct instanceof Aircraft ? "Aircraft" : "Handheld";
+            mStatusSmall.setText(str);
 
             if (null != mProduct.getModel()) {
-                mTextModelAvailable.setText("" + mProduct.getModel().getDisplayName());
+                mStatusBig.setText(mProduct.getModel().getDisplayName());
             } else {
-                mTextModelAvailable.setText("Model Not Available");
+                mStatusBig.setText("");
             }
             if (KeyManager.getInstance() != null) {
                 KeyManager.getInstance().addListener(firmkey, firmVersionListener);
@@ -364,7 +378,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
             mBtnOpen.setEnabled(false);
 
             mTextProduct.setText(R.string.product_information);
-            mTextConnectionStatus.setText(R.string.connection_loose);
+            mStatusBig.setText(R.string.connection_loose);
         }
     }
 
@@ -401,7 +415,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
 
                     showToast("noSimulate...");
                     RDApplication.setSim(false);
-                    mTextConnectionStatus.setText(R.string.connection_loose);
+                    mStatusBig.setText(R.string.connection_loose);
                 } else {
                     showToast("Simulate...");
                     RDApplication.setSim(true);
