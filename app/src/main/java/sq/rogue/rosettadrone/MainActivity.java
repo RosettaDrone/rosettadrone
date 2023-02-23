@@ -820,7 +820,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         //--------------------------------------------------------------
         // Make the Takeoff button....
         Button mBtnTakeoff = findViewById(R.id.btn_takeoff);
-        mBtnTakeoff.setOnClickListener(v -> mModel.doTakeOff(5));
+        mBtnTakeoff.setOnClickListener(v -> mModel.doTakeOff(5, false));
         //--------------------------------------------------------------
         // Make the Return Home button....
         Button mBtnRTH = findViewById(R.id.btn_rth);

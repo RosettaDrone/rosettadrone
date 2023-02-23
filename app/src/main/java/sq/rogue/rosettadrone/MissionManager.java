@@ -102,7 +102,7 @@ public class MissionManager {
 
 					case MAV_CMD.MAV_CMD_NAV_TAKEOFF:
 						takeOffLocation = droneModel.getLocation2D();
-						droneModel.doTakeOff(m.z); // TODO: Prevent send_command_ack()
+						droneModel.doTakeOff(m.z, false); // TODO: Prevent send_command_ack()
 						waitTakeOffReady();
 						waitReachLocation();
 						break;
@@ -161,11 +161,11 @@ public class MissionManager {
 						break;
 
 					case MAV_CMD.MAV_CMD_VIDEO_START_CAPTURE:
-						droneModel.startRecordingVideo();
+						droneModel.startRecordingVideo(false);
 						break;
 
 					case MAV_CMD.MAV_CMD_VIDEO_STOP_CAPTURE:
-						droneModel.stopRecordingVideo();
+						droneModel.stopRecordingVideo(false);
 						break;
 
 					case MAV_CMD.MAV_CMD_DO_CHANGE_SPEED:
@@ -244,7 +244,6 @@ public class MissionManager {
 	// TODO: Use MAVlink-Waypoints instead of DJI-Waypoints. We need to support MAV_CMD_IMAGE_STOP_CAPTURE (not supported by DJI)
 	void setMission(ArrayList<msg_mission_item_int> mission) {
 		missionItems = mission;
-		paused = true;
 	}
 
 	void startMission() {
@@ -355,7 +354,7 @@ public class MissionManager {
 	// Take one or more pictures. Is called during movement and when waypoint is reached.
 	void takePhotos() {
 		if (requestOnePicture && !photoTaken && !droneModel.isMovingTo()) {
-			droneModel.takePhoto();
+			droneModel.takePhoto(false);
 			photoTaken = true;
 		}
 	}

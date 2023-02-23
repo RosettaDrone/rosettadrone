@@ -5,6 +5,7 @@ import android.util.Log;
 import com.MAVLink.Messages.MAVLinkMessage;
 import com.MAVLink.common.msg_command_long;
 import com.MAVLink.common.msg_manual_control;
+import com.MAVLink.common.msg_message_interval;
 import com.MAVLink.common.msg_mission_ack;
 import com.MAVLink.common.msg_mission_count;
 import com.MAVLink.common.msg_mission_item;
@@ -44,6 +45,7 @@ import static com.MAVLink.common.msg_command_int.MAVLINK_MSG_ID_COMMAND_INT;
 import static com.MAVLink.common.msg_command_long.MAVLINK_MSG_ID_COMMAND_LONG;
 import static com.MAVLink.common.msg_home_position.MAVLINK_MSG_ID_HOME_POSITION;
 import static com.MAVLink.common.msg_ping.MAVLINK_MSG_ID_PING;
+import static com.MAVLink.enums.MAV_CMD.MAV_CMD_REQUEST_MESSAGE;
 import static com.MAVLink.minimal.msg_heartbeat.MAVLINK_MSG_ID_HEARTBEAT;
 import static com.MAVLink.common.msg_manual_control.MAVLINK_MSG_ID_MANUAL_CONTROL;
 import static com.MAVLink.common.msg_mission_ack.MAVLINK_MSG_ID_MISSION_ACK;
@@ -128,6 +130,19 @@ public class MAVLinkReceiver {
         this.mModel = model;
     }
 
+    // TODO: Prefer this methods to send_command_ack.
+    // TODO: DroneModel should only send responses when they are not sent from this MAVLinkReceiver.
+
+    // Accept or Deny
+    private void sendResponse(int mavLinkCmd, boolean accepted) {
+        mModel.send_command_ack(mavLinkCmd, accepted ? MAV_RESULT.MAV_RESULT_ACCEPTED : MAV_RESULT.MAV_RESULT_DENIED);
+    }
+
+    // Send in progress
+    private void sendResponse(int mavLinkCmd) {
+        mModel.send_command_ack(mavLinkCmd, MAV_RESULT.MAV_RESULT_IN_PROGRESS);
+    }
+
     public void process(MAVLinkMessage msg) {
 
         if (msg.msgid == MAVLINK_MSG_ID_HEARTBEAT) {
@@ -140,11 +155,8 @@ public class MAVLinkReceiver {
         switch (msg.msgid) {
             case MAVLINK_MSG_ID_AUTOPILOT_VERSION_REQUEST:
                 Log.d(TAG, "send_autopilot_version...");
-                mModel.send_command_ack(MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES, MAV_RESULT.MAV_RESULT_ACCEPTED);
+                sendResponse(MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES, true);
                 mModel.send_autopilot_version();
-                break;
-
-            case MAVLINK_MSG_ID_HOME_POSITION:
                 break;
 
             case MAVLINK_MSG_ID_PING:
@@ -162,63 +174,73 @@ public class MAVLinkReceiver {
                 switch (msg_cmd.command) {
                     case MAV_CMD_SET_MESSAGE_INTERVAL:
                         // msg_cmd.param1;
-                        mModel.send_command_ack(MAV_CMD_SET_MESSAGE_INTERVAL, MAV_RESULT.MAV_RESULT_ACCEPTED);
+                        sendResponse(MAV_CMD_SET_MESSAGE_INTERVAL, true);
                         break;
 
                     case MAV_CMD_COMPONENT_ARM_DISARM:
                         if (msg_cmd.param1 == 1)
-                            mModel.armMotors();
+                            sendResponse(MAV_CMD_COMPONENT_ARM_DISARM, mModel.armMotors());
                         else
-                            mModel.disarmMotors();
+                            sendResponse(MAV_CMD_COMPONENT_ARM_DISARM);
+                            mModel.disarmMotors(true);
                         break;
 
                     case MAV_CMD_DO_SET_MODE:
                         changeFlightMode((int) msg_cmd.param2);
-                        mModel.send_command_ack(MAV_CMD_DO_SET_MODE, MAV_RESULT.MAV_RESULT_ACCEPTED);
+                        sendResponse(MAV_CMD_DO_SET_MODE, true);
                         break;
 
                     case MAV_CMD_NAV_LOITER_UNLIM:
-                        //                     mModel.set_flight_mode(ATTI);
+                        //mModel.set_flight_mode(ATTI);
                         break;
+
                     case MAV_CMD_NAV_TAKEOFF:
-                        Log.d(TAG, "ALT = " + msg_cmd.param7);
-                        mModel.send_command_ack(MAV_CMD_NAV_TAKEOFF, MAV_RESULT.MAV_RESULT_IN_PROGRESS);
-                        mModel.doTakeOff(msg_cmd.param7);
+                        mModel.doTakeOff(msg_cmd.param7, true);
                         break;
+
                     case MAV_CMD_NAV_LAND:
                         mModel.do_land();
                         break;
+
                     case MAV_CMD_DO_SET_HOME:
                         Log.d(TAG, "LAT = " + msg_cmd.param5);
                         Log.d(TAG, "LONG = " + msg_cmd.param6);
                         Log.d(TAG, "ALT = " + msg_cmd.param7);
                         mModel.set_home_position(msg_cmd.param5, msg_cmd.param6);
                         break;
+
                     case MAV_CMD_NAV_RETURN_TO_LAUNCH:
                         Log.d(TAG, "MAV_CMD_NAV_RETURN_TO_LAUNCH...");
+                        sendResponse(MAV_CMD_NAV_RETURN_TO_LAUNCH);
                         mModel.do_go_home();
-                        mModel.send_command_ack(MAV_CMD_NAV_RETURN_TO_LAUNCH, MAV_RESULT.MAV_RESULT_ACCEPTED);
                         break;
+
                     case MAV_CMD_GET_HOME_POSITION:
+                        // DEPRECATED: Replaced by MAV_CMD_REQUEST_MESSAGE
                         mModel.send_home_position();
                         break;
+
                     case MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES:
+                        sendResponse(MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES, true);
                         mModel.send_autopilot_version();
                         break;
+
                     case MAV_CMD_VIDEO_START_CAPTURE:
-                        mModel.startRecordingVideo();
+                        mModel.startRecordingVideo(true);
                         break;
+
                     case MAV_CMD_VIDEO_STOP_CAPTURE:
-                        mModel.stopRecordingVideo();
+                        mModel.stopRecordingVideo(true);
                         break;
+
                     case MAV_CMD_DO_DIGICAM_CONTROL:
                         // DEPRECATED but still used by QGC
                         //    mModel.do_set_Gimbal(9, (float)((-30.0*5.5)+1500.0)); // TODO:: Default point somewhat down... To be removed when Camera setting in mission works....
-                        mModel.takePhoto();
+                        mModel.takePhoto(true);
                         break;
 
                     case MAV_CMD_MISSION_START:
-                        mModel.startWaypointMission();
+                        sendResponse(MAV_CMD_MISSION_START, mModel.startWaypointMission());
                         break;
 
                     case MAV_CMD_OVERRIDE_GOTO:
@@ -264,8 +286,9 @@ public class MAVLinkReceiver {
                         if (msg_cmd.param1 == MAV_GOTO_DO_CONTINUE) {
                             mModel.resumeWaypointMission();
                         }
-                        mModel.send_command_ack(MAV_CMD_OVERRIDE_GOTO, MAV_RESULT.MAV_RESULT_ACCEPTED);
+                        sendResponse(MAV_CMD_OVERRIDE_GOTO, true);
                         break;
+
                     case MAV_CMD_CONDITION_YAW:
                         Log.d(TAG, "Yaw = " + msg_cmd.param1);
 
@@ -286,18 +309,44 @@ public class MAVLinkReceiver {
                             mModel.send_command_ack(MAV_CMD_CONDITION_YAW, MAV_RESULT.MAV_RESULT_UNSUPPORTED);
                         }
                         break;
+
                     case MAV_CMD_DO_SET_SERVO:
                         mModel.do_set_Gimbal(msg_cmd.param1, msg_cmd.param2);
                         break;
-                    //                        CUSTOM
+
                     case MAV_PROTOCOL_CAPABILITY_FTP:
                         parent.logMessageDJI("Received MAV: MAV_PROTOCOL_CAPABILITY_FTP");
                         mModel.send_command_ack(MAV_PROTOCOL_CAPABILITY_FTP, MAV_RESULT.MAV_RESULT_ACCEPTED);
                         break;
+
                     // JUMP is just a test function to enter the Timeline...
                     case MAV_CMD_DO_JUMP:
                         Log.d(TAG, "Start Timeline...");
                         //    mModel.echoLoadedMission();
+                        break;
+
+                    case MAV_CMD_REQUEST_MESSAGE:
+                        int requestMsgId = (int) msg_cmd.param1;
+                        int reqParamId = (int) msg_cmd.param2;
+                        mModel.send_command_ack(MAV_CMD_REQUEST_MESSAGE, MAV_RESULT.MAV_RESULT_ACCEPTED);
+                        switch(requestMsgId) {
+                            case MAVLINK_MSG_ID_HOME_POSITION:
+                                mModel.send_home_position();
+                                break;
+                            default:
+                                /*
+                                msg_message_interval m = new msg_message_interval();
+                                m.message_id = requestMsgId;
+
+                                m.interval_us = 1000; // TODO:
+                                mModel.sendMessage(m);
+                                 */
+                                break;
+                        }
+                        break;
+
+                    default:
+                        parent.logMessageDJI("Received Unsupported Command: " + msg_cmd);
                         break;
                 }
                 break;
@@ -554,9 +603,6 @@ public class MAVLinkReceiver {
             } else {
                 // Store mission item
                 mMissionItemList.add(msg_item);
-
-                // TODO: Necessary? QGC doesn't check this.
-                // mModel.send_command_ack(MAVLINK_MSG_ID_MISSION_ACK, MAV_RESULT.MAV_RESULT_ACCEPTED);
 
                 if (msg_item.seq == mNumGCSWaypoints - 1) {
                     // We are done fetching a complete mission from the GCS
