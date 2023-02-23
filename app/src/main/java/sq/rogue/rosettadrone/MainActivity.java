@@ -120,7 +120,6 @@ import sq.rogue.rosettadrone.video.NativeHelper;
 import sq.rogue.rosettadrone.video.VideoService;
 
 import static com.google.android.material.snackbar.Snackbar.LENGTH_LONG;
-import static sq.rogue.rosettadrone.YawDirection.TARGET;
 import static sq.rogue.rosettadrone.util.safeSleep;
 
 // TODO: Continue does not work, pause only allow flying in line with mission, report does not work, Button click should be changed, Mission not shown on rosettadrone.
@@ -189,7 +188,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Button mBtnSafety;
     private boolean stat = false; // Is it safe to takeoff...
 
-    private SharedPreferences prefs;
+    public SharedPreferences prefs;
     private boolean mExternalVideoOut = true;
     private String mvideoIPString;
     private int videoPort;
@@ -207,7 +206,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private DJICodecManager mCodecManager;
     private int videoViewWidth;
     private int videoViewHeight;
-    protected SharedPreferences sharedPreferences;
+    public SharedPreferences sharedPreferences;
     private boolean mIsTranscodedVideoFeedNeeded = false;
     public static WaypointMission.Builder waypointMissionBuilder;
     private List<Waypoint> waypointList = new ArrayList<>();
@@ -221,9 +220,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     public String last_downloaded_file;
     public boolean downloadError = false;
     public int lastDownloadedIndex = -1;
+    public PluginManager pluginManager = new PluginManager(this);;
 
-    private String AIaddress = "127.0.0.1";
-    private int AIport = 7001;
     //-----------------------------------------------------------------------------//
     private Runnable djiUpdateRunnable = () -> {
         Intent intent = new Intent(DJISimulatorApplication.FLAG_CONNECTION_CHANGE);
@@ -499,48 +497,48 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         aMap.moveCamera(CameraUpdateFactory.newLatLngZoom(marker, 14F));
 
         aMap.setOnMapClickListener((point)-> {
-
             Log.d(TAG, "Goto: " + point.toString());
-                AlertDialog.Builder alertDialog2 = new AlertDialog.Builder(this);
-                alertDialog2.setIcon(R.mipmap.track_right);
-                alertDialog2.setTitle("AI Mavlink/Python function selector!");
-                alertDialog2.setMessage("Clikked");
-                alertDialog2.setNegativeButton("Cancel",
-                        (dialog, which) -> {
-                            dialog.cancel();
-                        });
-                alertDialog2.setNeutralButton("Add to Waypoint list",
-                        (dialog, which) -> {
-                            markWaypoint(point, true);
-                            Waypoint mWaypoint = new Waypoint(point.latitude, point.longitude,  mModel.m_alt);
-                            //Add Waypoints to Waypoint arraylist;
-                            if (waypointMissionBuilder != null) {
-                                waypointList.add(mWaypoint);
-                                waypointMissionBuilder.waypointList(waypointList).waypointCount(waypointList.size());
-                            } else {
-                                waypointMissionBuilder = new WaypointMission.Builder();
-                                waypointList.add(mWaypoint);
-                                waypointMissionBuilder.waypointList(waypointList).waypointCount(waypointList.size());
-                            }
-                            dialog.cancel();
-                        });
-                alertDialog2.setPositiveButton ("Accept",
-                        (dialog, which) -> {
-                            // If we are airborn...
-                            if( mModel.m_alt > -5.0) {
-                                markWaypoint(point, false);
-                                mModel.goto_position(point.latitude, point.longitude, mModel.m_alt);
-                                dialog.cancel();
-                            }else {
-                                Log.d(TAG, "Cannot Add Waypoint");
-                                Toast.makeText(getApplicationContext(), "Cannot goto position!!!", Toast.LENGTH_LONG).show();
-                            }
+
+            AlertDialog.Builder alertDialog2 = new AlertDialog.Builder(this);
+            alertDialog2.setIcon(R.mipmap.track_right);
+            alertDialog2.setTitle("AI Mavlink/Python function selector!");
+            alertDialog2.setMessage("Clicked");
+            alertDialog2.setNegativeButton("Cancel",
+                    (dialog, which) -> {
+                        dialog.cancel();
                     });
-                ///
-                this.runOnUiThread(() -> {
-                    alertDialog2.show();
-                });
-         });
+            alertDialog2.setNeutralButton("Add to Waypoint list",
+                    (dialog, which) -> {
+                        markWaypoint(point, true);
+                        Waypoint mWaypoint = new Waypoint(point.latitude, point.longitude, mModel.m_alt);
+                        //Add Waypoints to Waypoint arraylist;
+                        if (waypointMissionBuilder != null) {
+                            waypointList.add(mWaypoint);
+                            waypointMissionBuilder.waypointList(waypointList).waypointCount(waypointList.size());
+                        } else {
+                            waypointMissionBuilder = new WaypointMission.Builder();
+                            waypointList.add(mWaypoint);
+                            waypointMissionBuilder.waypointList(waypointList).waypointCount(waypointList.size());
+                        }
+                        dialog.cancel();
+                    });
+            alertDialog2.setPositiveButton("Accept",
+                    (dialog, which) -> {
+                        // If we are airborn...
+                        if (mModel.m_alt > -5.0) {
+                            markWaypoint(point, false);
+                            mModel.goto_position(point.latitude, point.longitude, mModel.m_alt);
+                            dialog.cancel();
+                        } else {
+                            Log.d(TAG, "Cannot Add Waypoint");
+                            Toast.makeText(getApplicationContext(), "Cannot goto position!!!", Toast.LENGTH_LONG).show();
+                        }
+                    });
+            ///
+            this.runOnUiThread(() -> {
+                alertDialog2.show();
+            });
+        });
 
         updateDroneLocation();
     }
@@ -710,63 +708,58 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             DummyProduct.createInstance();
         }
 
-        //---------------- Hide top bar ---
+        // Hide top bar
         Objects.requireNonNull(getSupportActionBar()).hide();
-        //---------------- Force Landscape ether ways...
+
+        // Force Landscape
         this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
-        //---------------- Hide title (do not know..)
-//        requestWindowFeature(Window.FEATURE_NO_TITLE); // for hiding title
-        //---------------- Make absolutely full screen...
-        //       getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-        //             WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        //----------------
+
+        // Hide title
+        //requestWindowFeature(Window.FEATURE_NO_TITLE); // for hiding title
+
+        // Make fullscreen
+        //getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+        //WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         setContentView(R.layout.activity_gui);
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         prefs = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
 
         mProduct = RDApplication.getProductInstance(); // Should be set by Connection ...
-        if(mProduct != null){
+        if (mProduct != null) {
             try {
                 mProductModel = mProduct.getModel();
-            }catch(Exception e){
+            } catch (Exception e) {
                 Log.d(TAG, "exception", e);
                 mProductModel = Model.MAVIC_PRO; // Just a dummy value should we be in test mode... (No Target)
             }
-        }else{
+        } else {
             // We need to make this; if no device or if sin mode...
             // Will support alternative video source...
             Log.d(TAG, "Starting external video input...");
             int port = Integer.parseInt(Objects.requireNonNull(prefs.getString("pref_external_video", "0")));
-            if(port > 1000) {
+            if (port > 1000) {
                 startVideoLoop(port);
             }
         }
-/*
+
+        /*
         FrameLayout wv = findViewById(R.id.compass_container);
         wv.getLayoutParams().height = FrameLayout.LayoutParams.MATCH_PARENT; // LayoutParams: android.view.ViewGroup.LayoutParams
-// wv.getLayoutParams().height = LayoutParams.WRAP_CONTENT;
+        // wv.getLayoutParams().height = LayoutParams.WRAP_CONTENT;
         wv.requestLayout();//It is necesary to refresh the screen
- */
+        */
+
         if (savedInstanceState != null) {
             navState = savedInstanceState.getInt("navigation_state");
         }
 
-        //------------------------------------------------------------
         mModel = new DroneModel(this, null, RDApplication.getSim());
         mModel.setSystemId(Integer.parseInt(Objects.requireNonNull(prefs.getString("pref_drone_id", "1"))));
 
-        //--------------------------------------------------------------
         mMavlinkReceiver = new MAVLinkReceiver(this, mModel);
-        // Set some user values for the AI assist functionallity.
-        AIaddress = prefs.getString("pref_ai_ip", "127.0.0.1");
-        AIport  = Integer.parseInt(Objects.requireNonNull(prefs.getString("pref_ai_port", "2000")));
 
-        mMavlinkReceiver.AIenabled = prefs.getBoolean("pref_ai_telemetry_enabled", true);
-
-        // Store IP to mission controll...
-        mMavlinkReceiver.AIactivityIP = AIaddress; //prefs.getString("pref_gcs_ip", "127.0.0.1");
-        mMavlinkReceiver.AIactivityPort = AIport;
+        pluginManager.init();
 
         loadMockParamFile();
 
@@ -789,16 +782,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         initLogs();
         initPacketizer();
 
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
         initFlightController();
 
         DJISDKManager.getInstance().registerApp(this, mDJISDKManagerCallback);
 
-        //--------------------------------------------------------------
-        // Make the safety switch....
+        // SafeMode button
         mBtnSafety = findViewById(R.id.btn_safety);
         mBtnSafety.setOnClickListener(v -> {
             Drawable connectedDrawable;
@@ -817,100 +808,41 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     (mModel.isSafetyEnabled()) ? R.string.safety_on : R.string.safety_off, LENGTH_LONG);
         });
 
-        //--------------------------------------------------------------
-        // Make the Takeoff button....
+        // Takeoff button
         Button mBtnTakeoff = findViewById(R.id.btn_takeoff);
         mBtnTakeoff.setOnClickListener(v -> mModel.doTakeOff(5, false));
-        //--------------------------------------------------------------
-        // Make the Return Home button....
+
+        // RTH button
         Button mBtnRTH = findViewById(R.id.btn_rth);
         mBtnRTH.setOnClickListener(v -> mModel.do_go_home());
-        //--------------------------------------------------------------
-        // Make the Report button....
+
+        // Report button
         Button mBtnRepport = findViewById(R.id.btn_Report);
-        mBtnRepport.setOnClickListener(v -> SetMesasageBox("com.example.sendmail",1));
-/*
+        mBtnRepport.setOnClickListener(v -> pluginManager.startPlugin("com.example.sendmail",1));
+
+        /*
         StateListDrawable listDrawable = new StateListDrawable();
         listDrawable.addState(new int[] {android.R.attr.state_pressed},  mBtnRepport.getBackground());
         listDrawable.addState(new int[] {android.R.attr.defaultValue}, mBtnRepport.setBackground("@mipmap/track_report");
         mBtnRepport.setBackground(listDrawable);
-*/
-        //--------------------------------------------------------------
-        // Make the AI button....
+        */
+
+        // AI button
         Button mBtnAI = findViewById(R.id.btn_AI_start);
-        mBtnAI.setOnClickListener(v -> Set_ai_mode());
-        //--------------------------------------------------------------
-        // Disable takeoff by default... This however it not how DJI does it, so we must delay this action...
+        mBtnAI.setOnClickListener(v -> pluginManager.setAIMode());
+
+        // Click on SafeMode button (enable SafeMode)
         Handler mTimerHandler = new Handler(Looper.getMainLooper());
-        mTimerHandler.postDelayed(enablesafety, 3000);
+        mTimerHandler.postDelayed(enableSafeMode, 3000);
 
         if(RDApplication.isTestMode) {
             onDroneConnected();
         }
     }
 
-    // Toggle AI mission mode...
-    public void Set_ai_mode()
-    {
-        Button mBtnAI = findViewById(R.id.btn_AI_start);
-        Drawable connectedDrawable;
-
-        if (mMavlinkReceiver.AIenabled == true) {
-            mMavlinkReceiver.AIstat = !mMavlinkReceiver.AIstat;
-            if (mMavlinkReceiver.AIstat) {
-                connectedDrawable = getResources().getDrawable(R.drawable.drone_img, null);
-            } else {
-                connectedDrawable = getResources().getDrawable(R.mipmap.track_right, null);
-            }
-
-            mBtnAI.setBackground(connectedDrawable);
-        }
-        else{
-            logMessageDJI("AI not activated in setup menu !!!!!");
-            NotificationHandler.notifySnackbar(findViewById(R.id.snack),R.string.ai_not_active, LENGTH_LONG);
-            mMavlinkReceiver.AIstat = false;
-            connectedDrawable = getResources().getDrawable(R.mipmap.track_right, null);
-            mBtnAI.setBackground(connectedDrawable);
-        }
-    }
-
-    // If AI button is pressed then start the AI Pluggin ...
-    protected void SetMesasageBox(String msg, int type) {
-        switch (type){
-            case 1:
-                //--------------------------------------------------------------
-                logMessageDJI("Init media manager and fetch image...");
-                NotificationHandler.notifySnackbar(findViewById(R.id.snack),R.string.hold, LENGTH_LONG);
-
-                List<String> address = new ArrayList<String>();
-                String Eemail = sharedPreferences.getString("pref_email_name1", " ");
-                address.add(Eemail);
-                Eemail = sharedPreferences.getString("pref_email_name2", " ");
-                address.add(Eemail);
-                Eemail = sharedPreferences.getString("pref_email_name3", " ");
-                address.add(Eemail);
-                Eemail = sharedPreferences.getString("pref_email_name4", " ");
-                address.add(Eemail);
-
-                Runnable runnable = () -> mModel.initMediaManager(address);
-                new Thread(runnable).start();
-                break;
-            case 2:
-                Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
-                Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), notification);
-                startActivity(msg);
-                break;
-            case 3:
-
-                break;
-        }
-    }
-
-    // By default disable takeoff...
-    private Runnable enablesafety = new Runnable() {
+    private Runnable enableSafeMode = new Runnable() {
         @Override
         public void run() {
-            //stat = false;
             mBtnSafety.callOnClick();
         }
     };
@@ -932,27 +864,26 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mDJIHandler.removeCallbacks(djiUpdateRunnable);
         mDJIHandler.postDelayed(djiUpdateRunnable, 500);
         mProduct = RDApplication.getProductInstance();
-//        final BaseProduct product = RDApplication.getProductInstance();
 
         if (mProduct != null && mProduct.isConnected() && mProduct.getModel() != null) {
             logMessageDJI(mProduct.getModel().name() + " Connected ");
         } else {
             logMessageDJI("Disconnected");
             Log.e(TAG, "Video out 2: ");
-
         }
 
-        // The callback for receiving the raw H264 video data for camera live view
-        // For newer drones...
+        // Set callback for receiving the raw H264 video data from the camera
         mReceivedVideoDataListener = (videoBuffer, size) -> {
             if (m_videoMode == 2) {
                 if (mCodecManager != null) {
                     mCodecManager.sendDataToDecoder(videoBuffer, size);
                 }
+
                 // Send raw H264 to the FFMPEG parser...
                 if (mExternalVideoOut == true) {
                     NativeHelper.getInstance().parse(videoBuffer, size, 0);
                 }
+
             } else {
                 // Send H.264 to the NAIL generator...
                 if (mExternalVideoOut == true) {
@@ -961,18 +892,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         };
 
-        if (null == mProduct || !mProduct.isConnected()) {
-            mModel.m_camera = null; // Hmm to be investigated...
+        if (mProduct == null || !mProduct.isConnected()) {
+            mModel.m_camera = null;
+
         } else {
-            // List all models that needs alternative decoding...
-            if (validateTranscodingMethod(mProduct.getModel()) == true) {
-                m_videoMode = 2;
-            }
+            m_videoMode = getVideoMode(mProduct.getModel());
 
             if (!mProduct.getModel().equals(Model.UNKNOWN_AIRCRAFT)) {
-
                 if (mModel.m_camera != null) {
-
                     mModel.m_camera.setMode(SettingsDefinitions.CameraMode.SHOOT_PHOTO, djiError -> {
                         if (djiError != null) {
                             Log.e(TAG, "can't change mode of camera, error: " + djiError.getDescription());
@@ -1001,11 +928,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     }
                 }
 
-                //When calibration is needed or the fetch key frame is required by SDK, should use the provideTranscodedVideoFeed
-                //to receive the transcoded video feed from main camera.
+                // When calibration is needed or the fetch key frame is required by SDK, should use the provideTranscodedVideoFeed
+                // to receive the transcoded video feed from main camera.
                 if (mIsTranscodedVideoFeedNeeded) {
-                    if (standardVideoFeeder == null)
+                    if (standardVideoFeeder == null) {
                         standardVideoFeeder = VideoFeeder.getInstance().provideTranscodedVideoFeed();
+                    }
                     if (mExternalVideoOut) {
                         for (VideoFeeder.VideoDataListener listener : standardVideoFeeder.getListeners()) {
                             standardVideoFeeder.removeVideoDataListener(listener);
@@ -1013,6 +941,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         standardVideoFeeder.addVideoDataListener(mReceivedVideoDataListener);
                         logMessageDJI("Transcode Video !!!!!!!");
                     }
+
                 } else {
                     final VideoFeeder.VideoFeed videoFeeder = VideoFeeder.getInstance().getPrimaryVideoFeed();
                     if (mExternalVideoOut && videoFeeder != null) {
@@ -1027,35 +956,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-
-    // Start the AI Pluggin (Developed by the customers...)
-    public boolean startActivity(String pluggin)
-    {
-        Intent intent = getPackageManager().getLaunchIntentForPackage(pluggin);
-        if (intent == null) {
-            // Bring user to the market or let them choose an app?
-            intent = new Intent(Intent.ACTION_VIEW);
-            intent.setData(Uri.parse("market://details?id=" + pluggin));
-        }
-        if (intent != null) {
-
-            if( mMavlinkReceiver.AIenabled == true){
-                intent.putExtra("password", "thisisrosettadrone246546101");
-                intent.putExtra("ip", AIaddress);
-                intent.putExtra("port", AIport);
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(intent);
-            }else{
-                logMessageDJI("AI not enabled!");
-                NotificationHandler.notifySnackbar(findViewById(R.id.snack),R.string.ai_not_active, LENGTH_LONG);
-
-            }
-        }
-        return true;
-    }
-
-    private boolean validateTranscodingMethod(Model model) {
-        // If the drone requires the old handling...
+    private int getVideoMode(Model model) {
         switch (model) {
             case UNKNOWN_HANDHELD:
             case UNKNOWN_AIRCRAFT:
@@ -1063,23 +964,24 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             case PHANTOM_3_ADVANCED:
             case PHANTOM_3_PROFESSIONAL:
             case Phantom_3_4K:
-            case MAVIC_MINI:
-            case DJI_MINI_SE:
+            case MAVIC_MINI:        // Confirmed
+            case DJI_MINI_SE:       // Confirmed
             case DJI_AIR_2S:        // To be confirmed
             case MAVIC_PRO:
             case INSPIRE_1:
             case Spark:
             case MAVIC_AIR_2:       // Confirmed. https://github.com/The1only/rosettadrone/issues/108
             case INSPIRE_1_PRO:
-            case INSPIRE_1_RAW:     // Verified...
-            case MAVIC_AIR:         // Verified...
-                return true;
-        }
+            case INSPIRE_1_RAW:     // Confirmed
+            case MAVIC_AIR:         // Confirmed
+                return 2;
 
-        // Mavic 2 Pro              // Verified...
-        // Mavic 2 Zoom             // Verified...
-        // Matrice 210 V2 RTK       // Verified...
-        return false;
+            case MAVIC_2_PRO:       // Confirmed
+            case MAVIC_2_ZOOM:      // Confirmed
+            case MATRICE_210_RTK_V2:    // Confirmed
+                return 1;
+        }
+        return 1;
     }
 
     /**
@@ -1411,7 +1313,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             case R.id.action_AI:
                 Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
                 Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), notification);
-                startActivity("com.example.remoteconfig4");
+                pluginManager.startActivity("com.example.remoteconfig4");
                 break;
             default:
                 return false;

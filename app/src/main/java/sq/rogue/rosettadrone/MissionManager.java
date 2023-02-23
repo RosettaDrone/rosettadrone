@@ -93,6 +93,7 @@ public class MissionManager {
 			for (msg_mission_item_int m : missionItems) {
 				handlePause();
 				resetFlags();
+				int seq = wpNum;
 				wpNum++;
 				resetCommandStatus();
 
@@ -199,6 +200,8 @@ public class MissionManager {
 
 				// Make sure we take a photo if requested once
 				Log.i(TAG, "Completed Waypoint #" + wpNum + ": " + m.command);
+
+				droneModel.send_mission_item_reached(seq);
 
 				takePhotos();
 			}
