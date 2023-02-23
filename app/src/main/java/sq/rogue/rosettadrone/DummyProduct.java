@@ -12,6 +12,7 @@ package sq.rogue.rosettadrone;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import dji.common.battery.BatteryState;
 import dji.common.battery.LowVoltageBehavior;
 import dji.common.battery.PairingState;
 import dji.common.battery.WarningRecord;
@@ -194,6 +195,19 @@ public class DummyProduct extends Aircraft {
         @Override
         public void pairBatteries(@Nullable CommonCallbacks.CompletionCallback completionCallback) {
 
+        }
+
+        @Override
+        public void setStateCallback(@Nullable BatteryState.Callback callback) {
+            BatteryState.Builder builder = new BatteryState.Builder();
+            builder.chargeRemainingInPercent(93);
+            builder.chargeRemaining(100);
+            builder.current(500);
+            builder.fullChargeCapacity(1000);
+            builder.temperature(30);
+            builder.voltage(12);
+            builder.designCapacity(1200);
+            callback.onUpdate(builder.build());
         }
     }
 
@@ -459,6 +473,7 @@ public class DummyProduct extends Aircraft {
             state.setAttitude(attitude);
 
             state.setAircraftLocation(new LocationCoordinate3D(1, 2, 3));
+            state.setHomeLocation(new LocationCoordinate2D(1,2));
 
             state.setVelocityX(0.001f);
             state.setVelocityY(0.002f);
