@@ -63,7 +63,7 @@ public class RtpSocket implements Runnable {
     private DatagramPacket[] mPackets;
     private byte[][] mBuffers;
 
-    //private SenderReport mReport;
+    private SenderReport mReport;
     private long[] mTimestamps;
     private Semaphore mBufferRequested, mBufferCommitted;
     private Thread mThread;
@@ -87,7 +87,7 @@ public class RtpSocket implements Runnable {
         mBufferCount = 300; // TODO: readjust that when the FIFO is full
         mBuffers = new byte[mBufferCount][];
         mPackets = new DatagramPacket[mBufferCount];
-        //mReport = new SenderReport();
+        mReport = new SenderReport();
         mAverageBitrate = new AverageBitrate();
         mTransport = TRANSPORT_UDP;
         mTcpHeader = new byte[]{'$', 0, 0, 0};
@@ -145,7 +145,7 @@ public class RtpSocket implements Runnable {
         mTimestamps = new long[mBufferCount];
         mBufferRequested = new Semaphore(mBufferCount);
         mBufferCommitted = new Semaphore(0);
-        //mReport.reset();
+        mReport.reset();
         mAverageBitrate.reset();
     }
 
@@ -173,7 +173,7 @@ public class RtpSocket implements Runnable {
         for (int i = 0; i < mBufferCount; i++) {
             setLong(mBuffers[i], ssrc, 8, 12);
         }
-        //mReport.setSSRC(mSsrc);
+        mReport.setSSRC(mSsrc);
     }
 
     /**
@@ -215,7 +215,7 @@ public class RtpSocket implements Runnable {
                 mPackets[i].setPort(dport);
                 mPackets[i].setAddress(dest);
             }
-            //mReport.setDestination(dest, rtcpPort);
+            mReport.setDestination(dest, rtcpPort);
         }
     }
 
@@ -229,7 +229,7 @@ public class RtpSocket implements Runnable {
             mTransport = TRANSPORT_TCP;
             mOutputStream = outputStream;
             mTcpHeader[1] = channelIdentifier;
-            //mReport.setOutputStream(outputStream, (byte) (channelIdentifier+1));
+            mReport.setOutputStream(outputStream, (byte) (channelIdentifier+1));
         }
     }
 
@@ -352,7 +352,7 @@ public class RtpSocket implements Runnable {
                         delta = 0;
                     }
                 }
-                //mReport.update(mPackets[mBufferOut].getLength(), (mTimestamps[mBufferOut]/100L)*(mClock/1000L)/10000L);
+                mReport.update(mPackets[mBufferOut].getLength(), (mTimestamps[mBufferOut]/100L)*(mClock/1000L)/10000L);
                 mOldTimestamp = mTimestamps[mBufferOut];
                 if (mCount++ > 30) {
                     if (mTransport == TRANSPORT_UDP) {

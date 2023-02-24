@@ -1,6 +1,7 @@
 /*
-    gStreamer interface output, FFMPEG on the input side, is a service, from Native Helper....
-    We send data to UDP port 56994, that is received by the gStreamer module...
+    This class receives the data decoded using NativeHelper + ffmpeg.
+    The data is then streamed using RTP to an external gStreamer node.
+    The destination IP and port number are stored in the settings.
 */
 
 package sq.rogue.rosettadrone.video;
@@ -35,8 +36,8 @@ public class VideoService extends Service implements NativeHelper.NativeDataList
     // Binder given to clients
     private final IBinder binder = new LocalBinder();
 
-    private String mip = "127.0.0.1";
-    private int mvideoPort = 5600;
+    private String mip;
+    private int mvideoPort;
     private int mvideoBitrate = 3000;
     private int mencodeSpeed = 2;
 
@@ -113,7 +114,7 @@ public class VideoService extends Service implements NativeHelper.NativeDataList
         Log.i(TAG, "Gst initPacketizer. ");
 
         try {
-            mPacketizer.getRtpSocket().setDestination(InetAddress.getByName(ip), videoPort, 5000);
+            mPacketizer.getRtpSocket().setDestination(InetAddress.getByName(ip), videoPort, videoPort);
         } catch (UnknownHostException e) {
             Log.e(TAG, "Error setting destination for RTP packetizer", e);
         }
