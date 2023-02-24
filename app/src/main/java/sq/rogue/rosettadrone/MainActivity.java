@@ -190,7 +190,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     public SharedPreferences prefs;
     private boolean mExternalVideoOut = true;
-    private boolean trasmitRawVideo = true;
+    private boolean transmitRawVideo = false;
     private String mvideoIPString;
     private int videoPort;
     private int mVideoBitrate = 2;
@@ -317,7 +317,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     }
 
-    // After the service have started...
+    // After the service has started...
     private ServiceConnection mConnection = new ServiceConnection() {
 
         @Override
@@ -389,7 +389,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             mExternalVideoOut = false;
         }
 
-        // Wew should rather use multicast...
+        // We should rather use multicast...
         if (mService != null) {
             if (prefs.getBoolean("pref_enable_dualvideo", true)) {
                 mService.setDualVideo(true);
@@ -882,7 +882,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 // Send raw H264 to the FFMPEG parser...
                 if (mExternalVideoOut == true) {
-                    if(trasmitRawVideo) {
+                    if(transmitRawVideo) {
+                        doTransmitRawVideo(videoBuffer, size);
 
                     } else {
                         NativeHelper.getInstance().parse(videoBuffer, size, 0);
@@ -961,6 +962,20 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
+    private void doTransmitRawVideo(byte[] videoBuffer, int size) {
+        try {
+            DatagramSocket socket = new DatagramSocket();
+            socket.connect(InetAddress.getByName("192.168.0.5"), 5600);
+            socket.setSoTimeout(10);
+            DatagramPacket packet = new DatagramPacket(videoBuffer, size);
+            socket.send(packet);
+
+        } catch (IOException e) {
+
+        }
+
+    }
+
     private int getVideoMode(Model model) {
         switch (model) {
             case UNKNOWN_HANDHELD:
@@ -969,6 +984,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             case PHANTOM_3_ADVANCED:
             case PHANTOM_3_PROFESSIONAL:
             case Phantom_3_4K:
+            case PHANTOM_4:         // https://github.com/The1only/rosettadrone/issues/61
             case MAVIC_MINI:        // Confirmed
             case DJI_MINI_SE:       // Confirmed
             case DJI_AIR_2S:        // To be confirmed
