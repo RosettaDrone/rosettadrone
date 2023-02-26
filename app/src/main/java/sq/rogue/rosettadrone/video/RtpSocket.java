@@ -1,4 +1,7 @@
 /*
+ * This is a modified version for Rosetta that replaces the Multicast socket
+ * for two normal UDP ports on the same IP.
+ *
  * Copyright (C) 2011-2015 GUIGUI Simon, fyhertz@gmail.com
  *
  * This file is part of libstreaming (https://github.com/fyhertz/libstreaming)
@@ -41,17 +44,12 @@ public class RtpSocket implements Runnable {
 
     public static final String TAG = "RtpSocket";
 
-    /**
-     * Use this to use UDP for the transport protocol.
-     */
+    /** Use this to use UDP for the transport protocol. */
     public final static int TRANSPORT_UDP = 0x00;
-    /**
-     * Use this to use TCP for the transport protocol.
-     */
+
+    /** Use this to use TCP for the transport protocol. */
     public final static int TRANSPORT_TCP = 0x01;
-    /**
-     * Use this to use UDP MULTICAST for the transport protocol.
-     */
+    /** Use this to use UDP MULTICAST for the transport protocol. */
     public final static int TRANSPORT_MULTICAST = 0x02;
 
     public static final int RTP_HEADER_LENGTH = 12;
@@ -59,27 +57,31 @@ public class RtpSocket implements Runnable {
     public MulticastSocket mSocket;
     public DatagramSocket mSocketUDP;
     public DatagramSocket mSocketUDP2;
-    protected OutputStream mOutputStream = null;
     private DatagramPacket[] mPackets;
     private byte[][] mBuffers;
+    private long[] mTimestamps;
 
     private SenderReport mReport;
-    private long[] mTimestamps;
+
     private Semaphore mBufferRequested, mBufferCommitted;
     private Thread mThread;
+
     private int mTransport;
     private long mCacheSize;
     private long mClock = 0;
     private long mOldTimestamp = 0;
-    private int mSsrc, mSeq = 0, mPort = 5600;
+    private int mSsrc, mSeq = 0, mPort = -1;
     private int mBufferCount, mBufferIn, mBufferOut;
     private int mCount = 0;
     private byte mTcpHeader[];
+    protected OutputStream mOutputStream = null;
+
     private AverageBitrate mAverageBitrate;
     private boolean mUseDualVideoOut = false;
 
     /**
      * This RTP socket implements a buffering mechanism relying on a FIFO of buffers and a Thread.
+     * @throws IOException
      */
     public RtpSocket() {
 
@@ -149,25 +151,14 @@ public class RtpSocket implements Runnable {
         mAverageBitrate.reset();
     }
 
-    /**
-     * Closes the underlying socket.
-     */
+    /** Closes the underlying socket. */
     public void close() {
         mSocket.close();
         mSocketUDP.close();
         mSocketUDP2.close();
     }
 
-    /**
-     * Returns the SSRC of the stream.
-     */
-    public int getSSRC() {
-        return mSsrc;
-    }
-
-    /**
-     * Sets the SSRC of the stream.
-     */
+    /** Sets the SSRC of the stream. */
     public void setSSRC(int ssrc) {
         this.mSsrc = ssrc;
         for (int i = 0; i < mBufferCount; i++) {
@@ -176,38 +167,33 @@ public class RtpSocket implements Runnable {
         mReport.setSSRC(mSsrc);
     }
 
-    /**
-     * Sets the clock frequency of the stream in Hz.
-     */
+    /** Returns the SSRC of the stream. */
+    public int getSSRC() {
+        return mSsrc;
+    }
+
+    /** Sets the clock frequency of the stream in Hz. */
     public void setClockFrequency(long clock) {
         mClock = clock;
     }
 
-    /**
-     * Sets the size of the FIFO in ms.
-     */
+    /** Sets the size of the FIFO in ms. */
     public void setCacheSize(long cacheSize) {
         mCacheSize = cacheSize;
     }
 
-    /**
-     * Sets the Time To Live of the UDP packets.
-     */
+    /** Sets the Time To Live of the UDP packets. */
     public void setTimeToLive(int ttl) throws IOException {
         mSocket.setTimeToLive(ttl);
     }
 
-    /**
-     * Sets the destination address and to which the packets will be sent.
-     */
+    /** Sets the destination address and to which the packets will be sent. */
     public void setDestination(InetAddress dest, int dport, int rtcpPort) {
         if (dport != 0 && rtcpPort != 0) {
             if(dest.isMulticastAddress()) {
                 mTransport = TRANSPORT_MULTICAST;
-                Log.d(TAG, "Use Multicast...");
             }else {
                 mTransport = TRANSPORT_UDP;
-                Log.d(TAG, "Use Unicast...");
             }
             mPort = dport;
             Log.d(TAG, "setDestination: " + dest + ":" + dport);
@@ -249,7 +235,6 @@ public class RtpSocket implements Runnable {
     /**
      * Returns an available buffer from the FIFO, it can then be modified.
      * Call {@link #commitBuffer(int)} to send it over the network.
-     *
      * @throws InterruptedException
      **/
     public byte[] requestBuffer() throws InterruptedException {
@@ -258,10 +243,8 @@ public class RtpSocket implements Runnable {
         return mBuffers[mBufferIn];
     }
 
-    /**
-     * Puts the buffer back into the FIFO without sending the packet.
-     */
-    public void commitBuffer() {
+    /** Puts the buffer back into the FIFO without sending the packet. */
+    public void commitBuffer() throws IOException {
 
         if (mThread == null) {
             mThread = new Thread(this);
@@ -273,10 +256,8 @@ public class RtpSocket implements Runnable {
 
     }
 
-    /**
-     * Sends the RTP packet over the network.
-     */
-    public void commitBuffer(int length) {
+    /** Sends the RTP packet over the network. */
+    public void commitBuffer(int length) throws IOException {
         updateSequence();
         mPackets[mBufferIn].setLength(length);
 
@@ -292,23 +273,18 @@ public class RtpSocket implements Runnable {
 
     }
 
-    /**
-     * Returns an approximation of the bitrate of the RTP stream in bits per second.
-     */
+    /** Returns an approximation of the bitrate of the RTP stream in bits per second. */
     public long getBitrate() {
         return mAverageBitrate.average();
     }
 
-    /**
-     * Increments the sequence number.
-     */
+    /** Increments the sequence number. */
     private void updateSequence() {
         setLong(mBuffers[mBufferIn], ++mSeq, 2, 4);
     }
 
     /**
      * Overwrites the timestamp in the packet.
-     *
      * @param timestamp The new timestamp in ns.
      **/
     public void updateTimestamp(long timestamp) {
@@ -316,16 +292,12 @@ public class RtpSocket implements Runnable {
         setLong(mBuffers[mBufferIn], (timestamp / 100L) * (mClock / 1000L) / 10000L, 4, 8);
     }
 
-    /**
-     * Sets the marker in the RTP packet.
-     */
+    /** Sets the marker in the RTP packet. */
     public void markNextPacket() {
         mBuffers[mBufferIn][1] |= 0x80;
     }
 
-    /**
-     * The Thread sends the packets in the FIFO one by one at a constant rate.
-     */
+    /** The Thread sends the packets in the FIFO one by one at a constant rate. */
     @Override
     public void run() {
         Statistics stats = new Statistics(50, 3000);
@@ -391,8 +363,7 @@ public class RtpSocket implements Runnable {
             try {
                 mOutputStream.write(mTcpHeader);
                 mOutputStream.write(mBuffers[mBufferOut], 0, len);
-            } catch (Exception e) {
-            }
+            } catch (Exception e) {}
         }
     }
 
