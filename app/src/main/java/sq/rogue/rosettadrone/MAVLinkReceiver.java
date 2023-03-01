@@ -38,7 +38,6 @@ import dji.common.mission.waypoint.WaypointMissionFlightPathMode;
 import dji.common.mission.waypoint.WaypointMissionGotoWaypointMode;
 import dji.common.mission.waypoint.WaypointMissionHeadingMode;
 
-// import static com.MAVLink.common.msg_autopilot_version_request.MAVLINK_MSG_ID_AUTOPILOT_VERSION_REQUEST;
 import static com.MAVLink.ardupilotmega.msg_autopilot_version_request.MAVLINK_MSG_ID_AUTOPILOT_VERSION_REQUEST;
 import static com.MAVLink.common.msg_command_int.MAVLINK_MSG_ID_COMMAND_INT;
 import static com.MAVLink.common.msg_command_long.MAVLINK_MSG_ID_COMMAND_LONG;
@@ -153,9 +152,11 @@ public class MAVLinkReceiver {
 
         switch (msg.msgid) {
             case MAVLINK_MSG_ID_AUTOPILOT_VERSION_REQUEST:
-                Log.d(TAG, "send_autopilot_version...");
+                sendResponse(MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES, false);
+                /*
                 sendResponse(MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES, true);
                 mModel.send_autopilot_version();
+                */
                 break;
 
             case MAVLINK_MSG_ID_PING:
@@ -332,50 +333,24 @@ public class MAVLinkReceiver {
                 mModel.send_command_ack(MAVLINK_MSG_ID_SET_MODE, MAV_RESULT.MAV_RESULT_ACCEPTED);
                 break;
 
-            /**************************************************************
-             * These messages are used when GCS sends Velocity commands   *
-             **************************************************************/
             case MAVLINK_MSG_ID_SET_POSITION_TARGET_LOCAL_NED:
                 msg_set_position_target_local_ned msg_param = (msg_set_position_target_local_ned) msg;
-                if (((msg_param.type_mask & 0b0000100000000111) == 0x007)) {  // If no move and we use yaw rate...
-                    mModel.mAutonomy = false; // Velocity must halt autonomy (as Autonomy tries to reach a point, whule veliciity tries to set a speed)
-                    // TODO: Translate msg_param.type_mask into boolean flags
-                    mModel.setVelocities(msg_param.vx, msg_param.vy, msg_param.vz, Math.toDegrees(msg_param.yaw_rate));
-                    mModel.send_command_ack(MAVLINK_MSG_ID_SET_POSITION_TARGET_LOCAL_NED, MAV_RESULT.MAV_RESULT_ACCEPTED);
-                } else {
-                    mModel.send_command_ack(MAVLINK_MSG_ID_SET_POSITION_TARGET_LOCAL_NED, MAV_RESULT.MAV_RESULT_IN_PROGRESS);
-                    mModel.do_set_motion_relative(
-                            MAVLINK_MSG_ID_SET_POSITION_TARGET_LOCAL_NED,
-                            (double) msg_param.x,
-                            (double) msg_param.y,
-                            msg_param.z,
-                            msg_param.yaw,
-                            msg_param.vx,
-                            msg_param.vy,
-                            msg_param.vz,
-                            msg_param.yaw_rate,
-                            msg_param.type_mask);
-                }
+                double[] pos = mModel.get_location_metres(msg_param.x, msg_param.y, msg_param.z);
+                DroneModel.Motion motion = mModel.newMotion(MAVLINK_MSG_ID_SET_POSITION_TARGET_LOCAL_NED, msg_param.type_mask);
+                motion.lat = pos[0];
+                motion.lng = pos[1];
+                motion.alt = pos[2];
+                motion.yaw = msg_param.yaw;
+                motion.yawRate = msg_param.yaw_rate;
+                motion.vx = msg_param.vx;
+                motion.vy = msg_param.vy;
+                motion.vz = msg_param.vz;
+                mModel.startMotion(motion);
                 break;
 
             case MAVLINK_MSG_ID_SET_POSITION_TARGET_GLOBAL_INT:
                 // This command must be sent every second...
-                msg_set_position_target_global_int msg_param_4 = (msg_set_position_target_global_int) msg;
-
-                // If position is set to zero then it must be a velocity command... We should use rather the mask ...
-                if (((msg_param_4.type_mask & 0b0000100000000111) == 0x007)) {  // If no move and we use yaw rate...
-                    mModel.mAutonomy = false;
-                    mModel.do_set_motion_velocity_NED(msg_param_4.vx, msg_param_4.vy, msg_param_4.vz, (float) Math.toDegrees(msg_param_4.yaw_rate), msg_param_4.type_mask);
-                    mModel.send_command_ack(MAVLINK_MSG_ID_SET_POSITION_TARGET_GLOBAL_INT, MAV_RESULT.MAV_RESULT_ACCEPTED);
-                } else {
-                    DroneModel.Motion motion = mModel.newMotion(MAVLINK_MSG_ID_SET_POSITION_TARGET_GLOBAL_INT, msg_param_4.type_mask);
-                    motion.lat = msg_param_4.lat_int / 10000000;
-                    motion.lng = msg_param_4.lon_int / 10000000;
-                    motion.alt = msg_param_4.alt;
-                    motion.yaw = msg_param_4.yaw;
-                    motion.yawRate = msg_param_4.yaw_rate;
-                    mModel.startMotion(motion);
-                }
+                setPositionTargetGlobal((msg_set_position_target_global_int) msg);
                 break;
 
             // This command must be sent at 1Hz minimum...
@@ -391,7 +366,6 @@ public class MAVLinkReceiver {
 
                 mModel.send_command_ack(MAVLINK_MSG_ID_MANUAL_CONTROL, MAV_RESULT.MAV_RESULT_ACCEPTED);
                 break;
-
 
             /**************************************************************
              * These messages are used when GCS requests params from MAV  *
@@ -546,6 +520,30 @@ public class MAVLinkReceiver {
     void denyMissionItem() {
         isReceivingMission = false;
         mModel.send_command_ack(MAVLINK_MSG_ID_MISSION_ACK, MAV_RESULT.MAV_RESULT_DENIED);
+    }
+
+    void setPositionTargetGlobal(msg_set_position_target_global_int msg) {
+        DroneModel.Motion motion = mModel.newMotion(MAVLINK_MSG_ID_SET_POSITION_TARGET_GLOBAL_INT, msg.type_mask);
+
+        // If position is set to zero then it must be a velocity command... We should use rather the mask ...
+        if (((msg.type_mask & 0b0000100000000111) == 0x007)) {  // If no move and we use yaw rate...
+            float dNorth = msg.vx;
+            float dEast = msg.vy;
+            double ro = Math.toRadians(mModel.getCurrentYaw());
+
+            motion.vx = dNorth * Math.cos(ro) + dEast * Math.sin(ro);
+            motion.vy = -dNorth * Math.sin(ro) + dEast * Math.cos(ro);
+            motion.vz = msg.vz;
+            motion.yaw = Math.toDegrees(msg.yaw_rate);
+
+        } else {
+            motion.lat = msg.lat_int / 10000000;
+            motion.lng = msg.lon_int / 10000000;
+            motion.alt = msg.alt;
+            motion.yaw = msg.yaw;
+            motion.yawRate = msg.yaw_rate;
+        }
+        mModel.startMotion(motion);
     }
 
     void processMsgItemMessage(msg_mission_item_int msg_item) {

@@ -60,11 +60,9 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Shared
         findPreference("pref_external_gcs").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
             @Override
             public boolean onPreferenceChange(Preference preference, Object newValue) {
-
                 MainActivity.FLAG_PREFS_CHANGED = true;
                 MainActivity.FLAG_TELEMETRY_ADDRESS_CHANGED = true;
                 MainActivity.FLAG_VIDEO_ADDRESS_CHANGED = true;
-
                 return true;
             }
         });
@@ -72,7 +70,6 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Shared
         findPreference("pref_separate_gcs").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
             @Override
             public boolean onPreferenceChange(Preference preference, Object newValue) {
-
                 MainActivity.FLAG_PREFS_CHANGED = true;
                 MainActivity.FLAG_VIDEO_ADDRESS_CHANGED = true;
                 return true;

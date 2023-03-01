@@ -115,6 +115,7 @@ import static com.MAVLink.enums.MAV_CMD.MAV_CMD_VIDEO_START_CAPTURE;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_VIDEO_STOP_CAPTURE;
 import static com.MAVLink.enums.MAV_COMPONENT.MAV_COMP_ID_AUTOPILOT1;
 import static com.google.android.material.snackbar.BaseTransientBottomBar.LENGTH_LONG;
+import static sq.rogue.rosettadrone.Functions.EARTH_RADIUS;
 import static sq.rogue.rosettadrone.util.getTimestampMicroseconds;
 import static sq.rogue.rosettadrone.util.safeSleep;
 
@@ -126,7 +127,6 @@ enum YawDirection {
 }
 
 public class DroneModel implements CommonCallbacks.CompletionCallback {
-    private final double EARTH_RADIUS = 6378137.0;  // Radius of "spherical" earth
     private final int MOTION_PERIOD_MS = 50;
 
     private boolean isSimulator;
@@ -263,8 +263,8 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         // PID for position control...
 
         // TODO: Finetune PID values
-        miniPIDSide = new MiniPID(0.35, 0.0001, 4.0);
         miniPIDFwd = new MiniPID(0.35, 0.0001, 4.0);
+        miniPIDSide = new MiniPID(0.35, 0.0001, 4.0);
         miniPIDAlti = new MiniPID(0.35, 0.0001, 4.0);
         miniPIDHeading = new MiniPID(1.0, 0.00001, 2.0);
 
@@ -302,10 +302,12 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                 fatalConnectionError("mFlightController == null");
                 return;
             }
-            mFlightController.setRollPitchControlMode(RollPitchControlMode.VELOCITY);
-            mFlightController.setYawControlMode(YawControlMode.ANGULAR_VELOCITY);
-            mFlightController.setVerticalControlMode(VerticalControlMode.VELOCITY);
+
+            setControlModes();
+
             mFlightController.setRollPitchCoordinateSystem(FlightCoordinateSystem.BODY);
+
+            // Not supported by Mavic Mini, DJI Mini 2, DJI Mini SE and Mavic Air 2, DJI Air 2S, so we do it on our own.
             mFlightController.setFlightOrientationMode(FlightOrientationMode.COURSE_LOCK, null);
 
             if (isSimulator) {
@@ -922,7 +924,8 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                 break;
 
             case JOYSTICK:
-                msg.custom_mode = ArduCopterFlightModes.GUIDED;
+                // JOYSTICK is also used in Auto Mode
+                //msg.custom_mode = ArduCopterFlightModes.GUIDED;
                 msg.base_mode |= MAV_MODE_FLAG.MAV_MODE_FLAG_GUIDED_ENABLED;
                 break;
 
@@ -1207,14 +1210,8 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         return coord.getAltitude();
     }
 
-    public float get_current_head() {
-        if (mFlightController == null)
-            return (float) 123.45;
-
-        double yaw = djiAircraft.getFlightController().getState().getAttitude().yaw;
-        if (yaw < 0)
-            yaw += 360;
-        return (float) yaw;
+    public double getCurrentYaw() {
+        return angleDjiToMav(mFlightController.getState().getAttitude().yaw);
     }
 
     private void send_gps_raw_int() {
@@ -2128,16 +2125,6 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         return new Motion(command, mavLinkMask);
     }
 
-    public void do_set_motion_relative(int command, double forward, double right, float up, float head, float vx, float vy, float vz, float yaw_rate, int mask) {
-        double[] pos = get_location_metres(forward, right, up);
-        motion = new Motion(pos[0], pos[1], pos[2]);
-        motion.command = command;
-        motion.yaw = head;
-        motion.yawRate = yaw_rate;
-        motion.mask = new PositionTargetTypeMask(mask);
-        startMotion(motion);
-    }
-
     public void flyTo(double lat, double lng, double alt) {
         motion = new Motion(lat, lng, alt);
         motion.yawDirection = YawDirection.DEST;
@@ -2271,10 +2258,11 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             // Drone heading - Waypoint bearing... to 0-360 deg...
             double direction = rotation(brng, yaw);
 
+            //Log.i(TAG, "brng: " + brng + ", yaw: " + yaw + ", yawdirection: " + direction);
+
             // Find the X and Y distance from the hypotenuse and the direction...
             double right_dist = offset; //Math.max(offset,20); // bearing_error; //Math.sin(Math.toRadians(direction)) * hypotenuse + Math.cos(Math.toRadians(direction)) * bearing_error ;
-            double fw_dist = hypotenuse; //Math.max(hypotenuse,20); // Math.cos(Math.toRadians(direction)) * hypotenuse + Math.sin(Math.toRadians(direction)) * bearing_error;
-            //Log.i(TAG, "direction: " + direction);
+            double fw_dist = hypotenuse; //Math.max(hypotenuse,20); // Math.cos(Math.toRadians(direction)) * hypotenuse + Math.sin(Math.toRadians(direction)) * bearing_error;;
 
             double speed = 0;
 
@@ -2299,27 +2287,17 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
             miniPIDAlti.setOutputLimits(3.0f); // m/s
             miniPIDAlti.setOutputFilter(0.1);
-            double upmotion = miniPIDAlti.getOutput(coord.getAircraftLocation().getAltitude(), motion.alt);
+            double upVel = miniPIDAlti.getOutput(coord.getAircraftLocation().getAltitude(), motion.alt);
 
             miniPIDHeading.setOutputLimits(75.0f); // °/s
 
-            double clockmotion = miniPIDHeading.getOutput(-yawError, 0);
+            double yawVel = miniPIDHeading.getOutput(-yawError, 0);
 
-            double fmove = Math.cos(Math.toRadians(direction)) * fwmotion - Math.sin(Math.toRadians(direction)) * rightmotion;
-            double rmove = Math.sin(Math.toRadians(direction)) * fwmotion + Math.cos(Math.toRadians(direction)) * rightmotion;
+            double forwardVel = Math.cos(Math.toRadians(direction)) * fwmotion - Math.sin(Math.toRadians(direction)) * rightmotion;
+            double rightVel = Math.sin(Math.toRadians(direction)) * fwmotion + Math.cos(Math.toRadians(direction)) * rightmotion;
 
-            setVelocities(fmove, rmove, upmotion, clockmotion);
+            setVelocities(forwardVel, rightVel, upVel, yawVel);
         }
-    }
-
-    void do_set_motion_velocity_NED(float dNorth, float dEast, float D, float yaw, int mask) {
-        FlightControllerState coord = djiAircraft.getFlightController().getState();
-        double ro = Math.toRadians(coord.getAttitude().yaw);
-        double dForward = dNorth * Math.cos(ro) + dEast * Math.sin(ro);
-        double dRight = -dNorth * Math.sin(ro) + dEast * Math.cos(ro);
-
-        // TODO: Translate mask into flags.
-        setVelocities(dForward, dRight, D, yaw);
     }
 
     void enableVirtualStickMode() {
@@ -2357,22 +2335,26 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         return false;
     }
 
+    void setControlModes() {
+        mFlightController.setRollPitchControlMode(RollPitchControlMode.VELOCITY);
+        mFlightController.setYawControlMode(YawControlMode.ANGULAR_VELOCITY);
+        mFlightController.setVerticalControlMode(VerticalControlMode.VELOCITY);
+    }
+
     int velLogCounter = 0;
     void setVelocities(double roll, double pitch, double throttle, double yaw) {
         if(isForbiddenSwitchMode()) return;
 
         if(velLogCounter++ >= 1000 / MOTION_PERIOD_MS) {
             velLogCounter = 0;
-            Log.i(TAG, "roll: " + roll + ", pitch: " + pitch + ", throttle: " + throttle + ", yaw: " + yaw);
+            Log.i(TAG, "Velocities = roll: " + roll + ", pitch: " + pitch + ", throttle: " + throttle + ", yaw: " + yaw);
         }
 
         // Just in case...
         enableVirtualStickMode();
-        mFlightController.setRollPitchControlMode(RollPitchControlMode.VELOCITY);
-        mFlightController.setYawControlMode(YawControlMode.ANGULAR_VELOCITY);
-        mFlightController.setVerticalControlMode(VerticalControlMode.VELOCITY);
+        setControlModes();
 
-        /* TODO: Clean code. Don't use MAVLink masks here, but boolean flags
+        /* TODO: Reimplement using motion.mask
         if ((mask & 0b0000100000000000) == 0) {
             mYaw = yaw;
         }
@@ -2729,7 +2711,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                 + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
                 * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        double distance = EARTH_RADIUS * c * 1000; // convert to meters
+        double distance = EARTH_RADIUS * c; // convert to meters
         double height = el1 - el2;
         distance = Math.pow(distance, 2) + Math.pow(height, 2);
         return Math.sqrt(distance);
@@ -2748,7 +2730,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         return sign;
     }
 
-    private double[] get_location_metres(double dForward, double dRight, double alt) {
+    public double[] get_location_metres(double dForward, double dRight, double alt) {
         FlightControllerState coord = djiAircraft.getFlightController().getState();
         double ro = Math.toRadians(coord.getAttitude().yaw);
         double lat = coord.getAircraftLocation().getLatitude();
@@ -2766,7 +2748,6 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         double newlat = lat + Math.toDegrees(dLat);
         double newlon = lon + Math.toDegrees(dLon);
 
-        // parent.logMessageDJI("Was: lat " + lat + " lon " + lon + " newlat " + newlat + " newlon " + newlon);
         return new double[]{newlat, newlon, newalt};
     }
 

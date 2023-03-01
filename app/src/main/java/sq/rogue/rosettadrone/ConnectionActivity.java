@@ -95,6 +95,8 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
             attachedIntent.setAction(DJISDKManager.USB_ACCESSORY_ATTACHED);
             sendBroadcast(attachedIntent);
         }
+
+
     }
 
     /**
@@ -170,7 +172,6 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
 
         checkAndRequestPermissions();
 
-        //---------------- Force Landscape ether ways...
         this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
 
         setContentView(R.layout.activity_connection);

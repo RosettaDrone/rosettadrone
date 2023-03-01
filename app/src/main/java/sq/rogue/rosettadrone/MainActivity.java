@@ -189,6 +189,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private boolean stat = false; // Is it safe to takeoff...
 
     public SharedPreferences prefs;
+    public SharedPreferences sharedPreferences;
+
+    // TODO: Move to VideoService
     private boolean mExternalVideoOut = true;
     private boolean transmitRawVideo = false;
     private String mvideoIPString;
@@ -198,7 +201,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private VideoService mService = null;
     private boolean mIsBound;
     private int m_videoMode = 1;
-    private int mMaptype = GoogleMap.MAP_TYPE_HYBRID;
 
     private VideoFeeder.VideoFeed standardVideoFeeder;
     protected VideoFeeder.VideoDataListener mReceivedVideoDataListener;
@@ -207,8 +209,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private DJICodecManager mCodecManager;
     private int videoViewWidth;
     private int videoViewHeight;
-    public SharedPreferences sharedPreferences;
     private boolean mIsTranscodedVideoFeedNeeded = false;
+
+    private int mMaptype = GoogleMap.MAP_TYPE_HYBRID;
+
+
     public static WaypointMission.Builder waypointMissionBuilder;
     private List<Waypoint> waypointList = new ArrayList<>();
     private List<Polyline> m_line = new ArrayList<>();
@@ -223,13 +228,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     public int lastDownloadedIndex = -1;
     public PluginManager pluginManager = new PluginManager(this);;
 
-    //-----------------------------------------------------------------------------//
     private Runnable djiUpdateRunnable = () -> {
         Intent intent = new Intent(DJISimulatorApplication.FLAG_CONNECTION_CHANGE);
         sendBroadcast(intent);
     };
 
-    //-----------------------------------------------------------------------------
     private Runnable RunnableUpdateUI = new Runnable() {
         // We have to update UI from here because we can't update the UI from the
         // drone/GCS handling threads
@@ -258,50 +261,59 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     };
 
-    //-----------------------------------------------------------------------------
-    private void initPacketizer() {
-        Log.e(TAG, "initPacketizer");
-        String address = "127.0.0.1";
-
+    private void initLocationManager() {
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         LocationListener locationListener = new MyLocationListener();
 
         if (ActivityCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(this,
-                Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                        Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             Log.e(TAG, "Missing right to access GPS location!");
-        }else {
+        } else {
             locationManager.requestLocationUpdates(
                     LocationManager.GPS_PROVIDER, 5000, 10, locationListener);
         }
+    }
 
-        sharedPreferences = android.preference.PreferenceManager.getDefaultSharedPreferences(this);
+    public String getGCSAddress() {
+        String gcsAddress;
         if (sharedPreferences.getBoolean("pref_external_gcs", false)) {
-            if (!sharedPreferences.getBoolean("pref_separate_gcs", false)) {
-                address = sharedPreferences.getString("pref_gcs_ip", "127.0.0.1");
-            } else {
-                address = sharedPreferences.getString("pref_video_ip", "127.0.0.1");
-            }
-        } else if (sharedPreferences.getBoolean("pref_separate_gcs", false)) {
-            address = sharedPreferences.getString("pref_video_ip", "127.0.0.1");
+            gcsAddress = sharedPreferences.getString("pref_gcs_ip", "127.0.0.1");
+        } else {
+            gcsAddress = "127.0.0.1";
         }
-        //------------------------------------------------------------
-        mvideoIPString = address;
-        Log.e(TAG, "Ip Address: " + mvideoIPString);
-        //------------------------------------------------------------
+
+        return gcsAddress;
+    }
+
+    /**
+     * Reads the settings and binds the VideoService
+     */
+    private void initVideoService() {
+        Log.e(TAG, "initVideoService");
+
+        mvideoIPString = getVideoIP();
+        Log.e(TAG, "IP Address: " + mvideoIPString);
+
         videoPort = Integer.parseInt(Objects.requireNonNull(sharedPreferences.getString("pref_video_port", "5600")));
         mVideoBitrate = Integer.parseInt(Objects.requireNonNull(sharedPreferences.getString("pref_video_bitrate", "2")));
         mEncodeSpeed = Integer.parseInt(Objects.requireNonNull(sharedPreferences.getString("pref_encode_speed", "2")));
-        //------------------------------------------------------------
+
         mMaptype = Integer.parseInt(Objects.requireNonNull(prefs.getString("pref_maptype_mode", "2")));
         logMessageDJI("Mapmode: " + mMaptype);
 
-        //------------------------------------------------------------
         Intent intent = new Intent(this, VideoService.class);
         this.startService(intent);
         safeSleep(500);
-        doBindService();
+
+        // Establish a connection with the service.  We use an explicit
+        // class name because we want a specific service implementation that
+        // we know will be running in our own process (and thus won't be
+        // supporting component replacement by other applications).
+        Log.e(TAG, "doBindService");
+        bindService(new Intent(this, VideoService.class), mConnection, Context.BIND_AUTO_CREATE);
+        mIsBound = true;
 
         mIsTranscodedVideoFeedNeeded = isTranscodedVideoFeedNeeded();
         if (mIsTranscodedVideoFeedNeeded) {
@@ -310,11 +322,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             logMessageDJI("set rate to " + mVideoBitrate);
         }
 
-        //------------------------------------------------------------
         videostreamPreviewTtView = findViewById(R.id.livestream_preview_ttv);
         videostreamPreviewTtViewSmall = findViewById(R.id.livestream_preview_ttv_small);
         videostreamPreviewTtView.setVisibility(View.VISIBLE);
-
     }
 
     // After the service has started...
@@ -340,24 +350,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     };
 
-    private void doBindService() {
-        // Establish a connection with the service.  We use an explicit
-        // class name because we want a specific service implementation that
-        // we know will be running in our own process (and thus won't be
-        // supporting component replacement by other applications).
-        Log.e(TAG, "doBindService");
-        bindService(new Intent(this, VideoService.class), mConnection, Context.BIND_AUTO_CREATE);
-        mIsBound = true;
-    }
-
-    private void doUnbindService() {
-        if (mIsBound) {
-            // Detach our existing connection.
-            unbindService(mConnection);
-            mIsBound = false;
-        }
-    }
-
     /**
      * onResume is called whenever RosettaDrone takes the foreground. This happens if we open the
      * RosettaDrone application or return from the preferences window. Need to rebind to the AIDL service.
@@ -368,7 +360,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         super.onResume();
 
         setDroneParameters();
-/*
+
+        /*
         if (mDroneDetails != null) {
             String droneID = prefs.getString("pref_drone_id", "1");
             String rtlAlt = prefs.getString("pref_drone_rtl_altitude", "60") + "m";
@@ -379,15 +372,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             String text = "Drone Battery:       " + "\t\t" + dronebattery + "%"  + "\t" + "ID: " + "\t\t" + droneID + System.getProperty("line.separator") +
                     "Controller Battery:  " + "\t" + controlerbattery + "%"  + "\t" + "RTL:" + "\t" + rtlAlt;
 
-//            String text = "ID:" + "\t" + droneID + System.getProperty("line.separator") + "RTL:" + "\t" + rtlAlt;
             mDroneDetails.setText(text);
         }
- */
-        if (prefs.getBoolean("pref_enable_video", true)) {
-            mExternalVideoOut = true;
-        } else {
-            mExternalVideoOut = false;
-        }
+        */
+
+        mExternalVideoOut = prefs.getBoolean("pref_enable_video", true);
 
         // We should rather use multicast...
         if (mService != null) {
@@ -400,15 +389,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         videostreamPreviewTtView.setSurfaceTextureListener(mSurfaceTextureListener);
         if ( mModel.m_camera != null) {
-            if (!mExternalVideoOut) {
-                if (mIsTranscodedVideoFeedNeeded) {
-                    if (standardVideoFeeder != null) {
-                        standardVideoFeeder.removeVideoDataListener(mReceivedVideoDataListener);
-                    }
-                } else {
-                    VideoFeeder.getInstance().getPrimaryVideoFeed().removeVideoDataListener(mReceivedVideoDataListener);
-                }
-            } else {
+            if (mExternalVideoOut) {
                 if (mIsTranscodedVideoFeedNeeded) {
                     if (standardVideoFeeder != null) {
                         for (VideoFeeder.VideoDataListener listener : standardVideoFeeder.getListeners()) {
@@ -422,6 +403,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         videoFeed.removeVideoDataListener(listener);
                     }
                     videoFeed.addVideoDataListener(mReceivedVideoDataListener);
+                }
+            } else {
+                if (mIsTranscodedVideoFeedNeeded) {
+                    if (standardVideoFeeder != null) {
+                        standardVideoFeeder.removeVideoDataListener(mReceivedVideoDataListener);
+                    }
+                } else {
+                    VideoFeeder.getInstance().getPrimaryVideoFeed().removeVideoDataListener(mReceivedVideoDataListener);
                 }
             }
         }
@@ -468,7 +457,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             mediaFileList.clear();
         }
 
-        doUnbindService();
+        if (mIsBound) {
+            // Detach our existing connection.
+            unbindService(mConnection);
+            mIsBound = false;
+        }
 
         //Intent intent = getIntent();
         finish();
@@ -528,7 +521,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         // If we are airborn...
                         if (mModel.m_alt > -5.0) {
                             markWaypoint(point, false);
-                            mModel.goto_position(point.latitude, point.longitude, mModel.m_alt);
+                            mModel.flyTo(point.latitude, point.longitude, mModel.m_alt);
                             dialog.cancel();
                         } else {
                             Log.d(TAG, "Cannot Add Waypoint");
@@ -723,8 +716,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         //WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         setContentView(R.layout.activity_gui);
+
+        // Load preferences
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         prefs = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
         mProduct = RDApplication.getProductInstance(); // Should be set by Connection ...
         if (mProduct != null) {
@@ -781,7 +777,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
         deleteApplicationDirectory();
         initLogs();
-        initPacketizer();
+        initLocationManager();
+        initVideoService();
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
@@ -815,7 +812,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         // RTH button
         Button mBtnRTH = findViewById(R.id.btn_rth);
-        mBtnRTH.setOnClickListener(v -> mModel.do_go_home());
+        mBtnRTH.setOnClickListener(v -> mModel.doGomeHome());
 
         // Report button
         Button mBtnRepport = findViewById(R.id.btn_Report);
@@ -875,25 +872,26 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         // Set callback for receiving the raw H264 video data from the camera
         mReceivedVideoDataListener = (videoBuffer, size) -> {
+            int parserMode;
             if (m_videoMode == 2) {
+                parserMode = 0;
+
                 if (mCodecManager != null) {
+                    // Render on screen
+                    // TODO: Why not do always?
                     mCodecManager.sendDataToDecoder(videoBuffer, size);
                 }
 
-                // Send raw H264 to the FFMPEG parser...
-                if (mExternalVideoOut == true) {
-                    if(transmitRawVideo) {
-                        doTransmitRawVideo(videoBuffer, size);
-
-                    } else {
-                        NativeHelper.getInstance().parse(videoBuffer, size, 0);
-                    }
-                }
-
             } else {
-                // Send H.264 to the NAIL generator...
-                if (mExternalVideoOut == true) {
-                    NativeHelper.getInstance().parse(videoBuffer, size, 1);
+                parserMode = 1;
+            }
+
+            // Send the raw DJI H264 data to the JNI ffmpeg decoder --> NAL splitter --> RtpSocket
+            if (mExternalVideoOut == true) {
+                if(transmitRawVideo) {
+                    doTransmitRawVideo(videoBuffer, size);
+                } else {
+                    NativeHelper.getInstance().parse(videoBuffer, size, parserMode);
                 }
             }
         };
@@ -971,7 +969,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             socket.send(packet);
 
         } catch (IOException e) {
-
+            Log.e(TAG, e.toString());
         }
 
     }
@@ -1009,7 +1007,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
      * Init a fake texture view to for the codec manager, so that the video raw data can be received
      * by the camera needed to get video to the UDP handler...
      */
-
     private TextureView.SurfaceTextureListener mSurfaceTextureListener = new TextureView.SurfaceTextureListener() {
         @Override
         public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
@@ -1609,18 +1606,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private String getVideoIP() {
-        String videoIP = "127.0.0.1";
-
-        if (prefs.getBoolean("pref_external_gcs", false)) {
-            if (!prefs.getBoolean("pref_separate_gcs", false)) {
-                videoIP = prefs.getString("pref_gcs_ip", "127.0.0.1");
-            } else {
-                videoIP = prefs.getString("pref_video_ip", "127.0.0.1");
-            }
-        } else if (prefs.getBoolean("pref_separate_gcs", false)) {
-            videoIP = prefs.getString("pref_video_ip", "127.0.0.1");
+        String videoIP;
+        if (sharedPreferences.getBoolean("pref_separate_gcs", false)) {
+            // Separate video from GCS IP
+            videoIP = sharedPreferences.getString("pref_video_ip", "127.0.0.1");
+        } else {
+            videoIP = getGCSAddress();
         }
-
         return videoIP;
     }
 
@@ -1878,67 +1870,64 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
 
         private void createTelemetrySocket() {
+            // TODO: Why do we need weak references?
+            MainActivity mainActivityRef = mainActivityWeakReference.get();
             close();
 
-            String gcsIPString = "127.0.0.1";
-
-            if (mainActivityWeakReference.get().prefs.getBoolean("pref_external_gcs", false))
-                gcsIPString = mainActivityWeakReference.get().prefs.getString("pref_gcs_ip", "127.0.0.1");
-
+            String gcsIPString = mainActivityWeakReference.get().getGCSAddress();
 
             int telemIPPort = Integer.parseInt(Objects.requireNonNull(mainActivityWeakReference.get().prefs.getString("pref_telem_port", "14550")));
 
             try {
-                mainActivityWeakReference.get().socket = new DatagramSocket();
-                mainActivityWeakReference.get().socket.connect(InetAddress.getByName(gcsIPString), telemIPPort);
-                mainActivityWeakReference.get().socket.setSoTimeout(10);
+                mainActivityRef.socket = new DatagramSocket();
+                mainActivityRef.socket.connect(InetAddress.getByName(gcsIPString), telemIPPort);
+                mainActivityRef.socket.setSoTimeout(10);
+                mainActivityRef.logMessageDJI("Starting GCS telemetry link: " + gcsIPString + ":" + telemIPPort);
 
-                mainActivityWeakReference.get().logMessageDJI("Starting GCS telemetry link: " + gcsIPString + ":" + telemIPPort);
             } catch (SocketException e) {
+                // TODO
                 Log.d(TAG, "createTelemetrySocket() - socket exception");
                 Log.d(TAG, "exception", e);
-                mainActivityWeakReference.get().logMessageDJI("Telemetry socket exception: " + gcsIPString + ":" + telemIPPort);
-            } // TODO
-            catch (UnknownHostException e) {
+                mainActivityRef.logMessageDJI("Telemetry socket exception: " + gcsIPString + ":" + telemIPPort);
+
+            } catch (UnknownHostException e) {
+                // TODO
                 Log.d(TAG, "createTelemetrySocket() - unknown host exception");
                 Log.d(TAG, "exception", e);
-                mainActivityWeakReference.get().logMessageDJI("Unknown telemetry host: " + gcsIPString + ":" + telemIPPort);
-            } // TODO
+                mainActivityRef.logMessageDJI("Unknown telemetry host: " + gcsIPString + ":" + telemIPPort);
+            }
 
-            if (mainActivityWeakReference.get() != null) {
-                mainActivityWeakReference.get().mModel.setSocket(mainActivityWeakReference.get().socket);
-                if (mainActivityWeakReference.get().prefs.getBoolean("pref_secondary_telemetry_enabled", false)) {
-                    String secondaryIP = mainActivityWeakReference.get().prefs.getString("pref_secondary_telemetry_ip", "127.0.0.1");
-                    int secondaryPort = Integer.parseInt(Objects.requireNonNull(mainActivityWeakReference.get().prefs.getString("pref_secondary_telemetry_port", "18990")));
-                    try {
-                        DatagramSocket secondarySocket = new DatagramSocket();
-                        secondarySocket.connect(InetAddress.getByName(secondaryIP), secondaryPort);
-                        mainActivityWeakReference.get().logMessageDJI("Starting secondary telemetry link: " + secondaryIP + ":" + secondaryPort);
+            mainActivityRef.mModel.setSocket(mainActivityRef.socket);
+            if (mainActivityRef.prefs.getBoolean("pref_secondary_telemetry_enabled", false)) {
+                String secondaryIP = mainActivityRef.prefs.getString("pref_secondary_telemetry_ip", "127.0.0.1");
+                int secondaryPort = Integer.parseInt(Objects.requireNonNull(mainActivityRef.prefs.getString("pref_secondary_telemetry_port", "18990")));
+                try {
+                    DatagramSocket secondarySocket = new DatagramSocket();
+                    secondarySocket.connect(InetAddress.getByName(secondaryIP), secondaryPort);
+                    mainActivityRef.logMessageDJI("Starting secondary telemetry link: " + secondaryIP + ":" + secondaryPort);
+                    mainActivityRef.mModel.setSecondarySocket(secondarySocket);
 
-//                        mainActivityWeakReference.get().logMessageDJI(secondaryIP + ":" + secondaryPort);
-                        mainActivityWeakReference.get().mModel.setSecondarySocket(secondarySocket);
-                    } catch (SocketException | UnknownHostException e) {
-                        e.printStackTrace();
-                    }
+                } catch (SocketException | UnknownHostException e) {
+                    e.printStackTrace();
                 }
             }
         }
 
         protected void close() {
-            if (mainActivityWeakReference.get().socket != null) {
-                mainActivityWeakReference.get().socket.disconnect();
-                mainActivityWeakReference.get().socket.close();
+            MainActivity mainActivityRef = mainActivityWeakReference.get();
+
+            if (mainActivityRef.socket != null) {
+                mainActivityRef.socket.disconnect();
+                mainActivityRef.socket.close();
             }
-            if (mainActivityWeakReference.get().mModel != null) {
-                if (mainActivityWeakReference.get().mModel.secondarySocket != null) {
+            if (mainActivityRef.mModel != null) {
+                if (mainActivityRef.mModel.secondarySocket != null) {
                     Thread thread = new Thread(() -> {
-                        mainActivityWeakReference.get().mModel.secondarySocket.disconnect();
-                        mainActivityWeakReference.get().mModel.secondarySocket.close();
+                        mainActivityRef.mModel.secondarySocket.disconnect();
+                        mainActivityRef.mModel.secondarySocket.close();
                     });
                     thread.start();
-
                 }
-
             }
         }
     }
