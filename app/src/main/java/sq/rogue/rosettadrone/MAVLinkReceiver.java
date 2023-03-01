@@ -5,7 +5,6 @@ import android.util.Log;
 import com.MAVLink.Messages.MAVLinkMessage;
 import com.MAVLink.common.msg_command_long;
 import com.MAVLink.common.msg_manual_control;
-import com.MAVLink.common.msg_message_interval;
 import com.MAVLink.common.msg_mission_ack;
 import com.MAVLink.common.msg_mission_count;
 import com.MAVLink.common.msg_mission_item;
@@ -107,7 +106,7 @@ public class MAVLinkReceiver {
     private final String TAG = this.getClass().getSimpleName();
 
     private final float m_autoFlightSpeed = 2.0f;
-    private final float m_maxFlightSpeed = 5.0f;
+    private final float m_maxFlightSpeed = 3.0f;
     private final int MAX_WAYPOINT_DISTANCE = 475;
     public boolean curvedFlightPath = true;
     public float flightPathRadius = .2f;
@@ -199,7 +198,7 @@ public class MAVLinkReceiver {
                         break;
 
                     case MAV_CMD_NAV_LAND:
-                        mModel.do_land();
+                        mModel.doLand();
                         break;
 
                     case MAV_CMD_DO_SET_HOME:
@@ -212,7 +211,7 @@ public class MAVLinkReceiver {
                     case MAV_CMD_NAV_RETURN_TO_LAUNCH:
                         Log.d(TAG, "MAV_CMD_NAV_RETURN_TO_LAUNCH...");
                         sendResponse(MAV_CMD_NAV_RETURN_TO_LAUNCH);
-                        mModel.do_go_home();
+                        mModel.doGomeHome();
                         break;
 
                     case MAV_CMD_GET_HOME_POSITION:
@@ -250,38 +249,18 @@ public class MAVLinkReceiver {
                         }
                         mModel.pauseWaypointMission();
                         if (msg_cmd.param2 == MAV_GOTO_HOLD_AT_CURRENT_POSITION) {
-                            int x = (int) mModel.get_current_lat();
-                            int y = (int) mModel.get_current_lon();
-                            int z = (int) mModel.get_current_alt();
+                            DroneModel.Motion motion = mModel.newMotion(MAV_GOTO_HOLD_AT_CURRENT_POSITION, 0b0000111111111000);
+                            motion.command = MAV_GOTO_HOLD_AT_CURRENT_POSITION;
+                            motion.yaw = msg_cmd.param4;
+                            mModel.startMotion(motion);
 
-                            Log.d(TAG, "Lat = " + x);
-                            Log.d(TAG, "Lon = " + y);
-                            Log.d(TAG, "ALT = " + z);
-                            mModel.do_set_motion_absolute(
-                                    (double) x,
-                                    (double) y,
-                                    z,
-                                    msg_cmd.param4,
-                                    0,
-                                    0,
-                                    0,
-                                    0,
-                                    0b0000111111111000);
                         } else if (msg_cmd.param2 == MAV_GOTO_HOLD_AT_SPECIFIED_POSITION) {
-
-                            Log.d(TAG, "Lat = " + msg_cmd.param5);
-                            Log.d(TAG, "Lon = " + msg_cmd.param6);
-                            Log.d(TAG, "ALT = " + msg_cmd.param7);
-                            mModel.do_set_motion_absolute(
-                                    (double) msg_cmd.param5,
-                                    (double) msg_cmd.param6,
-                                    msg_cmd.param7,
-                                    msg_cmd.param4,
-                                    0,
-                                    0,
-                                    0,
-                                    0,
-                                    0b0000111111111000);
+                            DroneModel.Motion motion = mModel.newMotion(MAV_GOTO_HOLD_AT_SPECIFIED_POSITION, 0b0000111111111000);
+                            motion.lat = msg_cmd.param5;
+                            motion.lng = msg_cmd.param6;
+                            motion.alt = msg_cmd.param7;
+                            motion.yaw = msg_cmd.param4;
+                            mModel.startMotion(motion);
                         }
                         if (msg_cmd.param1 == MAV_GOTO_DO_CONTINUE) {
                             mModel.resumeWaypointMission();
@@ -290,28 +269,18 @@ public class MAVLinkReceiver {
                         break;
 
                     case MAV_CMD_CONDITION_YAW:
-                        Log.d(TAG, "Yaw = " + msg_cmd.param1);
-
-                        // If absolute yaw...
                         if (msg_cmd.param4 == 0) {
-                            mModel.send_command_ack(MAV_CMD_CONDITION_YAW, MAV_RESULT.MAV_RESULT_IN_PROGRESS);
-                            mModel.do_set_motion_absolute(
-                                    0,
-                                    0,
-                                    0,
-                                    msg_cmd.param1 * (float) (Math.PI / 180.0),
-                                    0,
-                                    0,
-                                    0,
-                                    10,
-                                    0b1111001111111111);
+                            DroneModel.Motion motion = mModel.newMotion(MAV_CMD_CONDITION_YAW, 0b1111001111111111);
+                            motion.yaw = msg_cmd.param1 * (float) (Math.PI / 180.0);
+                            motion.yawRate = 10;
+                            mModel.startMotion(motion);
                         } else {
                             mModel.send_command_ack(MAV_CMD_CONDITION_YAW, MAV_RESULT.MAV_RESULT_UNSUPPORTED);
                         }
                         break;
 
                     case MAV_CMD_DO_SET_SERVO:
-                        mModel.do_set_Gimbal(msg_cmd.param1, msg_cmd.param2);
+                        mModel.doSetGimbal(msg_cmd.param1, msg_cmd.param2);
                         break;
 
                     case MAV_PROTOCOL_CAPABILITY_FTP:
@@ -370,7 +339,8 @@ public class MAVLinkReceiver {
                 msg_set_position_target_local_ned msg_param = (msg_set_position_target_local_ned) msg;
                 if (((msg_param.type_mask & 0b0000100000000111) == 0x007)) {  // If no move and we use yaw rate...
                     mModel.mAutonomy = false; // Velocity must halt autonomy (as Autonomy tries to reach a point, whule veliciity tries to set a speed)
-                    mModel.do_set_motion_velocity(msg_param.vx, msg_param.vy, msg_param.vz, (float) Math.toDegrees(msg_param.yaw_rate), msg_param.type_mask);
+                    // TODO: Translate msg_param.type_mask into boolean flags
+                    mModel.setVelocities(msg_param.vx, msg_param.vy, msg_param.vz, Math.toDegrees(msg_param.yaw_rate));
                     mModel.send_command_ack(MAVLINK_MSG_ID_SET_POSITION_TARGET_LOCAL_NED, MAV_RESULT.MAV_RESULT_ACCEPTED);
                 } else {
                     mModel.send_command_ack(MAVLINK_MSG_ID_SET_POSITION_TARGET_LOCAL_NED, MAV_RESULT.MAV_RESULT_IN_PROGRESS);
@@ -398,17 +368,13 @@ public class MAVLinkReceiver {
                     mModel.do_set_motion_velocity_NED(msg_param_4.vx, msg_param_4.vy, msg_param_4.vz, (float) Math.toDegrees(msg_param_4.yaw_rate), msg_param_4.type_mask);
                     mModel.send_command_ack(MAVLINK_MSG_ID_SET_POSITION_TARGET_GLOBAL_INT, MAV_RESULT.MAV_RESULT_ACCEPTED);
                 } else {
-                    mModel.send_command_ack(MAVLINK_MSG_ID_SET_POSITION_TARGET_GLOBAL_INT, MAV_RESULT.MAV_RESULT_IN_PROGRESS);
-                    mModel.do_set_motion_absolute(
-                            (double) msg_param_4.lat_int / 10000000,
-                            (double) msg_param_4.lon_int / 10000000,
-                            msg_param_4.alt,
-                            msg_param_4.yaw,
-                            msg_param_4.vx,
-                            msg_param_4.vy,
-                            msg_param_4.vz,
-                            msg_param_4.yaw_rate,
-                            msg_param_4.type_mask);
+                    DroneModel.Motion motion = mModel.newMotion(MAVLINK_MSG_ID_SET_POSITION_TARGET_GLOBAL_INT, msg_param_4.type_mask);
+                    motion.lat = msg_param_4.lat_int / 10000000;
+                    motion.lng = msg_param_4.lon_int / 10000000;
+                    motion.alt = msg_param_4.alt;
+                    motion.yaw = msg_param_4.yaw;
+                    motion.yawRate = msg_param_4.yaw_rate;
+                    mModel.startMotion(motion);
                 }
                 break;
 
@@ -416,12 +382,12 @@ public class MAVLinkReceiver {
             case MAVLINK_MSG_ID_MANUAL_CONTROL:
                 msg_manual_control msg_param_5 = (msg_manual_control) msg;
 
-                mModel.do_set_motion_velocity(
-                        msg_param_5.x / (float) 100.0,
-                        msg_param_5.y / (float) 100.0,
-                        msg_param_5.z / (float) 260.0,
-                        msg_param_5.r / (float) 50.0,
-                        0b0000011111000111);
+                mModel.setVelocities(
+                        msg_param_5.x / 100.0,
+                        msg_param_5.y / 100.0,
+                        msg_param_5.z / 260.0,
+                        msg_param_5.r / 50.0
+                        );
 
                 mModel.send_command_ack(MAVLINK_MSG_ID_MANUAL_CONTROL, MAV_RESULT.MAV_RESULT_ACCEPTED);
                 break;
@@ -590,7 +556,7 @@ public class MAVLinkReceiver {
         if (msg_item.command == MAV_CMD_NAV_WAYPOINT && !isReceivingMission) {
             // QGC sends MAV_CMD_NAV_WAYPOINT outside a mission (isReceivingMission = false) to command an immediate FlyTo.
             mModel.missionManager.pauseMission();
-            mModel.goto_position(msg_item.x / 10000000.0, msg_item.y / 10000000.0, msg_item.z);
+            mModel.flyTo(msg_item.x / 10000000.0, msg_item.y / 10000000.0, msg_item.z);
             mModel.send_mission_ack(MAV_MISSION_RESULT.MAV_MISSION_ACCEPTED);
 
         } else {
@@ -631,10 +597,10 @@ public class MAVLinkReceiver {
             mModel.pauseWaypointMission();
 
         } else if (flightMode == ArduCopterFlightModes.RTL) {
-            mModel.do_go_home();
+            mModel.doGomeHome();
 
         } else if (flightMode == ArduCopterFlightModes.LAND) {
-            mModel.do_land();
+            mModel.doLand();
         }
     }
 

@@ -11,15 +11,21 @@ import android.graphics.drawable.Drawable;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
+import android.util.Log;
 import android.widget.Button;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import sq.rogue.rosettadrone.settings.MailReport;
+
 public class PluginManager {
+    private final String TAG = DroneModel.class.getSimpleName();
     private String AIaddress = "127.0.0.1";
     private int AIport = 7001;
+    private MailReport SendMail;
 
     MainActivity mainActivity;
 
@@ -37,6 +43,9 @@ public class PluginManager {
         // Store IP to mission controll...
         mainActivity.mMavlinkReceiver.AIactivityIP = AIaddress; //prefs.getString("pref_gcs_ip", "127.0.0.1");
         mainActivity.mMavlinkReceiver.AIactivityPort = AIport;
+
+        // Prepare mail handler and add the catalog for images
+        SendMail = new MailReport(mainActivity, mainActivity.getApplicationContext().getContentResolver());
     }
 
     // Start the AI Pluggin (Developed by the customers...)
@@ -120,5 +129,37 @@ public class PluginManager {
             connectedDrawable = mainActivity.getResources().getDrawable(R.mipmap.track_right, null);
             mBtnAI.setBackground(connectedDrawable);
         }
+    }
+
+    public List<String> m_mailToAddress = null;
+    void sendmail(String file_toSend)
+    {
+        /*
+        Log.i(TAG, "File to send: "+file_toSend);
+        try {
+            Intent email = SendMail.createEmail(
+                    m_mailToAddress,
+                    "Status report",
+                    "There is an issue: ",
+                    get_current_lat(),
+                    get_current_lon(),
+                    get_current_alt(),
+                    get_current_head(),
+                    file_toSend,
+                    m_directory
+            );
+
+            if(email != null) {
+                try {
+                    parent.startActivity(Intent.createChooser(email, "Send mail..."));
+                    Log.i(TAG, "Finished sending email...");
+                } catch (android.content.ActivityNotFoundException ex) {
+                    Toast.makeText(parent, "There is no email client installed.", Toast.LENGTH_SHORT).show();
+                }
+            }
+        }catch (Exception e) {
+            Toast.makeText(parent, "Can not send email: "+ e.toString(), Toast.LENGTH_SHORT).show();
+        }
+        */
     }
 }

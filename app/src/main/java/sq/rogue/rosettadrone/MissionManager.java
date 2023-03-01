@@ -24,10 +24,8 @@ public class MissionManager {
 
 	// wpVariables are 1 WayPoint specific
 	private int wpDelay;
-	public double wpRadius = 0.0;
-	public boolean wpSlowMode = false;
 	public boolean wpWaiting = false;
-	public float wpAirSpeed = 5.0f;
+	public float wpAirSpeed = 0.5f;
 
 	public boolean lookAtPOI; // 'true' if set by a waypoint. Once set, it remains set, until unset by another WayPoint with (0,0) coords.
 	float baseAlt;
@@ -50,6 +48,10 @@ public class MissionManager {
 	public boolean isAutoMode() {
 		return waypointHandlerThread != null && !paused;
 	}
+
+	// Points to POI or to next waypoint if lookAtPOI = false
+	double poiLat = 0;
+	double poiLng = 0;
 
 	class MissionHandlerThread extends Thread {
 		@Override
@@ -110,15 +112,12 @@ public class MissionManager {
 
 					case MAV_CMD.MAV_CMD_NAV_WAYPOINT:
 						if(wpNum == 1) {
-							// First item is the "Mission Start" for setting the mission altitude
+							// First item sent by QGC is the "Mission Start" item for setting the mission altitude
 							droneModel.mission_alt = baseAlt = m.z;
 							continue;
 						}
 
 						wpDelay = (int) m.param1;
-						wpRadius = m.param2; // TODO: m.param3?
-
-						// TODO: Validate min and max values
 
 						flyTo(m.x / 10000000.0, m.y / 10000000.0, getAbsAltitude(m));
 						waitReachLocation();
@@ -130,8 +129,8 @@ public class MissionManager {
 							lookAtPOI = false;
 						} else {
 							lookAtPOI = true;
-							droneModel.poiLat = m.x / 10000000.0;
-							droneModel.poiLon = m.y / 10000000.0;
+							poiLat = m.x / 10000000.0;
+							poiLng = m.y / 10000000.0;
 						}
 						break;
 
@@ -184,7 +183,7 @@ public class MissionManager {
 						break;
 
 					case MAV_CMD_NAV_LAND:
-						droneModel.do_land();
+						droneModel.doLand();
 						waitLanded();
 						break;
 
@@ -222,7 +221,7 @@ public class MissionManager {
 
 		void waitReachLocation() throws InterruptedException {
 			// Wait until reaching destination
-			while (droneModel.isMovingTo()) {
+			while (droneModel.inMotion()) {
 				sleep(100);
 				handlePause();
 			}
@@ -307,19 +306,14 @@ public class MissionManager {
 		paused = true;
 	}
 
-	void flyTo(double targetLatitude, double targetLongitude, float targetAltitude) {
-		flyTo(targetLatitude, targetLongitude, targetAltitude, wpAirSpeed, wpRadius);
+	void flyTo(double targetLatitude, double targetLongitude, double targetAltitude) {
+		flyTo(targetLatitude, targetLongitude, targetAltitude, wpAirSpeed);
 	}
 
-	void flyTo(double targetLatitude, double targetLongitude, float targetAltitude, float targetSpeed, double radius) {
-		if(lookAtPOI) {
-			droneModel.yawDirection = YawDirection.POI;
-		} else {
-			droneModel.yawDirection = YawDirection.TARGET;
-		}
-		wpSlowMode = targetSpeed <= 3.0;
-		wpRadius = Math.max(radius, 0.5);
-		droneModel.do_set_motion_absolute(targetLatitude, targetLongitude, targetAltitude, 0, 2.5f, 2.5f, 2.5f, 2.5f, 0);
+	void flyTo(double targetLatitude, double targetLongitude, double targetAltitude, double targetSpeed) {
+		droneModel.flyTo(targetLatitude, targetLongitude, targetAltitude);
+		droneModel.motion.yawDirection = lookAtPOI ? YawDirection.POI : YawDirection.DEST;
+		droneModel.motion.speed = targetSpeed;
 	}
 
 	float getAbsAltitude(msg_mission_item_int m) {
@@ -351,12 +345,11 @@ public class MissionManager {
 		wpDelay = 0;
 		requestOnePicture = false;
 		wpWaiting = false;
-		wpSlowMode = false;
 	}
 
 	// Take one or more pictures. Is called during movement and when waypoint is reached.
 	void takePhotos() {
-		if (requestOnePicture && !photoTaken && !droneModel.isMovingTo()) {
+		if (requestOnePicture && !photoTaken && !droneModel.inMotion()) {
 			droneModel.takePhoto(false);
 			photoTaken = true;
 		}
