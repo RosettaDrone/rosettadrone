@@ -65,6 +65,15 @@ import dji.sdk.sdkmanager.DJISDKManager;
 
 public class DummyProduct extends Aircraft {
 
+    private double homeLat = 60.4094000;
+    private double homeLng = 10.4910999;
+
+    private double lat = homeLat;
+    private double lng = homeLng;
+    private float alt = 30;
+    private double yaw = 0;
+    private boolean isFlying = true;
+
     public static void createInstance() {
         BaseProduct dummyProduct = new DummyProduct(new DJISDKManager.SDKManagerCallback() {
 
@@ -485,15 +494,17 @@ public class DummyProduct extends Aircraft {
             state.setAircraftHeadDirection(0);
             state.setGPSSignalLevel(GPSSignalLevel.LEVEL_5);
 
-            Attitude attitude = new Attitude(1,2,3);
+            Attitude attitude = new Attitude(0,0, yaw);
             state.setAttitude(attitude);
 
-            state.setAircraftLocation(new LocationCoordinate3D(60.4094000, 10.4910999, 30));
-            state.setHomeLocation(new LocationCoordinate2D(60.4094000,10.4910999));
+            state.setAircraftLocation(new LocationCoordinate3D(lat, lng, alt));
+            state.setHomeLocation(new LocationCoordinate2D(homeLat, homeLng));
 
             state.setVelocityX(0.001f);
             state.setVelocityY(0.002f);
             state.setVelocityZ(0.003f);
+
+            state.setFlying(isFlying);
 
             return state;
         }
@@ -650,7 +661,23 @@ public class DummyProduct extends Aircraft {
 
         @Override
         public void sendVirtualStickFlightControlData(@NonNull FlightControlData flightControlData, @Nullable CommonCallbacks.CompletionCallback completionCallback) {
+            final double dT = 10;
 
+            double fwdVel = flightControlData.getRoll();
+            double rightVel = flightControlData.getPitch();
+            double yawVel = flightControlData.getYaw();
+            double throttleVel = flightControlData.getVerticalThrottle();
+
+            double rad = Math.toRadians(yaw);
+
+            double dNorth = rightVel * Math.sin(rad) + fwdVel * Math.cos(rad);
+            double dEast = rightVel * Math.cos(rad) + fwdVel * Math.sin(rad);
+            double[] dLatLng = Functions.metersToLatLng(dNorth, dEast, lat);
+
+            lat += dLatLng[0] / dT;
+            lng += dLatLng[1] / dT;
+            yaw += yawVel / dT;
+            alt += throttleVel / dT;
         }
 
         @Override
