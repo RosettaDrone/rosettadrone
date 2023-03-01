@@ -1903,6 +1903,10 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             parent.logMessageDJI(parent.getResources().getString(R.string.safety_launch));
             send_text(parent.getResources().getString(R.string.safety_launch));
             return false;
+
+        } else if(isForbiddenSwitchMode()) {
+            return false;
+
         } else {
             return true;
         }
@@ -1912,16 +1916,14 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
      * @param alt In meters
      */
     boolean doTakeOff(float alt, boolean sendResponses) {
-        if(!checkSafeMode()) return false;
+        if(!checkSafeMode()) {
+            if(sendResponses) send_command_ack(MAV_CMD_NAV_TAKEOFF, MAV_RESULT.MAV_RESULT_DENIED);
+            return false;
+        }
 
-        Log.i(TAG, "Takeoff starting...");
+        Log.i(TAG, "Starting take off...");
 
         if(useMissionControlClass) {
-            if(isForibbdenMode()) {
-                if(sendResponses) send_command_ack(MAV_CMD_NAV_TAKEOFF, MAV_RESULT.MAV_RESULT_DENIED);
-                return false;
-            }
-
             // TODO: Why do we want to start/resume a mission after taking off?. Should we start a mission when setting mode to auto (like Mission Planner)?
             if (getWaypointMissionOperator().getCurrentState() == WaypointMissionState.EXECUTION_PAUSED) {
                 resumeWaypointMission();
@@ -1990,7 +1992,6 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     void doLand() {
-        cancelAllTasks();
         //setMavFlightMode(ArduCopterFlightModes.LAND);
         djiAircraft.getFlightController().startLanding(djiError -> {
             if (djiError == null) {
@@ -2112,12 +2113,12 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             this.alt = alt;
         }
 
-        // Used by MAVLink commands (use mavLinkMask and send ACK)
+        // Triggered by a MAVLink commands => sends ACK and does cancelAllTasks()
         // TODO: Implement in MotionTask.run()
         Motion(int command, int mavLinkMask) {
+            this.command = command;
             cancelAllTasks();
             type = DroneModel.MotionType.POSITION_TARGET;
-            this.command = command;
             this.mask = new DroneModel.PositionTargetTypeMask(mavLinkMask);
             send_command_ack(command, MAV_RESULT.MAV_RESULT_IN_PROGRESS);
         }
@@ -2346,7 +2347,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         });
     }
 
-    boolean isForibbdenMode() {
+    boolean isForbiddenSwitchMode() {
         // Only allow VirtualSticks in P mode
         if (rcMode == forbiddenModeSwitch) {
             parent.logMessageDJI("rcMode == forbiddenModeSwitch == " + rcMode);
@@ -2358,7 +2359,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
     int velLogCounter = 0;
     void setVelocities(double roll, double pitch, double throttle, double yaw) {
-        if(isForibbdenMode()) return;
+        if(isForbiddenSwitchMode()) return;
 
         if(velLogCounter++ >= 1000 / MOTION_PERIOD_MS) {
             velLogCounter = 0;

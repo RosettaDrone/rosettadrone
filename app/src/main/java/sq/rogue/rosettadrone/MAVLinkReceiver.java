@@ -560,23 +560,30 @@ public class MAVLinkReceiver {
             mModel.send_mission_ack(MAV_MISSION_RESULT.MAV_MISSION_ACCEPTED);
 
         } else {
-            Log.d(TAG, "Add mission item #" + msg_item.seq);
 
-            if (mMissionItemList == null) {
-                Log.d(TAG, "Error Sequence error!");
-                denyMissionItem();
+            int expectedSeq = mMissionItemList.size();
+            if(msg_item.seq != expectedSeq) {
+                Log.e(TAG, "Received wrong item #" + msg_item.seq + ". Was expecting item #" + expectedSeq + ". Ignoring.");
 
             } else {
-                // Store mission item
-                mMissionItemList.add(msg_item);
+                Log.d(TAG, "Add mission item #" + msg_item.seq);
 
-                if (msg_item.seq == mNumGCSWaypoints - 1) {
-                    // We are done fetching a complete mission from the GCS
-                    finalizeNewMission();
+                if (mMissionItemList == null) {
+                    Log.d(TAG, "Error Sequence error!");
+                    denyMissionItem();
 
                 } else {
-                    Log.d(TAG, "Mission REQ: " +msg_item.seq + 1);
-                    mModel.request_mission_item((msg_item.seq + 1));
+                    // Store mission item
+                    mMissionItemList.add(msg_item);
+
+                    if (msg_item.seq == mNumGCSWaypoints - 1) {
+                        // We are done fetching a complete mission from the GCS
+                        finalizeNewMission();
+
+                    } else {
+                        Log.d(TAG, "Mission REQ: " + (msg_item.seq + 1));
+                        mModel.request_mission_item((msg_item.seq + 1));
+                    }
                 }
             }
         }
@@ -594,12 +601,14 @@ public class MAVLinkReceiver {
             mModel.startOrResumeWaypointMission();
 
         } else if (flightMode == ArduCopterFlightModes.BRAKE) {
-            mModel.pauseWaypointMission();
+            mModel.cancelAllTasks();
 
         } else if (flightMode == ArduCopterFlightModes.RTL) {
+            mModel.cancelAllTasks();
             mModel.doGomeHome();
 
         } else if (flightMode == ArduCopterFlightModes.LAND) {
+            mModel.cancelAllTasks();
             mModel.doLand();
         }
     }
