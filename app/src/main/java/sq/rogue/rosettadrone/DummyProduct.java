@@ -12,6 +12,7 @@ package sq.rogue.rosettadrone;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import dji.common.Stick;
 import dji.common.battery.BatteryState;
 import dji.common.battery.LowVoltageBehavior;
 import dji.common.battery.PairingState;
@@ -212,6 +213,21 @@ public class DummyProduct extends Aircraft {
     }
 
     private class DummyRemoteController extends RemoteController {
+
+        @Override
+        public void setHardwareStateCallback(@Nullable HardwareState.HardwareStateCallback hardwareStateCallback) {
+            super.setHardwareStateCallback(hardwareStateCallback);
+
+            Stick leftStick = new Stick(0, 0);
+            Stick rightStick = new Stick(0, 0);
+
+            HardwareState.Builder builder = new HardwareState.Builder();
+            builder.leftStick(leftStick);
+            builder.rightStick(rightStick);
+            builder.flightModeSwitch(HardwareState.FlightModeSwitch.POSITION_TWO);
+
+            hardwareStateCallback.onUpdate(builder.build());
+        }
 
         @Override
         public boolean isMasterSlaveModeSupported() {
@@ -472,8 +488,8 @@ public class DummyProduct extends Aircraft {
             Attitude attitude = new Attitude(1,2,3);
             state.setAttitude(attitude);
 
-            state.setAircraftLocation(new LocationCoordinate3D(1, 2, 3));
-            state.setHomeLocation(new LocationCoordinate2D(1,2));
+            state.setAircraftLocation(new LocationCoordinate3D(60.4094000, 10.4910999, 30));
+            state.setHomeLocation(new LocationCoordinate2D(60.4094000,10.4910999));
 
             state.setVelocityX(0.001f);
             state.setVelocityY(0.002f);
