@@ -396,15 +396,10 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
                     lTextConnectionStatus.setText("TestMode");
                     mUIHandler = new Handler(Looper.getMainLooper());
                     mUIHandler.postDelayed(startApp, 50);
-                 //   hiddenkey = 6;
-                }
-                if (hiddenkey >= 10) {
+                } else if (hiddenkey >= 10) {
                     showToast("TestMode disabled...");
                     TextView lTextConnectionStatus = (TextView) findViewById(R.id.text_model_test);
                     lTextConnectionStatus.setText("NormalMode");
-
-//                    mUIHandler = new Handler(Looper.getMainLooper());
-//                    mUIHandler.postDelayed(startApp, 50);
                     hiddenkey = 0;
                 }
                 break;
@@ -426,7 +421,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
                 break;
             }
             case R.id.btn_start: {
-                mBtnOpen.setEnabled(false);
+                if(hiddenkey < 5) mBtnOpen.setEnabled(false);
 
                 safeUnregisterBroadcast();
 
