@@ -7,4 +7,8 @@ public abstract class Plugin {
      * Video mode, resolution or codec changed.
      */
     protected abstract void onVideoChange();
+
+    protected boolean isEnabled() {
+        return true;
+    }
 }

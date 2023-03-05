@@ -38,8 +38,10 @@ public class PluginManager {
             try {
                 Class<?> myClass = Class.forName("sq.rogue.rosettadrone.plugins." + className);
                 Plugin plugin = (Plugin) myClass.newInstance();
-                plugin.init(this);
-                plugins.add(plugin);
+                if(plugin.isEnabled()) {
+                    plugin.init(this);
+                    plugins.add(plugin);
+                }
 
             } catch (Exception e) {
             }

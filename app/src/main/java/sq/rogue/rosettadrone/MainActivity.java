@@ -185,6 +185,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     // TODO: Move to VideoService
     public boolean useCustomDecoder = true;
+    public boolean useOutputSurface = true;
     private boolean mExternalVideoOut = true;
     private String mvideoIPString;
     private int videoPort;
@@ -1005,8 +1006,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 mCodecManager = new DJICodecManager(getApplicationContext(), surface, width, height);
                 pluginManager.onVideoChange();
             } else {
-                mCodecManager.changeOutputSurface(surface);
-                mCodecManager.onSurfaceSizeChanged(width, height, 0);
+                if(useOutputSurface) {
+                    mCodecManager.changeOutputSurface(surface);
+                    mCodecManager.onSurfaceSizeChanged(width, height, 0);
+                }
             }
         }
 
@@ -1343,12 +1346,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             map_para.width = LayoutParams.WRAP_CONTENT;
             map_layout.setLayoutParams(map_para);
 
-            if (mCodecManager != null) {
-                mCodecManager.changeOutputSurface(videostreamPreviewTtViewSmall.getSurfaceTexture());
-                mCodecManager.onSurfaceSizeChanged(videostreamPreviewTtViewSmall.getWidth(), videostreamPreviewTtViewSmall.getHeight(), 0);
-            }
+            changeOutputSurface(videostreamPreviewTtViewSmall);
 
             compare_height = 1;
+
         } else {
             logMessageDJI("Set Main screen...");
             videostreamPreviewTtViewSmall.clearFocus();
@@ -1367,15 +1368,19 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             map_layout.setBottom(((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 10, getResources().getDisplayMetrics())));
             map_layout.setLeft(((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 5, getResources().getDisplayMetrics())));
 
-            if (mCodecManager != null) {
-                mCodecManager.changeOutputSurface(videostreamPreviewTtView.getSurfaceTexture());
-                mCodecManager.onSurfaceSizeChanged(videostreamPreviewTtView.getWidth(), videostreamPreviewTtView.getHeight(), 0);
-            }
+            changeOutputSurface(videostreamPreviewTtView);
 
             compare_height = 0;
         }
         v.setZ(101.f);
   //      updateDroneLocation();
+    }
+
+    void changeOutputSurface(TextureView textureView) {
+        if (mCodecManager != null && useOutputSurface) {
+            mCodecManager.changeOutputSurface(textureView.getSurfaceTexture());
+            mCodecManager.onSurfaceSizeChanged(textureView.getWidth(), textureView.getHeight(), 0);
+        }
     }
 
     // Hmm is this ever called...
