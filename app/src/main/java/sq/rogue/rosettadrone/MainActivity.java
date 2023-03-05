@@ -1,10 +1,5 @@
 package sq.rogue.rosettadrone;
 
-// Acknowledgements:
-// IP address validation: https://stackoverflow.com/questions/3698034/validating-ip-in-android/11545229#11545229
-// Hide keyboard: https://stackoverflow.com/questions/16495440/how-to-hide-keyboard-by-default-and-show-only-when-click-on-edittext
-// MenuItemTetColor: RPP @ https://stackoverflow.com/questions/31713628/change-menuitem-text-color-programmatically
-
 import android.Manifest;
 import android.content.ComponentName;
 import android.content.Context;
@@ -122,9 +117,6 @@ import sq.rogue.rosettadrone.video.VideoService;
 import static com.google.android.material.snackbar.Snackbar.LENGTH_LONG;
 import static sq.rogue.rosettadrone.util.safeSleep;
 
-// TODO: Continue does not work, pause only allow flying in line with mission, report does not work, Button click should be changed, Mission not shown on rosettadrone.
-
-
 //public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMapClickListener {
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -192,13 +184,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     public SharedPreferences sharedPreferences;
 
     // TODO: Move to VideoService
+    public boolean useCustomDecoder = true;
     private boolean mExternalVideoOut = true;
-    private boolean transmitRawVideo = false;
     private String mvideoIPString;
     private int videoPort;
     private int mVideoBitrate = 2;
     private int mEncodeSpeed = 2;
-    private VideoService mService = null;
+    private VideoService videoService = null;
     private boolean mIsBound;
     private int m_videoMode = 1;
 
@@ -206,13 +198,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     protected VideoFeeder.VideoDataListener mReceivedVideoDataListener;
     private TextureView videostreamPreviewTtView;
     private TextureView videostreamPreviewTtViewSmall;
-    private DJICodecManager mCodecManager;
+    public DJICodecManager mCodecManager;
     private int videoViewWidth;
     private int videoViewHeight;
     private boolean mIsTranscodedVideoFeedNeeded = false;
 
     private int mMaptype = GoogleMap.MAP_TYPE_HYBRID;
-
 
     public static WaypointMission.Builder waypointMissionBuilder;
     private List<Waypoint> waypointList = new ArrayList<>();
@@ -226,7 +217,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     public String last_downloaded_file;
     public boolean downloadError = false;
     public int lastDownloadedIndex = -1;
-    public PluginManager pluginManager = new PluginManager(this);;
+
+    public PluginManager pluginManager = new PluginManager(this);
 
     private Runnable djiUpdateRunnable = () -> {
         Intent intent = new Intent(DJISimulatorApplication.FLAG_CONNECTION_CHANGE);
@@ -291,6 +283,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
      * Reads the settings and binds the VideoService
      */
     private void initVideoService() {
+        if(!useCustomDecoder) return;
+
         Log.e(TAG, "initVideoService");
 
         mvideoIPString = getVideoIP();
@@ -321,10 +315,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             VideoFeeder.getInstance().setTranscodingDataRate(mVideoBitrate);
             logMessageDJI("set rate to " + mVideoBitrate);
         }
-
-        videostreamPreviewTtView = findViewById(R.id.livestream_preview_ttv);
-        videostreamPreviewTtViewSmall = findViewById(R.id.livestream_preview_ttv_small);
-        videostreamPreviewTtView.setVisibility(View.VISIBLE);
     }
 
     // After the service has started...
@@ -333,20 +323,20 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
             Log.e(TAG, "onServiceConnected  " + mvideoIPString);
-            mService = ((VideoService.LocalBinder) iBinder).getInstance();
-            mService.setParameters(mvideoIPString, videoPort, mVideoBitrate, mEncodeSpeed);
+            videoService = ((VideoService.LocalBinder) iBinder).getInstance();
+            videoService.setParameters(mvideoIPString, videoPort, mVideoBitrate, mEncodeSpeed);
 
             if (prefs.getBoolean("pref_enable_dualvideo", true)) {
-                mService.setDualVideo(true);
+                videoService.setDualVideo(true);
             } else {
-                mService.setDualVideo(false);
+                videoService.setDualVideo(false);
             }
         }
 
         @Override
         public void onServiceDisconnected(ComponentName componentName) {
             Log.e(TAG, "onServiceDisconnected");
-            mService = null;
+            videoService = null;
         }
     };
 
@@ -376,14 +366,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
         */
 
+        resumeVideo();
+    }
+
+    void resumeVideo() {
         mExternalVideoOut = prefs.getBoolean("pref_enable_video", true);
 
         // We should rather use multicast...
-        if (mService != null) {
+        if (videoService != null) {
             if (prefs.getBoolean("pref_enable_dualvideo", true)) {
-                mService.setDualVideo(true);
+                videoService.setDualVideo(true);
             } else {
-                mService.setDualVideo(false);
+                videoService.setDualVideo(false);
             }
         }
 
@@ -775,6 +769,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 sendBroadcast(attachedIntent);
             }
         }
+
+        videostreamPreviewTtView = findViewById(R.id.livestream_preview_ttv);
+        videostreamPreviewTtViewSmall = findViewById(R.id.livestream_preview_ttv_small);
+        videostreamPreviewTtView.setVisibility(View.VISIBLE);
+
         deleteApplicationDirectory();
         initLogs();
         initLocationManager();
@@ -888,11 +887,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             // Send the raw DJI H264 data to the JNI ffmpeg decoder --> NAL splitter --> RtpSocket
             if (mExternalVideoOut == true) {
-                if(transmitRawVideo) {
-                    doTransmitRawVideo(videoBuffer, size);
-                } else {
-                    NativeHelper.getInstance().parse(videoBuffer, size, parserMode);
-                }
+                NativeHelper.getInstance().parse(videoBuffer, size, parserMode);
             }
         };
 
@@ -960,20 +955,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-    private void doTransmitRawVideo(byte[] videoBuffer, int size) {
-        try {
-            DatagramSocket socket = new DatagramSocket();
-            socket.connect(InetAddress.getByName("192.168.0.5"), 5600);
-            socket.setSoTimeout(10);
-            DatagramPacket packet = new DatagramPacket(videoBuffer, size);
-            socket.send(packet);
-
-        } catch (IOException e) {
-            Log.e(TAG, e.toString());
-        }
-
-    }
-
     private int getVideoMode(Model model) {
         switch (model) {
             case UNKNOWN_HANDHELD:
@@ -1022,6 +1003,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             Log.d(TAG, "real onSurfaceTextureAvailable: width " + videoViewWidth + " height " + videoViewHeight + " Mode: " + compare_height);
             if (mCodecManager == null) {
                 mCodecManager = new DJICodecManager(getApplicationContext(), surface, width, height);
+                pluginManager.onVideoChange();
             } else {
                 mCodecManager.changeOutputSurface(surface);
                 mCodecManager.onSurfaceSizeChanged(width, height, 0);
@@ -1966,6 +1948,4 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         return VideoFeeder.getInstance().isFetchKeyFrameNeeded() || VideoFeeder.getInstance()
                 .isLensDistortionCalibrationNeeded();
     }
-
-
 }

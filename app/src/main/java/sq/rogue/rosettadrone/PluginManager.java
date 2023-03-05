@@ -11,11 +11,10 @@ import android.graphics.drawable.Drawable;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
-import android.util.Log;
 import android.widget.Button;
-import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -27,10 +26,24 @@ public class PluginManager {
     private int AIport = 7001;
     private MailReport SendMail;
 
-    MainActivity mainActivity;
+    public MainActivity mainActivity;
+
+    List<Plugin> plugins = new ArrayList<Plugin>();
+    List<String> classNames = Arrays.asList("OpenCVStreamer"); // TODO: Obtain dynamically
 
     PluginManager(MainActivity mainActivity) {
         this.mainActivity = mainActivity;
+
+        for (String className : classNames) {
+            try {
+                Class<?> myClass = Class.forName("sq.rogue.rosettadrone.plugins." + className);
+                Plugin plugin = (Plugin) myClass.newInstance();
+                plugin.init(this);
+                plugins.add(plugin);
+
+            } catch (Exception e) {
+            }
+        }
     }
 
     public void init() {
@@ -161,5 +174,11 @@ public class PluginManager {
             Toast.makeText(parent, "Can not send email: "+ e.toString(), Toast.LENGTH_SHORT).show();
         }
         */
+    }
+
+    public void onVideoChange() {
+        for (Plugin plugin : plugins) {
+            plugin.onVideoChange();
+        }
     }
 }

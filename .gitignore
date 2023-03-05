@@ -65,3 +65,4 @@ freeline_project_description.json
 
 # Keys
 app/src/main/res/values/keys.xml
+app/src/main/java/sq/rogue/rosettadrone/plugins/OpenCVStreamer.java
