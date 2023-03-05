@@ -74,7 +74,7 @@ public class MissionManager {
 		}
 
 		void task() throws InterruptedException {
-			if(missionItems.size() == 0) {
+			if(missionItems == null || missionItems.size() == 0) {
 				// stopMission(); // Don't! stopMission() will try to terminate and join itself. Too insane.
 				return;
 			}
@@ -219,26 +219,33 @@ public class MissionManager {
 
 		// Wait Methods
 
+		int counter = 0;
+		void wait(String reason) throws InterruptedException {
+			sleep(100);
+			handlePause();
+			if(counter > 20) {
+				Log.i(TAG, "Waiting " + reason + "...");
+				counter = 0;
+			}
+		}
+
 		void waitReachLocation() throws InterruptedException {
 			// Wait until reaching destination
 			while (droneModel.inMotion()) {
-				sleep(100);
-				handlePause();
+				wait("to reach destination");
 			}
 		}
 
 		void waitTakeOffReady() throws InterruptedException {
 			// Wait until reaching destination
 			while (!statusTakeOffReady) {
-				sleep(100);
-				handlePause();
+				wait("take off");
 			}
 		}
 
 		void waitLanded() throws InterruptedException {
 			while (!statusLanded) {
-				sleep(100);
-				handlePause();
+				wait("landing");
 			}
 		}
 	}
