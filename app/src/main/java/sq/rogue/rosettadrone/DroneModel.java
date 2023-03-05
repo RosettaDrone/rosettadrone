@@ -177,7 +177,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
     Motion motion = null;
 
-    private FlightMode lastDJIFlightMode = FlightMode.ATTI_HOVER;
+    private FlightMode djiFlightMode = FlightMode.ATTI_HOVER;
     private HardwareState.FlightModeSwitch rcMode = HardwareState.FlightModeSwitch.POSITION_ONE;
     private static HardwareState.FlightModeSwitch forbiddenModeSwitch = HardwareState.FlightModeSwitch.POSITION_ONE; // SwitchMode forbidden to take-off. Depends on each model.
     public msg_home_position home_position = new msg_home_position();
@@ -859,16 +859,19 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         Log.i(TAG, "cancelAllTasks()");
         pauseWaypointMission();
         cancelMotion();
-
-        /* TODO: Really needed?
-        mFlightController.setVirtualStickModeEnabled(false, djiError -> {
-                    if (djiError != null)
-                        Log.e(TAG, "SendVelocityDataTask Error: " + djiError.toString());
-                }
-        );
-        */
-
+        cancelLanding();
         mAutonomy = false;
+    }
+
+    void cancelLanding() {
+        if(djiFlightMode == FlightMode.AUTO_LANDING) {
+            djiAircraft.getFlightController().cancelLanding(new CommonCallbacks.CompletionCallback() {
+                @Override
+                public void onResult(DJIError djiError) {
+                    parent.logMessageDJI("Landing confirmed");
+                }
+            });
+        }
     }
 
     private void confirmLanding() {
@@ -893,8 +896,8 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
         //parent.logMessageDJI("FlightMode: "+djiAircraft.getFlightController().getState().getFlightMode());
 
-        lastDJIFlightMode = djiAircraft.getFlightController().getState().getFlightMode();
-        switch (lastDJIFlightMode) {
+        djiFlightMode = djiAircraft.getFlightController().getState().getFlightMode();
+        switch (djiFlightMode) {
             case MANUAL:
                 msg.custom_mode = ArduCopterFlightModes.STABILIZE;
                 break;
@@ -2306,7 +2309,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             public void onSuccess(Boolean enabled) {
                 if (!enabled) {
                     // After a manual mode change, we might loose the JOYSTICK mode...
-                    if (lastDJIFlightMode != FlightMode.JOYSTICK) {
+                    if (djiFlightMode != FlightMode.JOYSTICK) {
                         mFlightController.setVirtualStickModeEnabled(true, djiError -> {
                             if (djiError != null) {
                                 Log.e(TAG, "setVirtualStickModeEnabled() failed: " + djiError.toString());
