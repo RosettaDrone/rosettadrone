@@ -669,10 +669,7 @@ public class DummyProduct extends Aircraft {
             double throttleVel = flightControlData.getVerticalThrottle();
 
             double rad = Math.toRadians(yaw);
-
-            double dNorth = rightVel * Math.sin(rad) + fwdVel * Math.cos(rad);
-            double dEast = rightVel * Math.cos(rad) + fwdVel * Math.sin(rad);
-            double[] dLatLng = Functions.metersToLatLng(dNorth, dEast, lat);
+            double[] dLatLng = Functions.getLatLngDiff(lat, rad, fwdVel, rightVel);
 
             lat += dLatLng[0] / dT;
             lng += dLatLng[1] / dT;

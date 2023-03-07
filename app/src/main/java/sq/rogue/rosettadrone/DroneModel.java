@@ -2102,13 +2102,11 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
         public int command = 0; // If not 0, send MAVLink ACK once the motion has finished
 
-        short coordFrame; // See: https://mavlink.io/en/messages/common.html#MAV_FRAME
-
         DroneModel.PositionTargetTypeMask mask;
 
-        double x; // Lat
-        double y; // Lng
-        double z; // Alt
+        double lat; // Lat
+        double lng; // Lng
+        double alt; // Alt
         double yaw;
 
         double speed = 3; // m/s
@@ -2124,20 +2122,80 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         // Used internally (not for MAVLink commands)
         Motion(double lat, double lng, double alt) {
             type = DroneModel.MotionType.FLY_TO;
-            coordFrame = MAV_FRAME_GLOBAL;
-            this.x = lat;
-            this.y = lng;
-            this.z = alt;
+            mask = new PositionTargetTypeMask(0);
+            this.lat = lat;
+            this.lng = lng;
+            this.alt = alt;
         }
 
         // Triggered by a MAVLink commands => sends ACK and does cancelAllTasks()
         // TODO: Implement mask in MotionTask.run()
         Motion(int command, int mavLinkMask) {
-            this.command = command;
             cancelAllTasks();
-            type = DroneModel.MotionType.POSITION_TARGET;
-            this.mask = new DroneModel.PositionTargetTypeMask(mavLinkMask);
+            command = command;
+            mask = new PositionTargetTypeMask(mavLinkMask);
+            type = MotionType.POSITION_TARGET;
             send_command_ack(command, MAV_RESULT.MAV_RESULT_IN_PROGRESS);
+        }
+
+        /**
+         * Converts (x, y, z, coordFrame) --> (lat, lng, alt)
+         *
+         * @param coordFrame    See: https://mavlink.io/en/messages/common.html#MAV_FRAME
+         * @param x Has different meanings
+         * @param y Has different meanings
+         * @param z Has different meanings
+         */
+        public void setDestination(int coordFrame, float x, float y, float z) {
+            if(coordFrame == MAV_FRAME_BODY_OFFSET_NED) coordFrame = MAV_FRAME_BODY_FRD;
+
+            if(coordFrame == MAV_FRAME_LOCAL_NED || coordFrame == MAV_FRAME_LOCAL_OFFSET_NED || coordFrame == MAV_FRAME_BODY_FRD) {
+                FlightControllerState coord = djiAircraft.getFlightController().getState();
+                this.lat = coord.getAircraftLocation().getLatitude();
+                this.lng = coord.getAircraftLocation().getLongitude();
+                this.alt = coord.getAircraftLocation().getAltitude();
+            }
+
+            if(coordFrame == MAV_FRAME_GLOBAL) {
+                // (x, y, z) = (lat, lng, alt)
+                this.lat = x;
+                this.lng = y;
+                this.alt = z;
+
+            } else if(coordFrame == MAV_FRAME_GLOBAL_INT) {
+                // (x, y, z) = (latInt, lngInt, alt)
+                this.lat = x / 10000000;
+                this.lng = y / 10000000;
+                this.alt = z;
+
+            } else if(coordFrame == MAV_FRAME_LOCAL_NED) {
+                // (x, y, z) = (northMeters, eastMeters, downMeters)
+                double dCord[] = Functions.metersToLatLng(x, y, lat);
+                this.lat = dCord[0];
+                this.lng = dCord[1];
+                this.alt = -z; // TODO: Check sign (depends on frame)
+
+            } else if(coordFrame == MAV_FRAME_LOCAL_OFFSET_NED) {
+                // (x, y, z) = (dNorthMeters, dEastMeters, dDownMeters)
+                double dCord[] = Functions.metersToLatLng(x, y, lat);
+                this.lat += dCord[0];
+                this.lat += dCord[1];
+                this.alt -= z; // TODO: Check sign (depends on frame)
+
+            } else if(coordFrame == MAV_FRAME_BODY_FRD) {
+                // (x, y, z) = (dForwardMeters, dRightMeters, dDownMeters)
+
+                double yaw = mFlightController.getState().getAttitude().yaw;
+
+                double[] dLatLng = Functions.getLatLngDiff(lat, Math.toRadians(yaw), x, y);
+                this.lat += dLatLng[0];
+                this.lng += dLatLng[1];
+                this.alt -= z;
+
+            } else {
+                // TODO:
+                Log.e(TAG, "CoordFrame not supported");
+            }
         }
     }
 
@@ -2196,19 +2254,14 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             double lng = coord.getAircraftLocation().getLongitude();
             double alt = coord.getAircraftLocation().getAltitude();
 
-            double destX = motion.x;
-            double destY = motion.y;
-            double destZ = motion.z;
-            if(motion.coordFrame == MAV_FRAME_BODY_FRD) {
-                destX += lat;
-                destY += lng;
-            } else {
-                Log.e(TAG, "Frame not supported");
-            }
+            double destX = motion.lat;
+            double destY = motion.lng;
+            double destZ = motion.alt;
 
+            // Reset according to mask
             if(motion.mask.ignorePosX) destX = lat;
-            if(motion.mask.ignorePosY) destX = lng;
-            if(motion.mask.ignorePosZ) destX = alt;
+            if(motion.mask.ignorePosY) destY = lng;
+            if(motion.mask.ignorePosZ) destZ = alt;
 
             // Distance to destination
             double dist = getRangeBetweenWaypoints_m(destX, destY, destZ, lat, lng, alt);
@@ -2765,27 +2818,6 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         double distance = phi > 180 ? 360 - phi : phi;
         double sign = (alpha - beta >= 0 && alpha - beta <= 180) || (alpha - beta <= -180 && alpha - beta >= -360) ? distance : distance * -1;
         return sign;
-    }
-
-    public double[] get_location_metres(double dForward, double dRight, double alt) {
-        FlightControllerState coord = djiAircraft.getFlightController().getState();
-        double ro = Math.toRadians(coord.getAttitude().yaw);
-        double lat = coord.getAircraftLocation().getLatitude();
-        double lon = coord.getAircraftLocation().getLongitude();
-        double newalt = coord.getAircraftLocation().getAltitude() + alt;
-
-        double dNorth = dForward * Math.cos(ro) - dRight * Math.sin(ro);
-        double dEast = dForward * Math.sin(ro) + dRight * Math.cos(ro);
-
-        //Coordinate offsets in radians
-        double dLat = dNorth / EARTH_RADIUS;
-        double dLon = dEast / (EARTH_RADIUS * Math.cos(Math.toRadians(lat)));
-
-        // New position in decimal degrees
-        double newlat = lat + Math.toDegrees(dLat);
-        double newlon = lon + Math.toDegrees(dLon);
-
-        return new double[]{newlat, newlon, newalt};
     }
 
     private double[] get_location_intermediet(double lat, double lon, double dist, double yaw) {

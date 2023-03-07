@@ -18,7 +18,6 @@ import com.MAVLink.common.msg_file_transfer_protocol;
 import com.MAVLink.common.msg_set_position_target_local_ned;
 import com.MAVLink.common.msg_timesync;
 import com.MAVLink.enums.MAV_CMD;
-import com.MAVLink.enums.MAV_FRAME;
 import com.MAVLink.enums.MAV_MISSION_RESULT;
 import com.MAVLink.enums.MAV_RESULT;
 
@@ -47,6 +46,7 @@ import static com.MAVLink.common.msg_home_position.MAVLINK_MSG_ID_HOME_POSITION;
 import static com.MAVLink.common.msg_ping.MAVLINK_MSG_ID_PING;
 import static com.MAVLink.common.msg_timesync.MAVLINK_MSG_ID_TIMESYNC;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_REQUEST_MESSAGE;
+import static com.MAVLink.enums.MAV_FRAME.MAV_FRAME_GLOBAL;
 import static com.MAVLink.minimal.msg_heartbeat.MAVLINK_MSG_ID_HEARTBEAT;
 import static com.MAVLink.common.msg_manual_control.MAVLINK_MSG_ID_MANUAL_CONTROL;
 import static com.MAVLink.common.msg_mission_ack.MAVLINK_MSG_ID_MISSION_ACK;
@@ -270,9 +270,7 @@ public class MAVLinkReceiver {
 
                         } else if (msg_cmd.param2 == MAV_GOTO_HOLD_AT_SPECIFIED_POSITION) {
                             DroneModel.Motion motion = mModel.newMotion(MAV_GOTO_HOLD_AT_SPECIFIED_POSITION, 0b0000111111111000);
-                            motion.x = msg_cmd.param5;
-                            motion.y = msg_cmd.param6;
-                            motion.z = msg_cmd.param7;
+                            motion.setDestination(MAV_FRAME_GLOBAL, msg_cmd.param5, msg_cmd.param6, msg_cmd.param7);
                             motion.yaw = msg_cmd.param4;
                             mModel.startMotion(motion);
                         }
@@ -348,12 +346,8 @@ public class MAVLinkReceiver {
 
             case MAVLINK_MSG_ID_SET_POSITION_TARGET_LOCAL_NED:
                 msg_set_position_target_local_ned msg_param = (msg_set_position_target_local_ned) msg;
-                double[] pos = mModel.get_location_metres(msg_param.x, msg_param.y, msg_param.z);
                 DroneModel.Motion motion = mModel.newMotion(MAVLINK_MSG_ID_SET_POSITION_TARGET_LOCAL_NED, msg_param.type_mask);
-                motion.coordFrame = msg_param.coordinate_frame;
-                motion.x = pos[0];
-                motion.y = pos[1];
-                motion.z = pos[2];
+                motion.setDestination(msg_param.coordinate_frame, msg_param.x, msg_param.y, msg_param.z);
                 motion.yaw = msg_param.yaw;
                 motion.yawRate = msg_param.yaw_rate;
                 motion.vx = msg_param.vx;
@@ -541,6 +535,7 @@ public class MAVLinkReceiver {
 
         // If position is set to zero then it must be a velocity command... We should use rather the mask ...
         if (((msg.type_mask & 0b0000100000000111) == 0x007)) {  // If no move and we use yaw rate...
+            // TODO: Rewrite/implement in Motion class
             float dNorth = msg.vx;
             float dEast = msg.vy;
             double ro = Math.toRadians(mModel.getCurrentYaw());
@@ -551,9 +546,7 @@ public class MAVLinkReceiver {
             motion.yaw = Math.toDegrees(msg.yaw_rate);
 
         } else {
-            motion.x = msg.lat_int / 10000000;
-            motion.y = msg.lon_int / 10000000;
-            motion.z = msg.alt;
+            motion.setDestination(msg.coordinate_frame, msg.lat_int, msg.lon_int, msg.alt);
             motion.yaw = msg.yaw;
             motion.yawRate = msg.yaw_rate;
         }
