@@ -2156,6 +2156,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     public void startMotion(Motion motion) {
+        this.motion = motion;
         if (motionTimer == null) {
             motionTask = new MotionTask();
             motionTimer = new Timer();
