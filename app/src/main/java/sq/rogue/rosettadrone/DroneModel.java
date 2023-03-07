@@ -114,6 +114,8 @@ import static com.MAVLink.enums.MAV_CMD.MAV_CMD_NAV_TAKEOFF;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_VIDEO_START_CAPTURE;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_VIDEO_STOP_CAPTURE;
 import static com.MAVLink.enums.MAV_COMPONENT.MAV_COMP_ID_AUTOPILOT1;
+import static com.MAVLink.enums.MAV_FRAME.*;
+import static com.MAVLink.enums.POSITION_TARGET_TYPEMASK.*;
 import static com.google.android.material.snackbar.BaseTransientBottomBar.LENGTH_LONG;
 import static sq.rogue.rosettadrone.Functions.EARTH_RADIUS;
 import static sq.rogue.rosettadrone.util.getTimestampMicroseconds;
@@ -213,6 +215,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     private boolean missionActive = false; // true if started, false if stopped or paused. TODO: DEPRECATE: This flag cannot be trusted, since it is not changed when a mission ends or is interrupted. Use: isMissionActive()
 
     // FTP...
+    // TODO: Move to plugin or FTP class
     public List<MediaFile> mediaFileList = new ArrayList<MediaFile>();
     public int numFiles;
     private MediaManager mMediaManager;
@@ -1985,8 +1988,11 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         missionManager.setTakeOffStatus(true);
         Log.i(TAG, "Took off => Flying to altitude " + alt);
         FlightControllerState coord = djiAircraft.getFlightController().getState();
-        // TODO: Use motion.mask to completely ignore 'lat' and 'lng' motion, since GPS location me by inaccurate specially on the ground
         motion = new Motion(coord.getAircraftLocation().getLatitude(), coord.getAircraftLocation().getLongitude(), alt);
+        motion.mask.ignorePosX = true;
+        motion.mask.ignorePosY = true;
+        motion.mask.ignorePosZ = true;
+        motion.mask.ignoreYaw = true;
         motion.yawDirection = YawDirection.KEEP;
         startMotion(motion);
     }
@@ -2062,6 +2068,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         POSITION_TARGET // Run for a given time
     }
 
+    // See: https://mavlink.io/en/messages/common.html#POSITION_TARGET_TYPEMASK
     static class PositionTargetTypeMask {
         boolean ignorePosX;
         boolean ignorePosY;
@@ -2077,9 +2084,16 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         boolean ignoreYawRate;
 
         PositionTargetTypeMask(int mavLinkMask) {
-            // TODO: Translate mavLinkMask into booleans
-            // Search for "m_Destination_Mask" here:
+            // TODO: Reimplement old code. Search for "m_Destination_Mask" here:
             // https://github.com/The1only/rosettadrone/blob/6ebb4f04dac9c284afe26ca5292f0267e62609b6/app/src/main/java/sq/rogue/rosettadrone/DroneModel.java
+            // https://github.com/The1only/rosettadrone/blob/6ebb4f04dac9c284afe26ca5292f0267e62609b6/app/src/main/java/sq/rogue/rosettadrone/MAVLinkReceiver.java
+
+            ignorePosX = (mavLinkMask & POSITION_TARGET_TYPEMASK_X_IGNORE) != 0;
+            ignorePosY = (mavLinkMask & POSITION_TARGET_TYPEMASK_Y_IGNORE) != 0;
+            ignorePosZ = (mavLinkMask & POSITION_TARGET_TYPEMASK_Z_IGNORE) != 0;
+            // ...
+            ignoreYaw = (mavLinkMask & 	POSITION_TARGET_TYPEMASK_YAW_IGNORE) != 0;
+            ignoreYawRate = (mavLinkMask & 	POSITION_TARGET_TYPEMASK_YAW_RATE_IGNORE) != 0;
         }
     }
 
@@ -2088,9 +2102,13 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
         public int command = 0; // If not 0, send MAVLink ACK once the motion has finished
 
-        double lat;
-        double lng;
-        double alt;
+        short coordFrame; // See: https://mavlink.io/en/messages/common.html#MAV_FRAME
+
+        DroneModel.PositionTargetTypeMask mask;
+
+        double x; // Lat
+        double y; // Lng
+        double z; // Alt
         double yaw;
 
         double speed = 3; // m/s
@@ -2103,18 +2121,17 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
         YawDirection yawDirection = YawDirection.DEST; // Where to look while moving
 
-        DroneModel.PositionTargetTypeMask mask;
-
         // Used internally (not for MAVLink commands)
         Motion(double lat, double lng, double alt) {
             type = DroneModel.MotionType.FLY_TO;
-            this.lat = lat;
-            this.lng = lng;
-            this.alt = alt;
+            coordFrame = MAV_FRAME_GLOBAL;
+            this.x = lat;
+            this.y = lng;
+            this.z = alt;
         }
 
         // Triggered by a MAVLink commands => sends ACK and does cancelAllTasks()
-        // TODO: Implement in MotionTask.run()
+        // TODO: Implement mask in MotionTask.run()
         Motion(int command, int mavLinkMask) {
             this.command = command;
             cancelAllTasks();
@@ -2173,22 +2190,36 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
         @Override
         synchronized public void run() {
-            // TODO: if(motion.type == MotionType.POSITION_TARGET) => consider motion.mask
-
             FlightControllerState coord = djiAircraft.getFlightController().getState();
             double lat = coord.getAircraftLocation().getLatitude();
             double lng = coord.getAircraftLocation().getLongitude();
+            double alt = coord.getAircraftLocation().getAltitude();
+
+            double destX = motion.x;
+            double destY = motion.y;
+            double destZ = motion.z;
+            if(motion.coordFrame == MAV_FRAME_BODY_FRD) {
+                destX += lat;
+                destY += lng;
+            } else {
+                Log.e(TAG, "Frame not supported");
+            }
+
+            if(motion.mask.ignorePosX) destX = lat;
+            if(motion.mask.ignorePosY) destX = lng;
+            if(motion.mask.ignorePosZ) destX = alt;
 
             // Distance to destination
-            double dist = getRangeBetweenWaypoints_m(motion.lat, motion.lng, motion.alt, lat, lng, coord.getAircraftLocation().getAltitude());
+            double dist = getRangeBetweenWaypoints_m(destX, destY, destZ, lat, lng, alt);
 
             // Look at
             boolean lookAt = motion.yawDirection == YawDirection.DEST || motion.yawDirection == YawDirection.POI;
             double lookAtDistance = 0, lookAtLat = 0, lookAtLng = 0;
             if(lookAt) {
+                // TODO: Rotate gimbal
                 if (motion.yawDirection == YawDirection.DEST) {
-                    lookAtLat = motion.lat;
-                    lookAtLng = motion.lng;
+                    lookAtLat = destX;
+                    lookAtLng = destY;
                 } else if (motion.yawDirection == YawDirection.POI) {
                     lookAtLat = missionManager.poiLat;
                     lookAtLng = missionManager.poiLng;
@@ -2203,6 +2234,8 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             if(motion.yawDirection == YawDirection.KEEP
                     || lookAt && lookAtDistance < 0.3   // If we are close to the lookAt target => stop looking at it in order to avoid erratic yaw rotations (eg: if we passed the target for 0.00001 mm we would have to turn in 180°)
                     || motion.yawDirection == YawDirection.FIXED
+                    || motion.mask.ignoreYaw
+                    || motion.mask.ignoreYawRate
             ) {
                 yawError = 0;
 
@@ -2243,11 +2276,11 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             }
 
             // Find the bearing... return 0-360 deg.
-            double brng = getBearingBetweenWaypoints(motion.lat, motion.lng, lat, lng);
+            double brng = getBearingBetweenWaypoints(destX, destY, lat, lng);
 
             // The direct distance to the destination... return distance in meters...
-            double hypotenuse = getRangeBetweenWaypoints_m(motion.lat, motion.lng, 0, lat, lng, 0);
-            double idealPos[] = get_location_intermediet(motion.lat, motion.lng, hypotenuse, brng - 180);
+            double hypotenuse = getRangeBetweenWaypoints_m(destX, destY, 0, lat, lng, 0);
+            double idealPos[] = get_location_intermediet(destX, destY, hypotenuse, brng - 180);
             // At these two positions is at the same distance from target, the error must be the sideways error....
             double offset = getRangeBetweenWaypoints_m(idealPos[0], idealPos[1], 0, lat, lng, 0);
             double pol = getBearingBetweenWaypoints(idealPos[0], idealPos[1], lat, lng);
@@ -2290,7 +2323,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
             miniPIDAlti.setOutputLimits(3.0f); // m/s
             miniPIDAlti.setOutputFilter(0.1);
-            double upVel = miniPIDAlti.getOutput(coord.getAircraftLocation().getAltitude(), motion.alt);
+            double upVel = miniPIDAlti.getOutput(alt, destZ);
 
             miniPIDHeading.setOutputLimits(75.0f); // °/s
 
@@ -2771,7 +2804,9 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         return new double[]{newlat, newlon};
     }
 
+
     // FTP and file related functions
+    // TODO: Move to plugin or FTP class
     public void initMediaManager(List<String> address)
     {
         parent.pluginManager.m_mailToAddress = address;
