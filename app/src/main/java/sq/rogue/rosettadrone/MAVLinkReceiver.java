@@ -16,7 +16,9 @@ import com.MAVLink.common.msg_set_mode;
 import com.MAVLink.common.msg_set_position_target_global_int;
 import com.MAVLink.common.msg_file_transfer_protocol;
 import com.MAVLink.common.msg_set_position_target_local_ned;
+import com.MAVLink.common.msg_timesync;
 import com.MAVLink.enums.MAV_CMD;
+import com.MAVLink.enums.MAV_FRAME;
 import com.MAVLink.enums.MAV_MISSION_RESULT;
 import com.MAVLink.enums.MAV_RESULT;
 
@@ -43,6 +45,7 @@ import static com.MAVLink.common.msg_command_int.MAVLINK_MSG_ID_COMMAND_INT;
 import static com.MAVLink.common.msg_command_long.MAVLINK_MSG_ID_COMMAND_LONG;
 import static com.MAVLink.common.msg_home_position.MAVLINK_MSG_ID_HOME_POSITION;
 import static com.MAVLink.common.msg_ping.MAVLINK_MSG_ID_PING;
+import static com.MAVLink.common.msg_timesync.MAVLINK_MSG_ID_TIMESYNC;
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_REQUEST_MESSAGE;
 import static com.MAVLink.minimal.msg_heartbeat.MAVLINK_MSG_ID_HEARTBEAT;
 import static com.MAVLink.common.msg_manual_control.MAVLINK_MSG_ID_MANUAL_CONTROL;
@@ -159,6 +162,16 @@ public class MAVLinkReceiver {
                 */
                 break;
 
+            case MAVLINK_MSG_ID_TIMESYNC:
+                msg_timesync req = (msg_timesync)msg;
+                msg_timesync res = new msg_timesync();
+                res.tc1 = System.nanoTime();
+                res.ts1 = req.ts1;
+                res.target_system = (short)req.sysid;
+                res.target_component = (short)req.compid;
+                mModel.sendMessage(res);
+                break;
+
             case MAVLINK_MSG_ID_PING:
                 // TODO: Check
                 mModel.sendMessage(msg);
@@ -257,9 +270,9 @@ public class MAVLinkReceiver {
 
                         } else if (msg_cmd.param2 == MAV_GOTO_HOLD_AT_SPECIFIED_POSITION) {
                             DroneModel.Motion motion = mModel.newMotion(MAV_GOTO_HOLD_AT_SPECIFIED_POSITION, 0b0000111111111000);
-                            motion.lat = msg_cmd.param5;
-                            motion.lng = msg_cmd.param6;
-                            motion.alt = msg_cmd.param7;
+                            motion.x = msg_cmd.param5;
+                            motion.y = msg_cmd.param6;
+                            motion.z = msg_cmd.param7;
                             motion.yaw = msg_cmd.param4;
                             mModel.startMotion(motion);
                         }
@@ -337,9 +350,10 @@ public class MAVLinkReceiver {
                 msg_set_position_target_local_ned msg_param = (msg_set_position_target_local_ned) msg;
                 double[] pos = mModel.get_location_metres(msg_param.x, msg_param.y, msg_param.z);
                 DroneModel.Motion motion = mModel.newMotion(MAVLINK_MSG_ID_SET_POSITION_TARGET_LOCAL_NED, msg_param.type_mask);
-                motion.lat = pos[0];
-                motion.lng = pos[1];
-                motion.alt = pos[2];
+                motion.coordFrame = msg_param.coordinate_frame;
+                motion.x = pos[0];
+                motion.y = pos[1];
+                motion.z = pos[2];
                 motion.yaw = msg_param.yaw;
                 motion.yawRate = msg_param.yaw_rate;
                 motion.vx = msg_param.vx;
@@ -537,9 +551,9 @@ public class MAVLinkReceiver {
             motion.yaw = Math.toDegrees(msg.yaw_rate);
 
         } else {
-            motion.lat = msg.lat_int / 10000000;
-            motion.lng = msg.lon_int / 10000000;
-            motion.alt = msg.alt;
+            motion.x = msg.lat_int / 10000000;
+            motion.y = msg.lon_int / 10000000;
+            motion.z = msg.alt;
             motion.yaw = msg.yaw;
             motion.yawRate = msg.yaw_rate;
         }
