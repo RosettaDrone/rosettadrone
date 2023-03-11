@@ -510,6 +510,16 @@ public class DummyProduct extends Aircraft {
         }
 
         @Override
+        public void setPropellerCoverLimitEnabled(boolean b, @Nullable CommonCallbacks.CompletionCallback completionCallback) {
+
+        }
+
+        @Override
+        public void getPropellerCoverLimitEnabled(@NonNull CommonCallbacks.CompletionCallbackWith<Boolean> completionCallbackWith) {
+
+        }
+
+            @Override
         public boolean isFlightAssistantSupported() {
             return false;
         }

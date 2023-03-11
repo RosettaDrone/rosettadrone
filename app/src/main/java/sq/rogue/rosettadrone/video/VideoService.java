@@ -73,7 +73,7 @@ public class VideoService extends Service implements NativeHelper.NativeDataList
     @RequiresApi(api = Build.VERSION_CODES.O)
     private String createNotificationChannel() {
         String channelID = "video_service";
-        String channelName = "RosettaDrone 2 Video Service";
+        String channelName = "RosettaDrone 3 Video Service";
         NotificationChannel chan = new NotificationChannel(channelID, channelName, NotificationManager.IMPORTANCE_DEFAULT);
         chan.setLightColor(Color.BLUE);
         chan.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
