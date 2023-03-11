@@ -149,7 +149,7 @@ public class DJISimulatorApplication extends Application {
         };
 
         //Check the permissions before registering the application for android system 6.0 above.
-        int permissionCheck = ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        int permissionCheck = ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.INTERNET);
         int permissionCheck2 = ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.READ_PHONE_STATE);
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || (permissionCheck == 0 && permissionCheck2 == 0)) {

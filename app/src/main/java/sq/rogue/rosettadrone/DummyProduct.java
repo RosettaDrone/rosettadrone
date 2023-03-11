@@ -9,6 +9,8 @@
 
 package sq.rogue.rosettadrone;
 
+import android.util.Log;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -74,7 +76,10 @@ public class DummyProduct extends Aircraft {
     private double yaw = 0;
     private boolean isFlying = true;
 
+    private static final String TAG = DummyProduct.class.getSimpleName();
+
     public static void createInstance() {
+        Log.d(TAG, "createInstance dummyProduct");
         BaseProduct dummyProduct = new DummyProduct(new DJISDKManager.SDKManagerCallback() {
 
             @Override
