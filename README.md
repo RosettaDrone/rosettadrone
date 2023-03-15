@@ -69,10 +69,10 @@ Main screen, with live video on Mavic AIR (from my office)...
 Main screen on QGroundControl with live video and telemetry... (from inside my office)
 
 ![Image of Opening screen](images/IMG_4178.png)
-Rosetta Drone 2 on the big screen from DJI Smart Controller
+Rosetta Drone on the big screen from DJI Smart Controller
 
 ![Image of Opening screen](images/IMG_4179.png)
-Rosetta Drone 2 on the DJI Smart Controller
+Rosetta Drone on the DJI Smart Controller
 
 Latency video: 
 ![Video](https://youtu.be/HAC5OpQQpDI)

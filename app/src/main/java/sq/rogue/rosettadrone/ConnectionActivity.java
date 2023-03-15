@@ -146,7 +146,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         if (missingPermission.isEmpty()) {
             RDApplication.startLoginApplication();
         } else {
-            Toast.makeText(getApplicationContext(), "Missing permissions!!!", Toast.LENGTH_LONG).show();
+            Toast.makeText(getApplicationContext(), "Missing permissions!", Toast.LENGTH_LONG).show();
         }
     }
     
@@ -166,7 +166,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         super.onCreate(savedInstanceState);
 
         if(this.running == false){
-            Log.v(TAG, "First time ... Registrer Receiver");
+            Log.v(TAG, "First time ... Register Receiver");
             this.running = true;
         }
 
