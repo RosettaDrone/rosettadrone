@@ -4,7 +4,7 @@ Rosetta Drone is a MAVLink wrapper for the DJI SDK, which allows users to fly DJ
 
 *** IMPORTANT SAFETY NOTE ***
 
-Stay always away from the propellers. Use Rosetta Drone's "Safe Mode" to prevent the drone from unexpectly arming or taking off.
+Always stay away from the propellers. Use Rosetta Drone's "Safe Mode" to prevent the drone from unexpectly arming or taking off.
 When testing a new Rosetta version, test it first using the simulator.
 
 This Software is experimental and under constant development. By using this Software, you agree to assume all responsibility for eventual harm or damage.
@@ -16,7 +16,7 @@ See "Known issues" below before use.
 This new version implements a MissionManager that speaks native MAVLink and uses VirtualSticks to support the DJI Mini series and other DJI drones without on-board waypoint missions.
 
 The MissionManager can also be used with DJI drones that support WayPoints and MissionControl onboard. 
-This can be an interesting alternative for improving the features offerd by their flightcontrollers.
+This can be an interesting alternative for improving the features offered by their flight controllers.
 
 
 ## Supported Drones
@@ -41,19 +41,20 @@ Rosetta is compatible with:
 * MAVSDK
 * DJI SDK 4.16.1
 
-## Hacking on Rosetta
+## Contributing to Rosetta
 
-* If you want to contribute, please check this [important recomendations](https://docs.google.com/document/d/1wR56Mvd2OsT82kxMOD7f_3-c6yJGBtLaT8LuVrmC5wI/edit?usp=sharing).
+* If you want to contribute please follow these [important recomendations](https://docs.google.com/document/d/1wR56Mvd2OsT82kxMOD7f_3-c6yJGBtLaT8LuVrmC5wI/edit?usp=sharing).
 * Here is some [documentation](https://github.com/lilfish/Delta-FlowerPower/wiki/Drone-app) from a forked project.
 * Rosetta can be tested without a Drone (press 5 times on the logo). For MAVLink and GUI testing.
 
 ### **Please create issues and PR on this fork.** 
 
 ![Image of Opening screen](images/IMG_4176.png)
-Opening screen, requires DJI login first time...
+The opening screen.
+The first time you start the app, it will attempt to connect to DJI with the provided API key.
   
-This version has implemented the new video stream method in DJI SDK that require quite a few modifications. It also includes all the latest libraries, and Androidx.
-In the unstable code there is also the DJI simulator, to enable testing in the lab. Android Studio is now updated to 3.6
+This version implements the new video stream method in DJI SDK that require quite a few modifications. It also includes all the latest libraries, and Androidx.
+The DJI Simulator is enabled in the unstable code for testing in the lab. 
 
 # Screenshots
 
@@ -117,7 +118,7 @@ Takeoff and missions should also work fine using QGC.
 
 8. Support is added for Pan and Tilt of camera gimbal by using RC channel 8 and 9.
 
-### Add this to you're Dronekit python script:
+### Add this to your Dronekit python script:
 
 def set_servo(servo,val):
     msg = vehicle.message_factory.command_long_encode(
@@ -133,9 +134,9 @@ def set_servo(servo,val):
     
     And then use: set_servo(8,-45.0) to set the gimbal....
 
-9. Support for **joystick** is added and tested with QGroundcontrol, using the now built in simulator.
+9. Support for **joystick** has been added and tested with QGroundcontrol, using the now built in simulator.
 
-10. By taping on the drone icon 5 times, you enable test mode and can open the software with no drone connected. Useful for testing MAVLink communication and GUI.
+10. By tapping on the drone icon 5 times you enable test mode and can open the software with no drone connected. Useful for testing MAVLink communication and GUI.
 
     
 # Building from source
