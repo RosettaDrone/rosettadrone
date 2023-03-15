@@ -1,6 +1,6 @@
 # Welcome to Rosetta Drone
 
-This is the official and active maintained Rosetta Drone.
+This is the official and actively maintained Rosetta Drone.
 
 Rosetta Drone is a MAVLink wrapper for the DJI SDK, which allows users to fly DJI drones using MAVLink-speaking ground control stations. In theory it should work with any MAVLink GCS.
 
