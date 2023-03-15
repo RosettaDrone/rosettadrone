@@ -220,18 +220,13 @@ The use of an ArduPilot dialect over PX4 is not intended to be a statement of pr
 
 # Acknowledgements
 
-Rosetta Drone was brought to you by developers from Rogue Squadron, a UAS/C-UAS red team at the Defense Innovation Unit Experimental.
-The Rosetta Drone 2 version was brought to you by the Drone department at 9Tek AS, Norway.
-
-
-## Icons
-Icons made by Pixel Perfect & Freepik at flaticon
+Rosetta Drone was brought to you by developers from Rogue Squadron, a UAS/C-UAS red team at the Defense Innovation Unit Experimental, 9Tek AS (Norway), IMATRONIX and others.
 
 
 # Licensing
 
-Rosetta Drone 2 is licensed under BSD3. For particularities related to U.S. federal government code release, please read Intent.MD. For more information, visit [code.mil](https://code.mil) or [code.gov](https://code.gov).
+Rosetta Drone is licensed under BSD3. For particularities related to U.S. federal government code release, please read Intent.MD. For more information, visit [code.mil](https://code.mil) or [code.gov](https://code.gov).
 
-Rosetta Drone 2 uses a modified version of DJI's [Android Video Stream Decoding Sample](https://developer.dji.com/mobile-sdk/documentation/sample-code/index.html), which is released under the MIT License.
+Rosetta Drone uses a modified version of DJI's [Android Video Stream Decoding Sample](https://developer.dji.com/mobile-sdk/documentation/sample-code/index.html), which is released under the MIT License.
 
 Video RTP packing uses code modified from the [libstreamer](https://github.com/fyhertz/libstreaming) library, licensed under Apache 2.
