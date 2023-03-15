@@ -6,7 +6,7 @@ Rosetta Drone is a MAVLink wrapper for the DJI SDK, which allows users to fly DJ
 
 *** IMPORTANT SAFETY NOTE ***
 
-Stay always away from the propellers. Use Rosetta Drone's "Safe Mode" to prevent the drone from unexpectly arming or taking off.
+Always stay away from the propellers. Use Rosetta Drone's "Safe Mode" to prevent the drone from unexpectly arming or taking off.
 When testing a new Rosetta version, test it first using the simulator.
 
 This Software is experimental and under constant development. By using this Software, you agree to assume all responsibility for eventual harm or damage.
@@ -18,7 +18,7 @@ See "Known issues" below before use.
 This new version implements a MissionManager that speaks native MAVLink and uses VirtualSticks to support the DJI Mini series and other DJI drones without on-board waypoint missions.
 
 The MissionManager can also be used with DJI drones that support WayPoints and MissionControl onboard. 
-This can be an interesting alternative for improving the features offerd by their flightcontrollers.
+This can be an interesting alternative for improving the features offered by their flight controllers.
 
 
 ## Supported Drones
@@ -43,19 +43,21 @@ Rosetta is compatible with:
 * MAVSDK
 * DJI SDK 4.16.1
 
-## Hacking on Rosetta
+## Contributing to Rosetta
 
-* If you want to contribute, please check this [important recomendations](https://docs.google.com/document/d/1wR56Mvd2OsT82kxMOD7f_3-c6yJGBtLaT8LuVrmC5wI/edit?usp=sharing).
+* If you want to contribute please follow these [important recomendations](https://docs.google.com/document/d/1wR56Mvd2OsT82kxMOD7f_3-c6yJGBtLaT8LuVrmC5wI/edit?usp=sharing).
 * Here is some [documentation](https://github.com/lilfish/Delta-FlowerPower/wiki/Drone-app) from a forked project.
 * Rosetta can be tested without a Drone (press 5 times on the logo). For MAVLink and GUI testing.
 
 ### **Please create issues and PR on this fork.** 
 
 ![Image of Opening screen](images/IMG_4176.png)
-Opening screen, requires DJI login first time...
+The opening screen.
+
+The first time you start the app it will attempt to connect to DJI with the provided API key.
   
-This version has implemented the new video stream method in DJI SDK that require quite a few modifications. It also includes all the latest libraries, and Androidx.
-In the unstable code there is also the DJI simulator, to enable testing in the lab. Android Studio is now updated to 3.6
+This version implements the new video stream method in DJI SDK that require quite a few modifications. It also includes all the latest libraries, and Androidx.
+The DJI Simulator is enabled in the unstable code for testing in the lab. 
 
 # Screenshots
 
@@ -69,10 +71,10 @@ Main screen, with live video on Mavic AIR (from my office)...
 Main screen on QGroundControl with live video and telemetry... (from inside my office)
 
 ![Image of Opening screen](images/IMG_4178.png)
-Rosetta Drone 2 on the big screen from DJI Smart Controller
+Rosetta Drone on the big screen from DJI Smart Controller
 
 ![Image of Opening screen](images/IMG_4179.png)
-Rosetta Drone 2 on the DJI Smart Controller
+Rosetta Drone on the DJI Smart Controller
 
 Latency video: 
 ![Video](https://youtu.be/HAC5OpQQpDI)
@@ -119,7 +121,7 @@ Takeoff and missions should also work fine using QGC.
 
 8. Support is added for Pan and Tilt of camera gimbal by using RC channel 8 and 9.
 
-### Add this to you're Dronekit python script:
+### Add this to your Dronekit python script:
 
 def set_servo(servo,val):
     msg = vehicle.message_factory.command_long_encode(
@@ -135,9 +137,9 @@ def set_servo(servo,val):
     
     And then use: set_servo(8,-45.0) to set the gimbal....
 
-9. Support for **joystick** is added and tested with QGroundcontrol, using the now built in simulator.
+9. Support for **joystick** has been added and tested with QGroundcontrol, using the now built in simulator.
 
-10. By taping on the drone icon 5 times, you enable test mode and can open the software with no drone connected. Useful for testing MAVLink communication and GUI.
+10. By tapping on the drone icon 5 times you enable test mode and can open the software with no drone connected. Useful for testing MAVLink communication and GUI.
 
     
 # Building from source
@@ -176,7 +178,7 @@ Anyone who speaks multiple languages knows that translations are rarely perfect.
 
 - Radio signal strength is not yet implemented
 
-- Rosetta drone 2 reports groundspeed and airspeed as the same, and does no wind correction
+- Rosetta drone reports groundspeed and airspeed as the same, and does no wind correction
 
 - There is currently no way to turn the video camera on or off in QGC, but DJI controllers will still work fine, Mavlink support for this is now added.
 
@@ -194,24 +196,24 @@ Anyone who speaks multiple languages knows that translations are rarely perfect.
 
 - The message on the boot/login screen can now be modified in "settings/drone configuration/App Name" , to make tha app more private. 
 
-- The switch C3 is now both reported as switch 3 and also performa a auto takeoff is the system is armed. This to allow flying from Rosetta Drone 2, might be reverted.
+- The switch C3 is now both reported as switch 3 and also perform an auto takeoff is the system is armed. This to allow flying from Rosetta Drone, and might be reverted.
 
 
 # Known Issues for Users
 
 - If you change the UDP port while QGC is running, you may need to restart QGC.
 
-- If you change the video UDP port while QGC is running, you may need to restart Rosetta drone 2
+- If you change the video UDP port while QGC is running, you may need to restart Rosetta Drone.
 
-- Some times the Rosetta Drone 2 stopps and restarts, work are in progress to eliminate this. Seems to be related to the Mavlik layer.
+- Some times the Rosetta Drone app stops and restarts. Work is in progress to eliminate this. Seems to be related to the MAVLink layer.
 
-- If you takeoff using the QGC, and then sett a point and hit goto, the Rosetta drone 2 enters an error state. Work are in progress. 
+- If you takeoff using the QGC, set a point, and then hit goto, Rosetta Drone enters an error state. Work on a fix for this is in progress.
 
 
 
 # Known Issues for Developers
 
-RosettaDrone 2 uses MAVLink code generated by the MAVLink code generator, using the ArduPilot dialect. The Java code generator contains errors (see issues [#805](https://github.com/mavlink/mavlink/issues/805) and [#806](https://github.com/mavlink/mavlink/issues/806)), and the code required manual tweaking after generation. This means that simply dropping in updated auto-generated files will likely produce errors. At the moment this seems only to apply for setting and getting double that is missing. It is quite easy to copy the float function and modify it to double. The only usage for this is for ROV wheel distance, so someone should fix that in Mavlink. 
+Rosetta Drone uses MAVLink code generated by the MAVLink code generator, using the ArduPilot dialect. The Java code generator contains errors (see issues [#805](https://github.com/mavlink/mavlink/issues/805) and [#806](https://github.com/mavlink/mavlink/issues/806)), and the code required manual tweaking after generation. This means that simply dropping in updated auto-generated files will likely produce errors. At the moment this seems only to apply for setting and getting double that is missing. It is quite easy to copy the float function and modify it to double. The only usage for this is for ROV wheel distance, so someone should fix that in Mavlink. 
 
 The use of an ArduPilot dialect over PX4 is not intended to be a statement of preference. The author believes strongly in the importance of maintaining maximum compatibility across both projects. 
 
@@ -219,7 +221,7 @@ The use of an ArduPilot dialect over PX4 is not intended to be a statement of pr
 # Acknowledgements
 
 Rosetta Drone was brought to you by developers from Rogue Squadron, a UAS/C-UAS red team at the Defense Innovation Unit Experimental.
-The Rosetta Drone 2 version was brought to you by the Drone depatment at 9Tek AS, Norway.
+The Rosetta Drone 2 version was brought to you by the Drone department at 9Tek AS, Norway.
 
 
 ## Icons
