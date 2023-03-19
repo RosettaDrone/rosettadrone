@@ -49,6 +49,8 @@ Rosetta is compatible with:
 
 ### **Please create issues and PR on this fork.** 
 
+## Run
+
 ![Image of Opening screen](images/IMG_4176.png)
 The opening screen.
 
