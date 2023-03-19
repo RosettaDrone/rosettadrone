@@ -15,11 +15,9 @@ See "Known issues" below before use.
 
 ## What's New
 
-This new version implements a MissionManager that speaks native MAVLink and uses VirtualSticks to support the DJI Mini series and other DJI drones without on-board waypoint missions.
-
+This new version implements a MissionManager that speaks native MAVLink and uses VirtualSticks. This enables waypoint missions on DJI Mini series and other drones without "on-board" waypoint missions support.
 The MissionManager can also be used with DJI drones that support WayPoints and MissionControl onboard. 
 This can be an interesting alternative for improving the features offered by their flight controllers.
-
 
 ## Supported Drones
 
