@@ -1,4 +1,4 @@
-# Welcome to Rosetta Drone
+# Rosetta Drone
 
 This is the official and actively maintained Rosetta Drone project.
 
