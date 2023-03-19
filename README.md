@@ -41,7 +41,7 @@ Rosetta is compatible with:
 * MAVSDK
 * DJI SDK 4.16.1
 
-## Contributing to Rosetta
+## Contributing to Rosetta Drone
 
 * If you want to contribute please follow these [important recomendations](https://docs.google.com/document/d/1wR56Mvd2OsT82kxMOD7f_3-c6yJGBtLaT8LuVrmC5wI/edit?usp=sharing).
 * Here is some [documentation](https://github.com/lilfish/Delta-FlowerPower/wiki/Drone-app) from a forked project.
