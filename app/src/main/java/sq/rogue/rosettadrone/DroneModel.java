@@ -134,8 +134,6 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     private boolean isSimulator;
     private static final int NOT_USING_GCS_COMMANDED_MODE = -1;
     private final String TAG = DroneModel.class.getSimpleName();
-    public DatagramSocket socket;
-    DatagramSocket secondarySocket;
     private Aircraft djiAircraft;
     private ArrayList<MAVParam> params = new ArrayList<>();
     private long ticks = 0;
@@ -196,7 +194,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     private MiniPID miniPIDHeading;
 
     private boolean mSafetyEnabled = true;
-    private boolean mMotorsArmed = false;
+    protected boolean mMotorsArmed = false;
     private FollowMeMissionOperator fmmo;
     public FlightController mFlightController;
     private Gimbal mGimbal = null;
@@ -245,7 +243,6 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
     DroneModel(MainActivity parent, DatagramSocket socket, boolean sim) {
         this.parent = parent;
-        this.socket = socket;
         this.numFiles = 0;
         this.isSimulator = sim;
 
@@ -729,19 +726,6 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         return params;
     }
 
-    public DatagramSocket getSocket() {
-        return socket;
-    }
-
-    public void setSocket(DatagramSocket socket) {
-        this.socket = socket;
-    }
-
-    void setSecondarySocket(DatagramSocket socket) {
-        this.secondarySocket = socket;
-    }
-
-
     void tick() { // Called ever 100ms...
         ticks += 100;
 
@@ -816,34 +800,25 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     public void sendMessage(MAVLinkMessage msg) {
-        if (socket == null)
-            return;
+        if (parent.mMavlinkReceiver.mavLinkConnections.isEmpty()) return;
 
         MAVLinkPacket packet = msg.pack();
-
-        if(msg.msgid == 22 || msg.msgid == 86) {
-            int d = 0;
-        }
 
         packet.sysid = mSystemId;
         packet.compid = MAV_COMP_ID_AUTOPILOT1;
 
         byte[] bytes = packet.encodePacket();
 
-        try {
-            DatagramPacket p = new DatagramPacket(bytes, bytes.length, socket.getInetAddress(), socket.getPort());
-            socket.send(p);
-            parent.logMessageToGCS(msg.toString());
+        for(MAVLinkConnection mavLinkConnection : parent.mMavlinkReceiver.mavLinkConnections) {
+            try {
+                mavLinkConnection.send(bytes);
+                parent.logMessageToGCS(msg.toString());
 
-            if (secondarySocket != null) {
-                DatagramPacket secondaryPacket = new DatagramPacket(bytes, bytes.length, secondarySocket.getInetAddress(), secondarySocket.getPort());
-                secondarySocket.send(secondaryPacket);
+            } catch (PortUnreachableException ignored) {
+
+            } catch (IOException e) {
+
             }
-
-        } catch (PortUnreachableException ignored) {
-
-        } catch (IOException e) {
-
         }
     }
 
@@ -2135,6 +2110,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             command = command;
             mask = new PositionTargetTypeMask(mavLinkMask);
             type = MotionType.POSITION_TARGET;
+            yawDirection = YawDirection.FIXED;
             send_command_ack(command, MAV_RESULT.MAV_RESULT_IN_PROGRESS);
         }
 
@@ -2146,7 +2122,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
          * @param y Has different meanings
          * @param z Has different meanings
          */
-        public void setDestination(int coordFrame, float x, float y, float z) {
+        public void  setDestination(int coordFrame, float x, float y, float z) {
             if(coordFrame == MAV_FRAME_BODY_OFFSET_NED) coordFrame = MAV_FRAME_BODY_FRD;
 
             if(coordFrame == MAV_FRAME_LOCAL_NED || coordFrame == MAV_FRAME_LOCAL_OFFSET_NED || coordFrame == MAV_FRAME_BODY_FRD) {
@@ -2222,6 +2198,13 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         } else {
             motionTask.detectionCounter = 0;
         }
+
+        /*
+        miniPIDSide.reset();
+        miniPIDFwd.reset();
+        miniPIDAlti.reset();
+        miniPIDHeading.reset();
+        */
     }
 
     public void cancelMotion() {
@@ -2287,7 +2270,6 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
             if(motion.yawDirection == YawDirection.KEEP
                     || lookAt && lookAtDistance < 0.3   // If we are close to the lookAt target => stop looking at it in order to avoid erratic yaw rotations (eg: if we passed the target for 0.00001 mm we would have to turn in 180°)
-                    || motion.yawDirection == YawDirection.FIXED
                     || motion.mask.ignoreYaw
                     || motion.mask.ignoreYawRate
             ) {
@@ -2307,6 +2289,8 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                 }
 
                 yawError = rotation(targetYaw, yaw);
+
+                Log.i(TAG, "YAW - target: " + targetYaw + ", yaw: " + yaw + ", err: " + yawError);
             }
 
             // Check if we reached destination point

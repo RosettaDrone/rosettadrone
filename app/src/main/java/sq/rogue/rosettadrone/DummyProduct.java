@@ -70,7 +70,7 @@ public class DummyProduct extends Aircraft {
 
     private double lat = homeLat;
     private double lng = homeLng;
-    private float alt = 30;
+    private float alt = 1;
     private double yaw = 0;
     private boolean isFlying = true;
 
@@ -494,15 +494,17 @@ public class DummyProduct extends Aircraft {
             state.setAircraftHeadDirection(0);
             state.setGPSSignalLevel(GPSSignalLevel.LEVEL_5);
 
-            Attitude attitude = new Attitude(0,0, yaw);
-            state.setAttitude(attitude);
+            synchronized (this) { // Consistency
+                Attitude attitude = new Attitude(0, 0, yaw);
+                state.setAttitude(attitude);
 
-            state.setAircraftLocation(new LocationCoordinate3D(lat, lng, alt));
-            state.setHomeLocation(new LocationCoordinate2D(homeLat, homeLng));
+                state.setAircraftLocation(new LocationCoordinate3D(lat, lng, alt));
+                state.setHomeLocation(new LocationCoordinate2D(homeLat, homeLng));
 
-            state.setVelocityX(0.001f);
-            state.setVelocityY(0.002f);
-            state.setVelocityZ(0.003f);
+                state.setVelocityX(0.001f);
+                state.setVelocityY(0.002f);
+                state.setVelocityZ(0.003f);
+            }
 
             state.setFlying(isFlying);
 
@@ -671,10 +673,18 @@ public class DummyProduct extends Aircraft {
             double rad = Math.toRadians(yaw);
             double[] dLatLng = Functions.getLatLngDiff(lat, rad, fwdVel, rightVel);
 
-            lat += dLatLng[0] / dT;
-            lng += dLatLng[1] / dT;
-            yaw += yawVel / dT;
-            alt += throttleVel / dT;
+            synchronized (this) { // Consistency
+                lat += dLatLng[0] / dT;
+                lng += dLatLng[1] / dT;
+                yaw += yawVel / dT;
+                alt += throttleVel / dT;
+
+                if (yaw > 180) {
+                    yaw -= 360;
+                } else if (yaw < 180) {
+                    yaw += 360;
+                }
+            }
         }
 
         @Override

@@ -29,6 +29,7 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.List;
 
 import dji.common.mission.waypoint.Waypoint;
 import dji.common.mission.waypoint.WaypointAction;
@@ -124,6 +125,8 @@ public class MAVLinkReceiver {
 
     //    private ArrayList<String> aiWP = new ArrayList<String>();
     private String[] aiWP = new String[100]; // Max 100 wp in an AI mission for now...
+
+    public List<MAVLinkConnection> mavLinkConnections = new ArrayList<MAVLinkConnection>();
 
     public MAVLinkReceiver(MainActivity parent, DroneModel model) {
 

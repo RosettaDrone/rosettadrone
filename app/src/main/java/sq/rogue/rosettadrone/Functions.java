@@ -14,7 +14,7 @@ public class Functions {
      * Returns North and East increments if we fly forwardMeters and rightMeters while we are heading to angle 'yaw'.
      * See also: getLatLngDiff()
      *
-     * @param yaw   Current yaw (heading) in radians. If we are heading north (NED), a yaw angle of 90° is considered pointing to the east
+     * @param yaw   Current yaw (heading) in radians. If we are heading north (NED), a yaw angle of 90° is considered pointing to the east, ie. yaw is clockwise.
      * @param forwardMeters Meters to add in forward direction
      * @param rightMeters   Meters to add to right direction
      * @return (dNorth, dEast)

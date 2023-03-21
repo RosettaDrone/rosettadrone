@@ -86,14 +86,20 @@
     <string name="pref_enable_dualvideo">Enable second video feed on port+1</string>
 
     <!-- Network -->
-    <string name="pref_gcs_ip">GCS IP address</string>
+    <string name="pref_gcs_ip">Host 1</string>
+    <string name="pref_telem_port">Port 1</string>
+
     <string name="pref_ai_ip">AI Assist IP address</string>
-    <string name="pref_telem_port">Telemetry port</string>
     <string name="pref_ai_port">AI Assist port</string>
     <string name="pref_ai_telemetry">Enable AI Assist</string>
-    <string name="pref_secondary_telemetry">Enable secondary telemetry output</string>
-    <string name="pref_secondary_telemetry_ip">Secondary telemetry IP</string>
-    <string name="pref_secondary_telemetry_port">Secondary telemetry port</string>
+
+    <string name="pref_secondary_telemetry">Enable Telemetry 2</string>
+    <string name="pref_secondary_telemetry_ip">Host 2</string>
+    <string name="pref_secondary_telemetry_port">Port 2</string>
+
+    <string name="pref_telemetry_3_enabled">Enable Telemetry 3</string>
+    <string name="pref_telemetry_3_host">Host 3</string>
+    <string name="pref_telemetry_3_port">Port 3</string>
 
     <string name="pref_video_ip">Video IP address</string>
     <string name="pref_video_port">Video port</string>

@@ -72,9 +72,8 @@ import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.SocketException;
-import java.net.UnknownHostException;
+import java.net.PortUnreachableException;
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -93,6 +92,7 @@ import androidx.preference.PreferenceManager;
 import dji.common.camera.SettingsDefinitions;
 import dji.common.error.DJIError;
 import dji.common.error.DJISDKError;
+import dji.common.flightcontroller.LocationCoordinate3D;
 import dji.common.mission.waypoint.Waypoint;
 import dji.common.mission.waypoint.WaypointMission;
 import dji.common.model.LocationCoordinate2D;
@@ -164,7 +164,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private String mNewOutbound = "";
     private String mNewInbound = "";
     private String mNewDJI = "";
-    private DatagramSocket socket;
     public  DroneModel mModel;
     private Boolean mExtRunning = false;
     private LocationManager locationManager;
@@ -184,8 +183,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     public SharedPreferences sharedPreferences;
 
     // TODO: Move to VideoService
-    public boolean useCustomDecoder = true;
-    public boolean useOutputSurface = true;
+    public boolean useCustomDecoder = true; // Can be disabled by a video plugin
+    public boolean useOutputSurface = true; // Can be disabled by a video plugin
     private boolean mExternalVideoOut = true;
     private String mvideoIPString;
     private int videoPort;
@@ -667,19 +666,19 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void initFlightController() {
         if (mModel.mFlightController != null) {
-            mModel.mFlightController.setStateCallback(
-                djiFlightControllerCurrentState -> {
-                    droneLocationLat = djiFlightControllerCurrentState.getAircraftLocation().getLatitude();
-                    droneLocationLng = djiFlightControllerCurrentState.getAircraftLocation().getLongitude();
+            mModel.mFlightController.setStateCallback(djiFlightControllerCurrentState -> {
+                LocationCoordinate3D loc = djiFlightControllerCurrentState.getAircraftLocation();
+                droneLocationLat = loc.getLatitude();
+                droneLocationLng = loc.getLongitude();
 
-                    if (checkGpsCoordination(droneLocationLat, droneLocationLng)) {
-                        // If we got no data from GCS then use the initial Drone location
-                        if (m_host_lat == -500 && m_host_lon == -500) {
-                            m_host_lat = droneLocationLat;
-                            m_host_lon = droneLocationLng+0.00005;
-                        }
-                        updateDroneLocation();
+                if (checkGpsCoordination(droneLocationLat, droneLocationLng)) {
+                    // If we got no data from GCS then use the initial Drone location
+                    if (m_host_lat == -500 && m_host_lon == -500) {
+                        m_host_lat = droneLocationLat;
+                        m_host_lon = droneLocationLng + 0.00005;
                     }
+                    updateDroneLocation();
+                }
             });
         }
     }
@@ -834,6 +833,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mTimerHandler.postDelayed(enableSafeMode, 3000);
 
         if(RDApplication.isTestMode) {
+            mModel.mMotorsArmed = true;
             onDroneConnected();
         }
     }
@@ -878,7 +878,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 if (mCodecManager != null) {
                     // Render on screen
-                    // TODO: Why not do always?
                     mCodecManager.sendDataToDecoder(videoBuffer, size);
                 }
 
@@ -1355,12 +1354,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             videostreamPreviewTtViewSmall.clearFocus();
             videostreamPreviewTtViewSmall.setVisibility(View.GONE);
 
-            //         safeSleep(200);
+            //safeSleep(200);
             videostreamPreviewTtView.setSurfaceTextureListener(mSurfaceTextureListener);
             videostreamPreviewTtView.setVisibility(View.VISIBLE);
             video_layout_small.setZ(0.f);
 
-            //MAP OK...
+            // MAP OK...
             map_layout.setZ(100.f);
             map_para.height = ((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 86, getResources().getDisplayMetrics()));
             map_para.width = ((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 164, getResources().getDisplayMetrics()));
@@ -1373,7 +1372,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             compare_height = 0;
         }
         v.setZ(101.f);
-  //      updateDroneLocation();
+        //updateDroneLocation();
     }
 
     void changeOutputSurface(TextureView textureView) {
@@ -1708,7 +1707,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-    private static class GCSCommunicatorAsyncTask extends AsyncTask<Integer, Integer, Integer> {
+    public static class GCSCommunicatorAsyncTask extends AsyncTask<Integer, Integer, Integer> {
 
         private static final String TAG = GCSSenderTimerTask.class.getSimpleName();
         boolean request_renew_datalinks = false;
@@ -1720,120 +1719,150 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
 
         void renewDatalinks() {
-//            Log.d(TAG, "renewDataLinks");
             request_renew_datalinks = true;
             FLAG_TELEMETRY_ADDRESS_CHANGED = false;
         }
 
-        private void onRenewDatalinks() {
-//            Log.d(TAG, "onRenewDataLinks");
-            createTelemetrySocket();
-//            mainActivityWeakReference.get().sendRestartVideoService();
-        }
+        public class Listener extends Thread {
+            private final MainActivity mainActivity;
+            private final MAVLinkConnection connection;
+            public boolean close = false;
 
-        @Override
-        protected Integer doInBackground(Integer... ints2) {
-            try {
-                createTelemetrySocket();
-                mainActivityWeakReference.get().mMavlinkParser = new Parser();
+            Listener(MAVLinkConnection connection, MainActivity mainActivity) {
+                this.mainActivity = mainActivity;
+                this.connection = connection;
+            }
 
-                GCSSenderTimerTask gcsSender = new GCSSenderTimerTask(mainActivityWeakReference);
-                timer = new Timer(true);
-                timer.scheduleAtFixedRate(gcsSender, 0, 100);
-
+            @Override
+            public void run() {
                 while (!isCancelled()) {
                     // Listen for packets
                     try {
+                        // TODO: Process request_renew_datalinks only in main Listener thread
                         if (request_renew_datalinks) {
                             request_renew_datalinks = false;
-                            onRenewDatalinks();
+                            createTelemetrySockets(); // renew
                         }
 
-                        if (System.currentTimeMillis() - mainActivityWeakReference.get().mMavlinkReceiver.getTimestampLastGCSHeartbeat() <= mainActivityWeakReference.get().GCS_TIMEOUT_mSEC) {
-                            if (!mainActivityWeakReference.get().shouldConnect) {
-                                mainActivityWeakReference.get().shouldConnect = true;
-                                mainActivityWeakReference.get().connectivityHasChanged = true;
+                        if (System.currentTimeMillis() - this.mainActivity.mMavlinkReceiver.getTimestampLastGCSHeartbeat() <= this.mainActivity.GCS_TIMEOUT_mSEC) {
+                            if (!this.mainActivity.shouldConnect) {
+                                this.mainActivity.shouldConnect = true;
+                                this.mainActivity.connectivityHasChanged = true;
                             }
                         } else {
-                            if (mainActivityWeakReference.get().shouldConnect) {
-                                mainActivityWeakReference.get().shouldConnect = false;
-                                mainActivityWeakReference.get().connectivityHasChanged = true;
+                            // Timed out
+                            if (this.mainActivity.shouldConnect) {
+                                this.mainActivity.shouldConnect = false;
+                                this.mainActivity.connectivityHasChanged = true;
                             }
                         }
 
-                        if (mainActivityWeakReference.get().connectivityHasChanged) {
+                        if (this.mainActivity.connectivityHasChanged) {
+                            if (this.mainActivity.shouldConnect) {
+                                final Drawable connectedDrawable = this.mainActivity.getResources().getDrawable(R.drawable.ic_baseline_connected_24px, null);
 
-                            if (mainActivityWeakReference.get().shouldConnect) {
-                                final Drawable connectedDrawable = mainActivityWeakReference.get().getResources().getDrawable(R.drawable.ic_baseline_connected_24px, null);
-
-                                mainActivityWeakReference.get().runOnUiThread(() -> {
-                                    ImageView imageView = mainActivityWeakReference.get().findViewById(R.id.gcs_conn);
+                                this.mainActivity.runOnUiThread(() -> {
+                                    ImageView imageView = this.mainActivity.findViewById(R.id.gcs_conn);
                                     imageView.setBackground(connectedDrawable);
                                     imageView.invalidate();
                                 });
                             } else {
-                                final Drawable disconnectedDrawable = mainActivityWeakReference.get().getResources().getDrawable(R.drawable.ic_outline_disconnected_24px, null);
+                                final Drawable disconnectedDrawable = this.mainActivity.getResources().getDrawable(R.drawable.ic_outline_disconnected_24px, null);
 
-                                mainActivityWeakReference.get().runOnUiThread(() -> {
-                                    ImageView imageView = mainActivityWeakReference.get().findViewById(R.id.gcs_conn);
+                                this.mainActivity.runOnUiThread(() -> {
+                                    ImageView imageView = this.mainActivity.findViewById(R.id.gcs_conn);
                                     imageView.setBackground(disconnectedDrawable);
                                     imageView.invalidate();
                                 });
                             }
 
-                            mainActivityWeakReference.get().connectivityHasChanged = false;
+                            this.mainActivity.connectivityHasChanged = false;
                         }
 
                         byte[] buf = new byte[1000];
                         DatagramPacket dp = new DatagramPacket(buf, buf.length);
-                        mainActivityWeakReference.get().socket.receive(dp);
+
+                        // Listen on random src port
+                        //this.mainActivity.mMavlinkReceiver.mavLinkConnections.get(0).socket.receive(dp);
+                        connection.socket.receive(dp);
+
+                        if(close) {
+                            Log.i(TAG, "Listener closed");
+                            return;
+                        }
 
                         byte[] bytes = dp.getData();
                         int[] ints = new int[bytes.length];
                         for (int i = 0; i < bytes.length; i++)
                             ints[i] = bytes[i] & 0xff;
 
-                        for (int i = 0; i < bytes.length; i++) {
-                            MAVLinkPacket packet = mainActivityWeakReference.get().mMavlinkParser.mavlink_parse_char(ints[i]);
+                        synchronized (this.mainActivity) { // this.mainActivity.mMavlinkParser crashes if used concurrently by two threads. TODO: Instantiate multiple parsers?
+                            for (int i = 0; i < bytes.length; i++) {
+                                MAVLinkPacket packet = this.mainActivity.mMavlinkParser.mavlink_parse_char(ints[i]);
 
-                            if (packet != null) {
-                                MAVLinkMessage msg = packet.unpack();
-                                if (mainActivityWeakReference.get().prefs.getBoolean("pref_log_mavlink", false))
-                                    mainActivityWeakReference.get().logMessageFromGCS(msg.toString());
+                                if (packet != null) {
+                                    MAVLinkMessage msg = packet.unpack();
+                                    if (this.mainActivity.prefs.getBoolean("pref_log_mavlink", false))
+                                        this.mainActivity.logMessageFromGCS(msg.toString());
 
-                                mainActivityWeakReference.get().mMavlinkReceiver.process(msg);
+                                    this.mainActivity.mMavlinkReceiver.process(msg);
+                                }
                             }
                         }
+
+                    } catch(SocketTimeoutException e) {
+                        // Timeout
+                    } catch(PortUnreachableException e) {
+                        // Remote side is not receiving telemetry
                     } catch (IOException e) {
+                        Log.e(TAG, "IOException: " + e.toString());
                         //logMessageDJI("IOException: " + e.toString());
                     }
+                }
+            }
+        }
+
+        @Override
+        protected Integer doInBackground(Integer... ints2) {
+            try {
+                createTelemetrySockets();
+
+                MainActivity mainActivityRef = mainActivityWeakReference.get();
+                mainActivityRef.mMavlinkParser = new Parser();
+
+                GCSSenderTimerTask gcsSender = new GCSSenderTimerTask(mainActivityWeakReference);
+                timer = new Timer(true);
+                timer.scheduleAtFixedRate(gcsSender, 0, 100);
+
+                for(MAVLinkConnection mavLinkConnection : mainActivityRef.mMavlinkReceiver.mavLinkConnections) {
+                    Listener listener = new MainActivity.GCSCommunicatorAsyncTask.Listener(mavLinkConnection, mainActivityRef);
+                    mavLinkConnection.listen(listener);
+                }
+
+                for(MAVLinkConnection mavLinkConnection : mainActivityRef.mMavlinkReceiver.mavLinkConnections) {
+                    mavLinkConnection.listener.join();
                 }
 
             } catch (Exception e) {
                 Log.d(TAG, "exception", e);
             } finally {
+                /*
                 if (mainActivityWeakReference.get().socket.isConnected()) {
                     mainActivityWeakReference.get().socket.disconnect();
                 }
+                */
                 if (timer != null) {
                     timer.cancel();
                 }
-//                Log.d("RDTHREADS", "doInBackground() complete");
-
             }
             return 0;
         }
 
         @Override
         protected void onPostExecute(Integer integer) {
-            /*
-            TODO Not sure what to do here...
-             */
-            if (mainActivityWeakReference.get() == null || mainActivityWeakReference.get().isFinishing())
-                return;
-
+            // TODO: Not sure what to do here...
+            if (mainActivityWeakReference.get() == null || mainActivityWeakReference.get().isFinishing()) return;
             mainActivityWeakReference.clear();
-
         }
 
         @Override
@@ -1856,62 +1885,36 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         }
 
-        private void createTelemetrySocket() {
-            // TODO: Why do we need weak references?
+        private void createTelemetrySockets() {
             MainActivity mainActivityRef = mainActivityWeakReference.get();
             close();
 
             String gcsIPString = mainActivityWeakReference.get().getGCSAddress();
 
             int telemIPPort = Integer.parseInt(Objects.requireNonNull(mainActivityWeakReference.get().prefs.getString("pref_telem_port", "14550")));
+            mainActivityRef.mMavlinkReceiver.mavLinkConnections.add(new MAVLinkConnection(gcsIPString, telemIPPort));
 
-            try {
-                mainActivityRef.socket = new DatagramSocket();
-                mainActivityRef.socket.connect(InetAddress.getByName(gcsIPString), telemIPPort);
-                mainActivityRef.socket.setSoTimeout(10);
-                mainActivityRef.logMessageDJI("Starting GCS telemetry link: " + gcsIPString + ":" + telemIPPort);
-
-            } catch (SocketException e) {
-                // TODO
-                Log.d(TAG, "createTelemetrySocket() - socket exception");
-                Log.d(TAG, "exception", e);
-                mainActivityRef.logMessageDJI("Telemetry socket exception: " + gcsIPString + ":" + telemIPPort);
-
-            } catch (UnknownHostException e) {
-                // TODO
-                Log.d(TAG, "createTelemetrySocket() - unknown host exception");
-                Log.d(TAG, "exception", e);
-                mainActivityRef.logMessageDJI("Unknown telemetry host: " + gcsIPString + ":" + telemIPPort);
-            }
-
-            mainActivityRef.mModel.setSocket(mainActivityRef.socket);
             if (mainActivityRef.prefs.getBoolean("pref_secondary_telemetry_enabled", false)) {
                 String secondaryIP = mainActivityRef.prefs.getString("pref_secondary_telemetry_ip", "127.0.0.1");
                 int secondaryPort = Integer.parseInt(Objects.requireNonNull(mainActivityRef.prefs.getString("pref_secondary_telemetry_port", "18990")));
-                try {
-                    DatagramSocket secondarySocket = new DatagramSocket();
-                    secondarySocket.connect(InetAddress.getByName(secondaryIP), secondaryPort);
-                    mainActivityRef.logMessageDJI("Starting secondary telemetry link: " + secondaryIP + ":" + secondaryPort);
-                    mainActivityRef.mModel.setSecondarySocket(secondarySocket);
 
-                } catch (SocketException | UnknownHostException e) {
-                    e.printStackTrace();
-                }
+                mainActivityRef.mMavlinkReceiver.mavLinkConnections.add(new MAVLinkConnection(secondaryIP, secondaryPort));
+            }
+
+            if (mainActivityRef.prefs.getBoolean("pref_telemetry_3_enabled", false)) {
+                String host = mainActivityRef.prefs.getString("pref_telemetry_3_host", "");
+                int port = Integer.parseInt(Objects.requireNonNull(mainActivityRef.prefs.getString("pref_telemetry_3_port", "")));
+                mainActivityRef.mMavlinkReceiver.mavLinkConnections.add(new MAVLinkConnection(host, port));
             }
         }
 
         protected void close() {
             MainActivity mainActivityRef = mainActivityWeakReference.get();
-
-            if (mainActivityRef.socket != null) {
-                mainActivityRef.socket.disconnect();
-                mainActivityRef.socket.close();
-            }
             if (mainActivityRef.mModel != null) {
-                if (mainActivityRef.mModel.secondarySocket != null) {
+                for(MAVLinkConnection mavLinkConnection : mainActivityRef.mMavlinkReceiver.mavLinkConnections) {
                     Thread thread = new Thread(() -> {
-                        mainActivityRef.mModel.secondarySocket.disconnect();
-                        mainActivityRef.mModel.secondarySocket.close();
+                        mavLinkConnection.close();
+                        mainActivityRef.mMavlinkReceiver.mavLinkConnections.remove(mavLinkConnection);
                     });
                     thread.start();
                 }

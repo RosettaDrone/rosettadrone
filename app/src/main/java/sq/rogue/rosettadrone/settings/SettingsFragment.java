@@ -142,6 +142,39 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Shared
             }
         });
 
+        findPreference("pref_telemetry_3_host").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object newValue) {
+
+                if (Patterns.IP_ADDRESS.matcher((String) newValue).matches()) {
+                    MainActivity.FLAG_PREFS_CHANGED = true;
+                    MainActivity.FLAG_TELEMETRY_ADDRESS_CHANGED = true;
+                    return true;
+                } else {
+                    NotificationHandler.notifyAlert(SettingsFragment.this.getActivity(), TYPE_GCS_IP,
+                            null, null);
+                    return false;
+                }
+            }
+        });
+
+        findPreference("pref_telemetry_3_port").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object newValue) {
+                try {
+                    if (Integer.parseInt((String) newValue) >= 1 && Integer.parseInt((String) newValue) <= 65535) {
+                        MainActivity.FLAG_PREFS_CHANGED = true;
+                        MainActivity.FLAG_TELEMETRY_ADDRESS_CHANGED = true;
+                        return true;
+                    }
+                } catch (NumberFormatException ignored) {
+                }
+                NotificationHandler.notifyAlert(SettingsFragment.this.getActivity(), TYPE_GCS_PORT,
+                        null, null);
+                return false;
+            }
+        });
+
         findPreference("pref_video_ip").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
             @Override
             public boolean onPreferenceChange(Preference preference, Object newValue) {
