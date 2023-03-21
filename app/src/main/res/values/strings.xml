@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Rosetta Drone 2</string>
+    <string name="app_name">Rosetta Drone</string>
 
     <!-- Drone -->
     <string name="pref_drone_id">ID</string>

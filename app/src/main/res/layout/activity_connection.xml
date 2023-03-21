@@ -24,7 +24,7 @@
             android:id="@+id/textView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Rosetta Drone 2"
+            android:text="Rosetta Drone"
             android:textAlignment="center"
             android:textAppearance="?android:attr/textAppearanceSmall"
             android:textColor="@color/colorWhite"
@@ -247,7 +247,7 @@
             android:layout_height="wrap_content"
             android:layout_marginLeft="10dp"
             android:gravity="left"
-            android:text="9Tek AS - One pice of the system"
+            android:text="9Tek AS - One piece of the system"
             android:textColor="@color/colorGrey"
             android:textSize="12dp" />
 

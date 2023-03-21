@@ -518,8 +518,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             mModel.flyTo(point.latitude, point.longitude, mModel.m_alt);
                             dialog.cancel();
                         } else {
-                            Log.d(TAG, "Cannot Add Waypoint");
-                            Toast.makeText(getApplicationContext(), "Cannot goto position!!!", Toast.LENGTH_LONG).show();
+                            Log.d(TAG, "Can't Add Waypoint");
+                            Toast.makeText(getApplicationContext(), "Can't goto position!", Toast.LENGTH_LONG).show();
                         }
                     });
             ///

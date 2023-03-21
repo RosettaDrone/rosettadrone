@@ -741,7 +741,7 @@ public class Waypoint2Activity extends FragmentActivity implements View.OnClickL
 
     private void uploadWayPointMission() {
         if (!canUpload) {
-            Toast.makeText(this, "please click 'CONFIG' button first", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Please click 'CONFIG' button first", Toast.LENGTH_SHORT).show();
             return;
         }
         getWaypointMissionOperator().uploadMission(new CommonCallbacks.CompletionCallback() {
