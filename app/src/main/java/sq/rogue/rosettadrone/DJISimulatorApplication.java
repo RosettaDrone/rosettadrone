@@ -80,7 +80,7 @@ public class DJISimulatorApplication extends Application {
                     handler.post(new Runnable() {
                         @Override
                         public void run() {
-                            Toast.makeText(getApplicationContext(), "Register Success", Toast.LENGTH_LONG).show();
+                            Toast.makeText(getApplicationContext(), "Registration Success", Toast.LENGTH_LONG).show();
                         }
                     });
 
@@ -92,7 +92,7 @@ public class DJISimulatorApplication extends Application {
 
                         @Override
                         public void run() {
-                            Toast.makeText(getApplicationContext(), "Register sdk fails, check network is available", Toast.LENGTH_LONG).show();
+                            Toast.makeText(getApplicationContext(), "SDK Registration Failed. Check network settings", Toast.LENGTH_LONG).show();
                         }
                     });
                 }
@@ -157,7 +157,7 @@ public class DJISimulatorApplication extends Application {
             DJISDKManager x = DJISDKManager.getInstance();
             Context y = getApplicationContext();
             x.registerApp(y, mDJISDKManagerCallback);
-            Toast.makeText(getApplicationContext(), "registering, pls wait...", Toast.LENGTH_LONG).show();
+            Toast.makeText(getApplicationContext(), "Registering, please wait.", Toast.LENGTH_LONG).show();
         } else {
             Toast.makeText(getApplicationContext(), "Please check if the permission is granted.", Toast.LENGTH_LONG).show();
         }
