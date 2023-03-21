@@ -298,7 +298,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         logMessageDJI("Mapmode: " + mMaptype);
 
         Intent intent = new Intent(this, VideoService.class);
-        this.startService(intent);
+
+        // BUG: "Not allowed to start service Intent" "app is in background"
+        // this.startService(intent);
+        this.startForegroundService(intent);
+
         safeSleep(500);
 
         // Establish a connection with the service.  We use an explicit
