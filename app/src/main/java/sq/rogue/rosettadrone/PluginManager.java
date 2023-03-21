@@ -29,7 +29,10 @@ public class PluginManager {
     public MainActivity mainActivity;
 
     List<Plugin> plugins = new ArrayList<Plugin>();
-    List<String> classNames = Arrays.asList("RawVideoStreamer"); // TODO: Obtain dynamically
+
+    // Disabled, because it disables the video preview in Rosetta
+    // List<String> classNames = Arrays.asList("RawVideoStreamer"); // TODO: Obtain dynamically
+    List<String> classNames = Arrays.asList();
 
     PluginManager(MainActivity mainActivity) {
         this.mainActivity = mainActivity;
