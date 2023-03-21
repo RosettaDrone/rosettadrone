@@ -29,7 +29,7 @@ public class PluginManager {
     public MainActivity mainActivity;
 
     List<Plugin> plugins = new ArrayList<Plugin>();
-    List<String> classNames = Arrays.asList("OpenCVStreamer"); // TODO: Obtain dynamically
+    List<String> classNames = Arrays.asList("RawVideoStreamer"); // TODO: Obtain dynamically
 
     PluginManager(MainActivity mainActivity) {
         this.mainActivity = mainActivity;
