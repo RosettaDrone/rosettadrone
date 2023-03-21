@@ -54,11 +54,13 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
             Manifest.permission.ACCESS_NETWORK_STATE,
             Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.CHANGE_WIFI_STATE,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE,
             Manifest.permission.BLUETOOTH,
             Manifest.permission.BLUETOOTH_ADMIN,
-            Manifest.permission.READ_EXTERNAL_STORAGE,
             Manifest.permission.READ_PHONE_STATE,
+//            Manifest.permission.SYSTEM_ALERT_WINDOW,
+//            Manifest.permission.MOUNT_UNMOUNT_FILESYSTEMS,
+//    Manifest.permission.WRITE_EXTERNAL_STORAGE,
+//    Manifest.permission.READ_EXTERNAL_STORAGE,
     };
 
     private static final int REQUEST_PERMISSION_CODE = 12345;
@@ -121,7 +123,14 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         }
 
         if (missingPermission.isEmpty()) {
+            Log.d(TAG, "No missingPermission");
             RDApplication.startLoginApplication();
+        }
+        else{
+            String[] x = missingPermission.toArray(new String[missingPermission.size()]);
+            for (int i = 0; i < x.length; i++) {
+                Log.d(TAG, x[i]);
+            }
         }
     }
 
@@ -321,7 +330,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         ((TextView) findViewById(R.id.textView3)).setText(version);
 
         sharedPreferences = android.preference.PreferenceManager.getDefaultSharedPreferences(this);
-        CustomName = sharedPreferences.getString("pref_app_name", "RosettaDrone 2"); //+"RosettaDrone 2";
+        CustomName = sharedPreferences.getString("pref_app_name", "RosettaDrone 3"); //+"RosettaDrone 2";
         if (CustomName.length() > 0)
             ((TextView) findViewById(R.id.textView)).setText(CustomName);
 

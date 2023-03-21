@@ -697,6 +697,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         super.onCreate(savedInstanceState);
 
         if(RDApplication.isTestMode) {
+            Log.e(TAG, "(RDApplication.isTestMode");
             DummyProduct.createInstance();
         }
 

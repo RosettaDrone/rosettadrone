@@ -18,7 +18,7 @@
             android:title="App Name">
 
             <androidx.preference.EditTextPreference
-                android:defaultValue="RosettaDrone 2"
+                android:defaultValue="RosettaDrone 3"
                 android:key="pref_app_name"
                 android:title="@string/pref_app" />
         </PreferenceCategory>
