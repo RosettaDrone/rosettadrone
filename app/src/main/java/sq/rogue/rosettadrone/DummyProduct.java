@@ -72,8 +72,8 @@ public class DummyProduct extends Aircraft {
 
     private double lat = homeLat;
     private double lng = homeLng;
-    private float alt = 1;
-    private double yaw = 0;
+    private float alt = 10;
+    private double yaw = 90;
     private boolean isFlying = true;
 
     private static final String TAG = DummyProduct.class.getSimpleName();
@@ -516,17 +516,15 @@ public class DummyProduct extends Aircraft {
             return state;
         }
 
-        @Override
         public void setPropellerCoverLimitEnabled(boolean b, @Nullable CommonCallbacks.CompletionCallback completionCallback) {
 
         }
 
-        @Override
         public void getPropellerCoverLimitEnabled(@NonNull CommonCallbacks.CompletionCallbackWith<Boolean> completionCallbackWith) {
 
         }
 
-            @Override
+        @Override
         public boolean isFlightAssistantSupported() {
             return false;
         }
@@ -678,7 +676,7 @@ public class DummyProduct extends Aircraft {
 
         @Override
         public void sendVirtualStickFlightControlData(@NonNull FlightControlData flightControlData, @Nullable CommonCallbacks.CompletionCallback completionCallback) {
-            final double dT = 10;
+            final double dT = DroneModel.MOTION_PERIOD_MS / 1000.0;
 
             double fwdVel = flightControlData.getRoll();
             double rightVel = flightControlData.getPitch();
@@ -689,14 +687,14 @@ public class DummyProduct extends Aircraft {
             double[] dLatLng = Functions.getLatLngDiff(lat, rad, fwdVel, rightVel);
 
             synchronized (this) { // Consistency
-                lat += dLatLng[0] / dT;
-                lng += dLatLng[1] / dT;
-                yaw += yawVel / dT;
-                alt += throttleVel / dT;
+                lat += dLatLng[0] * dT;
+                lng += dLatLng[1] * dT;
+                yaw += yawVel * dT;
+                alt += throttleVel * dT;
 
                 if (yaw > 180) {
                     yaw -= 360;
-                } else if (yaw < 180) {
+                } else if (yaw < -180) {
                     yaw += 360;
                 }
             }

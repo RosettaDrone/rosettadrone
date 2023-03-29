@@ -59,6 +59,8 @@ import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import androidx.annotation.NonNull;
+import androidx.constraintlayout.motion.widget.MotionLayout;
+
 import dji.common.camera.SettingsDefinitions;
 import dji.common.error.DJIError;
 import dji.common.flightcontroller.Attitude;
@@ -129,7 +131,7 @@ enum YawDirection {
 }
 
 public class DroneModel implements CommonCallbacks.CompletionCallback {
-    private final int MOTION_PERIOD_MS = 50;
+    public static final int MOTION_PERIOD_MS = 50;
 
     private boolean isSimulator;
     private static final int NOT_USING_GCS_COMMANDED_MODE = -1;
@@ -181,6 +183,8 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     private HardwareState.FlightModeSwitch rcMode = HardwareState.FlightModeSwitch.POSITION_ONE;
     private static HardwareState.FlightModeSwitch forbiddenModeSwitch = HardwareState.FlightModeSwitch.POSITION_ONE; // SwitchMode forbidden to take-off. Depends on each model.
     public msg_home_position home_position = new msg_home_position();
+
+    public double[] takeOffLocation;
 
     private MotionTask motionTask = null;
     private Timer motionTimer = null;
@@ -748,6 +752,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                 send_rc_channels();
             }
             if (ticks % 1000 == 0) {
+                registerTakeOffLocation();
                 send_heartbeat();
                 confirmLanding();
                 send_sys_status();
@@ -860,6 +865,15 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                     parent.logMessageDJI("Landing confirmed");
                 }
             });
+        }
+    }
+
+    private boolean lastMotorsArmed = false;
+    private void registerTakeOffLocation() {
+        if (!lastMotorsArmed && mMotorsArmed) {
+            // Used for MAV_FRAME_LOCAL_NED
+            takeOffLocation = getLocation3D();
+            lastMotorsArmed = true;
         }
     }
 
@@ -1115,34 +1129,38 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     private void send_global_position_int() {
         msg_global_position_int msg = new msg_global_position_int();
 
-        LocationCoordinate3D coord = djiAircraft.getFlightController().getState().getAircraftLocation();
+        FlightControllerState state = djiAircraft.getFlightController().getState();
+
+        LocationCoordinate3D coord = state.getAircraftLocation();
         msg.lat = (int) (coord.getLatitude() * MAV_LINK_MULTI);
         msg.lon = (int) (coord.getLongitude() * MAV_LINK_MULTI);
 
+        float alt = coord.getAltitude();
+
         // This is a bad idea, but the best we can do...
-        msg.alt = (int) ((coord.getAltitude()+mission_alt) * Math.pow(10, 3));
+        msg.alt = (int) ((alt + mission_alt) * Math.pow(10, 3));
 
         // NOTE: Commented out this field, because msg.relative_alt seems to be intended for altitude above the current terrain,
         // but DJI reports altitude above home point.
         // Mavlink: Millimeters above ground (unspecified: presumably above home point?)
         // DJI: relative altitude of the aircraft relative to take off location, measured by barometer, in meters.
-        msg.relative_alt = (int) (coord.getAltitude() * 1000);
+        msg.relative_alt = (int) (alt * 1000);
 
         // Mavlink: Millimeters AMSL
         // msg.alt = ??? No method in SDK for obtaining MSL altitude.
         // djiAircraft.getFlightController().getState().getHomePointAltitude()) seems promising, but always returns 0
 
-        // Mavlink: m/s*100
+        // Mavlink: m/s * 100
         // DJI: m/s
-        msg.vx = (short) (djiAircraft.getFlightController().getState().getVelocityX() * 100); // positive values N
-        msg.vy = (short) (djiAircraft.getFlightController().getState().getVelocityY() * 100); // positive values E
-        msg.vz = (short) (djiAircraft.getFlightController().getState().getVelocityZ() * 100); // positive values down
+        // Velocities have only 1 digit precision (10 cm)
+        msg.vx = (short) (state.getVelocityX() * 100); // positive values N
+        msg.vy = (short) (state.getVelocityY() * 100); // positive values E
+        msg.vz = (short) (state.getVelocityZ() * 100); // positive values down
 
-        // DJI=[-180,180] where 0 is true north, Mavlink=degrees
+        // DJI = [-180,180] where 0 is true north, Mavlink=degrees
         // TODO unspecified in Mavlink documentation whether this heading is true or magnetic
-        double yaw = djiAircraft.getFlightController().getState().getAttitude().yaw;
-        if (yaw < 0)
-            yaw += 360;
+        double yaw = state.getAttitude().yaw;
+        if (yaw < 0) yaw += 360;
         msg.hdg = (int) (yaw * 100);
 
         sendMessage(msg);
@@ -1966,7 +1984,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         motion = new Motion(coord.getAircraftLocation().getLatitude(), coord.getAircraftLocation().getLongitude(), alt);
         motion.mask.ignorePosX = true;
         motion.mask.ignorePosY = true;
-        motion.mask.ignorePosZ = true;
+        motion.mask.ignorePosZ = false;
         motion.mask.ignoreYaw = true;
         motion.yawDirection = YawDirection.KEEP;
         startMotion(motion);
@@ -2122,8 +2140,17 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
          * @param y Has different meanings
          * @param z Has different meanings
          */
-        public void  setDestination(int coordFrame, float x, float y, float z) {
-            if(coordFrame == MAV_FRAME_BODY_OFFSET_NED) coordFrame = MAV_FRAME_BODY_FRD;
+        public void setDestination(int coordFrame, float x, float y, float z) {
+            // Deprecated coordFrames
+            if(coordFrame == MAV_FRAME_BODY_OFFSET_NED) {
+                coordFrame = MAV_FRAME_BODY_FRD;
+            } else if(coordFrame == MAV_FRAME_BODY_NED) {
+                if(x != 0 || y != 0 || x != 0) {
+                    coordFrame = MAV_FRAME_LOCAL_NED;
+                } else {
+                    coordFrame = MAV_FRAME_BODY_FRD;
+                }
+            }
 
             if(coordFrame == MAV_FRAME_LOCAL_NED || coordFrame == MAV_FRAME_LOCAL_OFFSET_NED || coordFrame == MAV_FRAME_BODY_FRD) {
                 FlightControllerState coord = djiAircraft.getFlightController().getState();
@@ -2147,16 +2174,18 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             } else if(coordFrame == MAV_FRAME_LOCAL_NED) {
                 // (x, y, z) = (northMeters, eastMeters, downMeters)
                 double dCord[] = Functions.metersToLatLng(x, y, lat);
-                this.lat = dCord[0];
-                this.lng = dCord[1];
-                this.alt = -z; // TODO: Check sign (depends on frame)
+                if(takeOffLocation != null) { // TODO: Invalid. Ignore motion
+                    this.lat = dCord[0] + takeOffLocation[0];
+                    this.lng = dCord[1] + takeOffLocation[1];
+                    this.alt = -z;
+                }
 
             } else if(coordFrame == MAV_FRAME_LOCAL_OFFSET_NED) {
                 // (x, y, z) = (dNorthMeters, dEastMeters, dDownMeters)
                 double dCord[] = Functions.metersToLatLng(x, y, lat);
                 this.lat += dCord[0];
                 this.lat += dCord[1];
-                this.alt -= z; // TODO: Check sign (depends on frame)
+                this.alt -= z;
 
             } else if(coordFrame == MAV_FRAME_BODY_FRD) {
                 // (x, y, z) = (dForwardMeters, dRightMeters, dDownMeters)
@@ -2190,6 +2219,11 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     public void startMotion(Motion motion) {
+        if(motion.mask.ignorePosX && motion.mask.ignorePosY && motion.mask.ignorePosZ) {
+            setVelocities(motion.vx, motion.vy, motion.vz, motion.yawRate);
+            return;
+        }
+
         this.motion = motion;
         if (motionTimer == null) {
             motionTask = new MotionTask();

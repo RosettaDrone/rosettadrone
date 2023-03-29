@@ -39,7 +39,6 @@ public class MissionManager {
 	// Status fields modified by other threads
 	private boolean statusTakeOffReady;
 	private boolean statusLanded;
-	private double[] takeOffLocation;
 
 	MissionManager(DroneModel droneModel) {
 		this.droneModel = droneModel;
@@ -104,7 +103,6 @@ public class MissionManager {
 				switch (m.command) {
 
 					case MAV_CMD.MAV_CMD_NAV_TAKEOFF:
-						takeOffLocation = droneModel.getLocation2D();
 						droneModel.doTakeOff(m.z, false); // TODO: Prevent send_command_ack()
 						waitTakeOffReady();
 						waitReachLocation();
@@ -178,7 +176,7 @@ public class MissionManager {
 
 					case MAV_CMD.MAV_CMD_NAV_RETURN_TO_LAUNCH:
 						// droneModel.do_go_home();
-						flyTo(takeOffLocation[0], takeOffLocation[1], droneModel.getGoHomeHeight());
+						flyTo(droneModel.takeOffLocation[0], droneModel.takeOffLocation[1], droneModel.getGoHomeHeight());
 						waitReachLocation();
 						break;
 

@@ -20,8 +20,10 @@ public class Functions {
      * @return (dNorth, dEast)
      */
     public static double[] getNorthEastDiff(double yaw, double forwardMeters, double rightMeters) {
-        double dNorth = forwardMeters * Math.cos(yaw) - rightMeters * Math.sin(yaw);
-        double dEast = forwardMeters * Math.sin(yaw) + rightMeters * Math.cos(yaw);
+        double c = Math.cos(yaw);
+        double s = Math.sin(yaw);
+        double dNorth = forwardMeters * c - rightMeters * s;
+        double dEast = forwardMeters * s + rightMeters * c;
         return new double[] {dNorth, dEast};
     }
 
