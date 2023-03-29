@@ -1,0 +1,59 @@
+name: "\U0001F41E Bug Report"
+description: Create a report to help us improve
+labels: ["bug"]
+body:
+  - type: textarea
+    attributes:
+      label: Describe the bug
+      description: A clear and concise description of what the bug is.
+    validations:
+      required: false
+  - type: textarea
+    attributes:
+      label: Steps To Reproduce
+      description: Steps to reproduce the behavior.
+      placeholder: |
+        1. Go to '...'
+        2. Click on '....'
+        3. Scroll down to '....'
+        4. See error
+    validations:
+      required: false
+  - type: textarea
+    attributes:
+      label: Screenshots
+      description: If applicable, add screenshots to help explain your problem.
+    validations:
+      required: false
+  - type: textarea
+    attributes:
+      label: Desktop
+      description: |
+        please complete the following information
+      value: |
+        - OS: [e.g. iOS]
+        - Browser [e.g. chrome, safari]
+        - Version [e.g. 22]
+      render: Markdown
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Smartphone
+      description: |
+        please complete the following information
+      value: |
+        - Device: [e.g. iPhone6]
+        - OS: [e.g. iOS8.1]
+        - Browser [e.g. stock browser, safari]
+        - Version [e.g. 22]
+      render: Markdown
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Additional context
+      description: |
+        Add any other context about the problem here.
+    validations:
+      required: false
