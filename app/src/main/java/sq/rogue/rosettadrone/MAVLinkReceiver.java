@@ -368,12 +368,14 @@ public class MAVLinkReceiver {
             case MAVLINK_MSG_ID_MANUAL_CONTROL:
                 msg_manual_control msg_param_5 = (msg_manual_control) msg;
 
-                mModel.setVelocities(
-                        msg_param_5.x / 100.0,
-                        msg_param_5.y / 100.0,
-                        msg_param_5.z / 260.0,
-                        msg_param_5.r / 50.0
-                        );
+                double roll = msg_param_5.x / 500.0;
+                double pitch = msg_param_5.y / 500.0;
+                double throttle = (msg_param_5.z - 500) / 260.0;
+                double yaw = msg_param_5.r / 50.0;
+
+                if(roll != 0 || pitch != 0 || throttle != 0 || yaw != 0) { // Prevent cancelling other motion
+                    mModel.setVelocities(roll, pitch, throttle, yaw);
+                }
 
                 mModel.send_command_ack(MAVLINK_MSG_ID_MANUAL_CONTROL, MAV_RESULT.MAV_RESULT_ACCEPTED);
                 break;
