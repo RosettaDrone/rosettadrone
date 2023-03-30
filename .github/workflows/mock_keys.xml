@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="dji_key">mock_key</string>
+    <string name="google_key">mock_key</string>
+</resources>
