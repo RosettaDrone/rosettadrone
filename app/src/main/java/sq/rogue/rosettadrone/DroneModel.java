@@ -1341,8 +1341,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         // TODO: unspecified in Mavlink documentation whether this heading is true or magnetic
         // DJI=[-180,180] where 0 is true north, Mavlink=degrees
         double yaw = djiAircraft.getFlightController().getState().getAttitude().yaw;
-        if (yaw < 0)
-            yaw += 360;
+        if (yaw < 0) yaw += 360;
         msg.heading = (short) yaw;
 
         // Mavlink: Current throttle setting in integer percent, 0 to 100
@@ -2091,11 +2090,15 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     public class Motion {
+        public int velocityTicks; // Count setVelocity ticks (when receiving a "set velocity" command, we send it multiple times to the FlightController (while velocityTicks > 0)
+        public boolean isVelocityCommand = false;
         DroneModel.MotionType type;
 
         public int command = 0; // If not 0, send MAVLink ACK once the motion has finished
 
         DroneModel.PositionTargetTypeMask mask;
+
+        int coordFrame;
 
         double lat; // Lat
         double lng; // Lng
@@ -2141,9 +2144,12 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
          * @param z Has different meanings
          */
         public void setDestination(int coordFrame, float x, float y, float z) {
+            this.coordFrame = coordFrame;
+
             // Deprecated coordFrames
             if(coordFrame == MAV_FRAME_BODY_OFFSET_NED) {
                 coordFrame = MAV_FRAME_BODY_FRD;
+
             } else if(coordFrame == MAV_FRAME_BODY_NED) {
                 if(x != 0 || y != 0 || x != 0) {
                     coordFrame = MAV_FRAME_LOCAL_NED;
@@ -2202,6 +2208,21 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                 Log.e(TAG, "CoordFrame not supported");
             }
         }
+
+        public void processVelocities(int coordFrame) {
+            double roll, pitch, throttle;
+            if(coordFrame == MAV_FRAME_LOCAL_NED) {
+                double ne[] = Functions.getNorthEastDiff(-Math.toRadians(getCurrentYaw()), vx, vy);
+                roll = ne[0];
+                pitch = ne[1];
+                throttle = vz;
+            } else {
+                roll = vx;
+                pitch = vy;
+                throttle = vz;
+            }
+            setVelocities(roll, pitch, throttle, yawRate);
+        }
     }
 
     public Motion newMotion(int command, int mavLinkMask) {
@@ -2219,9 +2240,13 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     public void startMotion(Motion motion) {
-        if(motion.mask.ignorePosX && motion.mask.ignorePosY && motion.mask.ignorePosZ) {
-            setVelocities(motion.vx, motion.vy, motion.vz, motion.yawRate);
-            return;
+        if(
+            // TODO: Propose a better MAVLink mask to set velocities only. See: https://github.com/mavlink/mavlink/issues/1966
+            motion.mask.ignorePosX && motion.mask.ignorePosY && motion.mask.ignorePosZ
+            && (!motion.mask.ignoreVelX || !motion.mask.ignoreVelY || !motion.mask.ignoreVelZ || !motion.mask.ignoreYawRate)
+        ) {
+            motion.isVelocityCommand = true;
+            motion.velocityTicks = 4;
         }
 
         this.motion = motion;
@@ -2265,11 +2290,25 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         private final double detectionYawError = 1.25;
 
         @Override
-        synchronized public void run() {
-            FlightControllerState coord = djiAircraft.getFlightController().getState();
-            double lat = coord.getAircraftLocation().getLatitude();
-            double lng = coord.getAircraftLocation().getLongitude();
-            double alt = coord.getAircraftLocation().getAltitude();
+        public void run() {
+            if (motion.isVelocityCommand) {
+                motion.processVelocities(motion.coordFrame);
+
+                motion.velocityTicks--;
+                if (motion.velocityTicks <= 0) {
+                    cancelMotion();
+                }
+
+            } else {
+                processFlyTo();
+            }
+        }
+
+        private void processFlyTo() {
+            FlightControllerState state = djiAircraft.getFlightController().getState();
+            double lat = state.getAircraftLocation().getLatitude();
+            double lng = state.getAircraftLocation().getLongitude();
+            double alt = state.getAircraftLocation().getAltitude();
 
             double destX = motion.lat;
             double destY = motion.lng;
@@ -2299,7 +2338,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             }
 
             // Calculate yaw
-            double yaw = angleDjiToMav(coord.getAttitude().yaw);
+            double yaw = angleDjiToMav(state.getAttitude().yaw);
             double yawError; // [-180, 180] (from left to right)
 
             if(motion.yawDirection == YawDirection.KEEP
