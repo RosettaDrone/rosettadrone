@@ -1,8 +1,15 @@
-/*
-    This class receives the data decoded using NativeHelper + ffmpeg.
-    The data is then streamed using RTP to an external gStreamer node.
-    The destination IP and port number are stored in the settings.
-*/
+/**
+ * This class receives the data decoded using NativeHelper + ffmpeg.
+ * The data is then streamed using RTP to an external gStreamer node.
+ * The destination IP and port number are stored in the settings.
+ *
+ * See: https://github.com/The1only/rosettadrone/issues/131
+ *
+ * Based on: https://github.com/DJI-Mobile-SDK-Tutorials/Android-VideoStreamDecodingSample
+ * This implements the demoType == USE_SURFACE_VIEW_DEMO_DECODER
+ *
+ * JNI -> onDataRecv() -> splitNALs() -> sendNAL() -> H264Packetizer
+ **/
 
 package sq.rogue.rosettadrone.video;
 
@@ -126,7 +133,6 @@ public class VideoService extends Service implements NativeHelper.NativeDataList
         return isRunning;
     }
 
-    // --------------------------------------------------------------------------------------------
     public void splitNALs(byte[] buffer) {
         // One H264 frame can contain multiple NALs
         int packet_start_idx = 0;
@@ -157,7 +163,6 @@ public class VideoService extends Service implements NativeHelper.NativeDataList
         }
     }
 
-    //---------------------------------------------------------------------------------------
     @Override
     public void onDataRecv(byte[] data, int size, int frameNum, boolean isKeyFrame, int width, int height) {
         if (size > 0 && isRunning) {
