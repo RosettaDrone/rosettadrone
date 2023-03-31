@@ -6,7 +6,7 @@ package sq.rogue.rosettadrone;
  * MiniPID pid = new MiniPID(p,i,d); <br>
  * ...looping code...{ <br>
  * output= pid.getOutput(sensorvalue,target); <br>
- * }
+ * } 
  *
  * @see https://github.com/tekdemo/MiniPID-Java
  * @see http://brettbeauregard.com/blog/2011/04/improving-the-beginners-pid-direction/improving-the-beginners-pid-introduction
