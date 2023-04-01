@@ -273,9 +273,10 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
 
         if (product != null) {
             if (product.isConnected()) {
-                //The product is connected
                 showToast(RDApplication.getProductInstance().getModel() + " Connected");
+                mBtnOpen.setEnabled(true);
                 ret = true;
+
             } else {
                 if (product instanceof Aircraft) {
                     Aircraft aircraft = (Aircraft) product;
@@ -289,7 +290,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         }
 
         if (!ret) {
-            // The product nor the remote controller are not connected.
+            // The product nor the remote controller are connected.
             mStatusBig.setText("RC not connected");
             mStatusSmall.setText("");
         }
@@ -312,7 +313,6 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         mStatusBig = (TextView) findViewById(R.id.text_connection_status);
         mStatusSmall = (TextView) findViewById(R.id.text_model_available);
         mTextProduct = (TextView) findViewById(R.id.text_product_info);
-
 
         mBtnOpen = (Button) findViewById(R.id.btn_start);
         mBtnOpen.setOnClickListener(this);
@@ -360,7 +360,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         BaseProduct mProduct = DJISimulatorApplication.getProductInstance();
         Log.d(TAG, "refreshSDKRelativeUI");
 
-        if (null != mProduct && mProduct.isConnected()) {
+        if (mProduct != null && mProduct.isConnected()) {
             Log.d(TAG, "refreshSDK: True");
 
             mUIHandler = new Handler(Looper.getMainLooper());
