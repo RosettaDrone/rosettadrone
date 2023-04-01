@@ -53,10 +53,13 @@ public class RawVideoStreamer extends Plugin implements DJICodecManager.YuvDataC
                     RawVideoStreamer streamer = new RawVideoStreamer();
                     streamer.connect();
 
-                    String msg = "This is just a simple test, but here goes the buffer data";
-                    Charset charset = Charset.forName("UTF-8");
-                    ByteBuffer buffer = charset.encode(msg);
-                    streamer.sendYuvData(null, buffer, msg.length(), 10, 10);
+                    for(;;) {
+                        String msg = "This is just a simple test, but here goes the buffer data";
+                        Charset charset = Charset.forName("UTF-8");
+                        ByteBuffer buffer = charset.encode(msg);
+                        streamer.sendYuvData(null, buffer, msg.length(), 10, 10);
+                        Thread.sleep(1000);
+                    }
 
                 } catch (Exception e) {
                     e.printStackTrace();
