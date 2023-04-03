@@ -59,7 +59,7 @@
         <activity
             android:name="sq.rogue.rosettadrone.ConnectionActivity"
             android:launchMode="singleTop"
-            android:configChanges="orientation|screenSize"
+            android:configChanges="orientation|screenSize|screenLayout"
             android:exported="true">
 
             <intent-filter>
