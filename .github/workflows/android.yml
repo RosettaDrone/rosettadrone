@@ -1,6 +1,13 @@
 name: Android CI
 
-on: ["push", "pull_request"]
+on:
+    push:
+        branches:
+            - master
+    pull_request:
+        branches:
+            - master
+    workflow_dispatch: #Allow triggering builds manually from Actions tab in GitHub
 
 jobs:
   build:
