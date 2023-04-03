@@ -7,7 +7,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.hardware.usb.UsbManager;
 import android.media.Ringtone;
@@ -44,6 +43,12 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
     String modelString = "";
     String firmwareString = "";
 
+    enum AppMode {
+        REAL_DRONE,
+        SIMULATOR,
+        TEST_MODE,
+    }
+
     private static final String TAG = MainActivity.class.getName();
     private static final String[] REQUIRED_PERMISSION_LIST = new String[]{
             Manifest.permission.VIBRATE,
@@ -65,28 +70,25 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
 
     private static final int REQUEST_PERMISSION_CODE = 12345;
     private TextView mStatusBig;
-    private TextView mTextProduct;
     private TextView mStatusSmall;
     private Button mBtnOpen;
     private Button mBtnSim;
     private Button mBtnTest;
-    private int hiddenkey = 0;
+
     private Handler mUIHandler;
     private static boolean running = false;
 
     private KeyListener firmVersionListener = new KeyListener() {
         @Override
         public void onValueChange(@Nullable Object oldValue, @Nullable Object newValue) {
-            updateVersion();
+            refreshProductInfo();
         }
     };
     private DJIKey firmkey = ProductKey.create(ProductKey.FIRMWARE_PACKAGE_VERSION);
     private AtomicBoolean isRegistrationInProgress = new AtomicBoolean(false);
     private List<String> missingPermission = new ArrayList<>();
     private SharedPreferences sharedPreferences;
-    private String CustomName;
-
-    //region Registration n' Permissions Helpers
+    private String appName;
 
     @Override
     protected void onNewIntent(Intent intent) {
@@ -97,8 +99,6 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
             attachedIntent.setAction(DJISDKManager.USB_ACCESSORY_ATTACHED);
             sendBroadcast(attachedIntent);
         }
-
-
     }
 
     /**
@@ -159,15 +159,6 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         }
     }
     
-    private void notifyStatusChange() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                refreshSDKRelativeUI();
-            }
-        });
-    }
-
     //endregion
 
     @Override
@@ -181,16 +172,14 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
 
         checkAndRequestPermissions();
 
-        this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
-
         setContentView(R.layout.activity_connection);
         initUI();
 
-        // Register the broadcast receiver for receiving the device connection's changes.
-        Log.v(TAG, "Registrer Receiver");
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(DJISimulatorApplication.FLAG_CONNECTION_CHANGE);
-        registerReceiver(mReceiver, filter);
+        registerBroadcast();
+
+        if (KeyManager.getInstance() != null) {
+            KeyManager.getInstance().addListener(firmkey, firmVersionListener);
+        }
 
         // Process extras passed to intent
         Bundle extras = this.getIntent().getExtras();
@@ -198,22 +187,22 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
             String mode = extras.getString("mode");
             if(mode != null) {
                 if(mode.equals("test")) {
-                    RDApplication.isTestMode = true;
-
-                    // Start app
-                    mUIHandler = new Handler(Looper.getMainLooper());
-                    mUIHandler.postDelayed(startApp, 50);
+                    openMainActivity(AppMode.TEST_MODE);
                 }
             }
         }
     }
 
     protected BroadcastReceiver mReceiver = new BroadcastReceiver() {
-
         @Override
         public void onReceive(Context context, Intent intent) {
-            mStatusBig.setText(R.string.connection_sim);
-            notifyStatusChange();
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    playSound();
+                    refreshProductInfo();
+                }
+            });
         }
     };
 
@@ -221,14 +210,15 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
     public void onResume() {
         Log.v(TAG, "onResume");
         super.onResume();
-        updateTitleBar();
+        refreshProductInfo();
+        registerBroadcast();
+    }
 
-        // JUST FOR DEBUG MUST BE REMOVED:::::::
-/*
-        View x = new View(this);
-        x.setId(R.id.btn_start);
-        onClick(x);
-*/
+    void registerBroadcast() {
+        // Register the broadcast receiver for receiving the device connection's changes.
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(DJISimulatorApplication.FLAG_CONNECTION_CHANGE);
+        registerReceiver(mReceiver, filter);
     }
 
     void safeUnregisterBroadcast() {
@@ -261,58 +251,53 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         return "";
     }
 
-    private void updateTitleBar() {
-        boolean ret = false;
-        BaseProduct product;
+    private void refreshProductInfo() {
+        boolean somethingConnected = false;
+        BaseProduct realProduct = DJISDKManager.getInstance().getProduct();
+        boolean productConnected = false;
 
-        if (RDApplication.getSim() == true) {
-            product = DJISimulatorApplication.getAircraftInstance();
+        if (realProduct != null) {
+            if (realProduct.isConnected()) {
+                productConnected = true;
+                somethingConnected = true;
+
+                if (realProduct.getModel() != null) {
+                    mStatusBig.setText(realProduct.getModel().getDisplayName());
         } else {
-            product = RDApplication.getProductInstance();
+                    String str = realProduct instanceof Aircraft ? "Aircraft" : "Handheld";
+                    mStatusBig.setText(str);
         }
 
-        if (product != null) {
-            if (product.isConnected()) {
-                showToast(RDApplication.getProductInstance().getModel() + " Connected");
-                mBtnOpen.setEnabled(true);
-                ret = true;
+                final String version = realProduct.getFirmwarePackageVersion();
+                mStatusSmall.setText(version);
 
             } else {
-                if (product instanceof Aircraft) {
-                    Aircraft aircraft = (Aircraft) product;
+                if (realProduct instanceof Aircraft) {
+                    Aircraft aircraft = (Aircraft) realProduct;
                     if (aircraft.getRemoteController() != null && aircraft.getRemoteController().isConnected()) {
                         // The product is not connected, but the remote controller is connected
                         mStatusBig.setText("RC connected");
-                        ret = true;
+                        somethingConnected = true;
                     }
                 }
+
+                mStatusBig.setText(R.string.connection_loose);
             }
         }
 
-        if (!ret) {
+        mBtnOpen.setEnabled(productConnected);
+        mBtnSim.setEnabled(productConnected);
+
+        if (!somethingConnected) {
             // The product nor the remote controller are connected.
             mStatusBig.setText("RC not connected");
             mStatusSmall.setText("");
         }
     }
 
-
-    private void updateVersion() {
-        if (RDApplication.getProductInstance() != null) {
-            final String version = RDApplication.getProductInstance().getFirmwarePackageVersion();
-            this.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    mStatusSmall.setText(version);
-                }
-            });
-        }
-    }
-
     private void initUI() {
-        mStatusBig = (TextView) findViewById(R.id.text_connection_status);
-        mStatusSmall = (TextView) findViewById(R.id.text_model_available);
-        mTextProduct = (TextView) findViewById(R.id.text_product_info);
+        mStatusBig = (TextView) findViewById(R.id.textConnectionStatus);
+        mStatusSmall = (TextView) findViewById(R.id.textConnectedModel);
 
         mBtnOpen = (Button) findViewById(R.id.btn_start);
         mBtnOpen.setOnClickListener(this);
@@ -320,6 +305,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
 
         mBtnSim = (Button) findViewById(R.id.btn_sim);
         mBtnSim.setOnClickListener(this);
+        mBtnSim.setEnabled(false);
 
         mBtnTest = (Button) findViewById(R.id.btn_test);
         mBtnTest.setOnClickListener(this);
@@ -327,122 +313,50 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         Context appContext = this.getBaseContext();
         String version = "Version: " + getAppVersion(appContext);
         Log.v(TAG, "" + version);
-        ((TextView) findViewById(R.id.textView3)).setText(version);
+        ((TextView) findViewById(R.id.textAppVersion)).setText(version);
 
         sharedPreferences = android.preference.PreferenceManager.getDefaultSharedPreferences(this);
-        CustomName = sharedPreferences.getString("pref_app_name", "RosettaDrone 3"); //+"RosettaDrone 2";
-        if (CustomName.length() > 0)
-            ((TextView) findViewById(R.id.textView)).setText(CustomName);
+        appName = "RosettaDrone"; // Use PluginManager to customize
 
-        ((TextView) findViewById(R.id.textView2)).setText(getResources().getString(R.string.sdk_version, DJISDKManager.getInstance().getSDKVersion()));
+        if (appName.length() > 0)
+            ((TextView) findViewById(R.id.textView)).setText(appName);
 
+        ((TextView) findViewById(R.id.textSdkInfo)).setText(getResources().getString(R.string.sdk_version, DJISDKManager.getInstance().getSDKVersion()));
     }
 
-    private Runnable startApp = new Runnable() {
-
-        @Override
-        public void run() {
+    void playSound() {
             Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
             Ringtone r = RingtoneManager. getRingtone(getApplicationContext(), notification);
             r.play();
-
-            mBtnOpen.setEnabled(true);
-
-            if(RDApplication.isTestMode) {
-                mBtnOpen.performClick();
-            }
-        }
-    };
-
-
-    private void refreshSDKRelativeUI() {
-
-        BaseProduct mProduct = DJISimulatorApplication.getProductInstance();
-        Log.d(TAG, "refreshSDKRelativeUI");
-
-        if (mProduct != null && mProduct.isConnected()) {
-            Log.d(TAG, "refreshSDK: True");
-
-            mUIHandler = new Handler(Looper.getMainLooper());
-            mUIHandler.postDelayed(startApp, 2000);
-
-            String str = mProduct instanceof Aircraft ? "Aircraft" : "Handheld";
-            mStatusSmall.setText(str);
-
-            if (null != mProduct.getModel()) {
-                mStatusBig.setText(mProduct.getModel().getDisplayName());
-            } else {
-                mStatusBig.setText("");
-            }
-            if (KeyManager.getInstance() != null) {
-                KeyManager.getInstance().addListener(firmkey, firmVersionListener);
-            }
-        } else if (RDApplication.getSim() == true) {
-            Log.v(TAG, "refreshSDK: Sim");
-//            mBtnOpen.setEnabled(true);
-
-            mTextProduct.setText(R.string.product_information);
-            //  mTextConnectionStatus.setText(R.string.connection_sim);
-        } else {
-            Log.v(TAG, "refreshSDK: False");
-            mBtnOpen.setEnabled(false);
-
-            mTextProduct.setText(R.string.product_information);
-            mStatusBig.setText(R.string.connection_loose);
-        }
     }
 
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
+            case R.id.btn_sim:
+                openMainActivity(AppMode.SIMULATOR);
+                break;
 
-            // For debugging we can tap the drone icon 5 times to be able to open the software without a drone connected.
+            case R.id.btn_start:
+                openMainActivity(AppMode.REAL_DRONE);
+                break;
+
             case R.id.btn_test:
-                if (++hiddenkey == 5) {
-                    showToast("TestMode enabled...");
-                    RDApplication.isTestMode = true;
-                    TextView lTextConnectionStatus = (TextView) findViewById(R.id.text_model_test);
-                    lTextConnectionStatus.setText("TestMode");
-                    mUIHandler = new Handler(Looper.getMainLooper());
-                    mUIHandler.postDelayed(startApp, 50);
-                } else if (hiddenkey >= 10) {
-                    showToast("TestMode disabled...");
-                    TextView lTextConnectionStatus = (TextView) findViewById(R.id.text_model_test);
-                    lTextConnectionStatus.setText("NormalMode");
-                    hiddenkey = 0;
-                }
+                openMainActivity(AppMode.TEST_MODE);
                 break;
 
-            case R.id.btn_sim: {
-                if (RDApplication.getSim() == true) {
-                    TextView lTextConnectionStatus = (TextView) findViewById(R.id.text_model_simulated);
-                    lTextConnectionStatus.setText("");
-
-                    showToast("noSimulate...");
-                    RDApplication.setSim(false);
-                    mStatusBig.setText(R.string.connection_loose);
-                } else {
-                    showToast("Simulate...");
-                    RDApplication.setSim(true);
-                    TextView lTextConnectionStatus = (TextView) findViewById(R.id.text_model_simulated);
-                    lTextConnectionStatus.setText("Active");
-                }
+            default:
                 break;
+                }
             }
-            case R.id.btn_start: {
-                if(hiddenkey < 5) mBtnOpen.setEnabled(false);
 
+    void openMainActivity(AppMode mode) {
+        RDApplication.isTestMode = mode == AppMode.TEST_MODE;
+        RDApplication.setSim(mode == AppMode.SIMULATOR);
                 safeUnregisterBroadcast();
-
-                Log.v(TAG, "Start Maintask");
                 Intent intent = new Intent(this, MainActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 startActivityIfNeeded(intent,0);
-                break;
-            }
-            default:
-                break;
-        }
     }
 
     public void showToast(final String msg) {

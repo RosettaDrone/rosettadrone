@@ -15,7 +15,7 @@
         tools:context="com.example.mapwithmarker.MapsMarkerActivity" />
 
     <TextView
-        android:id="@+id/text_connection_status"
+        android:id="@+id/textConnectionStatus"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
@@ -41,7 +41,7 @@
         android:textStyle="bold" />
 
     <TextView
-        android:id="@+id/textView2"
+        android:id="@+id/textSdkInfo"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
@@ -55,7 +55,7 @@
 
 
     <TextView
-        android:id="@+id/textView3"
+        android:id="@+id/textAppVersion"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"

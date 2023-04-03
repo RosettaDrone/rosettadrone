@@ -154,7 +154,7 @@ public class MAVLinkReceiver {
             return;
         }
 
-        Log.d(TAG, "Received Cmd: " + msg.toString());
+        //Log.d(TAG, "Received Cmd: " + msg.toString());
 
         switch (msg.msgid) {
             case MAVLINK_MSG_ID_AUTOPILOT_VERSION_REQUEST:

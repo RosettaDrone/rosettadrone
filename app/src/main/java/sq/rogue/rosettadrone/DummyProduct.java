@@ -66,21 +66,21 @@ import dji.sdk.sdkmanager.DJISDKInitEvent;
 import dji.sdk.sdkmanager.DJISDKManager;
 
 public class DummyProduct extends Aircraft {
-
     private double homeLat = 60.4094000;
     private double homeLng = 10.4910999;
 
     private double lat = homeLat;
     private double lng = homeLng;
-    private float alt = 10;
+    private float alt = 30;
     private double yaw = 90;
     private boolean isFlying = true;
 
     private static final String TAG = DummyProduct.class.getSimpleName();
+    private static DummyProduct instance = null;
 
-    public static void createInstance() {
-        Log.d(TAG, "createInstance dummyProduct");
-        BaseProduct dummyProduct = new DummyProduct(new DJISDKManager.SDKManagerCallback() {
+    public static BaseProduct getProductInstance() {
+        if(instance == null) {
+            instance = new DummyProduct(new DJISDKManager.SDKManagerCallback() {
 
             @Override
             public void onRegister(DJIError djiError) {
@@ -117,7 +117,8 @@ public class DummyProduct extends Aircraft {
 
             }
         });
-        RDApplication.updateProduct(dummyProduct);
+        }
+        return (BaseProduct)instance;
     }
 
     private class DummyBattery extends Battery {

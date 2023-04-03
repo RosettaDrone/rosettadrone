@@ -119,8 +119,6 @@ import static sq.rogue.rosettadrone.util.safeSleep;
 
 //public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMapClickListener {
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
-
-    //    public static final String FLAG_CONNECTION_CHANGE = "dji_sdk_connection_change";
     private final static int RESULT_SETTINGS = 1001;
     private final static int RESULT_HELP = 1002;
     private static int compare_height = 0;
@@ -300,8 +298,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         Intent intent = new Intent(this, VideoService.class);
 
         // BUG: "Not allowed to start service Intent" "app is in background"
-        // this.startService(intent);
-        this.startForegroundService(intent);
+        this.startService(intent);
+        //this.startForegroundService(intent); // For API level 26
 
         safeSleep(500);
 
@@ -691,15 +689,16 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         return (latitude > -90 && latitude < 90 && longitude > -180 && longitude < 180) && (latitude != 0f && longitude != 0f);
     }
 
+    public static BaseProduct createDummyProduct() {
+        return DummyProduct.getProductInstance();
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.e(TAG, "onCreate()");
         super.onCreate(savedInstanceState);
 
-        if(RDApplication.isTestMode) {
-            Log.e(TAG, "(RDApplication.isTestMode");
-            DummyProduct.createInstance();
-        }
+        mProduct = RDApplication.getProductOrDummy();
 
         // Hide top bar
         Objects.requireNonNull(getSupportActionBar()).hide();
@@ -721,7 +720,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         prefs = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
-        mProduct = RDApplication.getProductInstance(); // Should be set by Connection ...
+        mProduct = RDApplication.getProductOrDummy();
+
         if (mProduct != null) {
             try {
                 mProductModel = mProduct.getModel();
@@ -866,7 +866,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void notifyStatusChange() {
         mDJIHandler.removeCallbacks(djiUpdateRunnable);
         mDJIHandler.postDelayed(djiUpdateRunnable, 500);
-        mProduct = RDApplication.getProductInstance();
 
         if (mProduct != null && mProduct.isConnected() && mProduct.getModel() != null) {
             logMessageDJI(mProduct.getModel().name() + " Connected ");
@@ -1056,7 +1055,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         @Override
         public void onProductConnect(BaseProduct newProduct) {
-            mProduct = newProduct;
+            // Keep same product (real drone or dummy) selected in the ConnectionActivity
+            //mProduct = newProduct;
 
             if (mProduct == null) {
                 logMessageDJI("No DJI drone detected");
@@ -1075,7 +1075,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         @Override
         public void onProductChanged(BaseProduct baseProduct) {
-            mProduct = baseProduct;
+            // Keep same product (real drone or dummy) selected in the ConnectionActivity
+            //mProduct = baseProduct;
 
             if (mProduct == null) {
                 logMessageDJI("No DJI drone detected");
@@ -1454,7 +1455,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void onDroneConnected() {
-
         if (mProduct.getModel() == null) {
             logMessageDJI("Aircraft is not on!");
             return;

@@ -59,7 +59,6 @@ import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import androidx.annotation.NonNull;
-import androidx.constraintlayout.motion.widget.MotionLayout;
 
 import dji.common.camera.SettingsDefinitions;
 import dji.common.error.DJIError;
@@ -272,9 +271,9 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         miniPIDAlti = new MiniPID(0.35, 0.0001, 4.0);
         miniPIDHeading = new MiniPID(1.0, 0.00001, 2.0);
 
-        m_aircraft = (Aircraft) RDApplication.getProductInstance(); //DJISimulatorApplication.getAircraftInstance();
+        m_aircraft = (Aircraft) RDApplication.getProductOrDummy();
         if (m_aircraft == null || !m_aircraft.isConnected()) {
-            parent.logMessageDJI("No target...");
+            parent.logMessageDJI("Aircraft not available");
             mFlightController = null;
             return;
 
@@ -340,24 +339,22 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             if (isSimulator) {
                 LocationCoordinate2D pos = getSimPos2D();
 
-                mFlightController.getSimulator()
-                        .start(InitializationData.createInstance(pos, 10, 10),
-                                djiError -> {
-                                    if (djiError != null) {
-                                        parent.logMessageDJI(djiError.getDescription());
-                                    } else {
-                                        parent.logMessageDJI("Start Simulator Success");
-                                    }
-                                });
+                mFlightController.getSimulator().start(InitializationData.createInstance(pos, 10, 10), djiError -> {
+                    if (djiError != null) {
+                        parent.logMessageDJI(djiError.getDescription());
+                    } else {
+                        parent.logMessageDJI("Start Simulator Success");
+                    }
+                });
             }
         }
     }
 
     LocationCoordinate3D getSimPos3D() {
         LocationCoordinate3D pos = new LocationCoordinate3D(
-                Double.parseDouble(Objects.requireNonNull(parent.sharedPreferences.getString("pref_sim_pos_lat", "-1"))),
-                Double.parseDouble(Objects.requireNonNull(parent.sharedPreferences.getString("pref_sim_pos_lon", "-1"))),
-                Float.parseFloat(Objects.requireNonNull(parent.sharedPreferences.getString("pref_sim_pos_alt", "-1")))
+            Double.parseDouble(Objects.requireNonNull(parent.sharedPreferences.getString("pref_sim_pos_lat", "-1"))),
+            Double.parseDouble(Objects.requireNonNull(parent.sharedPreferences.getString("pref_sim_pos_lon", "-1"))),
+            Float.parseFloat(Objects.requireNonNull(parent.sharedPreferences.getString("pref_sim_pos_alt", "-1")))
         );
 
         // If this is the first time the app is running...
@@ -2908,7 +2905,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         if (m_aircraft == null)
         {
             mediaFileList.clear();
-            DJILog.e(TAG, "Product disconnected");
+            DJILog.e(TAG, "Aircraft disconnected");
             switch_camera_mode = camera_mode.DISCONNECTED;
             return;
 
@@ -2955,11 +2952,12 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     public void getFileList() {
-        BaseProduct product = null;
-        if (RDApplication.getSim() == false) product = m_aircraft;
+        BaseProduct product = m_aircraft;
+        if(!product.isConnected()) {
+            parent.logMessageDJI("Aircraft not connected");
+            return;
+        }
 
-        if (product != null){
-            if(product.isConnected()) {
                 mMediaManager = m_camera.getMediaManager();
                 if (mMediaManager != null) {
                     parent.logMessageDJI(currentFileListState.name());
@@ -3005,14 +3003,8 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                 } else {
                     parent.logMessageDJI("mMediaManager == null");
                 }
-            }else {
-                parent.logMessageDJI("product == None, not connected...");
             }
-        } else {
-            parent.logMessageDJI("product == null, Product in SIM mode ?");
-        }
-    }
-    //Listeners
+
     private MediaManager.FileListStateListener updateFileListStateListener = new MediaManager.FileListStateListener() {
         @Override
         public void onFileListStateChange(MediaManager.FileListState state) {

@@ -306,8 +306,7 @@ public class Waypoint2Activity extends FragmentActivity implements View.OnClickL
     }
 
     private void initFlightController() {
-
-        BaseProduct product = RDApplication.getProductInstance();
+        BaseProduct product = RDApplication.getProductOrDummy();
         if (product != null && product.isConnected()) {
             if (product instanceof Aircraft) {
                 mFlightController = ((Aircraft) product).getFlightController();

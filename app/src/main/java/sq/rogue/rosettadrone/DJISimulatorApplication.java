@@ -1,3 +1,6 @@
+/**
+ * TODO: Deprecate this class. Clean and move needed code to RDApplication.java
+ */
 package sq.rogue.rosettadrone;
 
 import android.app.Application;
@@ -75,7 +78,7 @@ public class DJISimulatorApplication extends Application {
                 Log.e("TAG", error.toString());
 
                 if (error == DJISDKError.REGISTRATION_SUCCESS) {
-
+                    /*
                     Handler handler = new Handler(Looper.getMainLooper());
                     handler.post(new Runnable() {
                         @Override
@@ -83,13 +86,13 @@ public class DJISimulatorApplication extends Application {
                             Toast.makeText(getApplicationContext(), "Registration Success", Toast.LENGTH_LONG).show();
                         }
                     });
-
+                    */
                     DJISDKManager.getInstance().startConnectionToProduct();
 
                 } else {
+                    // TODO: Show an error dialog
                     Handler handler = new Handler(Looper.getMainLooper());
                     handler.post(new Runnable() {
-
                         @Override
                         public void run() {
                             Toast.makeText(getApplicationContext(), "SDK Registration Failed. Check network settings", Toast.LENGTH_LONG).show();

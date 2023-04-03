@@ -202,13 +202,7 @@ public class MapActivity extends FragmentActivity implements View.OnClickListene
 
     private void initFlightController() {
 
-        BaseProduct product;
-
-        if (RDApplication.getSim() == true) {
-            product = DJISimulatorApplication.getAircraftInstance();
-        } else {
-            product = RDApplication.getProductInstance();
-        }
+        BaseProduct product = RDApplication.getProductOrDummy();
 
         if (product != null && product.isConnected()) {
             if (product instanceof Aircraft) {
