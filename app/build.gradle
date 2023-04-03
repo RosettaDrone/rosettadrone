@@ -90,10 +90,8 @@ android {
     }
     defaultConfig {
         ndk {
-            //           abiFilters 'armeabi-v7a'
+            // DJI has removed 'x86' support
             abiFilters 'armeabi-v7a', 'arm64-v8a'
-            // DJI has removed x86 support...
-//            abiFilters 'armeabi-v7a', 'x86', 'arm64-v8a'
         }
     }
 
