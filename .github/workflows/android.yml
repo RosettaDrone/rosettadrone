@@ -16,7 +16,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
       with:
-        lfs: false
+        lfs: true
 
     # NDK installation https://github.com/actions/runner-images/issues/60
     - name: Setup Android NDKv2
@@ -27,16 +27,6 @@ jobs:
         java-version: '11'
         distribution: 'temurin'
         cache: gradle
-
-    # Manually download library uploaded in mock release:
-    # https://github.com/pktiuk/rosettadrone/releases/tag/libffm
-    - name: Download libffmpeg library (workaround for https://github.com/RosettaDrone/rosettadrone/issues/141 )
-      run: |
-        wget https://github.com/pktiuk/rosettadrone/releases/download/libffmpeg/libffmpeg.zip
-        unzip ./libffmpeg.zip 
-        mv ./arm64-v8a/libffmpeg.so ./app/src/main/cpp/lib/arm64-v8a/
-        mv ./armeabi-v7a/libffmpeg.so ./app/src/main/cpp/lib/armeabi-v7a/
-
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
     - name: Copy mock keys
