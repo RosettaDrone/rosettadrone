@@ -184,6 +184,8 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         // Process extras passed to intent
         Bundle extras = this.getIntent().getExtras();
         if (extras != null) {
+            // Provide mode argument via command line. Set:
+            // [Run > Edit Configurations > General tab > Launch Flags] = “--es mode test”
             String mode = extras.getString("mode");
             if(mode != null) {
                 if(mode.equals("test")) {
@@ -263,10 +265,10 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
 
                 if (realProduct.getModel() != null) {
                     mStatusBig.setText(realProduct.getModel().getDisplayName());
-        } else {
+                } else {
                     String str = realProduct instanceof Aircraft ? "Aircraft" : "Handheld";
                     mStatusBig.setText(str);
-        }
+                }
 
                 final String version = realProduct.getFirmwarePackageVersion();
                 mStatusSmall.setText(version);
@@ -353,10 +355,10 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
     void openMainActivity(AppMode mode) {
         RDApplication.isTestMode = mode == AppMode.TEST_MODE;
         RDApplication.setSim(mode == AppMode.SIMULATOR);
-                safeUnregisterBroadcast();
-                Intent intent = new Intent(this, MainActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                startActivityIfNeeded(intent,0);
+        safeUnregisterBroadcast();
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        startActivityIfNeeded(intent,0);
     }
 
     public void showToast(final String msg) {
