@@ -387,7 +387,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     void setRTLAltitude(final int altitude) {
-        djiAircraft.getFlightController().setGoHomeHeightInMeters(altitude, djiError -> {
+        mFlightController.setGoHomeHeightInMeters(altitude, djiError -> {
             if (djiError == null) {
                 parent.logMessageDJI("RTL altitude set to " + altitude + "m");
 
@@ -410,7 +410,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     void setMaxHeight(final int height) {
-        djiAircraft.getFlightController().setMaxFlightHeight(height, djiError -> {
+        mFlightController.setMaxFlightHeight(height, djiError -> {
             if (djiError == null) {
                 parent.logMessageDJI("Max height set to " + height + "m");
 
@@ -421,7 +421,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     void setSmartRTLEnabled(final boolean enabled) {
-        djiAircraft.getFlightController().setSmartReturnToHomeEnabled(enabled, djiError -> {
+        mFlightController.setSmartReturnToHomeEnabled(enabled, djiError -> {
             if (djiError == null) {
                 parent.logMessageDJI("Smart RTL set to " + enabled);
 
@@ -432,7 +432,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     void setMultiModeEnabled(final boolean enabled) {
-        djiAircraft.getFlightController().setMultipleFlightModeEnabled(enabled, djiError -> {
+        mFlightController.setMultipleFlightModeEnabled(enabled, djiError -> {
             if (djiError == null) {
                 parent.logMessageDJI("Multi Mode set to " + enabled);
 
@@ -443,7 +443,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     void setForwardLEDsEnabled(final boolean enabled) {
-        djiAircraft.getFlightController().getLEDsEnabledSettings(new CommonCallbacks.CompletionCallbackWith<LEDsSettings>() {
+        mFlightController.getLEDsEnabledSettings(new CommonCallbacks.CompletionCallbackWith<LEDsSettings>() {
             @Override
             public void onSuccess(LEDsSettings ledsSettings) {
                 LEDsSettings.Builder builder = new LEDsSettings.Builder();
@@ -451,7 +451,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                 builder.beaconsOn(ledsSettings.areBeaconsOn());
                 builder.rearLEDsOn(ledsSettings.areRearLEDsOn());
                 builder.statusIndicatorOn(true);
-                djiAircraft.getFlightController().setLEDsEnabledSettings(
+                mFlightController.setLEDsEnabledSettings(
                         builder.build(),
                         new CommonCallbacks.CompletionCallback() {
                             @Override
@@ -474,8 +474,8 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     void setCollisionAvoidance(final boolean enabled) {
-        if (djiAircraft.getFlightController().getFlightAssistant() != null) {
-            djiAircraft.getFlightController().getFlightAssistant().setCollisionAvoidanceEnabled(enabled, new CommonCallbacks.CompletionCallback() {
+        if (mFlightController.getFlightAssistant() != null) {
+            mFlightController.getFlightAssistant().setCollisionAvoidanceEnabled(enabled, new CommonCallbacks.CompletionCallback() {
                 @Override
                 public void onResult(DJIError djiError) {
                     if (djiError == null) {
@@ -493,8 +493,8 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
     void setUpwardCollisionAvoidance(final boolean enabled) {
 
-        if (djiAircraft.getFlightController().getFlightAssistant() != null) {
-            djiAircraft.getFlightController().getFlightAssistant().setUpwardVisionObstacleAvoidanceEnabled(enabled, new CommonCallbacks.CompletionCallback() {
+        if (mFlightController.getFlightAssistant() != null) {
+            mFlightController.getFlightAssistant().setUpwardVisionObstacleAvoidanceEnabled(enabled, new CommonCallbacks.CompletionCallback() {
                 @Override
                 public void onResult(DJIError djiError) {
                     if (djiError == null) {
@@ -511,8 +511,8 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     void setLandingProtection(final boolean enabled) {
-        if (djiAircraft.getFlightController().getFlightAssistant() != null) {
-            djiAircraft.getFlightController().getFlightAssistant().setLandingProtectionEnabled(enabled, djiError -> {
+        if (mFlightController.getFlightAssistant() != null) {
+            mFlightController.getFlightAssistant().setLandingProtectionEnabled(enabled, djiError -> {
                 if (djiError == null) {
                     parent.logMessageDJI("Landing Protection set to " + enabled);
 
@@ -774,7 +774,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         mMotorsArmed = true;
 
 //
-//        djiAircraft.getFlightController().turnOnMotors(new CommonCallbacks.CompletionCallback() {
+//        mFlightController.turnOnMotors(new CommonCallbacks.CompletionCallback() {
 //            @Override
 //            public void onResult(DJIError djiError) {
 //                // TODO reattempt if arming/disarming fails
@@ -790,7 +790,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     void disarmMotors(boolean sendResponses) {
-        djiAircraft.getFlightController().turnOffMotors(new CommonCallbacks.CompletionCallback() {
+        mFlightController.turnOffMotors(new CommonCallbacks.CompletionCallback() {
 
             @Override
             public void onResult(DJIError djiError) {
@@ -849,7 +849,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
     void cancelLanding() {
         if(djiFlightMode == FlightMode.AUTO_LANDING) {
-            djiAircraft.getFlightController().cancelLanding(new CommonCallbacks.CompletionCallback() {
+            mFlightController.cancelLanding(new CommonCallbacks.CompletionCallback() {
                 @Override
                 public void onResult(DJIError djiError) {
                     parent.logMessageDJI("Landing confirmed");
@@ -859,7 +859,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     private void confirmLanding() {
-        if (djiAircraft.getFlightController().getState().isLandingConfirmationNeeded()) {
+        if (mFlightController.getState().isLandingConfirmationNeeded()) {
             mFlightController.confirmLanding(new CommonCallbacks.CompletionCallback() {
                 @Override
                 public void onResult(DJIError djiError) {
@@ -887,9 +887,9 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         msg.base_mode = MAV_MODE_FLAG.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED;
         msg.base_mode |= MAV_MODE_FLAG.MAV_MODE_FLAG_MANUAL_INPUT_ENABLED;
 
-        //parent.logMessageDJI("FlightMode: "+djiAircraft.getFlightController().getState().getFlightMode());
+        //parent.logMessageDJI("FlightMode: "+mFlightController.getState().getFlightMode());
 
-        djiFlightMode = djiAircraft.getFlightController().getState().getFlightMode();
+        djiFlightMode = mFlightController.getState().getFlightMode();
         switch (djiFlightMode) {
             case MANUAL:
                 msg.custom_mode = ArduCopterFlightModes.STABILIZE;
@@ -1008,7 +1008,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
         // Catches manual landings
         // Automatically disarm motors if aircraft is on the ground and a takeoff is not in progress
-        if (!getDjiAircraft().getFlightController().getState().isFlying() && gcsFlightMode != ArduCopterFlightModes.GUIDED) {
+        if (!mFlightController.getState().isFlying() && gcsFlightMode != ArduCopterFlightModes.GUIDED) {
             if(useMissionManager) {
                 missionManager.setLandedStatus(true);
             }
@@ -1016,7 +1016,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         }
 
         // Catches manual takeoffs
-        if (getDjiAircraft().getFlightController().getState().areMotorsOn())
+        if (mFlightController.getState().areMotorsOn())
             mMotorsArmed = true;
 
         msg.system_status = MAV_STATE.MAV_STATE_ACTIVE;
@@ -1028,7 +1028,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         msg_attitude msg = new msg_attitude();
         // TODO: this next line causes an exception
         //msg.time_boot_ms = getTimestampMilliseconds();
-        Attitude att = djiAircraft.getFlightController().getState().getAttitude();
+        Attitude att = mFlightController.getState().getAttitude();
         msg.roll = (float) (att.roll * Math.PI / 180);
         msg.pitch = (float) (att.pitch * Math.PI / 180);
         msg.yaw = (float) (att.yaw * Math.PI / 180);
@@ -1040,7 +1040,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
     private void send_altitude() {
         msg_altitude msg = new msg_altitude();
-        LocationCoordinate3D coord = djiAircraft.getFlightController().getState().getAircraftLocation();
+        LocationCoordinate3D coord = mFlightController.getState().getAircraftLocation();
         msg.altitude_relative = coord.getAltitude();
         m_alt = msg.altitude_relative;
         sendMessage(msg);
@@ -1130,7 +1130,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     private void send_global_position_int() {
         msg_global_position_int msg = new msg_global_position_int();
 
-        FlightControllerState state = djiAircraft.getFlightController().getState();
+        FlightControllerState state = mFlightController.getState();
 
         LocationCoordinate3D coord = state.getAircraftLocation();
         msg.lat = (int) (coord.getLatitude() * MAV_LINK_MULTI);
@@ -1149,7 +1149,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
         // Mavlink: Millimeters AMSL
         // msg.alt = ??? No method in SDK for obtaining MSL altitude.
-        // djiAircraft.getFlightController().getState().getHomePointAltitude()) seems promising, but always returns 0
+        // mFlightController.getState().getHomePointAltitude()) seems promising, but always returns 0
 
         // Mavlink: m/s * 100
         // DJI: m/s
@@ -1168,17 +1168,17 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     public double[] getLocation2D() {
-        LocationCoordinate3D coord = djiAircraft.getFlightController().getState().getAircraftLocation();
+        LocationCoordinate3D coord = mFlightController.getState().getAircraftLocation();
         return new double[] {coord.getLatitude(), coord.getLongitude()};
     }
 
     public double[] getLocation3D() {
-        LocationCoordinate3D coord = djiAircraft.getFlightController().getState().getAircraftLocation();
+        LocationCoordinate3D coord = mFlightController.getState().getAircraftLocation();
         return new double[] {coord.getLatitude(), coord.getLongitude(), coord.getAltitude()};
     }
 
     public float getGoHomeHeight() {
-        return djiAircraft.getFlightController().getState().getGoHomeHeight();
+        return mFlightController.getState().getGoHomeHeight();
     }
 
     // TODO: DEPRECATE: Inefficient
@@ -1191,7 +1191,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         }
         */
 
-        LocationCoordinate3D coord = djiAircraft.getFlightController().getState().getAircraftLocation();
+        LocationCoordinate3D coord = mFlightController.getState().getAircraftLocation();
         Log.d(TAG, "coord.getLatitude()="+coord.getLatitude());
         return coord.getLatitude();
     }
@@ -1202,7 +1202,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             return getSimPos3D().getLongitude();
         */
 
-        LocationCoordinate3D coord = djiAircraft.getFlightController().getState().getAircraftLocation();
+        LocationCoordinate3D coord = mFlightController.getState().getAircraftLocation();
         return coord.getLongitude();
     }
 
@@ -1212,7 +1212,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             return getSimPos3D().getAltitude();
         */
 
-        LocationCoordinate3D coord = djiAircraft.getFlightController().getState().getAircraftLocation();
+        LocationCoordinate3D coord = mFlightController.getState().getAircraftLocation();
         return coord.getAltitude();
     }
 
@@ -1223,7 +1223,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     private void send_gps_raw_int() {
         msg_gps_raw_int msg = new msg_gps_raw_int();
 
-        LocationCoordinate3D coord = djiAircraft.getFlightController().getState().getAircraftLocation();
+        LocationCoordinate3D coord = mFlightController.getState().getAircraftLocation();
 
         msg.time_usec = getTimestampMicroseconds();
         msg.lat = (int) (coord.getLatitude() * MAV_LINK_MULTI);
@@ -1233,11 +1233,11 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         // TODO msg.epv
         // TODO msg.vel
         // TODO msg.cog
-        msg.satellites_visible = (short) djiAircraft.getFlightController().getState().getSatelliteCount();
+        msg.satellites_visible = (short) mFlightController.getState().getSatelliteCount();
 
         // DJI reports signal quality on a scale of 1-5
         // Mavlink has separate codes for fix type.
-        GPSSignalLevel gpsLevel = djiAircraft.getFlightController().getState().getGPSSignalLevel();
+        GPSSignalLevel gpsLevel = mFlightController.getState().getGPSSignalLevel();
         if (gpsLevel == GPSSignalLevel.NONE)
             msg.fix_type = GPS_FIX_TYPE.GPS_FIX_TYPE_NO_FIX;
         if (gpsLevel == GPSSignalLevel.LEVEL_0 || gpsLevel == GPSSignalLevel.LEVEL_1)
@@ -1341,8 +1341,8 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
         // Mavlink: Current airspeed in m/s
         // DJI: unclear whether getState() returns airspeed or groundspeed
-        msg.airspeed = (float) (Math.sqrt(Math.pow(djiAircraft.getFlightController().getState().getVelocityX(), 2) +
-                Math.pow(djiAircraft.getFlightController().getState().getVelocityY(), 2)));
+        msg.airspeed = (float) (Math.sqrt(Math.pow(mFlightController.getState().getVelocityX(), 2) +
+                Math.pow(mFlightController.getState().getVelocityY(), 2)));
 
         // Mavlink: Current ground speed in m/s. For now, just echoing airspeed.
         msg.groundspeed = msg.airspeed;
@@ -1350,7 +1350,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         // Mavlink: Current heading in degrees, in compass units (0..360, 0=north)
         // TODO: unspecified in Mavlink documentation whether this heading is true or magnetic
         // DJI=[-180,180] where 0 is true north, Mavlink=degrees
-        double yaw = djiAircraft.getFlightController().getState().getAttitude().yaw;
+        double yaw = mFlightController.getState().getAttitude().yaw;
         if (yaw < 0) yaw += 360;
         msg.heading = (short) yaw;
 
@@ -1360,29 +1360,29 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         // Mavlink: Current altitude (MSL), in meters
         // DJI: relative altitude is altitude of the aircraft relative to take off location, measured by barometer, in meters.
         // DJI: home altitude is home point's altitude. Units unspecified in DJI SDK documentation. Presumably meters AMSL.
-        LocationCoordinate3D coord = djiAircraft.getFlightController().getState().getAircraftLocation();
+        LocationCoordinate3D coord = mFlightController.getState().getAircraftLocation();
         msg.alt = (int) (coord.getAltitude());
 
         // Mavlink: Current climb rate in meters/second
         // DJI: m/s, positive values down
-        msg.climb = -(short) (djiAircraft.getFlightController().getState().getVelocityZ());
+        msg.climb = -(short) (mFlightController.getState().getVelocityZ());
 
         sendMessage(msg);
     }
 
     void send_home_position() {
-        home_position.latitude = (int) (djiAircraft.getFlightController().getState().getHomeLocation().getLatitude() * MAV_LINK_MULTI);
-        home_position.longitude = (int) (djiAircraft.getFlightController().getState().getHomeLocation().getLongitude() * MAV_LINK_MULTI);
+        home_position.latitude = (int) (mFlightController.getState().getHomeLocation().getLatitude() * MAV_LINK_MULTI);
+        home_position.longitude = (int) (mFlightController.getState().getHomeLocation().getLongitude() * MAV_LINK_MULTI);
 
         // We are suposed to send the home altitude (MSL), but we don't have it.
-        // home_position.altitude = (int) (djiAircraft.getFlightController().getState().getTakeoffLocationAltitude()); // Unsafe, because the TakeOff location altitude could be below the home location altitude.
-        home_position.altitude = (int) (djiAircraft.getFlightController().getState().getGoHomeHeight()); // This is the altitude for returning home. This is safe.
+        // home_position.altitude = (int) (mFlightController.getState().getTakeoffLocationAltitude()); // Unsafe, because the TakeOff location altitude could be below the home location altitude.
+        home_position.altitude = (int) (mFlightController.getState().getGoHomeHeight()); // This is the altitude for returning home. This is safe.
 
         sendMessage(home_position);
     }
 
     void set_home_position(double lat, double lon) {
-        djiAircraft.getFlightController().getState().setHomeLocation(new LocationCoordinate2D(lat, lon));
+        mFlightController.getState().setHomeLocation(new LocationCoordinate2D(lat, lon));
     }
 
     public void send_statustext(String text, int severity) {
@@ -1436,60 +1436,60 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         for (int i = 0; i < getParams().size(); i++) {
             switch (getParams().get(i).getParamName()) {
                 case "DJI_CTRL_MODE":
-                    getDjiAircraft().getFlightController().getControlMode(new ParamControlModeCallback(i));
+                    mFlightController.getControlMode(new ParamControlModeCallback(i));
                     break;
                 case "DJI_ENBL_LEDS":
-//                    getDjiAircraft().getFlightController().getLEDsEnabled(new ParamBooleanCallback(i));
+//                    mFlightController.getLEDsEnabled(new ParamBooleanCallback(i));
                     break;
                 case "DJI_ENBL_QSPIN":
-                    getDjiAircraft().getFlightController().getQuickSpinEnabled(new ParamBooleanCallback(i));
+                    mFlightController.getQuickSpinEnabled(new ParamBooleanCallback(i));
                     break;
                 case "DJI_ENBL_RADIUS":
-                    getDjiAircraft().getFlightController().getMaxFlightRadiusLimitationEnabled(new ParamBooleanCallback(i));
+                    mFlightController.getMaxFlightRadiusLimitationEnabled(new ParamBooleanCallback(i));
                     break;
                 case "DJI_ENBL_TFOLLOW":
-                    getDjiAircraft().getFlightController().getTerrainFollowModeEnabled(new ParamBooleanCallback(i));
+                    mFlightController.getTerrainFollowModeEnabled(new ParamBooleanCallback(i));
                     break;
                 case "DJI_ENBL_TRIPOD":
-                    getDjiAircraft().getFlightController().getTripodModeEnabled(new ParamBooleanCallback(i));
+                    mFlightController.getTripodModeEnabled(new ParamBooleanCallback(i));
                     break;
                 case "DJI_FAILSAFE":
-                    getDjiAircraft().getFlightController().getConnectionFailSafeBehavior(new ParamConnectionFailSafeBehaviorCallback(i));
+                    mFlightController.getConnectionFailSafeBehavior(new ParamConnectionFailSafeBehaviorCallback(i));
                     break;
                 case "DJI_LOW_BAT":
-                    getDjiAircraft().getFlightController().getLowBatteryWarningThreshold(new ParamIntegerCallback(i));
+                    mFlightController.getLowBatteryWarningThreshold(new ParamIntegerCallback(i));
                     break;
                 case "DJI_MAX_HEIGHT":
-                    getDjiAircraft().getFlightController().getMaxFlightHeight(new ParamIntegerCallback(i));
+                    mFlightController.getMaxFlightHeight(new ParamIntegerCallback(i));
                     break;
                 case "DJI_MAX_RADIUS":
-                    getDjiAircraft().getFlightController().getMaxFlightRadius(new ParamIntegerCallback(i));
+                    mFlightController.getMaxFlightRadius(new ParamIntegerCallback(i));
                     break;
                 case "DJI_RLPCH_MODE":
-                    if (getDjiAircraft().getFlightController().getRollPitchControlMode() == RollPitchControlMode.ANGLE)
+                    if (mFlightController.getRollPitchControlMode() == RollPitchControlMode.ANGLE)
                         getParams().get(i).setParamValue(0f);
-                    else if (getDjiAircraft().getFlightController().getRollPitchControlMode() == RollPitchControlMode.VELOCITY)
+                    else if (mFlightController.getRollPitchControlMode() == RollPitchControlMode.VELOCITY)
                         getParams().get(i).setParamValue(1f);
                     break;
                 case "DJI_RTL_HEIGHT":
-                    getDjiAircraft().getFlightController().getGoHomeHeightInMeters(new ParamIntegerCallback(i));
+                    mFlightController.getGoHomeHeightInMeters(new ParamIntegerCallback(i));
                     break;
                 case "DJI_SERIOUS_BAT":
-                    getDjiAircraft().getFlightController().getSeriousLowBatteryWarningThreshold(new ParamIntegerCallback(i));
+                    mFlightController.getSeriousLowBatteryWarningThreshold(new ParamIntegerCallback(i));
                     break;
                 case "DJI_SMART_RTH":
-                    getDjiAircraft().getFlightController().getSmartReturnToHomeEnabled(new ParamBooleanCallback(i));
+                    mFlightController.getSmartReturnToHomeEnabled(new ParamBooleanCallback(i));
                     break;
                 case "DJI_VERT_MODE":
-                    if (getDjiAircraft().getFlightController().getVerticalControlMode() == VerticalControlMode.VELOCITY)
+                    if (mFlightController.getVerticalControlMode() == VerticalControlMode.VELOCITY)
                         getParams().get(i).setParamValue(0f);
-                    else if (getDjiAircraft().getFlightController().getVerticalControlMode() == VerticalControlMode.POSITION)
+                    else if (mFlightController.getVerticalControlMode() == VerticalControlMode.POSITION)
                         getParams().get(i).setParamValue(1f);
                     break;
                 case "DJI_YAW_MODE":
-                    if (getDjiAircraft().getFlightController().getYawControlMode() == YawControlMode.ANGLE)
+                    if (mFlightController.getYawControlMode() == YawControlMode.ANGLE)
                         getParams().get(i).setParamValue(0f);
-                    else if (getDjiAircraft().getFlightController().getYawControlMode() == YawControlMode.ANGULAR_VELOCITY)
+                    else if (mFlightController.getYawControlMode() == YawControlMode.ANGULAR_VELOCITY)
                         getParams().get(i).setParamValue(1f);
                     break;
             }
@@ -1504,72 +1504,72 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                 switch (param.getParamName()) {
                     case "DJI_CTRL_MODE":
                         if (param.getParamValue() == 0)
-                            getDjiAircraft().getFlightController().setControlMode(ControlMode.MANUAL, new ParamWriteCompletionCallback(i));
+                            mFlightController.setControlMode(ControlMode.MANUAL, new ParamWriteCompletionCallback(i));
                         else if (param.getParamValue() == 2)
-                            getDjiAircraft().getFlightController().setControlMode(ControlMode.SMART, new ParamWriteCompletionCallback(i));
+                            mFlightController.setControlMode(ControlMode.SMART, new ParamWriteCompletionCallback(i));
                         else if (param.getParamValue() == 255)
-                            getDjiAircraft().getFlightController().setControlMode(ControlMode.UNKNOWN, new ParamWriteCompletionCallback(i));
+                            mFlightController.setControlMode(ControlMode.UNKNOWN, new ParamWriteCompletionCallback(i));
                         break;
                     case "DJI_ENBL_LEDS":
-//                        getDjiAircraft().getFlightController().setLEDsEnabled(param.getParamValue() > 0, new ParamWriteCompletionCallback(i));
+//                        mFlightController.setLEDsEnabled(param.getParamValue() > 0, new ParamWriteCompletionCallback(i));
                         break;
                     case "DJI_ENBL_QSPIN":
-                        getDjiAircraft().getFlightController().setAutoQuickSpinEnabled(param.getParamValue() > 0, new ParamWriteCompletionCallback(i));
+                        mFlightController.setAutoQuickSpinEnabled(param.getParamValue() > 0, new ParamWriteCompletionCallback(i));
                         break;
                     case "DJI_ENBL_RADIUS":
-                        getDjiAircraft().getFlightController().setMaxFlightRadiusLimitationEnabled((param.getParamValue() > 0), new ParamWriteCompletionCallback(i));
+                        mFlightController.setMaxFlightRadiusLimitationEnabled((param.getParamValue() > 0), new ParamWriteCompletionCallback(i));
                         break;
                     case "DJI_ENBL_TFOLLOW":
-                        getDjiAircraft().getFlightController().setTerrainFollowModeEnabled(param.getParamValue() > 0, new ParamWriteCompletionCallback(i));
+                        mFlightController.setTerrainFollowModeEnabled(param.getParamValue() > 0, new ParamWriteCompletionCallback(i));
                         break;
                     case "DJI_ENBL_TRIPOD":
-                        getDjiAircraft().getFlightController().setTripodModeEnabled(param.getParamValue() > 0, new ParamWriteCompletionCallback(i));
+                        mFlightController.setTripodModeEnabled(param.getParamValue() > 0, new ParamWriteCompletionCallback(i));
                         break;
                     case "DJI_FAILSAFE":
                         if (param.getParamValue() == 0)
-                            getDjiAircraft().getFlightController().setConnectionFailSafeBehavior(ConnectionFailSafeBehavior.HOVER, new ParamWriteCompletionCallback(i));
+                            mFlightController.setConnectionFailSafeBehavior(ConnectionFailSafeBehavior.HOVER, new ParamWriteCompletionCallback(i));
                         else if (param.getParamValue() == 1)
-                            getDjiAircraft().getFlightController().setConnectionFailSafeBehavior(ConnectionFailSafeBehavior.LANDING, new ParamWriteCompletionCallback(i));
+                            mFlightController.setConnectionFailSafeBehavior(ConnectionFailSafeBehavior.LANDING, new ParamWriteCompletionCallback(i));
                         else if (param.getParamValue() == 2)
-                            getDjiAircraft().getFlightController().setConnectionFailSafeBehavior(ConnectionFailSafeBehavior.GO_HOME, new ParamWriteCompletionCallback(i));
+                            mFlightController.setConnectionFailSafeBehavior(ConnectionFailSafeBehavior.GO_HOME, new ParamWriteCompletionCallback(i));
                         else if (param.getParamValue() == 255)
-                            getDjiAircraft().getFlightController().setConnectionFailSafeBehavior(ConnectionFailSafeBehavior.UNKNOWN, new ParamWriteCompletionCallback(i));
+                            mFlightController.setConnectionFailSafeBehavior(ConnectionFailSafeBehavior.UNKNOWN, new ParamWriteCompletionCallback(i));
                         break;
                     case "DJI_LOW_BAT":
-                        getDjiAircraft().getFlightController().setLowBatteryWarningThreshold(Math.round(param.getParamValue()), new ParamWriteCompletionCallback(i));
+                        mFlightController.setLowBatteryWarningThreshold(Math.round(param.getParamValue()), new ParamWriteCompletionCallback(i));
                         break;
                     case "DJI_MAX_HEIGHT":
-                        getDjiAircraft().getFlightController().setMaxFlightHeight(Math.round(param.getParamValue()), new ParamWriteCompletionCallback(i));
+                        mFlightController.setMaxFlightHeight(Math.round(param.getParamValue()), new ParamWriteCompletionCallback(i));
                         break;
                     case "DJI_MAX_RADIUS":
-                        getDjiAircraft().getFlightController().setMaxFlightRadius(Math.round(param.getParamValue()), new ParamWriteCompletionCallback(i));
+                        mFlightController.setMaxFlightRadius(Math.round(param.getParamValue()), new ParamWriteCompletionCallback(i));
                         break;
                     case "DJI_RLPCH_MODE":
                         if (param.getParamValue() == 0)
-                            getDjiAircraft().getFlightController().setRollPitchControlMode(RollPitchControlMode.ANGLE);
+                            mFlightController.setRollPitchControlMode(RollPitchControlMode.ANGLE);
                         else if (param.getParamValue() == 1)
-                            getDjiAircraft().getFlightController().setRollPitchControlMode(RollPitchControlMode.VELOCITY);
+                            mFlightController.setRollPitchControlMode(RollPitchControlMode.VELOCITY);
                         break;
                     case "DJI_RTL_HEIGHT":
-                        getDjiAircraft().getFlightController().setGoHomeHeightInMeters(Math.round(param.getParamValue()), new ParamWriteCompletionCallback(i));
+                        mFlightController.setGoHomeHeightInMeters(Math.round(param.getParamValue()), new ParamWriteCompletionCallback(i));
                         break;
                     case "DJI_SERIOUS_BAT":
-                        getDjiAircraft().getFlightController().setSeriousLowBatteryWarningThreshold(Math.round(param.getParamValue()), new ParamWriteCompletionCallback(i));
+                        mFlightController.setSeriousLowBatteryWarningThreshold(Math.round(param.getParamValue()), new ParamWriteCompletionCallback(i));
                         break;
                     case "DJI_SMART_RTH":
-                        getDjiAircraft().getFlightController().setSmartReturnToHomeEnabled(param.getParamValue() > 0, new ParamWriteCompletionCallback(i));
+                        mFlightController.setSmartReturnToHomeEnabled(param.getParamValue() > 0, new ParamWriteCompletionCallback(i));
                         break;
                     case "DJI_VERT_MODE":
                         if (param.getParamValue() == 0)
-                            getDjiAircraft().getFlightController().setVerticalControlMode(VerticalControlMode.VELOCITY);
+                            mFlightController.setVerticalControlMode(VerticalControlMode.VELOCITY);
                         else if (param.getParamValue() == 1)
-                            getDjiAircraft().getFlightController().setVerticalControlMode(VerticalControlMode.POSITION);
+                            mFlightController.setVerticalControlMode(VerticalControlMode.POSITION);
                         break;
                     case "DJI_YAW_MODE":
                         if (param.getParamValue() == 0)
-                            getDjiAircraft().getFlightController().setYawControlMode(YawControlMode.ANGLE);
+                            mFlightController.setYawControlMode(YawControlMode.ANGLE);
                         else if (param.getParamValue() == 1)
-                            getDjiAircraft().getFlightController().setYawControlMode(YawControlMode.ANGULAR_VELOCITY);
+                            mFlightController.setYawControlMode(YawControlMode.ANGULAR_VELOCITY);
                         break;
                     default:
                         parent.logMessageDJI("Unknown parameter name");
@@ -1943,12 +1943,12 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                 }
             }
 
-            FlightControllerState coord = djiAircraft.getFlightController().getState();
+            FlightControllerState coord = mFlightController.getState();
             TimeLine.TimeLinetakeOff(coord.getAircraftLocation().getLatitude(), coord.getAircraftLocation().getLongitude(), alt  * (float) 1000.0, 0);
             TimeLine.startTimeline();
 
         } else {
-            FlightControllerState coord = djiAircraft.getFlightController().getState();
+            FlightControllerState coord = mFlightController.getState();
             if(coord.isFlying()) {
                 Log.i(TAG, "doTakeOff(): already flying => ignore takeoff and only ascend");
                 ascend(alt);
@@ -1965,7 +1965,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                             // HACK: DJI sometimes returns "Undefined Error(255)" even when take off was successful (tested on simulator)
                             // So here we check if we are flying for max 10 seconds
                             for(int i = 0; i < 10; i++) {
-                                if(getDjiAircraft().getFlightController().getState().isFlying()) {
+                                if(mFlightController.getState().isFlying()) {
                                     ascend(alt);
                                     return;
                                 }
@@ -1989,7 +1989,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     void ascend(float alt) {
         missionManager.setTakeOffStatus(true);
         Log.i(TAG, "Took off => Flying to altitude " + alt);
-        FlightControllerState coord = djiAircraft.getFlightController().getState();
+        FlightControllerState coord = mFlightController.getState();
         motion = new Motion(coord.getAircraftLocation().getLatitude(), coord.getAircraftLocation().getLongitude(), alt);
         motion.mask.ignorePosX = true;
         motion.mask.ignorePosY = true;
@@ -2001,7 +2001,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
     void doLand() {
         //setMavFlightMode(ArduCopterFlightModes.LAND);
-        djiAircraft.getFlightController().startLanding(djiError -> {
+        mFlightController.startLanding(djiError -> {
             if (djiError == null) {
                 parent.logMessageDJI("Landing...");
 
@@ -2027,7 +2027,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         mAutonomy = false;
         missionActive = false;
         parent.logMessageDJI("Initiating Go Home");
-        djiAircraft.getFlightController().startGoHome(djiError -> {
+        mFlightController.startGoHome(djiError -> {
             if (djiError != null)
                 Log.e(TAG, "do_go_home: " + djiError.toString());
             else
@@ -2169,7 +2169,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             }
 
             if(coordFrame == MAV_FRAME_LOCAL_NED || coordFrame == MAV_FRAME_LOCAL_OFFSET_NED || coordFrame == MAV_FRAME_BODY_FRD) {
-                FlightControllerState coord = djiAircraft.getFlightController().getState();
+                FlightControllerState coord = mFlightController.getState();
                 this.lat = coord.getAircraftLocation().getLatitude();
                 this.lng = coord.getAircraftLocation().getLongitude();
                 this.alt = coord.getAircraftLocation().getAltitude();
@@ -2325,7 +2325,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         }
 
         private void processFlyTo() {
-            FlightControllerState state = djiAircraft.getFlightController().getState();
+            FlightControllerState state = mFlightController.getState();
             double lat = state.getAircraftLocation().getLatitude();
             double lng = state.getAircraftLocation().getLongitude();
             double alt = state.getAircraftLocation().getAltitude();
@@ -2468,28 +2468,46 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     void setVirtualSticksEnabled(boolean setEnabled) {
-        mFlightController.getVirtualStickModeEnabled(new CommonCallbacks.CompletionCallbackWith<Boolean>() {
-            @Override
-            public void onSuccess(Boolean isEnabled) {
-                if (isEnabled != setEnabled) {
-                    // After a manual mode change, we might loose the JOYSTICK mode...
-                    if (djiFlightMode != FlightMode.JOYSTICK) {
-                        mFlightController.setVirtualStickModeEnabled(setEnabled, djiError -> {
-                            if (djiError != null) {
-                                Log.e(TAG, "setVirtualStickModeEnabled() failed: " + djiError.toString());
-                            } else {
-                                mFlightController.setVirtualStickAdvancedModeEnabled(setEnabled);
-                            }
-                        });
+        if(true) {
+            // TODO: NOT TESTED:
+            mFlightController.setVirtualStickModeEnabled(setEnabled, djiError -> {
+                if (djiError != null) {
+                    Log.e(TAG, "setVirtualStickModeEnabled() failed: " + djiError.toString());
+                } else {
+                    Log.i(TAG, "setVirtualStickModeEnabled() succeded");
+                    if (setEnabled) {
+                        mFlightController.setVirtualStickAdvancedModeEnabled(setEnabled);
                     }
                 }
-            }
+            });
 
-            @Override
-            public void onFailure(DJIError error) {
-                Log.e(TAG, "enableVirtualStickMode(): getVirtualStickModeEnabled failed");
-            }
-        });
+        } else {
+            // TODO: Simplify this code
+            mFlightController.getVirtualStickModeEnabled(new CommonCallbacks.CompletionCallbackWith<Boolean>() {
+                @Override
+                public void onSuccess(Boolean isEnabled) {
+                    if (isEnabled != setEnabled) {
+                        // After a manual mode change, we might loose the JOYSTICK mode...
+                        if (!setEnabled || djiFlightMode != FlightMode.JOYSTICK) {
+                            mFlightController.setVirtualStickModeEnabled(setEnabled, djiError -> {
+                                if (djiError != null) {
+                                    Log.e(TAG, "setVirtualStickModeEnabled() failed: " + djiError.toString());
+                                } else {
+                                    if (setEnabled) {
+                                        mFlightController.setVirtualStickAdvancedModeEnabled(setEnabled);
+                                    }
+                                }
+                            });
+                        }
+                    }
+                }
+
+                @Override
+                public void onFailure(DJIError error) {
+                    Log.e(TAG, "enableVirtualStickMode(): getVirtualStickModeEnabled failed");
+                }
+            });
+        }
     }
 
     boolean isForbiddenSwitchMode() {
@@ -2623,8 +2641,8 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
     public void echoLoadedMission() {
 
-        double lat = djiAircraft.getFlightController().getState().getHomeLocation().getLatitude();
-        double lon = djiAircraft.getFlightController().getState().getHomeLocation().getLongitude();
+        double lat = mFlightController.getState().getHomeLocation().getLatitude();
+        double lon = mFlightController.getState().getHomeLocation().getLongitude();
         TimeLine.addHome(lat, lon);
         Log.d(TAG, "Init Timeline...");
         TimeLine.initTimeline();
