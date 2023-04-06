@@ -389,13 +389,13 @@ public class MAVLinkReceiver {
                 break;
 
             case MAVLINK_MSG_ID_PARAM_REQUEST_READ:
-                int i = mModel.getParameterIndex(((msg_param_request_read) msg).getParam_Id());
-                if(i != -1) {
-                    mModel.send_param(i);
+                msg_param_request_read paramRequestReadMsg = (msg_param_request_read) msg;
+                int i = mModel.getParameterIndex(paramRequestReadMsg.getParam_Id());
+                if(i == -1) {
+                    // TODO: Check
+                    mModel.send_param(paramRequestReadMsg.name(), 0, (short)0, 0, paramRequestReadMsg.param_index);
                 } else {
-                    Log.d(TAG, "Request to read param that doesn't exist");
-                    // NOT_TESTED:
-                    mModel.send_command_ack(MAVLINK_MSG_ID_PARAM_REQUEST_READ, MAV_RESULT.MAV_RESULT_DENIED);
+                    mModel.send_param(i);
                 }
                 break;
 
