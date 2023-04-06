@@ -666,7 +666,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         public void onStatusChanged(String provider, int status, Bundle extras) {}
     }
 
-    private void initFlightController() {
+    private void requestDroneLocation() {
         if (mModel.mFlightController != null) {
             mModel.mFlightController.setStateCallback(djiFlightControllerCurrentState -> {
                 LocationCoordinate3D loc = djiFlightControllerCurrentState.getAircraftLocation();
@@ -751,6 +751,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
 
         mModel = new DroneModel(this, null, RDApplication.getSim());
+        if(mModel.mFlightController == null) {
+            // We should never have a MainActivity with a DroneModel without a FlightController since it may crash everywhere.
+            // TODO: DOC: How does this happen? Maybe when running the DJI FlyApp in background?
+            Log.e(TAG, "Tried to create MainActivity without a FlightController!");
+            finish();
+            return;
+        }
+
         mModel.setSystemId(Integer.parseInt(Objects.requireNonNull(prefs.getString("pref_drone_id", "1"))));
 
         mMavlinkReceiver = new MAVLinkReceiver(this, mModel);
@@ -787,7 +795,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
-        initFlightController();
+        requestDroneLocation();
 
         DJISDKManager.getInstance().registerApp(this, mDJISDKManagerCallback);
 

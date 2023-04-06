@@ -46,7 +46,6 @@ import com.MAVLink.minimal.msg_heartbeat;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.PortUnreachableException;
 import java.util.ArrayList;
@@ -199,7 +198,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     private boolean mSafetyEnabled = true;
     protected boolean mMotorsArmed = false;
     private FollowMeMissionOperator fmmo;
-    public FlightController mFlightController;
+    public FlightController mFlightController; // Will never be null. We are now finishing MainActivity (and destroying DroneModel) if mFlightController is null.
     private Gimbal mGimbal = null;
 
     public float mission_alt = 0;
@@ -231,6 +230,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     private boolean useMissionControlClass; // Not supported by Mini series
     public boolean useMissionManager; // Uses VirtualSticks, instead of using onboard logic. May also give better results for taking Photos during Waypoints.
     public MissionManager missionManager = new MissionManager(this);
+    private long timerIgnoreMavLink = 0; // Timer to ignore MAVLink motion commands while user is moving the RC Joystick
 
     enum camera_mode {
         IDLE,
@@ -258,6 +258,8 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
      */
     private void fatalConnectionError(String msg) {
         Log.e(TAG, msg);
+        parent.logMessageDJI(msg);
+        parent.finish();
     }
 
     private void initFlightController() {
@@ -273,8 +275,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
         m_aircraft = (Aircraft) RDApplication.getProductOrDummy();
         if (m_aircraft == null || !m_aircraft.isConnected()) {
-            parent.logMessageDJI("Aircraft not available");
-            mFlightController = null;
+            fatalConnectionError("Aircraft not available");
             return;
 
         } else {
@@ -306,7 +307,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                 return;
             }
 
-            setControlModes();
+            setControlModes(); // TODO: Can be removed here? Is set in startMotion
 
             mFlightController.setRollPitchCoordinateSystem(FlightCoordinateSystem.BODY);
 
@@ -333,20 +334,18 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             }
         }
 
-        if (mFlightController != null) {
-            parent.logMessageDJI("Target found...");
+        parent.logMessageDJI("Target found...");
 
-            if (isSimulator) {
-                LocationCoordinate2D pos = getSimPos2D();
+        if (isSimulator) {
+            LocationCoordinate2D pos = getSimPos2D();
 
-                mFlightController.getSimulator().start(InitializationData.createInstance(pos, 10, 10), djiError -> {
-                    if (djiError != null) {
-                        parent.logMessageDJI(djiError.getDescription());
-                    } else {
-                        parent.logMessageDJI("Start Simulator Success");
-                    }
-                });
-            }
+            mFlightController.getSimulator().start(InitializationData.createInstance(pos, 10, 10), djiError -> {
+                if (djiError != null) {
+                    parent.logMessageDJI(djiError.getDescription());
+                } else {
+                    parent.logMessageDJI("Start Simulator Success");
+                }
+            });
         }
     }
 
@@ -574,8 +573,13 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         return mSafetyEnabled;
     }
 
-    void setSafetyEnabled(boolean SafetyEnabled) {
-        mSafetyEnabled = SafetyEnabled;
+    void setSafetyEnabled(boolean enabled) {
+        mSafetyEnabled = enabled;
+        if(enabled) {
+            // Stop motion and disable VirtualSticks (to enable RC)
+            cancelAllTasks();
+            setVirtualSticksEnabled(false);
+        }
     }
 
     private void SetMesasageBox(String msg) {
@@ -1180,10 +1184,12 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     // TODO: DEPRECATE: Inefficient
 
     public double get_current_lat() {
+        /* Should never happen
         if (mFlightController == null) {
             Log.d(TAG, "getSimPos3D().getLatitude()="+getSimPos3D().getLatitude());
             return getSimPos3D().getLatitude();
         }
+        */
 
         LocationCoordinate3D coord = djiAircraft.getFlightController().getState().getAircraftLocation();
         Log.d(TAG, "coord.getLatitude()="+coord.getLatitude());
@@ -1191,16 +1197,20 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     public double get_current_lon() {
+        /* Should never happen
         if (mFlightController == null)
             return getSimPos3D().getLongitude();
+        */
 
         LocationCoordinate3D coord = djiAircraft.getFlightController().getState().getAircraftLocation();
         return coord.getLongitude();
     }
 
     public float get_current_alt() {
+        /* Should never happen
         if (mFlightController == null)
             return getSimPos3D().getAltitude();
+        */
 
         LocationCoordinate3D coord = djiAircraft.getFlightController().getState().getAircraftLocation();
         return coord.getAltitude();
@@ -1295,8 +1305,11 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
             mAutonomy = false;   // TODO:: This variable needs to be checked elseware in the code...
 
-            Log.i(TAG, "Stick moved => cancel all tasks");
+            int blockSeconds = 5;
+            Log.i(TAG, "RC joystick moved => cancelling all tasks and blocking MAVLink motion for " + blockSeconds + " seconds");
             cancelAllTasks();
+            setVirtualSticksEnabled(false);
+            timerIgnoreMavLink = System.currentTimeMillis() + blockSeconds * 1000;
         }
 
         msg.chan8_raw = (mAIfunction_activation * 100) + 1000;
@@ -1398,7 +1411,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                 index);
     }
 
-    private void send_param(String key, float value, short type, int count, int index) {
+    public void send_param(String key, float value, short type, int count, int index) {
 
         msg_param_value msg = new msg_param_value();
         msg.setParam_Id(key);
@@ -2209,9 +2222,10 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         public void processVelocities(int coordFrame) {
             double roll, pitch, throttle;
             if(coordFrame == MAV_FRAME_LOCAL_NED) {
-                double ne[] = Functions.getNorthEastDiff(-Math.toRadians(getCurrentYaw()), vx, vy);
-                roll = ne[0];
-                pitch = ne[1];
+                // Here we use a negative yaw, because we want to convert NE -> FR instead of FR -> NE
+                double forwardRight[] = Functions.getNorthEastDiff(-Math.toRadians(getCurrentYaw()), vx, vy);
+                roll = forwardRight[0];
+                pitch = forwardRight[1];
                 throttle = vz;
             } else {
                 roll = vx;
@@ -2237,22 +2251,29 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     public void startMotion(Motion motion) {
+        if(System.currentTimeMillis() < timerIgnoreMavLink) return;
+
         if(
             // TODO: Propose a better MAVLink mask to set velocities only. See: https://github.com/mavlink/mavlink/issues/1966
             motion.mask.ignorePosX && motion.mask.ignorePosY && motion.mask.ignorePosZ
             && (!motion.mask.ignoreVelX || !motion.mask.ignoreVelY || !motion.mask.ignoreVelZ || !motion.mask.ignoreYawRate)
         ) {
             motion.isVelocityCommand = true;
-            motion.velocityTicks = 4;
+            motion.velocityTicks = 4; // Min repetitions (every MOTION_PERIOD_MS) to make sure the motion command will be executed smoothly. New velocity commands may overwrite previous ones.
         }
 
+        setVirtualSticksEnabled(true);
+        setControlModes();
+
         this.motion = motion;
-        if (motionTimer == null) {
-            motionTask = new MotionTask();
-            motionTimer = new Timer();
-            motionTimer.schedule(motionTask, 100, MOTION_PERIOD_MS);
-        } else {
-            motionTask.detectionCounter = 0;
+        synchronized (this) {
+            if (motionTimer == null) {
+                motionTask = new MotionTask();
+                motionTimer = new Timer();
+                motionTimer.schedule(motionTask, 0, MOTION_PERIOD_MS);
+            } else {
+                motionTask.detectionCounter = 0;
+            }
         }
 
         /*
@@ -2264,10 +2285,12 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     public void cancelMotion() {
-        if(motionTimer != null) {
-            motionTimer.cancel();
-            motionTimer.purge();
-            motionTimer = null;
+        synchronized (this) {
+            if (motionTimer != null) {
+                motionTimer.cancel();
+                motionTimer.purge();
+                motionTimer = null;
+            }
         }
     }
 
@@ -2444,18 +2467,18 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         }
     }
 
-    void enableVirtualStickMode() {
+    void setVirtualSticksEnabled(boolean setEnabled) {
         mFlightController.getVirtualStickModeEnabled(new CommonCallbacks.CompletionCallbackWith<Boolean>() {
             @Override
-            public void onSuccess(Boolean enabled) {
-                if (!enabled) {
+            public void onSuccess(Boolean isEnabled) {
+                if (isEnabled != setEnabled) {
                     // After a manual mode change, we might loose the JOYSTICK mode...
                     if (djiFlightMode != FlightMode.JOYSTICK) {
-                        mFlightController.setVirtualStickModeEnabled(true, djiError -> {
+                        mFlightController.setVirtualStickModeEnabled(setEnabled, djiError -> {
                             if (djiError != null) {
                                 Log.e(TAG, "setVirtualStickModeEnabled() failed: " + djiError.toString());
                             } else {
-                                mFlightController.setVirtualStickAdvancedModeEnabled(true);
+                                mFlightController.setVirtualStickAdvancedModeEnabled(setEnabled);
                             }
                         });
                     }
@@ -2493,10 +2516,6 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             velLogCounter = 0;
             Log.i(TAG, "Velocities = roll: " + roll + ", pitch: " + pitch + ", throttle: " + throttle + ", yaw: " + yaw);
         }
-
-        // Just in case...
-        enableVirtualStickMode();
-        setControlModes();
 
         /* TODO: Reimplement using motion.mask
         if ((mask & 0b0000100000000000) == 0) {
