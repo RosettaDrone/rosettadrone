@@ -2,7 +2,8 @@
 
 This is the official and actively maintained RosettaDrone project.
 
-RosettaDrone is a MAVLink wrapper for the DJI SDK, which allows users to fly DJI drones using MAVLink-speaking ground control stations. In theory it should work with any MAVLink GCS.
+RosettaDrone is a framework for developing and testing software with DJI drones.
+It provides a MAVLink wrapper which allows users to control DJI drones using MAVLink-speaking ground control stations and offers tools and features for implementing and testing AI scripts.
 
 *** IMPORTANT SAFETY NOTE ***
 
@@ -12,6 +13,7 @@ When testing a new Rosetta version, test it first using the simulator.
 This Software is experimental and under constant development. By using this Software, you agree to assume all responsibility for eventual harm or damage.
 See "Known issues" below before use.
 
+OpenSource developers are welcome. If you use this Software, we expect you to get directly involved with the source code, read the issues section and, most important, contribute with pull requests.
 
 ## What's New
 
