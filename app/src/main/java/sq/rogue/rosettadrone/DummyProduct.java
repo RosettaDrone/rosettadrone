@@ -72,8 +72,9 @@ public class DummyProduct extends Aircraft {
     private double lat = homeLat;
     private double lng = homeLng;
     private float alt = 30;
-    private double yaw = 90;
+    private double yaw = 0;
     private boolean isFlying = true;
+    private long lastTime = 0;
 
     private static final String TAG = DummyProduct.class.getSimpleName();
     private static DummyProduct instance = null;
@@ -677,7 +678,13 @@ public class DummyProduct extends Aircraft {
 
         @Override
         public void sendVirtualStickFlightControlData(@NonNull FlightControlData flightControlData, @Nullable CommonCallbacks.CompletionCallback completionCallback) {
-            final double dT = DroneModel.MOTION_PERIOD_MS / 1000.0;
+            long time = System.currentTimeMillis();
+            double dt = (time - lastTime) / 1000.0;
+            lastTime = time;
+            if(dt > 0.1) { // TODO: Check DJI doc
+                // Timed out => ignore
+                return;
+            }
 
             double fwdVel = flightControlData.getRoll();
             double rightVel = flightControlData.getPitch();
@@ -688,10 +695,10 @@ public class DummyProduct extends Aircraft {
             double[] dLatLng = Functions.getLatLngDiff(lat, rad, fwdVel, rightVel);
 
             synchronized (this) { // Consistency
-                lat += dLatLng[0] * dT;
-                lng += dLatLng[1] * dT;
-                yaw += yawVel * dT;
-                alt += throttleVel * dT;
+                lat += dLatLng[0] * dt;
+                lng += dLatLng[1] * dt;
+                yaw += yawVel * dt;
+                alt += throttleVel * dt;
 
                 if (yaw > 180) {
                     yaw -= 360;
