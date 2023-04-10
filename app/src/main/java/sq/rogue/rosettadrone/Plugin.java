@@ -1,14 +1,23 @@
 package sq.rogue.rosettadrone;
 
 public abstract class Plugin {
-    protected abstract void init(PluginManager pluginManager);
+    protected PluginManager pluginManager;
+
+    protected void init(PluginManager pluginManager) {
+        this.pluginManager = pluginManager;
+    }
 
     /**
      * Video mode, resolution or codec changed.
      */
-    protected abstract void onVideoChange();
+    protected void onVideoChange() {
+    }
 
     protected boolean isEnabled() {
         return true;
+    }
+
+    public boolean onMenuItemClick(int itemId) {
+        return false;
     }
 }

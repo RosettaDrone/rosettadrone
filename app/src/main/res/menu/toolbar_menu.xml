@@ -19,10 +19,11 @@
 
     <item
         android:id="@+id/action_AI"
-        android:orderInCategory="502"
-        app:showAsAction="never"
         android:onClick="onMenuItemClick"
-        android:title="@string/AIsettings" />
+        android:orderInCategory="502"
+        android:title="@string/AIsettings"
+        android:visible="false"
+        app:showAsAction="never" />
 
     <item
         android:id="@+id/action_waypoint1"
@@ -32,10 +33,11 @@
         android:title="@string/options_map_new" />
     <item
         android:id="@+id/action_waypoint2"
-        android:orderInCategory="503"
-        app:showAsAction="never"
         android:onClick="onMenuItemClick"
-        android:title="@string/options_map" />
+        android:orderInCategory="503"
+        android:title="@string/options_map"
+        android:visible="false"
+        app:showAsAction="never" />
     <item
         android:id="@+id/action_clear_logs"
         android:orderInCategory="504"

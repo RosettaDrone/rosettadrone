@@ -19,9 +19,6 @@ import android.hardware.usb.UsbManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.media.Ringtone;
-import android.media.RingtoneManager;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
@@ -763,8 +760,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         mMavlinkReceiver = new MAVLinkReceiver(this, mModel);
 
-        pluginManager.init();
-
         loadMockParamFile();
 
         mDJIHandler = new Handler(Looper.getMainLooper());
@@ -826,20 +821,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         Button mBtnRTH = findViewById(R.id.btn_rth);
         mBtnRTH.setOnClickListener(v -> mModel.doGomeHome());
 
-        // Report button
-        Button mBtnRepport = findViewById(R.id.btn_Report);
-        mBtnRepport.setOnClickListener(v -> pluginManager.startPlugin("com.example.sendmail",1));
-
-        /*
-        StateListDrawable listDrawable = new StateListDrawable();
-        listDrawable.addState(new int[] {android.R.attr.state_pressed},  mBtnRepport.getBackground());
-        listDrawable.addState(new int[] {android.R.attr.defaultValue}, mBtnRepport.setBackground("@mipmap/track_report");
-        mBtnRepport.setBackground(listDrawable);
-        */
-
-        // AI button
-        Button mBtnAI = findViewById(R.id.btn_AI_start);
-        mBtnAI.setOnClickListener(v -> pluginManager.setAIMode());
+        pluginManager.init();
 
         // Click on SafeMode button (enable SafeMode)
         Handler mTimerHandler = new Handler(Looper.getMainLooper());
@@ -1326,13 +1308,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             case R.id.action_gui:
                 onClickGUI();
                 break;
-            case R.id.action_AI:
-                Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
-                Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), notification);
-                pluginManager.startActivity("com.example.remoteconfig4");
-                break;
             default:
-                return false;
+                return this.pluginManager.onMenuItemClick(item.getItemId());
         }
         return true;
     }
@@ -1637,6 +1614,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             mModel.setMaxHeight(Integer.parseInt(Objects.requireNonNull(prefs.getString("pref_drone_max_height", "500"))));
             FLAG_DRONE_MAX_HEIGHT_CHANGED = false;
         }
+
+        /* TODO: Move to AI9Tek plugin
         if(FLAG_DRONE_AI_IP_CHANGED) {
             mModel.setAiIP(prefs.getString("pref_ai_ip", "127.0.0.1"));
             FLAG_DRONE_AI_IP_CHANGED = false;
@@ -1650,6 +1629,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             mModel.setAIenable(prefs.getBoolean("pref_ai_telemetry_enabled", true));
             FLAG_DRONE_AI_ENABLED_CHANGED = false;
         }
+        */
 
         if (FLAG_DRONE_SMART_RTL_CHANGED) {
             mModel.setSmartRTLEnabled(prefs.getBoolean("pref_drone_smart_rtl", true));

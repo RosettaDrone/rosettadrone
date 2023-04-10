@@ -146,9 +146,9 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
     private int mThrottleSetting = 0;
     private int mLeftStickVertical = 0;
-    private int mLeftStickHorisontal = 0;
+    private int mLeftStickHorizontal = 0;
     private int mRightStickVertical = 0;
-    private int mRightStickHorisontal = 0;
+    private int mRightStickHorizontal = 0;
     private boolean mC1 = false;
     private boolean mC2 = false;
     private boolean mC3 = false;
@@ -210,7 +210,6 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     File destDir = new File(Environment.getExternalStorageDirectory().getPath() + "/DroneApp/");
     String m_directory;
 
-    private int mAIfunction_activation = 0;
     public boolean mAutonomy = false;   // Sends the MAV_MODE_FLAG_AUTO_ENABLED flag (autonomous mode). TODO: DEPRECATE: Use missionManager.isAutoMode()
     private boolean missionActive = false; // true if started, false if stopped or paused. TODO: DEPRECATE: This flag cannot be trusted, since it is not changed when a mission ends or is interrupted. Use: isMissionActive()
 
@@ -395,18 +394,6 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                 parent.logMessageDJI("Error setting RTL altitude " + djiError.getDescription());
             }
         });
-    }
-
-    // These are no long used as this is an internal process now, sending data to RemoteConfig...
-    void setAiIP(final String ip) {
-    }
-
-    void setAiPort(final int port) {
-    }
-
-    void setAIenable(final boolean enable) {
-        parent.mMavlinkReceiver.AIenabled = enable;
-        parent.pluginManager.setAIMode();
     }
 
     void setMaxHeight(final int height) {
@@ -624,9 +611,9 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
                 // Mavlink: 1000 to 2000 with 1500 = 1.5ms as center...
                 mLeftStickVertical = (int) (rcHardwareState.getLeftStick().getVerticalPosition() * 0.8) + 1500;
-                mLeftStickHorisontal = (int) (rcHardwareState.getLeftStick().getHorizontalPosition() * 0.8) + 1500;
+                mLeftStickHorizontal = (int) (rcHardwareState.getLeftStick().getHorizontalPosition() * 0.8) + 1500;
                 mRightStickVertical = (int) (rcHardwareState.getRightStick().getVerticalPosition() * 0.8) + 1500;
-                mRightStickHorisontal = (int) (rcHardwareState.getRightStick().getHorizontalPosition() * 0.8) + 1500;
+                mRightStickHorizontal = (int) (rcHardwareState.getRightStick().getHorizontalPosition() * 0.8) + 1500;
                 mC1 = Objects.requireNonNull(rcHardwareState.getC1Button()).isClicked();
                 mC2 = Objects.requireNonNull(rcHardwareState.getC2Button()).isClicked();
                 mC3 = Objects.requireNonNull(rcHardwareState.getC3Button()).isClicked();
@@ -1046,19 +1033,6 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         sendMessage(msg);
     }
 
-    public void setAIfunction(int ai) {
-        mAIfunction_activation = ai;
-    }
-
-    // Does not work, use RC ch 8...
-    void send_AI_Function(int num) {
-        msg_statustext msg = new msg_statustext();
-        String data = "Mgs: RosettaDrone: AI Fuction " + num + " True";
-        byte[] txt = data.getBytes();
-        msg.text = txt;
-        sendMessage(msg);
-    }
-
     void send_command_ack(int message_id, int result) {
         msg_command_ack msg = new msg_command_ack();
         msg.command = message_id;
@@ -1283,26 +1257,13 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     private void send_rc_channels() {
-        msg_rc_channels msg = new msg_rc_channels();
-        msg.rssi = (short) mUplinkQuality;
-        msg.chan1_raw = mLeftStickVertical;
-        msg.chan2_raw = mLeftStickHorisontal;
-        msg.chan3_raw = mRightStickVertical;
-        msg.chan4_raw = mRightStickHorisontal;
-        msg.chan5_raw = mC1 ? 1000 : 2000;
-        msg.chan6_raw = mC2 ? 1000 : 2000;
-        msg.chan7_raw = mC3 ? 1000 : 2000;
-
-        // Cancel all AI modes if stick is moved...
-        if ((mLeftStickVertical > 1550 || mLeftStickVertical < 1450) ||
-                (mLeftStickHorisontal > 1550 || mLeftStickHorisontal < 1450) ||
-                (mRightStickVertical > 1550 || mRightStickVertical < 1450) ||
-                (mRightStickHorisontal > 1550 || mRightStickHorisontal < 1450)) {
-            if (mAIfunction_activation != 0) {
-                parent.logMessageDJI("AI Mode Canceled...");
-                mAIfunction_activation = 0;
-            }
-
+        // Cancel motion tasks if stick is moved
+        if (
+            (mLeftStickVertical > 1550 || mLeftStickVertical < 1450) ||
+            (mLeftStickHorizontal > 1550 || mLeftStickHorizontal < 1450) ||
+            (mRightStickVertical > 1550 || mRightStickVertical < 1450) ||
+            (mRightStickHorizontal > 1550 || mRightStickHorizontal < 1450)
+        ) {
             mAutonomy = false;   // TODO:: This variable needs to be checked elseware in the code...
 
             int blockSeconds = 5;
@@ -1311,10 +1272,6 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             setVirtualSticksEnabled(false);
             timerIgnoreMavLink = System.currentTimeMillis() + blockSeconds * 1000;
         }
-
-        msg.chan8_raw = (mAIfunction_activation * 100) + 1000;
-        msg.chancount = 8;
-        sendMessage(msg);
     }
 
     private void send_vibration() {
@@ -2928,14 +2885,10 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         return new double[]{newlat, newlon};
     }
 
-
     // FTP and file related functions
     // TODO: Move to plugin or FTP class
     public void initMediaManager(List<String> address)
     {
-        parent.pluginManager.m_mailToAddress = address;
-        DJILog.e(TAG, "Addresses: "+address.toString());
-
         parent.logMessageDJI("Image retrival started...");
         switch_camera_mode = camera_mode.IDLE;
 
@@ -2995,52 +2948,52 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             return;
         }
 
-                mMediaManager = m_camera.getMediaManager();
-                if (mMediaManager != null) {
-                    parent.logMessageDJI(currentFileListState.name());
-                    if ((currentFileListState == MediaManager.FileListState.SYNCING) || (currentFileListState == MediaManager.FileListState.DELETING)) {
-                        DJILog.e(TAG, "Media Manager is busy.");
-                        parent.logMessageDJI("Media Manager is busy.");
-                    } else {
-                        mMediaManager.refreshFileListOfStorageLocation(SettingsDefinitions.StorageLocation.SDCARD, djiError -> {
-                            if (null == djiError) {
-                                //Reset data
-                                if (currentFileListState != MediaManager.FileListState.INCOMPLETE) {
-                                    mediaFileList.clear();
-                                }
-                                mediaFileList = mMediaManager.getSDCardFileListSnapshot();
-                                Collections.sort(mediaFileList, (lhs, rhs) -> {
-                                    if (lhs.getTimeCreated() < rhs.getTimeCreated()) {
-                                        return -1;
-                                    } else if (lhs.getTimeCreated() > rhs.getTimeCreated()) {
-                                        return 1;
-                                    }
-                                    return 0;
-                                });
-                                scheduler.resume(error -> {
-                                    if (error == null) {
-                                    }
-                                });
-
-                                if(numFiles != mediaFileList.size()){
-                                    numFiles = mediaFileList.size();
-                                }
-
-                                parent.logMessageDJI("Got Media Files: " + mediaFileList.size());
-                                for(int i=0; i<mediaFileList.size(); i++) {
-                                    MediaFile file = mediaFileList.get(i);
-                                    String fileName = file.getFileName();
-                                    parent.logMessageDJI("FileName on Drone: " + fileName);
-                                }
-                            } else {
-                                parent.logMessageDJI("Get Media File List Failed: " + djiError.getDescription());
+        mMediaManager = m_camera.getMediaManager();
+        if (mMediaManager != null) {
+            parent.logMessageDJI(currentFileListState.name());
+            if ((currentFileListState == MediaManager.FileListState.SYNCING) || (currentFileListState == MediaManager.FileListState.DELETING)) {
+                DJILog.e(TAG, "Media Manager is busy.");
+                parent.logMessageDJI("Media Manager is busy.");
+            } else {
+                mMediaManager.refreshFileListOfStorageLocation(SettingsDefinitions.StorageLocation.SDCARD, djiError -> {
+                    if (null == djiError) {
+                        //Reset data
+                        if (currentFileListState != MediaManager.FileListState.INCOMPLETE) {
+                            mediaFileList.clear();
+                        }
+                        mediaFileList = mMediaManager.getSDCardFileListSnapshot();
+                        Collections.sort(mediaFileList, (lhs, rhs) -> {
+                            if (lhs.getTimeCreated() < rhs.getTimeCreated()) {
+                                return -1;
+                            } else if (lhs.getTimeCreated() > rhs.getTimeCreated()) {
+                                return 1;
+                            }
+                            return 0;
+                        });
+                        scheduler.resume(error -> {
+                            if (error == null) {
                             }
                         });
+
+                        if(numFiles != mediaFileList.size()){
+                            numFiles = mediaFileList.size();
+                        }
+
+                        parent.logMessageDJI("Got Media Files: " + mediaFileList.size());
+                        for(int i=0; i<mediaFileList.size(); i++) {
+                            MediaFile file = mediaFileList.get(i);
+                            String fileName = file.getFileName();
+                            parent.logMessageDJI("FileName on Drone: " + fileName);
+                        }
+                    } else {
+                        parent.logMessageDJI("Get Media File List Failed: " + djiError.getDescription());
                     }
-                } else {
-                    parent.logMessageDJI("mMediaManager == null");
-                }
+                });
             }
+        } else {
+            parent.logMessageDJI("mMediaManager == null");
+        }
+    }
 
     private MediaManager.FileListStateListener updateFileListStateListener = new MediaManager.FileListStateListener() {
         @Override
@@ -3048,22 +3001,16 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             currentFileListState = state;
             parent.logMessageDJI("Changed state to " + currentFileListState.name());
             if(currentFileListState == MediaManager.FileListState.UP_TO_DATE){
-                if(parent.pluginManager.m_mailToAddress != null) {
+                // if(parent.pluginManager.m_mailToAddress != null) {
                     parent.logMessageDJI("getFile");
                     if (numFiles > 0) {
                         downloadFileByIndex(numFiles - 1);
                     }
-                }
+                // }
             }
         }
     };
-    public void downloadFileByName(final String name) {
-        for(int i=0; i<mediaFileList.size(); i++) {
-            if (mediaFileList.get(i).getFileName() == name) {
-                downloadFileByIndex(i);
-            }
-        }
-    }
+
 
     public boolean downloadFileByIndex(final int index){
         if ((mediaFileList.get(index).getMediaType() == MediaFile.MediaType.PANORAMA)
@@ -3109,7 +3056,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                 RDApplication.getCameraInstance().setMode(SettingsDefinitions.CameraMode.SHOOT_PHOTO, error -> {
                     if (error == null) {
                         parent.logMessageDJI("Set camera to SHOOT_PHOTO success");
-                        parent.pluginManager.sendmail(last_downloaded_file);
+                        // TODO: parent.pluginManager.sendmail(last_downloaded_file);
                         NotificationHandler.notifySnackbar(parent.findViewById(R.id.snack),R.string.release, LENGTH_LONG);
                     } else {
                         parent.logMessageDJI("Set camera to SHOOT_PHOTO failed");
@@ -3122,7 +3069,11 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         return true;
     }
 
-    void onFileListStateChange(MediaManager.FileListState state){
-        parent.logMessageDJI( "Files changed?");
+    public void downloadFileByName(final String name) {
+        for(int i=0; i<mediaFileList.size(); i++) {
+            if (mediaFileList.get(i).getFileName() == name) {
+                downloadFileByIndex(i);
+            }
+        }
     }
 }

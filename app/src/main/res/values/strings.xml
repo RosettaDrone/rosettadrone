@@ -152,7 +152,6 @@
     <string name="ai_uploaded_active">AI mission sent to AI module!</string>
     <string name="release">Report Sent!</string>
 
-
     <!-- Preference Menus -->
     <string name="settings">Settings</string>
     <string name="AIsettings">AI Settings</string>
@@ -168,8 +167,8 @@
     <string name="options_clear_log">Clear Logs</string>
     <string name="options_download_log">Download Logs</string>
     <string name="options_help">Help &amp; feedback</string>
-    <string name="options_map">Waypoint v1</string>
-    <string name="options_map_new">Waypoint v2</string>
+    <string name="options_map">Waypoints (old)</string>
+    <string name="options_map_new">Waypoints</string>
     <string name="options_gui">Switch Logging</string>
 
     <!-- Error Messages -->
