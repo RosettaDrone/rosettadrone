@@ -183,7 +183,8 @@ public class MAVLinkReceiver {
             case MAVLINK_MSG_ID_COMMAND_LONG:
                 msg_command_long msg_cmd = (msg_command_long) msg;
 
-                if (mModel.getSystemId() != msg_cmd.target_system) {
+                // A value of 0 means that the command should be executed by any available system
+                if (msg_cmd.target_system != 0 && msg_cmd.target_system != mModel.getSystemId()) {
                     return;
                 }
 
@@ -293,7 +294,7 @@ public class MAVLinkReceiver {
                             mModel.send_command_ack(MAV_CMD_CONDITION_YAW, MAV_RESULT.MAV_RESULT_UNSUPPORTED);
                         }
                         break;
-
+                    // TODO: Implement MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW
                     case MAV_CMD_DO_SET_SERVO:
                         mModel.doSetGimbal(msg_cmd.param1, msg_cmd.param2);
                         break;
