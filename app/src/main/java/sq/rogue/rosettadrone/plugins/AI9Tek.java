@@ -1,6 +1,6 @@
 /**
- * TODO: Reenable and test custom code (if it will be used in the future)
- * TODO: Maybe distribute into different plugins.
+ * TODO: Reenable and test custom code if necessary.
+ * TODO: Maybe distribute into multiple plugins.
  */
 package sq.rogue.rosettadrone.plugins;
 
@@ -13,6 +13,9 @@ import android.media.RingtoneManager;
 import android.net.Uri;
 import android.util.Log;
 import android.widget.Button;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AlertDialog;
 
 import com.MAVLink.common.msg_rc_channels;
 import com.MAVLink.common.msg_statustext;
@@ -23,6 +26,8 @@ import java.util.Objects;
 
 import dji.common.camera.SettingsDefinitions;
 import dji.common.error.DJIError;
+import dji.common.mission.waypoint.Waypoint;
+import dji.common.mission.waypoint.WaypointMission;
 import dji.log.DJILog;
 import dji.sdk.media.DownloadListener;
 import dji.sdk.media.MediaFile;
@@ -268,4 +273,52 @@ public class AI9Tek extends Plugin {
         }
     }
     */
+
+    void onMapReady() {
+        /* TODO: Reimplement
+        aMap.setOnMapClickListener((point)-> {
+            Log.d(TAG, "Goto: " + point.toString());
+
+            AlertDialog.Builder alertDialog2 = new AlertDialog.Builder(this);
+            alertDialog2.setIcon(R.mipmap.track_right);
+            alertDialog2.setTitle("AI Mavlink/Python function selector!");
+            alertDialog2.setMessage("Clicked");
+            alertDialog2.setNegativeButton("Cancel",
+                    (dialog, which) -> {
+                        dialog.cancel();
+                    });
+            alertDialog2.setNeutralButton("Add to Waypoint list",
+                    (dialog, which) -> {
+                        markWaypoint(point, true);
+                        Waypoint mWaypoint = new Waypoint(point.latitude, point.longitude, mModel.m_alt);
+                        //Add Waypoints to Waypoint arraylist;
+                        if (waypointMissionBuilder != null) {
+                            waypointList.add(mWaypoint);
+                            waypointMissionBuilder.waypointList(waypointList).waypointCount(waypointList.size());
+                        } else {
+                            waypointMissionBuilder = new WaypointMission.Builder();
+                            waypointList.add(mWaypoint);
+                            waypointMissionBuilder.waypointList(waypointList).waypointCount(waypointList.size());
+                        }
+                        dialog.cancel();
+                    });
+            alertDialog2.setPositiveButton("Accept",
+                    (dialog, which) -> {
+                        // If we are airborn...
+                        if (mModel.m_alt > -5.0) {
+                            markWaypoint(point, false);
+                            mModel.flyTo(point.latitude, point.longitude, mModel.m_alt);
+                            dialog.cancel();
+                        } else {
+                            Log.d(TAG, "Can't Add Waypoint");
+                            Toast.makeText(getApplicationContext(), "Can't goto position!", Toast.LENGTH_LONG).show();
+                        }
+                    });
+            ///
+            this.runOnUiThread(() -> {
+                alertDialog2.show();
+            });
+        });
+        */
+    }
 }

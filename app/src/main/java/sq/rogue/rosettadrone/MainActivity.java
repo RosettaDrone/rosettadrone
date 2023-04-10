@@ -483,50 +483,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         LatLng marker = new LatLng(m_host_lat, m_host_lon);
         aMap.moveCamera(CameraUpdateFactory.newLatLngZoom(marker, 14F));
 
-        aMap.setOnMapClickListener((point)-> {
-            Log.d(TAG, "Goto: " + point.toString());
-
-            AlertDialog.Builder alertDialog2 = new AlertDialog.Builder(this);
-            alertDialog2.setIcon(R.mipmap.track_right);
-            alertDialog2.setTitle("AI Mavlink/Python function selector!");
-            alertDialog2.setMessage("Clicked");
-            alertDialog2.setNegativeButton("Cancel",
-                    (dialog, which) -> {
-                        dialog.cancel();
-                    });
-            alertDialog2.setNeutralButton("Add to Waypoint list",
-                    (dialog, which) -> {
-                        markWaypoint(point, true);
-                        Waypoint mWaypoint = new Waypoint(point.latitude, point.longitude, mModel.m_alt);
-                        //Add Waypoints to Waypoint arraylist;
-                        if (waypointMissionBuilder != null) {
-                            waypointList.add(mWaypoint);
-                            waypointMissionBuilder.waypointList(waypointList).waypointCount(waypointList.size());
-                        } else {
-                            waypointMissionBuilder = new WaypointMission.Builder();
-                            waypointList.add(mWaypoint);
-                            waypointMissionBuilder.waypointList(waypointList).waypointCount(waypointList.size());
-                        }
-                        dialog.cancel();
-                    });
-            alertDialog2.setPositiveButton("Accept",
-                    (dialog, which) -> {
-                        // If we are airborn...
-                        if (mModel.m_alt > -5.0) {
-                            markWaypoint(point, false);
-                            mModel.flyTo(point.latitude, point.longitude, mModel.m_alt);
-                            dialog.cancel();
-                        } else {
-                            Log.d(TAG, "Can't Add Waypoint");
-                            Toast.makeText(getApplicationContext(), "Can't goto position!", Toast.LENGTH_LONG).show();
-                        }
-                    });
-            ///
-            this.runOnUiThread(() -> {
-                alertDialog2.show();
-            });
-        });
-
         updateDroneLocation();
     }
 
