@@ -1083,6 +1083,6 @@ public class MAVLinkReceiver {
         double lat2 = wp2.coordinate.getLatitude();
         float el2 =  0; //wp2.altitude;
 
-        return mModel.getRangeBetweenWaypoints_m(lat1,lon1,el1,lat2,lon2,el2);
+        return mModel.getMetersBetweenWaypoints(lat1,lon1,el1,lat2,lon2,el2);
     }
 }

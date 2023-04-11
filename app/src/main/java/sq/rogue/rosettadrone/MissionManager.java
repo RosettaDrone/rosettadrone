@@ -316,9 +316,10 @@ public class MissionManager {
 	}
 
 	void flyTo(double targetLatitude, double targetLongitude, double targetAltitude, double targetSpeed) {
-		droneModel.flyTo(targetLatitude, targetLongitude, targetAltitude);
-		droneModel.motion.yawDirection = lookAtPOI ? YawDirection.POI : YawDirection.DEST;
-		droneModel.motion.speed = targetSpeed;
+		DroneModel.Motion motion = droneModel.newMotion(targetLatitude, targetLongitude, targetAltitude);
+		motion.yawDirection = lookAtPOI ? YawDirection.POI : YawDirection.DEST;
+		motion.speed = targetSpeed;
+		droneModel.startMotion(motion);
 	}
 
 	float getAbsAltitude(msg_mission_item_int m) {

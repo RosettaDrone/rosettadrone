@@ -26,7 +26,6 @@ import com.MAVLink.common.msg_mission_request_list;
 import com.MAVLink.common.msg_param_value;
 import com.MAVLink.common.msg_power_status;
 import com.MAVLink.common.msg_radio_status;
-import com.MAVLink.common.msg_rc_channels;
 import com.MAVLink.common.msg_statustext;
 import com.MAVLink.common.msg_sys_status;
 import com.MAVLink.common.msg_vfr_hud;
@@ -129,7 +128,7 @@ enum YawDirection {
 }
 
 public class DroneModel implements CommonCallbacks.CompletionCallback {
-    public static final int MOTION_PERIOD_MS = 50;
+    public static final int MOTION_PERIOD_MS = 50; // DJI_DOC: "Virtual stick commands should be sent to the aircraft between 5 Hz and 25 Hz" => MOTION_PERIOD_MS should be between 200 and 40 [ms]
 
     private boolean isSimulator;
     private static final int NOT_USING_GCS_COMMANDED_MODE = -1;
@@ -2197,6 +2196,10 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         return new Motion(command, mavLinkMask);
     }
 
+    public Motion newMotion(double lat, double lng, double alt) {
+        return new Motion(lat, lng, alt);
+    }
+
     public void flyTo(double lat, double lng, double alt) {
         motion = new Motion(lat, lng, alt);
         motion.yawDirection = YawDirection.DEST;
@@ -2265,6 +2268,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         private final int requiredDetections = 7;
         private final double detectionDistance = 0.2;
         private final double detectionYawError = 1.25;
+        private final double detectionAltError = 0.2;
 
         @Override
         public void run() {
@@ -2297,7 +2301,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             if(motion.mask.ignorePosZ) destZ = alt;
 
             // Distance to destination
-            double dist = getRangeBetweenWaypoints_m(destX, destY, destZ, lat, lng, alt);
+            double dist = getMetersBetweenWaypoints(destX, destY, destZ, lat, lng, alt);
 
             // Look at
             boolean lookAt = motion.yawDirection == YawDirection.DEST || motion.yawDirection == YawDirection.POI;
@@ -2311,7 +2315,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                     lookAtLat = missionManager.poiLat;
                     lookAtLng = missionManager.poiLng;
                 }
-                lookAtDistance = getRangeBetweenWaypoints_m(lookAtLat, lookAtLng, 0, lat, lng,0);
+                lookAtDistance = getMetersBetweenWaypoints(lookAtLat, lookAtLng, 0, lat, lng,0);
             }
 
             // Calculate yaw
@@ -2339,38 +2343,50 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                 }
 
                 yawError = rotation(targetYaw, yaw);
-
                 Log.i(TAG, "YAW - target: " + targetYaw + ", yaw: " + yaw + ", err: " + yawError);
             }
 
             // Check if we reached destination point
-            boolean onDestination = false;
-            if (dist < detectionDistance && Math.abs(yawError) < detectionYawError) {
+            boolean lock = false;
+            if (dist < detectionDistance) {
+                if(Math.abs(yawError) < detectionYawError) {
+                    if(Math.abs(alt - destZ) < detectionAltError) {
+                        lock = true;
+                    } else {
+                        Log.d(TAG, "Destination = alt error: " + Math.abs(alt - destZ));
+                    }
+                } else {
+                    Log.d(TAG, "Destination = yaw error: " + Math.abs(yawError));
+                }
+            } else {
+                Log.d(TAG, "Destination = distance error: " + dist);
+            }
+
+            if(lock) {
                 if (++detectionCounter > requiredDetections) {
-                    onDestination = true;
+                    parent.logMessageDJI("Motion finished");
+                    cancelMotion();
+                    return;
                 }
             } else {
                 detectionCounter = 0;
-            }
-
-            if(onDestination) {
-                parent.logMessageDJI("Motion finished");
-                cancelMotion();
-                return;
             }
 
             if(useMissionManager) {
                 missionManager.takePhotos();
             }
 
+            // Navigation algorithm that computes the distance and direction to a target destination point,
+            // as well as the deviation of the current position from the ideal position on a straight line to the target.
+
             // Find the bearing... return 0-360 deg.
             double brng = getBearingBetweenWaypoints(destX, destY, lat, lng);
 
             // The direct distance to the destination... return distance in meters...
-            double hypotenuse = getRangeBetweenWaypoints_m(destX, destY, 0, lat, lng, 0);
+            double hypotenuse = getMetersBetweenWaypoints(destX, destY, 0, lat, lng, 0);
             double idealPos[] = get_location_intermediet(destX, destY, hypotenuse, brng - 180);
             // At these two positions is at the same distance from target, the error must be the sideways error....
-            double offset = getRangeBetweenWaypoints_m(idealPos[0], idealPos[1], 0, lat, lng, 0);
+            double offset = getMetersBetweenWaypoints(idealPos[0], idealPos[1], 0, lat, lng, 0);
             double pol = getBearingBetweenWaypoints(idealPos[0], idealPos[1], lat, lng);
             double diff = rotation(brng, pol);
             if (diff > 0) {
@@ -2419,52 +2435,21 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
             double forwardVel = Math.cos(Math.toRadians(direction)) * fwmotion - Math.sin(Math.toRadians(direction)) * rightmotion;
             double rightVel = Math.sin(Math.toRadians(direction)) * fwmotion + Math.cos(Math.toRadians(direction)) * rightmotion;
-
             setVelocities(forwardVel, rightVel, upVel, yawVel);
         }
     }
 
     void setVirtualSticksEnabled(boolean setEnabled) {
-        if(true) {
-            // TODO: NOT TESTED:
-            mFlightController.setVirtualStickModeEnabled(setEnabled, djiError -> {
-                if (djiError != null) {
-                    Log.e(TAG, "setVirtualStickModeEnabled() failed: " + djiError.toString());
-                } else {
-                    Log.i(TAG, "setVirtualStickModeEnabled() succeded");
-                    if (setEnabled) {
-                        mFlightController.setVirtualStickAdvancedModeEnabled(setEnabled);
-                    }
+        mFlightController.setVirtualStickModeEnabled(setEnabled, djiError -> {
+            if (djiError != null) {
+                Log.e(TAG, "setVirtualStickModeEnabled() failed: " + djiError.toString());
+            } else {
+                Log.i(TAG, "setVirtualStickModeEnabled() succeded");
+                if (setEnabled) {
+                    mFlightController.setVirtualStickAdvancedModeEnabled(setEnabled);
                 }
-            });
-
-        } else {
-            // TODO: Simplify this code
-            mFlightController.getVirtualStickModeEnabled(new CommonCallbacks.CompletionCallbackWith<Boolean>() {
-                @Override
-                public void onSuccess(Boolean isEnabled) {
-                    if (isEnabled != setEnabled) {
-                        // After a manual mode change, we might loose the JOYSTICK mode...
-                        if (!setEnabled || djiFlightMode != FlightMode.JOYSTICK) {
-                            mFlightController.setVirtualStickModeEnabled(setEnabled, djiError -> {
-                                if (djiError != null) {
-                                    Log.e(TAG, "setVirtualStickModeEnabled() failed: " + djiError.toString());
-                                } else {
-                                    if (setEnabled) {
-                                        mFlightController.setVirtualStickAdvancedModeEnabled(setEnabled);
-                                    }
-                                }
-                            });
-                        }
-                    }
-                }
-
-                @Override
-                public void onFailure(DJIError error) {
-                    Log.e(TAG, "enableVirtualStickMode(): getVirtualStickModeEnabled failed");
-                }
-            });
-        }
+            }
+        });
     }
 
     boolean isForbiddenSwitchMode() {
@@ -2478,9 +2463,9 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     void setControlModes() {
-        mFlightController.setRollPitchControlMode(RollPitchControlMode.VELOCITY);
-        mFlightController.setYawControlMode(YawControlMode.ANGULAR_VELOCITY);
-        mFlightController.setVerticalControlMode(VerticalControlMode.VELOCITY);
+        mFlightController.setRollPitchControlMode(RollPitchControlMode.VELOCITY); // roll, pitch
+        mFlightController.setVerticalControlMode(VerticalControlMode.VELOCITY); // alt
+        mFlightController.setYawControlMode(YawControlMode.ANGULAR_VELOCITY);   // yaw
     }
 
     int velLogCounter = 0;
@@ -2489,7 +2474,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
         if(velLogCounter++ >= 1000 / MOTION_PERIOD_MS) {
             velLogCounter = 0;
-            Log.i(TAG, "Velocities = roll: " + roll + ", pitch: " + pitch + ", throttle: " + throttle + ", yaw: " + yaw);
+            Log.i(TAG, "Velocities = fwd: " + roll + ", right: " + pitch + ", up: " + throttle + ", yaw: " + yaw);
         }
 
         /* TODO: Reimplement using motion.mask
@@ -2823,6 +2808,8 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     /**
+     * Calculates the bearing between two geographical coordinates represented by latitude and longitude values.
+     * The bearing is the direction from the starting point to the destination point, expressed in degrees clockwise from north.
      * @param lat2
      * @param lon2
      * @param lat1
@@ -2842,17 +2829,20 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         return z;
     }
 
-    double getRangeBetweenWaypoints_m(double lat1, double lon1, double el1, double lat2, double lon2, double el2) {
-        double latDistance = Math.toRadians(lat2 - lat1);
-        double lonDistance = Math.toRadians(lon2 - lon1);
-        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
-                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
-                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+    /**
+     * The function uses the haversine formula to calculate the great-circle distance between the two points. The calculation takes into account the curvature of the Earth's surface. The function also calculates the difference in elevation between the two points, and combines it with the distance to calculate the range between the two points.
+     * @return distance between two waypoints in meters
+     */
+    double getMetersBetweenWaypoints(double lat1, double lon1, double el1, double lat2, double lon2, double el2) {
+        double latDistance = Math.toRadians(lat2 - lat1); // The difference in latitude between the two waypoints in radians
+        double lonDistance = Math.toRadians(lon2 - lon1); // The difference in longitude between the two waypoints in radians
+        double s1 = Math.sin(latDistance / 2);
+        double s2 = Math.sin(lonDistance / 2);
+        double a = s1 * s1 + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) * s2 * s2;
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         double distance = EARTH_RADIUS * c; // convert to meters
         double height = el1 - el2;
-        distance = Math.pow(distance, 2) + Math.pow(height, 2);
-        return Math.sqrt(distance);
+        return Math.sqrt(distance * distance + height * height);
     }
 
     /**
@@ -2868,6 +2858,15 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         return sign;
     }
 
+    /**
+     * Calculate the intermediate position on the Earth's surface based on a starting position and a distance and direction of travel.
+     * This is the ideal position on a straight line between the current position and the destination point, assuming that the UAV can fly directly towards the target.
+     * @param lat starting latitude in decimal degrees
+     * @param lon starting longitude in decimal degrees
+     * @param dist dist representing the distance in meters
+     * @param yaw direction of travel in degrees
+     * @return
+     */
     private double[] get_location_intermediet(double lat, double lon, double dist, double yaw) {
 
         double ro = Math.toRadians(yaw);
@@ -2886,7 +2885,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     // FTP and file related functions
-    // TODO: Move to plugin or FTP class
+    // TODO: Move to a FTP plugin?
     public void initMediaManager(List<String> address)
     {
         parent.logMessageDJI("Image retrival started...");
