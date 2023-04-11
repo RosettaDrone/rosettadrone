@@ -58,7 +58,6 @@ public class RawVideoStreamer extends Plugin implements DJICodecManager.YuvDataC
             int offset = 0;
             while (!stop) {
                 try {
-                    Log.d("TestSender", "TestSender: " + this);
                     int w = 1280;
                     int h = 720;
 
@@ -154,9 +153,11 @@ public class RawVideoStreamer extends Plugin implements DJICodecManager.YuvDataC
             pluginManager.mainActivity.mCodecManager.enabledYuvData(false);
         }
 
-        try {
-            socket.close();
-        } catch (IOException e) {
+        if(socket != null) {
+            try {
+                socket.close();
+            } catch (IOException e) {
+            }
         }
     }
 
