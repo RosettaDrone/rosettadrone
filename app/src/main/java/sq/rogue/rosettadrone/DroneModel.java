@@ -2188,6 +2188,13 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                 pitch = vy;
                 throttle = vz;
             }
+
+            // TODO: Or should we ignore vx, vy, vz ?
+            if(mask.ignoreVelX) roll = 0;
+            if(mask.ignoreVelY) pitch = 0;
+            if(mask.ignoreVelZ) throttle = 0;
+            if(mask.ignoreYawRate) yawRate = 0;
+
             setVelocities(roll, pitch, throttle, yawRate);
         }
     }
@@ -2268,7 +2275,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         private final int requiredDetections = 7;
         private final double detectionDistance = 0.2;
         private final double detectionYawError = 1.25;
-        private final double detectionAltError = 0.2;
+        private final double detectionAltError = 0.1;
 
         @Override
         public void run() {
@@ -2433,8 +2440,11 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
             double yawVel = miniPIDHeading.getOutput(-yawError, 0);
 
+            // fwmotion and rightmotion are in the direction of the target destination
+            // while forwardVel and rightVel are in the direction to the yaw (drone's heading)
             double forwardVel = Math.cos(Math.toRadians(direction)) * fwmotion - Math.sin(Math.toRadians(direction)) * rightmotion;
             double rightVel = Math.sin(Math.toRadians(direction)) * fwmotion + Math.cos(Math.toRadians(direction)) * rightmotion;
+
             setVelocities(forwardVel, rightVel, upVel, yawVel);
         }
     }
@@ -2472,25 +2482,10 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     void setVelocities(double roll, double pitch, double throttle, double yaw) {
         if(isForbiddenSwitchMode()) return;
 
-        if(velLogCounter++ >= 1000 / MOTION_PERIOD_MS) {
+        if(velLogCounter++ >= 1000 / MOTION_PERIOD_MS / 4) {
             velLogCounter = 0;
             Log.i(TAG, "Velocities = fwd: " + roll + ", right: " + pitch + ", up: " + throttle + ", yaw: " + yaw);
         }
-
-        /* TODO: Reimplement using motion.mask
-        if ((mask & 0b0000100000000000) == 0) {
-            mYaw = yaw;
-        }
-        if ((mask & 0b0000000000001000) == 0) {
-            mPitch = y;
-        }
-        if ((mask & 0b0000000000010000) == 0) {
-            mRoll = x;
-        }
-        if ((mask & 0b0000000000100000) == 0) {
-            mThrottle = z;
-        }
-        */
 
         mFlightController.sendVirtualStickFlightControlData(new FlightControlData((float)pitch, (float)roll, (float)yaw, (float)throttle), djiError -> {
             if (djiError != null) Log.e(TAG, "SendVelocityDataTask Error: " + djiError.toString());
