@@ -11,6 +11,7 @@
 package sq.rogue.rosettadrone.plugins;
 
 import android.media.MediaFormat;
+import android.util.Log;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -22,6 +23,7 @@ import java.nio.ByteOrder;
 import dji.sdk.codec.DJICodecManager;
 import sq.rogue.rosettadrone.Plugin;
 import sq.rogue.rosettadrone.PluginManager;
+import sq.rogue.rosettadrone.RDApplication;
 
 public class RawVideoStreamer extends Plugin implements DJICodecManager.YuvDataCallback {
     private static final boolean TEST = false; // Send a testing stream
@@ -30,6 +32,7 @@ public class RawVideoStreamer extends Plugin implements DJICodecManager.YuvDataC
     private final int fps = 15; // Must be a divisor of 30 (eg. 1, 3, 5, 6, 10, 15, 30)
     Socket socket;
     OutputStream outputStream;
+    TestSender testSender;
 
     public void init(PluginManager pluginManager) {
         this.pluginManager = pluginManager;
@@ -48,12 +51,14 @@ public class RawVideoStreamer extends Plugin implements DJICodecManager.YuvDataC
 
     public class TestSender extends Thread {
         public RawVideoStreamer streamer;
+        public boolean stop = false;
 
-            @Override
-            public void run() {
+        @Override
+        public void run() {
             int offset = 0;
-            for(;;) {
+            while (!stop) {
                 try {
+                    Log.d("TestSender", "TestSender: " + this);
                     int w = 1280;
                     int h = 720;
 
@@ -67,6 +72,8 @@ public class RawVideoStreamer extends Plugin implements DJICodecManager.YuvDataC
 
                     ByteBuffer buffer = ByteBuffer.wrap(bytes);
                     streamer.sendYuvData(null, buffer, bufferSize, w, h);
+
+                    Thread.sleep(1000 / fps);
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -130,13 +137,26 @@ public class RawVideoStreamer extends Plugin implements DJICodecManager.YuvDataC
     }
 
     public void onVideoChange() {
-        if(TEST) {
-            TestSender sender = new TestSender();
-            sender.streamer = this;
-            sender.start();
+        if(TEST || RDApplication.isTestMode) {
+            testSender = new TestSender();
+            testSender.streamer = this;
+            testSender.start();
         } else {
-        pluginManager.mainActivity.mCodecManager.enabledYuvData(true);
-        pluginManager.mainActivity.mCodecManager.setYuvDataCallback(this);
+            pluginManager.mainActivity.mCodecManager.enabledYuvData(true);
+            pluginManager.mainActivity.mCodecManager.setYuvDataCallback(this);
+        }
+    }
+
+    public void stop() {
+        if(TEST || RDApplication.isTestMode) {
+            testSender.stop = true;
+        } else {
+            pluginManager.mainActivity.mCodecManager.enabledYuvData(false);
+        }
+
+        try {
+            socket.close();
+        } catch (IOException e) {
         }
     }
 

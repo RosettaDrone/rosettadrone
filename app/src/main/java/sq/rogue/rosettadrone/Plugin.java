@@ -20,4 +20,7 @@ public abstract class Plugin {
     public boolean onMenuItemClick(int itemId) {
         return false;
     }
+
+    public void stop() {
+    }
 }

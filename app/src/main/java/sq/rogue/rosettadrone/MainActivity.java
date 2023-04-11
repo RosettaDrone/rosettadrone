@@ -456,6 +456,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             mIsBound = false;
         }
 
+        pluginManager.stop();
+
         //Intent intent = getIntent();
         finish();
         super.onDestroy();

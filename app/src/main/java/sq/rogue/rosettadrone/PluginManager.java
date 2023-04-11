@@ -46,6 +46,12 @@ public class PluginManager {
         }
     }
 
+    public void stop() {
+        for (Plugin plugin : plugins) {
+            plugin.stop();
+        }
+    }
+
     public void onVideoChange() {
         for (Plugin plugin : plugins) {
             plugin.onVideoChange();
