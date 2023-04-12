@@ -2459,7 +2459,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             double forwardVel = Math.cos(Math.toRadians(direction)) * fwmotion - Math.sin(Math.toRadians(direction)) * rightmotion;
             double rightVel = Math.sin(Math.toRadians(direction)) * fwmotion + Math.cos(Math.toRadians(direction)) * rightmotion;
 
-            Log.i(TAG, "processFlyTo = fm: " + fwmotion + " ; rm: " + rightmotion + " ; um: " + (destZ - alt));
+            //Log.i(TAG, "processFlyTo = fm: " + fwmotion + " ; rm: " + rightmotion + " ; um: " + (destZ - alt));
 
             setVelocities(forwardVel, rightVel, upVel, yawVel);
         }
@@ -2498,10 +2498,10 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     void setVelocities(double roll, double pitch, double throttle, double yaw) {
         if(isForbiddenSwitchMode()) return;
 
-        //if(velLogCounter++ >= 1000 / MOTION_PERIOD_MS / 4) {
+        if(velLogCounter++ >= 1000 / MOTION_PERIOD_MS) { // 1 log per second
             velLogCounter = 0;
             Log.i(TAG, "setVelocities = fwd: " + roll + " ; right: " + pitch + " ; up: " + throttle + " ; yaw: " + yaw);
-        //}
+        }
 
         mFlightController.sendVirtualStickFlightControlData(new FlightControlData((float)pitch, (float)roll, (float)yaw, (float)throttle), djiError -> {
             if (djiError != null) Log.e(TAG, "SendVelocityDataTask Error: " + djiError.toString());
