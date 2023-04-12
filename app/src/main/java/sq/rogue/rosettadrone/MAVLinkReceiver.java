@@ -227,9 +227,11 @@ public class MAVLinkReceiver {
                         break;
 
                     case MAV_CMD_NAV_RETURN_TO_LAUNCH:
+                        // MAVSDK uses MAVLINK_MSG_ID_SET_MODE instead
                         Log.d(TAG, "MAV_CMD_NAV_RETURN_TO_LAUNCH...");
                         sendResponse(MAV_CMD_NAV_RETURN_TO_LAUNCH);
-                        mModel.doGomeHome();
+                        //mModel.doGomeHome();
+                        mModel.doReturnToLaunch();
                         break;
 
                     case MAV_CMD_GET_HOME_POSITION:
@@ -616,7 +618,8 @@ public class MAVLinkReceiver {
 
         } else if (flightMode == ArduCopterFlightModes.RTL) {
             mModel.cancelAllTasks();
-            mModel.doGomeHome();
+            //mModel.doGomeHome();
+            mModel.doReturnToLaunch();
 
         } else if (flightMode == ArduCopterFlightModes.LAND) {
             mModel.cancelAllTasks();

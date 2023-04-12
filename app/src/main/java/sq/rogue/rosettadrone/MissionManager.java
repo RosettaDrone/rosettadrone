@@ -176,7 +176,7 @@ public class MissionManager {
 
 					case MAV_CMD.MAV_CMD_NAV_RETURN_TO_LAUNCH:
 						// droneModel.do_go_home();
-						flyTo(droneModel.takeOffLocation[0], droneModel.takeOffLocation[1], droneModel.getGoHomeHeight());
+						droneModel.doReturnToLaunch();
 						waitReachLocation();
 						break;
 

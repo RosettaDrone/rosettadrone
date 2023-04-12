@@ -129,6 +129,7 @@ enum YawDirection {
 
 public class DroneModel implements CommonCallbacks.CompletionCallback {
     public static final int MOTION_PERIOD_MS = 50; // DJI_DOC: "Virtual stick commands should be sent to the aircraft between 5 Hz and 25 Hz" => MOTION_PERIOD_MS should be between 200 and 40 [ms]
+    public static final double MIN_HEIGHT_RTL = 20; // If altitude < MIN_HEIGHT_RTL => ascend before RTL
 
     private boolean isSimulator;
     private static final int NOT_USING_GCS_COMMANDED_MODE = -1;
@@ -266,10 +267,11 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         // PID for position control...
 
         // TODO: Finetune PID values
-        miniPIDFwd = new MiniPID(0.35, 0.0001, 4.0);
-        miniPIDSide = new MiniPID(0.35, 0.0001, 4.0);
-        miniPIDAlti = new MiniPID(0.35, 0.0001, 4.0);
-        miniPIDHeading = new MiniPID(1.0, 0.00001, 2.0);
+        // See: https://github.com/RosettaDrone/rosettadrone/issues/155
+        miniPIDFwd = new MiniPID(0.35, 0, 0);
+        miniPIDSide = new MiniPID(0.35, 0, 0);
+        miniPIDAlti = new MiniPID(0.35, 0, 0);
+        miniPIDHeading = new MiniPID(1.0, 0, 0);
 
         m_aircraft = (Aircraft) RDApplication.getProductOrDummy();
         if (m_aircraft == null || !m_aircraft.isConnected()) {
@@ -382,6 +384,18 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
     void setSystemId(int id) {
         mSystemId = id;
+    }
+
+    void doReturnToLaunch() {
+        double alt = get_current_alt();
+        if(alt < MIN_HEIGHT_RTL) {
+            // TODO: Implement a sequence: 1) ascend to getGoHomeHeight(), 2) go RTL. Reuse code from MissionManager.
+            flyTo(takeOffLocation[0], takeOffLocation[1], MIN_HEIGHT_RTL);
+        } else {
+            motion = new Motion(takeOffLocation[0], takeOffLocation[1], alt);
+            motion.yawDirection = YawDirection.DEST;
+            startMotion(motion);
+        }
     }
 
     void setRTLAltitude(final int altitude) {
@@ -2350,7 +2364,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                 }
 
                 yawError = rotation(targetYaw, yaw);
-                Log.i(TAG, "YAW - target: " + targetYaw + ", yaw: " + yaw + ", err: " + yawError);
+                Log.i(TAG, "YAW - target: " + targetYaw + " ; yaw: " + yaw + " ; err: " + yawError);
             }
 
             // Check if we reached destination point
@@ -2445,6 +2459,8 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             double forwardVel = Math.cos(Math.toRadians(direction)) * fwmotion - Math.sin(Math.toRadians(direction)) * rightmotion;
             double rightVel = Math.sin(Math.toRadians(direction)) * fwmotion + Math.cos(Math.toRadians(direction)) * rightmotion;
 
+            Log.i(TAG, "processFlyTo = fm: " + fwmotion + " ; rm: " + rightmotion + " ; um: " + (destZ - alt));
+
             setVelocities(forwardVel, rightVel, upVel, yawVel);
         }
     }
@@ -2482,10 +2498,10 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     void setVelocities(double roll, double pitch, double throttle, double yaw) {
         if(isForbiddenSwitchMode()) return;
 
-        if(velLogCounter++ >= 1000 / MOTION_PERIOD_MS / 4) {
+        //if(velLogCounter++ >= 1000 / MOTION_PERIOD_MS / 4) {
             velLogCounter = 0;
-            Log.i(TAG, "Velocities = fwd: " + roll + ", right: " + pitch + ", up: " + throttle + ", yaw: " + yaw);
-        }
+            Log.i(TAG, "setVelocities = fwd: " + roll + " ; right: " + pitch + " ; up: " + throttle + " ; yaw: " + yaw);
+        //}
 
         mFlightController.sendVirtualStickFlightControlData(new FlightControlData((float)pitch, (float)roll, (float)yaw, (float)throttle), djiError -> {
             if (djiError != null) Log.e(TAG, "SendVelocityDataTask Error: " + djiError.toString());
