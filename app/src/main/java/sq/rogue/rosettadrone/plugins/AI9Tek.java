@@ -64,10 +64,10 @@ public class AI9Tek extends Plugin {
     private MailReport SendMail;
     private String[] aiWP = new String[100]; // Max 100 wp in an AI mission for now...
 
-    protected void init(PluginManager pluginManager) {
+    protected void start() {
         // Set some user values for the AI assist functionallity.
         AIaddress = pluginManager.mainActivity.prefs.getString("pref_ai_ip", "127.0.0.1");
-        AIport  = Integer.parseInt(Objects.requireNonNull(pluginManager.mainActivity.prefs.getString("pref_ai_port", "2000")));
+        AIport = Integer.parseInt(Objects.requireNonNull(pluginManager.mainActivity.prefs.getString("pref_ai_port", "2000")));
 
         AIenabled = pluginManager.mainActivity.prefs.getBoolean("pref_ai_telemetry_enabled", true);
 
@@ -91,11 +91,8 @@ public class AI9Tek extends Plugin {
         mBtnRepport.setBackground(listDrawable);
         */
 
-        // AI button
-        /* TODO: Reimplement
-        Button mBtnAI = findViewById(R.id.btn_AI_start);
-        mBtnAI.setOnClickListener(v -> pluginManager.setAIMode());
-        */
+        Button mBtnAI = pluginManager.mainActivity.findViewById(R.id.btn_AI_start);
+        mBtnAI.setOnClickListener(v -> setAIMode());
     }
 
     // Start the AI Pluggin (Developed by the customers...)
@@ -229,13 +226,6 @@ public class AI9Tek extends Plugin {
         } else {
             return false;
         }
-    }
-
-    // These are no long used as this is an internal process now, sending data to RemoteConfig...
-    void setAiIP(final String ip) {
-    }
-
-    void setAiPort(final int port) {
     }
 
     void setAIenable(final boolean enable) {
@@ -394,5 +384,11 @@ public class AI9Tek extends Plugin {
         //stopUpload = true;
 
         NotificationHandler.notifySnackbar(pluginManager.mainActivity.findViewById(R.id.snack),R.string.ai_uploaded_active, LENGTH_LONG);
+    }
+
+    public void settingsChanged() {
+        if(MainActivity.changedSetting("pref_ai_telemetry_enabled")) {
+            setAIenable(pluginManager.mainActivity.prefs.getBoolean("pref_ai_telemetry_enabled", true));
+        }
     }
 }

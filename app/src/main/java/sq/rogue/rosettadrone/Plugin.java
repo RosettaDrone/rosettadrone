@@ -1,10 +1,13 @@
 package sq.rogue.rosettadrone;
 
-public abstract class Plugin {
+public class Plugin {
     protected PluginManager pluginManager;
 
     protected void init(PluginManager pluginManager) {
         this.pluginManager = pluginManager;
+    }
+
+    protected void start() {
     }
 
     /**
@@ -22,5 +25,8 @@ public abstract class Plugin {
     }
 
     public void stop() {
+    }
+
+    public void settingsChanged() {
     }
 }

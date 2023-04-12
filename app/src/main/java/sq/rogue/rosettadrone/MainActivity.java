@@ -121,6 +121,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private static int compare_height = 0;
 
     public static boolean FLAG_PREFS_CHANGED = false;
+    public static List<String> changedSettings = new ArrayList<String>();
+
+    // TODO: DEPRECATE: Use changedSettings
     public static boolean FLAG_VIDEO_ADDRESS_CHANGED = false;
     public static boolean FLAG_TELEMETRY_ADDRESS_CHANGED = false;
     public static boolean FLAG_DRONE_ID_CHANGED = false;
@@ -136,9 +139,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     public static boolean FLAG_APP_NAME_CHANGED = false;
     public static boolean FLAG_APP_REPORT_EMAIL = false;
     public static boolean FLAG_MAPS_CHANGED = false;
-    public static boolean FLAG_DRONE_AI_IP_CHANGED = false;
-    public static boolean FLAG_DRONE_AI_PORT_CHANGED = false;
-    public static boolean FLAG_DRONE_AI_ENABLED_CHANGED = false;
 
     private GoogleMap aMap;
     private double droneLocationLat, droneLocationLng;
@@ -214,6 +214,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     public int lastDownloadedIndex = -1;
 
     public PluginManager pluginManager = new PluginManager(this);
+
+    public static boolean changedSetting(String settingId) {
+        return changedSettings.indexOf(settingId) != -1;
+    }
 
     private Runnable djiUpdateRunnable = () -> {
         Intent intent = new Intent(DJISimulatorApplication.FLAG_CONNECTION_CHANGE);
@@ -777,17 +781,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         // RTH button
         Button mBtnRTH = findViewById(R.id.btn_rth);
-        mBtnRTH.setOnClickListener(v -> mModel.doGomeHome());
+        //mBtnRTH.setOnClickListener(v -> mModel.doGomeHome());
+        mBtnRTH.setOnClickListener(v -> mModel.doReturnToLaunch());
 
-        pluginManager.init();
-
-        // Click on SafeMode button (enable SafeMode)
-        Handler mTimerHandler = new Handler(Looper.getMainLooper());
-        mTimerHandler.postDelayed(enableSafeMode, 3000);
+        pluginManager.start();
 
         if(RDApplication.isTestMode) {
             mModel.mMotorsArmed = true;
             onDroneConnected();
+        } else {
+            // Click on SafeMode button (enable SafeMode)
+            Handler mTimerHandler = new Handler(Looper.getMainLooper());
+            mTimerHandler.postDelayed(enableSafeMode, 3000);
         }
     }
 
@@ -1574,22 +1579,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             FLAG_DRONE_MAX_HEIGHT_CHANGED = false;
         }
 
-        /* TODO: Move to AI9Tek plugin
-        if(FLAG_DRONE_AI_IP_CHANGED) {
-            mModel.setAiIP(prefs.getString("pref_ai_ip", "127.0.0.1"));
-            FLAG_DRONE_AI_IP_CHANGED = false;
-        }
-        if(FLAG_DRONE_AI_PORT_CHANGED) {
-            mModel.setAiPort(Integer.parseInt(Objects.requireNonNull(prefs.getString("pref_ai_port", "2000"))));
-            FLAG_DRONE_AI_PORT_CHANGED = false;
-
-        }
-        if(FLAG_DRONE_AI_ENABLED_CHANGED) {
-            mModel.setAIenable(prefs.getBoolean("pref_ai_telemetry_enabled", true));
-            FLAG_DRONE_AI_ENABLED_CHANGED = false;
-        }
-        */
-
         if (FLAG_DRONE_SMART_RTL_CHANGED) {
             mModel.setSmartRTLEnabled(prefs.getBoolean("pref_drone_smart_rtl", true));
             FLAG_DRONE_SMART_RTL_CHANGED = false;
@@ -1626,6 +1615,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             aMap.setMapType(mMaptype);
             FLAG_MAPS_CHANGED = false;
         }
+
+        pluginManager.settingsChanged();
+        changedSettings.clear();
     }
 
     //---------------------------------------------------------------------------------------

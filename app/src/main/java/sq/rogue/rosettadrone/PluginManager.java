@@ -17,11 +17,11 @@ public class PluginManager {
 
     // TODO: Obtain plugins list automatically
 
-    // Plugin disabled, because it disables the video preview in Rosetta
-    //List<String> classNames = Arrays.asList("RawVideoStreamer");
-    List<String> classNames = Arrays.asList("AI9Tek");
+    //List<String> classNames = Arrays.asList("RawVideoStreamer"); // Plugin disabled, because it disables the video preview in Rosetta
+    //List<String> classNames = Arrays.asList("RawVideoStreamer", "AI9Tek");
+    //List<String> classNames = Arrays.asList("AI9Tek");
 
-    //List<String> classNames = Arrays.asList();
+    List<String> classNames = Arrays.asList();
 
     PluginManager(MainActivity mainActivity) {
         this.mainActivity = mainActivity;
@@ -36,13 +36,14 @@ public class PluginManager {
                 }
 
             } catch (Exception e) {
+                e.printStackTrace();
             }
         }
     }
 
-    public void init() {
+    public void start() {
         for (Plugin plugin : plugins) {
-            plugin.init(this);
+            plugin.start();
         }
     }
 
@@ -63,5 +64,11 @@ public class PluginManager {
             if(plugin.onMenuItemClick(itemId)) return true;
         }
         return false;
+    }
+
+    public void settingsChanged() {
+        for (Plugin plugin : plugins) {
+            plugin.settingsChanged();
+        }
     }
 }

@@ -28,14 +28,12 @@ import sq.rogue.rosettadrone.RDApplication;
 public class RawVideoStreamer extends Plugin implements DJICodecManager.YuvDataCallback {
     private static final boolean TEST = false; // Send a testing stream
 
-    PluginManager pluginManager;
     private final int fps = 15; // Must be a divisor of 30 (eg. 1, 3, 5, 6, 10, 15, 30)
     Socket socket;
     OutputStream outputStream;
     TestSender testSender;
 
-    public void init(PluginManager pluginManager) {
-        this.pluginManager = pluginManager;
+    public void start() {
         pluginManager.mainActivity.useCustomDecoder = false; // Messes up the buffer received by onYuvDataReceived()
         pluginManager.mainActivity.useOutputSurface = false; // Avoid crash when clicking on minimap
     }
