@@ -17,9 +17,17 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 
+import com.MAVLink.common.msg_mission_item_int;
 import com.MAVLink.common.msg_rc_channels;
 import com.MAVLink.common.msg_statustext;
+import com.MAVLink.enums.MAV_CMD;
 
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -44,21 +52,28 @@ import sq.rogue.rosettadrone.settings.MailReport;
 public class AI9Tek extends Plugin {
     private final String TAG = DroneModel.class.getSimpleName();
 
+    public int AIactivityPort = 7001;
+    public String AIactivityIP = "127.0.0.1";
+
+    public boolean AIenabled = false;
+    public boolean AIstat = false;
+
     private int mAIfunction_activation = 0;
     private String AIaddress = "127.0.0.1";
     private int AIport = 7001;
     private MailReport SendMail;
+    private String[] aiWP = new String[100]; // Max 100 wp in an AI mission for now...
 
     protected void init(PluginManager pluginManager) {
         // Set some user values for the AI assist functionallity.
         AIaddress = pluginManager.mainActivity.prefs.getString("pref_ai_ip", "127.0.0.1");
         AIport  = Integer.parseInt(Objects.requireNonNull(pluginManager.mainActivity.prefs.getString("pref_ai_port", "2000")));
 
-        pluginManager.mainActivity.mMavlinkReceiver.AIenabled = pluginManager.mainActivity.prefs.getBoolean("pref_ai_telemetry_enabled", true);
+        AIenabled = pluginManager.mainActivity.prefs.getBoolean("pref_ai_telemetry_enabled", true);
 
         // Store IP to mission controll...
-        pluginManager.mainActivity.mMavlinkReceiver.AIactivityIP = AIaddress; //prefs.getString("pref_gcs_ip", "127.0.0.1");
-        pluginManager.mainActivity.mMavlinkReceiver.AIactivityPort = AIport;
+        AIactivityIP = AIaddress; //prefs.getString("pref_gcs_ip", "127.0.0.1");
+        AIactivityPort = AIport;
 
         // Prepare mail handler and add the catalog for images
         SendMail = new MailReport(pluginManager.mainActivity, pluginManager.mainActivity.getApplicationContext().getContentResolver());
@@ -95,7 +110,7 @@ public class AI9Tek extends Plugin {
         }
         if (intent != null) {
 
-            if(mainActivity.mMavlinkReceiver.AIenabled == true){
+            if(AIenabled == true){
                 intent.putExtra("password", "thisisrosettadrone246546101");
                 intent.putExtra("ip", AIaddress);
                 intent.putExtra("port", AIport);
@@ -153,9 +168,9 @@ public class AI9Tek extends Plugin {
         Button mBtnAI = mainActivity.findViewById(R.id.btn_AI_start);
         Drawable connectedDrawable;
 
-        if (mainActivity.mMavlinkReceiver.AIenabled == true) {
-            mainActivity.mMavlinkReceiver.AIstat = !mainActivity.mMavlinkReceiver.AIstat;
-            if (mainActivity.mMavlinkReceiver.AIstat) {
+        if (AIenabled == true) {
+            AIstat = !AIstat;
+            if (AIstat) {
                 connectedDrawable = mainActivity.getResources().getDrawable(R.drawable.drone_img, null);
             } else {
                 connectedDrawable = mainActivity.getResources().getDrawable(R.mipmap.track_right, null);
@@ -166,7 +181,7 @@ public class AI9Tek extends Plugin {
         else{
             mainActivity.logMessageDJI("AI not activated in setup menu !!!!!");
             NotificationHandler.notifySnackbar(mainActivity.findViewById(R.id.snack),R.string.ai_not_active, LENGTH_LONG);
-            mainActivity.mMavlinkReceiver.AIstat = false;
+            AIstat = false;
             connectedDrawable = mainActivity.getResources().getDrawable(R.mipmap.track_right, null);
             mBtnAI.setBackground(connectedDrawable);
         }
@@ -224,7 +239,7 @@ public class AI9Tek extends Plugin {
     }
 
     void setAIenable(final boolean enable) {
-        pluginManager.mainActivity.mMavlinkReceiver.AIenabled = enable;
+        AIenabled = enable;
         setAIMode();
     }
 
@@ -320,5 +335,64 @@ public class AI9Tek extends Plugin {
             });
         });
         */
+    }
+
+    void missionFinished() {
+        DroneModel mModel = pluginManager.mainActivity.mModel;
+        int num = 0;
+
+        for (msg_mission_item_int m : pluginManager.mainActivity.mMavlinkReceiver.mMissionItemList) {
+            Log.d(TAG, "AI Command: " + String.valueOf(m));
+
+            switch (m.command) {
+                case MAV_CMD.MAV_CMD_NAV_WAYPOINT:
+
+                    if(num ==0)
+                        mModel.mission_alt = m.z;
+
+                    aiWP[num++] = "WP," +
+                            String.valueOf(num) + "," +
+                            String.valueOf(m.x / 10000000.0) + "," +
+                            String.valueOf(m.y / 10000000.0) + "," +
+                            String.valueOf(m.z-mModel.mission_alt) + "";
+                    break;
+            }
+        }
+
+        // Send mission to the AIactivityModule
+        //Log.d(TAG, aiWP);
+        if(num > 0){
+            aiWP[num++] = "WP,9999,0,0,0";  // End of mission...
+
+            try {
+                InetAddress address = InetAddress.getByName(AIactivityIP);
+
+                try {
+                    DatagramSocket mSocketUDP = new DatagramSocket();
+
+                    for(int x=0; x < num; x++){
+
+                        byte[] byteArrray = aiWP[x].getBytes();
+                        DatagramPacket p = new DatagramPacket(byteArrray, byteArrray.length, address, AIactivityPort);
+                        try {
+                            mSocketUDP.send(p);
+                            //                 mSocketUDP.close();  // It this needed / wanted...
+                        } catch (IOException e) {
+                            Log.e(TAG, "Error sending AI datagram socket", e);
+                        }
+                        aiWP[x]="";
+                    }
+                } catch (SocketException e) {
+                    Log.e(TAG, "Error creating AI datagram socket", e);
+                }
+            } catch (UnknownHostException e) {
+                Log.e(TAG, "Error setting address to AI datagram socket", e);
+            }
+        }
+
+        // TODO: Reimplement
+        //stopUpload = true;
+
+        NotificationHandler.notifySnackbar(pluginManager.mainActivity.findViewById(R.id.snack),R.string.ai_uploaded_active, LENGTH_LONG);
     }
 }

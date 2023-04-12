@@ -99,13 +99,6 @@ import static com.MAVLink.enums.MAV_PROTOCOL_CAPABILITY.MAV_PROTOCOL_CAPABILITY_
 import static com.google.android.material.snackbar.BaseTransientBottomBar.LENGTH_LONG;
 
 public class MAVLinkReceiver {
-
-    public int AIactivityPort = 7001;
-    public String AIactivityIP = "127.0.0.1";
-
-    public boolean AIenabled = false;
-    public boolean AIstat = false;
-
     private final String TAG = this.getClass().getSimpleName();
 
     private final float m_autoFlightSpeed = 2.0f;
@@ -120,11 +113,8 @@ public class MAVLinkReceiver {
     private int mNumGCSWaypoints = 0; // Expected number of mission items
     private MainActivity parent;
     private WaypointMission.Builder mBuilder;
-    private ArrayList<msg_mission_item_int> mMissionItemList; // MAV Mission Item List
+    public ArrayList<msg_mission_item_int> mMissionItemList; // MAV Mission Item List
     private boolean isHome = true;
-
-    //    private ArrayList<String> aiWP = new ArrayList<String>();
-    private String[] aiWP = new String[100]; // Max 100 wp in an AI mission for now...
 
     public List<MAVLinkConnection> mavLinkConnections = new ArrayList<MAVLinkConnection>();
 
@@ -662,74 +652,12 @@ public class MAVLinkReceiver {
         boolean triggerDistanceEnabled = false;
         float triggerDistance = 0;
 
-        // If we got our position...
-//        if(mModel.get_current_lat()+mModel.get_current_lon()+mModel.get_current_alt() > 0) {
-//            currentWP = new Waypoint(mModel.get_current_lat(), mModel.get_current_lon(), mModel.get_current_alt());
-//        }
-
         if(mModel.useMissionManager) {
             mModel.missionManager.setMission(mMissionItemList);
             parent.logMessageDJI("Mission uploaded and ready to execute (using VirtualSticks)");
             mModel.send_mission_ack(MAV_MISSION_RESULT.MAV_MISSION_ACCEPTED);
             return;
 
-        } else if (AIstat == true) {
-            // TODO: Move code to AIClass
-//            aiWP = "";
-            int num = 0;
-
-            for (msg_mission_item_int m : this.mMissionItemList) {
-                Log.d(TAG, "AI Command: " + String.valueOf(m));
-
-                switch (m.command) {
-                    case MAV_CMD.MAV_CMD_NAV_WAYPOINT:
-
-                        if(num ==0)
-                            mModel.mission_alt = m.z;
-
-                        aiWP[num++] = "WP," +
-                                String.valueOf(num) + "," +
-                                String.valueOf(m.x / 10000000.0) + "," +
-                                String.valueOf(m.y / 10000000.0) + "," +
-                                String.valueOf(m.z-mModel.mission_alt) + "";
-                        break;
-                }
-            }
-
-            // Send mission to the AIactivityModule
-//            Log.d(TAG, aiWP);
-
-            if(num > 0){
-                aiWP[num++] = "WP,9999,0,0,0";  // End of mission...
-
-                try {
-                    InetAddress address = InetAddress.getByName(AIactivityIP);
-
-                    try {
-                        DatagramSocket mSocketUDP = new DatagramSocket();
-
-                        for(int x=0; x < num; x++){
-
-                            byte[] byteArrray = aiWP[x].getBytes();
-                            DatagramPacket p = new DatagramPacket(byteArrray, byteArrray.length, address, AIactivityPort);
-                            try {
-                                mSocketUDP.send(p);
-                                //                 mSocketUDP.close();  // It this needed / wanted...
-                            } catch (IOException e) {
-                                Log.e(TAG, "Error sending AI datagram socket", e);
-                            }
-                            aiWP[x]="";
-                        }
-                    } catch (SocketException e) {
-                        Log.e(TAG, "Error creating AI datagram socket", e);
-                    }
-                } catch (UnknownHostException e) {
-                    Log.e(TAG, "Error setting address to AI datagram socket", e);
-                }
-            }
-            stopUpload = true;
-
-            NotificationHandler.notifySnackbar(parent.findViewById(R.id.snack),R.string.ai_uploaded_active, LENGTH_LONG);
         } else {
             waypoint_loop:
             for (msg_mission_item_int m : this.mMissionItemList) {
