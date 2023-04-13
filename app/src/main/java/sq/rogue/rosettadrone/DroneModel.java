@@ -387,6 +387,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     void doReturnToLaunch() {
+        parent.logMessageDJI("Return to Launch\n");
         double alt = get_current_alt();
         if(alt < MIN_HEIGHT_RTL) {
             // TODO: Implement a sequence: 1) ascend to getGoHomeHeight(), 2) go RTL. Reuse code from MissionManager.
@@ -2468,7 +2469,11 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     void setVirtualSticksEnabled(boolean setEnabled) {
         mFlightController.setVirtualStickModeEnabled(setEnabled, djiError -> {
             if (djiError != null) {
-                Log.e(TAG, "setVirtualStickModeEnabled() failed: " + djiError.toString());
+                Log.e(TAG, "setVirtualStickModeEnabled() failed (will retry): " + djiError.toString());
+
+                // Retry
+                setVirtualSticksEnabled(true);
+
             } else {
                 Log.i(TAG, "setVirtualStickModeEnabled() succeded");
                 if (setEnabled) {
