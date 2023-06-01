@@ -130,6 +130,7 @@ enum YawDirection {
 public class DroneModel implements CommonCallbacks.CompletionCallback {
     public static final int MOTION_PERIOD_MS = 50; // DJI_DOC: "Virtual stick commands should be sent to the aircraft between 5 Hz and 25 Hz" => MOTION_PERIOD_MS should be between 200 and 40 [ms]
     public static final double MIN_HEIGHT_RTL = 20; // If altitude < MIN_HEIGHT_RTL => ascend before RTL
+    private static final boolean DEBUG_MOTION = true;
 
     private boolean isSimulator;
     private static final int NOT_USING_GCS_COMMANDED_MODE = -1;
@@ -230,6 +231,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     public boolean useMissionManager; // Uses VirtualSticks, instead of using onboard logic. May also give better results for taking Photos during Waypoints.
     public MissionManager missionManager = new MissionManager(this);
     private long timerIgnoreMavLink = 0; // Timer to ignore MAVLink motion commands while user is moving the RC Joystick
+    private boolean isAscending = false; // Used to detect when we are taking off and ascending to record the takeOffLocation when the drone finished ascending (when the GPS signal is better)
 
     enum camera_mode {
         IDLE,
@@ -271,7 +273,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         miniPIDFwd = new MiniPID(0.35, 0, 0);
         miniPIDSide = new MiniPID(0.35, 0, 0);
         miniPIDAlti = new MiniPID(0.35, 0, 0);
-        miniPIDHeading = new MiniPID(1.0, 0, 0);
+        miniPIDHeading = new MiniPID(2.0, 0, 0);
 
         m_aircraft = (Aircraft) RDApplication.getProductOrDummy();
         if (m_aircraft == null || !m_aircraft.isConnected()) {
@@ -754,7 +756,6 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                 send_rc_channels();
             }
             if (ticks % 1000 == 0) {
-                registerTakeOffLocation();
                 send_heartbeat();
                 confirmLanding();
                 send_sys_status();
@@ -867,15 +868,6 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                     parent.logMessageDJI("Landing confirmed");
                 }
             });
-        }
-    }
-
-    private boolean lastMotorsArmed = false;
-    private void registerTakeOffLocation() {
-        if (!lastMotorsArmed && mMotorsArmed) {
-            // Used for MAV_FRAME_LOCAL_NED
-            takeOffLocation = getLocation3D();
-            lastMotorsArmed = true;
         }
     }
 
@@ -1956,8 +1948,9 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     // DJI's TakeOff only goes to 1.2 m approx
-    // The elevation is done after
+    // The elevation is done here, after DJI's TakeOff
     void ascend(float alt) {
+        isAscending = true;
         missionManager.setTakeOffStatus(true);
         Log.i(TAG, "Took off => Flying to altitude " + alt);
         FlightControllerState coord = mFlightController.getState();
@@ -1966,16 +1959,17 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         motion.mask.ignorePosY = true;
         motion.mask.ignorePosZ = false;
         motion.mask.ignoreYaw = true;
+        motion.mask.ignoreYawRate = true;
         motion.yawDirection = YawDirection.KEEP;
         startMotion(motion);
     }
 
     void doLand() {
+        parent.logMessageDJI("Landing...");
+        cancelAllTasks();
         //setMavFlightMode(ArduCopterFlightModes.LAND);
         mFlightController.startLanding(djiError -> {
             if (djiError == null) {
-                parent.logMessageDJI("Landing...");
-
                 if(!useMissionManager) {
                     // TODO: Wait until landed
                     // Keeping old version
@@ -2288,7 +2282,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     class MotionTask extends TimerTask {
         public int detectionCounter = 0;  // We might fly past the point so we look for consecutive hits...
         private final int requiredDetections = 7;
-        private final double detectionDistance = 0.2;
+        private final double detectionDistance = 0.3;
         private final double detectionYawError = 1.25;
         private final double detectionAltError = 0.1;
 
@@ -2371,15 +2365,19 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             // Check if we reached destination point
             boolean lock = false;
             if (dist < detectionDistance) {
+                lock = true;
+                /*
                 if(Math.abs(yawError) < detectionYawError) {
                     if(Math.abs(alt - destZ) < detectionAltError) {
                         lock = true;
                     } else {
                         Log.d(TAG, "Destination = alt error: " + Math.abs(alt - destZ));
                     }
+                    lock = true;
                 } else {
                     Log.d(TAG, "Destination = yaw error: " + Math.abs(yawError));
                 }
+                */
             } else {
                 Log.d(TAG, "Destination = distance error: " + dist);
             }
@@ -2388,6 +2386,12 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                 if (++detectionCounter > requiredDetections) {
                     parent.logMessageDJI("Motion finished");
                     cancelMotion();
+
+                    if(isAscending) {
+                        takeOffLocation = getLocation3D();
+                        isAscending = false;
+                    }
+
                     return;
                 }
             } else {
@@ -2460,7 +2464,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             double forwardVel = Math.cos(Math.toRadians(direction)) * fwmotion - Math.sin(Math.toRadians(direction)) * rightmotion;
             double rightVel = Math.sin(Math.toRadians(direction)) * fwmotion + Math.cos(Math.toRadians(direction)) * rightmotion;
 
-            //Log.i(TAG, "processFlyTo = fm: " + fwmotion + " ; rm: " + rightmotion + " ; um: " + (destZ - alt));
+            if(DEBUG_MOTION) Log.i(TAG, "processFlyTo = fm: " + fwmotion + " ; rm: " + rightmotion + " ; um: " + (destZ - alt) + " ; alt: " + alt);
 
             setVelocities(forwardVel, rightVel, upVel, yawVel);
         }
@@ -2503,7 +2507,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     void setVelocities(double roll, double pitch, double throttle, double yaw) {
         if(isForbiddenSwitchMode()) return;
 
-        if(velLogCounter++ >= 1000 / MOTION_PERIOD_MS) { // 1 log per second
+        if(DEBUG_MOTION || velLogCounter++ >= 1000 / MOTION_PERIOD_MS) { // 1 log per second
             velLogCounter = 0;
             Log.i(TAG, "setVelocities = fwd: " + roll + " ; right: " + pitch + " ; up: " + throttle + " ; yaw: " + yaw);
         }
