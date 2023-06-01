@@ -10,6 +10,8 @@
 package sq.rogue.rosettadrone;
 
 import static com.MAVLink.enums.MAV_CMD.MAV_CMD_NAV_LAND;
+import static com.MAVLink.enums.MAV_FRAME.MAV_FRAME_GLOBAL;
+import static com.MAVLink.enums.MAV_FRAME.MAV_FRAME_GLOBAL_RELATIVE_ALT;
 
 import android.util.Log;
 
@@ -323,13 +325,13 @@ public class MissionManager {
 	}
 
 	float getAbsAltitude(msg_mission_item_int m) {
-		if (m.frame == 0) {
+		if (m.frame == MAV_FRAME_GLOBAL) {
 			// Absolute altitude
-			return m.z;
-
-		} else if(m.frame == 3) {
-			// Relative altitude
 			return m.z - baseAlt;
+
+		} else if(m.frame == MAV_FRAME_GLOBAL_RELATIVE_ALT) {
+			// Relative altitude
+			return m.z;
 
 		} else {
 			Log.e(TAG, "Unsupported reference frame " + m.frame);
