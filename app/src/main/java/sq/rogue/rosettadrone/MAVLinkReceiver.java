@@ -187,9 +187,10 @@ public class MAVLinkReceiver {
                     case MAV_CMD_COMPONENT_ARM_DISARM:
                         if (msg_cmd.param1 == 1)
                             sendResponse(MAV_CMD_COMPONENT_ARM_DISARM, mModel.armMotors());
-                        else
+                        else {
                             sendResponse(MAV_CMD_COMPONENT_ARM_DISARM);
                             mModel.disarmMotors(true);
+                        }
                         break;
 
                     case MAV_CMD_DO_SET_MODE:
