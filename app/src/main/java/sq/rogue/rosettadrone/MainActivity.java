@@ -1850,6 +1850,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 int port = Integer.parseInt(Objects.requireNonNull(mainActivityRef.prefs.getString("pref_telemetry_3_port", "")));
                 mainActivityRef.mMavlinkReceiver.mavLinkConnections.add(new MAVLinkConnection(host, port));
             }
+
+            if (mainActivityRef.prefs.getBoolean("pref_telemetry_4_enabled", false)) {
+                String host = mainActivityRef.prefs.getString("pref_telemetry_4_host", "");
+                int port = Integer.parseInt(Objects.requireNonNull(mainActivityRef.prefs.getString("pref_telemetry_4_port", "")));
+                mainActivityRef.mMavlinkReceiver.mavLinkConnections.add(new MAVLinkConnection(host, port));
+            }
         }
 
         protected void close() {

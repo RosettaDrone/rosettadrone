@@ -253,6 +253,23 @@
             android:key="pref_telemetry_3_port"
             android:title="@string/pref_telemetry_3_port" />
 
+        <androidx.preference.SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="pref_telemetry_4_enabled"
+            android:title="@string/pref_telemetry_4_enabled" />
+        <androidx.preference.EditTextPreference
+            android:defaultValue=""
+            android:dependency="pref_telemetry_4_enabled"
+            android:digits="0123456789."
+            android:inputType="number"
+            android:key="pref_telemetry_4_host"
+            android:title="@string/pref_telemetry_4_host" />
+        <androidx.preference.EditTextPreference
+            android:defaultValue=""
+            android:dependency="pref_telemetry_4_enabled"
+            android:key="pref_telemetry_4_port"
+            android:title="@string/pref_telemetry_4_port" />
+
     </PreferenceCategory>
 
     <PreferenceCategory
