@@ -166,6 +166,7 @@ def set_servo(servo,val):
     ```
     
 7. Run **Build->Make Project**
+8. If it fails, check https://github.com/RosettaDrone/rosettadrone/issues/172
 
 
 # DJI-Mavlink Translation Notes
