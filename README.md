@@ -47,7 +47,7 @@ Rosetta is compatible with:
 
 * If you want to contribute please follow these [important recomendations](https://docs.google.com/document/d/1wR56Mvd2OsT82kxMOD7f_3-c6yJGBtLaT8LuVrmC5wI/edit?usp=sharing).
 * Here is some [documentation](https://github.com/lilfish/Delta-FlowerPower/wiki/Drone-app) from a forked project.
-* Rosetta can be tested without a Drone (press 5 times on the logo). For MAVLink and GUI testing.
+* Rosetta can be tested without a real Drone using the "Test Mode" (for MAVLink and GUI testing).
 
 ### **Please create issues and PR on this fork.** 
 
