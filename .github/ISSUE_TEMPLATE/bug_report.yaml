@@ -32,7 +32,7 @@ body:
         Eg: "DJI Mini", "DJI Mini SE", "DJI Mini 2", "DJI Mini 2 SE", etc
       render: Markdown
     validations:
-      required: false
+      required: true
   - type: textarea
     attributes:
       label: Smartphone Model
