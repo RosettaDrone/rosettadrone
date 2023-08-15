@@ -27,26 +27,20 @@ body:
       required: false
   - type: textarea
     attributes:
-      label: Desktop
+      label: Drone Model
       description: |
-        please complete the following information
-      value: |
-        - OS: [e.g. iOS]
-        - Browser [e.g. chrome, safari]
-        - Version [e.g. 22]
+        Eg: "DJI Mini", "DJI Mini SE", "DJI Mini 2", "DJI Mini 2 SE", etc
       render: Markdown
     validations:
       required: false
   - type: textarea
     attributes:
-      label: Smartphone
+      label: Smartphone Model
       description: |
         please complete the following information
       value: |
-        - Device: [e.g. iPhone6]
-        - OS: [e.g. iOS8.1]
-        - Browser [e.g. stock browser, safari]
-        - Version [e.g. 22]
+        - Model:
+        - Android version:
       render: Markdown
     validations:
       required: false
