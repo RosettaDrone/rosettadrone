@@ -27,7 +27,6 @@ Rosetta has been tested on:
 * DJI Mini
 * DJI Mini SE
 * DJI Mini 2
-* DJI Mini 2 SE
 * DJI Air
 * DJI Air 2S
 * Mavic 2
