@@ -228,7 +228,7 @@
                 android:id="@+id/signal"
                 android:layout_width="match_parent"
                 android:layout_height="25dp"
-                android:layout_centerVertical="true"
+                android:gravity="center_vertical"
                 android:background="@color/dark_gray"
                 android:orientation="horizontal">
 
@@ -238,7 +238,6 @@
                     android:layout_height="25dp" />
 
                 <ImageView
-                    android:layout_marginTop="3dp"
                     android:id="@+id/dji_conn"
                     android:layout_width="18dp"
                     android:layout_height="18dp"
@@ -247,14 +246,12 @@
 
                 <TextView
                     android:layout_weight="1"
-                    android:layout_marginTop="3dp"
                     android:layout_width="35dp"
                     android:layout_height="20dp"
                     android:text="@string/dji"
                     android:textColor="@color/white" />
 
                 <ImageView
-                    android:layout_marginTop="3dp"
                     android:id="@+id/gcs_conn"
                     android:layout_width="18dp"
                     android:layout_height="18dp"
@@ -263,7 +260,6 @@
 
                 <TextView
                     android:layout_weight="1"
-                    android:layout_marginTop="3dp"
                     android:layout_width="35dp"
                     android:layout_height="20dp"
                     android:text="@string/gcs"
@@ -271,7 +267,6 @@
 
                 <dji.ux.widget.FlightModeWidget
                     android:layout_weight="1"
-                    android:layout_marginTop="2dp"
                     android:layout_width="103dp"
                     android:layout_height="22dp" />
 
@@ -308,7 +303,6 @@
 
                 <dji.ux.widget.ConnectionWidget
                     android:layout_weight="1"
-                    android:layout_marginTop="3dp"
                     android:layout_width="28dp"
                     android:layout_height="18dp" />
 
@@ -316,12 +310,10 @@
                     android:id="@+id/btn_safety"
                     android:layout_width="20dp"
                     android:layout_height="20dp"
-                    android:layout_marginTop="2dp"
                     android:background="@drawable/ic_lock_outline_secondary_24dp" />
 
                 <TextView
                     android:layout_weight="1"
-                    android:layout_marginTop="3dp"
                     android:layout_width="25dp"
                     android:layout_height="20dp"
                     android:text="" />
@@ -330,9 +322,9 @@
                     android:id="@+id/btn_config"
                     android:layout_width="20dp"
                     android:layout_height="20dp"
-                    android:layout_marginTop="3dp"
                     android:background="@drawable/ic_settings_white_24dp"
-                    android:onClick="showPopup" />
+                    android:onClick="showPopup"
+                    android:layout_marginEnd="8dp" />
             </LinearLayout>
 
 
