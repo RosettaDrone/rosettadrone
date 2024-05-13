@@ -166,21 +166,22 @@
     </FrameLayout>
 
 
-    <LinearLayout
+    <FrameLayout
         android:id="@+id/camera_set"
-        android:layout_width="500dp"
+        android:layout_width="270dp"
         android:layout_height="match_parent"
         android:layout_marginEnd="10dp"
         android:orientation="horizontal"
         android:gravity="end"
         android:padding="12dp"
         android:layout_marginTop="70dp"
+        android:elevation="102dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
         <dji.ux.panel.CameraSettingAdvancedPanel
             android:layout_width="180dp"
-            android:layout_height="243dp"
+            android:layout_height="270dp"
             android:background="@color/transparent"
             android:gravity="center"
             android:visibility="invisible"
@@ -188,7 +189,7 @@
 
         <dji.ux.panel.CameraSettingExposurePanel
             android:layout_width="180dp"
-            android:layout_height="263dp"
+            android:layout_height="270dp"
             android:background="@color/transparent"
             android:gravity="center"
             android:visibility="invisible"
@@ -197,12 +198,13 @@
         <dji.ux.widget.controls.CameraControlsWidget
             android:id="@+id/CameraCapturePanel"
             android:layout_width="50dp"
-            android:layout_height="223dp"
+            android:layout_height="213dp"
+            android:layout_gravity="top|right"
             tools:ignore="RtlHardcoded" />
 
         <!--      custom:excludeItem="ESCStatus" -->
 
-    </LinearLayout>
+    </FrameLayout>
 
 
     <RelativeLayout
@@ -236,7 +238,6 @@
                     android:layout_height="25dp" />
 
                 <ImageView
-                    android:layout_weight="1"
                     android:layout_marginTop="3dp"
                     android:id="@+id/dji_conn"
                     android:layout_width="18dp"
@@ -253,7 +254,6 @@
                     android:textColor="@color/white" />
 
                 <ImageView
-                    android:layout_weight="1"
                     android:layout_marginTop="3dp"
                     android:id="@+id/gcs_conn"
                     android:layout_width="18dp"
@@ -313,11 +313,10 @@
                     android:layout_height="18dp" />
 
                 <Button
-                    android:layout_weight="1"
                     android:id="@+id/btn_safety"
-                    android:layout_marginTop="2dp"
-                    android:layout_width="25dp"
+                    android:layout_width="20dp"
                     android:layout_height="20dp"
+                    android:layout_marginTop="2dp"
                     android:background="@drawable/ic_lock_outline_secondary_24dp" />
 
                 <TextView
@@ -328,9 +327,8 @@
                     android:text="" />
 
                 <Button
-                    android:layout_weight="1"
                     android:id="@+id/btn_config"
-                    android:layout_width="25dp"
+                    android:layout_width="20dp"
                     android:layout_height="20dp"
                     android:layout_marginTop="3dp"
                     android:background="@drawable/ic_settings_white_24dp"
@@ -402,7 +400,7 @@
                 <Button
                     android:id="@+id/btn_takeoff"
                     android:layout_width="46dp"
-                    android:layout_height="40dp"
+                    android:layout_height="46dp"
                     android:layout_marginTop="12dp"
                     android:background="@drawable/quadcopter_start"
                     android:alpha="0.75"
@@ -413,7 +411,7 @@
                 <Button
                     android:id="@+id/btn_rth"
                     android:layout_width="46dp"
-                    android:layout_height="40dp"
+                    android:layout_height="46dp"
                     android:layout_marginTop="12dp"
                     android:background="@drawable/return_home"
                     android:alpha="0.75"
@@ -437,7 +435,7 @@
                 <Button
                     android:id="@+id/btn_AI_start"
                     android:layout_width="46dp"
-                    android:layout_height="40dp"
+                    android:layout_height="34.5dp"
                     android:layout_marginTop="12dp"
                     android:background="@mipmap/track_right"
                     android:alpha="0.75"
