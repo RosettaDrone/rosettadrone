@@ -12,6 +12,7 @@ import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -25,6 +26,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.text.format.DateFormat;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.MenuInflater;
@@ -72,6 +74,7 @@ import java.net.DatagramSocket;
 import java.net.PortUnreachableException;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Timer;
@@ -118,7 +121,12 @@ import static sq.rogue.rosettadrone.util.safeSleep;
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
     private final static int RESULT_SETTINGS = 1001;
     private final static int RESULT_HELP = 1002;
-    private static int compare_height = 0;
+
+    private enum FocusedView {
+        VideoFeed,
+        Map,
+    }
+    private static FocusedView focusedView = FocusedView.VideoFeed;
 
     public static boolean FLAG_PREFS_CHANGED = false;
     public static List<String> changedSettings = new ArrayList<String>();
@@ -188,14 +196,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private VideoService videoService = null;
     private boolean mIsBound;
     private int m_videoMode = 1;
+    private int mPrevVideoBufferSize = 0;
 
     private VideoFeeder.VideoFeed standardVideoFeeder;
     protected VideoFeeder.VideoDataListener mReceivedVideoDataListener;
     private TextureView videostreamPreviewTtView;
-    private TextureView videostreamPreviewTtViewSmall;
     public DJICodecManager mCodecManager;
-    private int videoViewWidth;
-    private int videoViewHeight;
     private boolean mIsTranscodedVideoFeedNeeded = false;
 
     private int mMaptype = GoogleMap.MAP_TYPE_HYBRID;
@@ -534,11 +540,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 BitmapDrawable bitmapdraw = (BitmapDrawable)getResources().getDrawable(R.drawable.pilot, null);
                 Bitmap smallMarker;
 
-                if (compare_height == 0) {
-                    smallMarker = Bitmap.createScaledBitmap(bitmapdraw.getBitmap(), 32, 32, false);
-                }else{
-                    smallMarker = Bitmap.createScaledBitmap(bitmapdraw.getBitmap(), 64, 64, false);
+                switch (focusedView) {
+                    case Map: {
+                        smallMarker = Bitmap.createScaledBitmap(bitmapdraw.getBitmap(), 64, 64, false);
+                        break;
+                    }
+                    case VideoFeed:
+                    default: {
+                        smallMarker = Bitmap.createScaledBitmap(bitmapdraw.getBitmap(), 32, 32, false);
+                        break;
+                    }
                 }
+
                 GCS_markerOptions.icon(BitmapDescriptorFactory.fromBitmap(smallMarker));
 
                 runOnUiThread(() -> {
@@ -568,10 +581,16 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             BitmapDrawable bitmapdraw = (BitmapDrawable)getResources().getDrawable(R.drawable.drone_img, null);
             Bitmap smallMarker;
 
-            if (compare_height == 0) {
-                smallMarker = Bitmap.createScaledBitmap(bitmapdraw.getBitmap(), 32, 32, false);
-            }else{
-                smallMarker = Bitmap.createScaledBitmap(bitmapdraw.getBitmap(), 64, 64, false);
+            switch (focusedView) {
+                case Map: {
+                    smallMarker = Bitmap.createScaledBitmap(bitmapdraw.getBitmap(), 64, 64, false);
+                    break;
+                }
+                case VideoFeed:
+                default: {
+                    smallMarker = Bitmap.createScaledBitmap(bitmapdraw.getBitmap(), 32, 32, false);
+                    break;
+                }
             }
             markerOptions.icon(BitmapDescriptorFactory.fromBitmap(smallMarker));
 
@@ -745,8 +764,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
 
         videostreamPreviewTtView = findViewById(R.id.livestream_preview_ttv);
-        videostreamPreviewTtViewSmall = findViewById(R.id.livestream_preview_ttv_small);
-        videostreamPreviewTtView.setVisibility(View.VISIBLE);
 
         deleteApplicationDirectory();
         initLogs();
@@ -840,6 +857,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 if (mCodecManager != null) {
                     // Render on screen
                     mCodecManager.sendDataToDecoder(videoBuffer, size);
+                    if (mPrevVideoBufferSize != size && videostreamPreviewTtView.getSurfaceTexture() != null) {
+                        mPrevVideoBufferSize = size;
+                        mSurfaceTextureListener.onSurfaceTextureSizeChanged(videostreamPreviewTtView.getSurfaceTexture(), videostreamPreviewTtView.getWidth(), videostreamPreviewTtView.getHeight());
+                    }
                 }
 
             } else {
@@ -953,32 +974,43 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private TextureView.SurfaceTextureListener mSurfaceTextureListener = new TextureView.SurfaceTextureListener() {
         @Override
         public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-            Log.d(TAG, "real onSurfaceTextureAvailable: width " + width + " height " + height);
-            if (compare_height == 1) {
-                height = ((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 86, getResources().getDisplayMetrics()));
-                width = ((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 164, getResources().getDisplayMetrics()));
-
-            }
-            videoViewWidth = width;
-            videoViewHeight = height;
-
-            Log.d(TAG, "real onSurfaceTextureAvailable: width " + videoViewWidth + " height " + videoViewHeight + " Mode: " + compare_height);
             if (mCodecManager == null) {
                 mCodecManager = new DJICodecManager(getApplicationContext(), surface, width, height);
                 pluginManager.onVideoChange();
-            } else {
-                if(useOutputSurface) {
-                    mCodecManager.changeOutputSurface(surface);
-                    mCodecManager.onSurfaceSizeChanged(width, height, 0);
-                }
             }
+
+            Log.d(TAG, "real onSurfaceTextureAvailable: width " + width + " height " + height);
+
+            onSurfaceTextureSizeChanged(surface, width, height);
         }
 
         @Override
         public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
-            videoViewWidth = width;
-            videoViewHeight = height;
-            Log.d(TAG, "real onSurfaceTextureAvailable2: width " + videoViewWidth + " height " + videoViewHeight);
+            double aspectRatio = (double) mCodecManager.getVideoHeight() / mCodecManager.getVideoWidth();
+            int newWidth, newHeight;
+            if (height > (int) (width * aspectRatio)) {
+                newWidth = width;
+                newHeight = (int) (width * aspectRatio);
+            } else {
+                newWidth = (int) (height / aspectRatio);
+                newHeight = height;
+            }
+            int xOffset = (width - newWidth) / 2;
+            int yOffset = (height - newHeight) / 2;
+
+            Matrix transform = new Matrix();
+            TextureView textureView = videostreamPreviewTtView;
+            textureView.getTransform(transform);
+            transform.setScale((float) newWidth / width, (float) newHeight / height);
+            transform.postTranslate(xOffset, yOffset);
+            textureView.setTransform(transform);
+
+            Log.d(TAG, "real onSurfaceTextureAvailable2: width " + width + " height " + height);
+
+            if (useOutputSurface) {
+                mCodecManager.changeOutputSurface(surface);
+                mCodecManager.onSurfaceSizeChanged(width, height, 0);
+            }
         }
 
         @Override
@@ -1117,7 +1149,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             final int BUF_LEN = 2048;
             byte[] buffer = new byte[BUF_LEN];
 
-            String zipName = "RD_LOG_" + android.text.format.DateFormat.format("yyyy-MM-dd-hh:mm:ss", new java.util.Date());
+            String zipName = "RD_LOG_" + DateFormat.format("yyyy-MM-dd-hh:mm:ss", new Date());
             String[] fileNames = {"DJI_LOG", "OUTBOUND_LOG", "INBOUND_LOG"};
 
             File directory = new File(Environment.getExternalStorageDirectory().getPath()
@@ -1283,62 +1315,46 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     public void onSmallMapClick(View v) {
-
         LinearLayout map_layout = findViewById(R.id.map_view);
-        FrameLayout video_layout_small = findViewById(R.id.fragment_container_small);
-        ViewGroup.LayoutParams map_para = map_layout.getLayoutParams();
+        FrameLayout video_layout = findViewById(R.id.fragment_container);
 
-        if (compare_height == 0) {
-            logMessageDJI("Set Small screen...");
-            videostreamPreviewTtView.clearFocus();
-            videostreamPreviewTtView.setVisibility(View.GONE);
-
-            //    safeSleep(200);
-            videostreamPreviewTtViewSmall.setSurfaceTextureListener(mSurfaceTextureListener);
-            videostreamPreviewTtViewSmall.setVisibility(View.VISIBLE);
-            video_layout_small.setZ(100.f);
-
-            // MAP ok...
-            map_layout.setZ(0.f);
-            map_para.height = LayoutParams.WRAP_CONTENT;
-            map_para.width = LayoutParams.WRAP_CONTENT;
-            map_layout.setLayoutParams(map_para);
-
-            changeOutputSurface(videostreamPreviewTtViewSmall);
-
-            compare_height = 1;
-
-        } else {
-            logMessageDJI("Set Main screen...");
-            videostreamPreviewTtViewSmall.clearFocus();
-            videostreamPreviewTtViewSmall.setVisibility(View.GONE);
-
-            //safeSleep(200);
-            videostreamPreviewTtView.setSurfaceTextureListener(mSurfaceTextureListener);
-            videostreamPreviewTtView.setVisibility(View.VISIBLE);
-            video_layout_small.setZ(0.f);
-
-            // MAP OK...
-            map_layout.setZ(100.f);
-            map_para.height = ((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 86, getResources().getDisplayMetrics()));
-            map_para.width = ((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 164, getResources().getDisplayMetrics()));
-            map_layout.setLayoutParams(map_para);
-            map_layout.setBottom(((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 10, getResources().getDisplayMetrics())));
-            map_layout.setLeft(((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 5, getResources().getDisplayMetrics())));
-
-            changeOutputSurface(videostreamPreviewTtView);
-
-            compare_height = 0;
+        ViewGroup focusedLayout;
+        ViewGroup previewLayout;
+        switch (focusedView) {
+            case Map: {
+                focusedLayout = map_layout;
+                previewLayout = video_layout;
+                focusedView = FocusedView.VideoFeed;
+                break;
+            }
+            case VideoFeed:
+            default: {
+                focusedLayout = video_layout;
+                previewLayout = map_layout;
+                focusedView = FocusedView.Map;
+                break;
+            }
         }
+
+        logMessageDJI("Swap the map and the video feed...");
+
+        int previewWidth = previewLayout.getWidth();
+        int previewHeight = previewLayout.getHeight();
+
+        LayoutParams focusedLayoutParams = focusedLayout.getLayoutParams();
+        focusedLayoutParams.width = previewWidth;
+        focusedLayoutParams.height = previewHeight;
+        focusedLayout.setLayoutParams(focusedLayoutParams);
+        focusedLayout.setZ(100.f);
+
+        LayoutParams previewLayoutParams = previewLayout.getLayoutParams();
+        previewLayoutParams.height = LayoutParams.WRAP_CONTENT;
+        previewLayoutParams.width = LayoutParams.WRAP_CONTENT;
+        previewLayout.setLayoutParams(previewLayoutParams);
+        previewLayout.setZ(0.f);
+
         v.setZ(101.f);
         //updateDroneLocation();
-    }
-
-    void changeOutputSurface(TextureView textureView) {
-        if (mCodecManager != null && useOutputSurface) {
-            mCodecManager.changeOutputSurface(textureView.getSurfaceTexture());
-            mCodecManager.onSurfaceSizeChanged(textureView.getWidth(), textureView.getHeight(), 0);
-        }
     }
 
     // Hmm is this ever called...
@@ -1783,7 +1799,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 timer.scheduleAtFixedRate(gcsSender, 0, 100);
 
                 for(MAVLinkConnection mavLinkConnection : mainActivityRef.mMavlinkReceiver.mavLinkConnections) {
-                    Listener listener = new MainActivity.GCSCommunicatorAsyncTask.Listener(mavLinkConnection, mainActivityRef);
+                    Listener listener = new Listener(mavLinkConnection, mainActivityRef);
                     mavLinkConnection.listen(listener);
                 }
 
