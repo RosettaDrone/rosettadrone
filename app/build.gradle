@@ -164,6 +164,7 @@ dependencies {
     implementation 'javax.mail:mail:1.4.7'                              // 1.4.7
     //  exclude 'javax.activation:activation:1.1'
     //  implementation 'com.sun.mail:android-activation:1.6.6'
+//    implementation 'io.getstream:stream-webrtc-android:1.1.3'
 }
 
 
