@@ -4,6 +4,8 @@
  */
 package sq.rogue.rosettadrone;
 
+import android.util.Log;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -21,7 +23,8 @@ public class PluginManager {
     //List<String> classNames = Arrays.asList("RawVideoStreamer", "AI9Tek");
     //List<String> classNames = Arrays.asList("AI9Tek");
 
-    List<String> classNames = Arrays.asList();
+    List<String> classNames = Arrays.asList("WebRTCStreaming");
+    //List<String> classNames = Arrays.asList();
 
     PluginManager(MainActivity mainActivity) {
         this.mainActivity = mainActivity;
@@ -36,7 +39,8 @@ public class PluginManager {
                 }
 
             } catch (Exception e) {
-                e.printStackTrace();
+//                e.printStackTrace();
+                Log.e(TAG, e.getClass().getName() + " occurred, stack trace: " + e.getMessage() + "\n" + e.getCause());
             }
         }
     }

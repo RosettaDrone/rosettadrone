@@ -2,18 +2,19 @@ package sq.rogue.rosettadrone.plugins;
 
 import android.util.Log;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
+//import java.io.IOException;
+//import java.nio.ByteBuffer;
 
 import dji.common.product.Model;
 
 // import io.socket.client.Socket;
-import sq.rogue.rosettadrone.DroneModel;
+
+// import sq.rogue.rosettadrone.DroneModel;
 import sq.rogue.rosettadrone.Plugin;
 import sq.rogue.rosettadrone.RDApplication;
 //import sq.rogue.rosettadrone.plugins.WebRTC.DJIStreamer;
 
-//import sq.rogue.rosettadrone.plugins.WebRTC.SocketConnection;
+import sq.rogue.rosettadrone.plugins.WebRTC.SocketConnection;
 
 public class WebRTCStreaming extends Plugin {
     private static final String TAG = "WebRTCStreaming";
@@ -59,7 +60,9 @@ public class WebRTCStreaming extends Plugin {
     public void start() {
         pluginManager.mainActivity.useCustomDecoder = false; // Messes up the buffer received by onYuvDataReceived()
         pluginManager.mainActivity.useOutputSurface = false; // Avoid crash when clicking on minimap
-//        socket = SocketConnection.getInstance();
+        Log.e(TAG, "SocketConnection() call");
+        SocketConnection socket = SocketConnection.getInstance();
+        Log.e(TAG, "start() call");
 
         if(TEST || RDApplication.isTestMode) {
             // TODO
@@ -106,7 +109,7 @@ public class WebRTCStreaming extends Plugin {
     }
 
     public boolean isEnabled() {
-        return false;
+        return true;
     }
 
 
