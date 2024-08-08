@@ -54,7 +54,9 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme">
+        android:theme="@style/AppTheme"
+        android:usesCleartextTraffic="true"
+        tools:targetApi="m">
 
         <activity
             android:name="sq.rogue.rosettadrone.ConnectionActivity"
@@ -100,8 +102,8 @@
             tools:ignore="Instantiatable">
         </service>
 
-        <service android:name="sq.rogue.rosettadrone.video.VideoService">
-        </service>
+        <!--<service android:name="sq.rogue.rosettadrone.video.VideoService">
+        </service>-->
 
         <!-- DJI SDK needed also by emulator, this is a problem... -->
         <uses-library

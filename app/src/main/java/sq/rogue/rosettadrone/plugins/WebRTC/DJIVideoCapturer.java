@@ -1,0 +1,133 @@
+/* Originally sourced from
+* https://chromium.googlesource.com/external/webrtc/+/b6760f9e4442410f2bcb6090b3b89bf709e2fce2/webrtc/api/android/java/src/org/webrtc/CameraVideoCapturer.java
+* and rewritten to work for DJI drones.
+*  */
+package sq.rogue.rosettadrone.plugins.WebRTC;
+
+import org.webrtc.CapturerObserver;
+import org.webrtc.NV12Buffer;
+import org.webrtc.SurfaceTextureHelper;
+import org.webrtc.VideoCapturer;
+import org.webrtc.VideoFrame;
+
+import android.content.Context;
+import android.graphics.SurfaceTexture;
+import android.media.MediaFormat;
+import android.os.SystemClock;
+import android.util.Log;
+
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
+
+import dji.common.product.Model;
+import dji.sdk.camera.VideoFeeder;
+import dji.sdk.codec.DJICodecManager;
+
+public class DJIVideoCapturer implements VideoCapturer {
+    private final static String TAG = "DJIStreamer";
+
+    private static DJICodecManager codecManager;
+    private static final ArrayList<CapturerObserver> observers = new ArrayList<CapturerObserver>();
+
+    private final Model aircraftModel;
+    private Context context;
+    private CapturerObserver capturerObserver;
+
+    public DJIVideoCapturer(Model aircraftModel){
+        this.aircraftModel = aircraftModel;
+    }
+
+    private void setupVideoListener(){
+        Log.d(TAG, "setupVideoListener");
+        if(codecManager != null) {
+            Log.d(TAG, "codecManager not null");
+            return;
+        }
+
+        // Pass SurfaceTexture as null to force the Yuv callback - width and height for the surface texture does not matter
+        codecManager = new DJICodecManager(context, (SurfaceTexture)null, 0, 0);
+        codecManager.enabledYuvData(true);
+        codecManager.setYuvDataCallback(new DJICodecManager.YuvDataCallback() {
+            @Override
+            public void onYuvDataReceived(MediaFormat mediaFormat, ByteBuffer videoBuffer, int dataSize, int width, int height) {
+                if (videoBuffer != null){
+                    try{
+                        // TODO: We need to check which color format they are using by doing a lookup in our MediaFormat, otherwise we get green artifacts
+                        // This can change with Android/device versions. The format might actually change, seemingly at random, according to community reports...
+                        // Other possible buffers we might have to use: I420Buffer
+                        long timestampNS = TimeUnit.MILLISECONDS.toNanos(SystemClock.elapsedRealtime());
+                        NV12Buffer buffer = new NV12Buffer(width,
+                                                            height,
+                                                            mediaFormat.getInteger(MediaFormat.KEY_STRIDE),
+                                                            mediaFormat.getInteger(MediaFormat.KEY_SLICE_HEIGHT),
+                                                            videoBuffer,
+                                                            null);
+                        VideoFrame videoFrame = new VideoFrame(buffer, 0, timestampNS);
+                        // Feed the video frame to everyone
+                        for (CapturerObserver obs : observers) {
+                            obs.onFrameCaptured(videoFrame);
+                        }
+                        videoFrame.release();
+                    } catch (Exception e){
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+
+        // Could create more cases if other drones from DJI require a different approach
+        Log.d(TAG, "DJICApture");
+        Log.d(TAG, aircraftModel.getDisplayName());
+        if (this.aircraftModel.getDisplayName().equals("DJI Air 2S") ||
+                this.aircraftModel.getDisplayName().equals("DJI Phantom 4 PRO")){
+            // The Air 2S relies on the VideoDataListener to obtain the video feed
+            // The onReceive callback provides us the raw H264 (at least according to official documentation). To decode it we send it to our DJICodecManager
+            // H264 or H265 encoding is done to compress and save bandwidth. (4K video might force a switch to H265 on DJI drones)
+            VideoFeeder.VideoDataListener videoDataListener = new VideoFeeder.VideoDataListener() {
+                @Override
+                public void onReceive(byte[] bytes, int dataSize) {
+                    // Pass the encoded data along to obtain the YUV-color data
+                    codecManager.sendDataToDecoder(bytes, dataSize);
+                }
+            };
+            VideoFeeder.getInstance().getPrimaryVideoFeed().addVideoDataListener(videoDataListener);
+        }
+    }
+
+    @Override
+    public void initialize(SurfaceTextureHelper surfaceTextureHelper, Context applicationContext,
+                           CapturerObserver capturerObserver) {
+        this.context = applicationContext;
+        this.capturerObserver = capturerObserver;
+
+        observers.add(capturerObserver);
+    }
+
+    @Override
+    public void startCapture(int width, int height, int framerate) {
+        // Hook onto the DJI onYuvDataReceived event
+        setupVideoListener();
+    }
+
+    @Override
+    public void stopCapture() throws InterruptedException {
+    }
+
+    @Override
+    public void changeCaptureFormat(int width, int height, int framerate) {
+        // Empty on purpose
+    }
+
+    @Override
+    public void dispose() {
+        // Stop receiving frames on the callback from the decoder
+        if (observers.contains(capturerObserver))
+            observers.remove(capturerObserver);
+    }
+
+    @Override
+    public boolean isScreencast() {
+        return false;
+    }
+}
