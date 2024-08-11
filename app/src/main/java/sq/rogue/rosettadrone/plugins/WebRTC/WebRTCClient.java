@@ -92,8 +92,8 @@ public class WebRTCClient {
             }
         }
         catch (JSONException e) {
-            Log.d(TAG, "Exception with socket : " + e.getMessage());
-            e.printStackTrace();
+            Log.d(TAG, "Exception during WebRTC message : " + e.getMessage());
+//            e.printStackTrace();
         }
     }
 
@@ -108,7 +108,8 @@ public class WebRTCClient {
                     message.put("sdp", sessionDescription.description);
                     sendMessage(message);
                 } catch (JSONException e) {
-                    e.printStackTrace();
+                    Log.e(TAG, "JSONException " + e.getMessage());
+//                    e.printStackTrace();
                 }
             }
         }, new MediaConstraints());
@@ -116,15 +117,16 @@ public class WebRTCClient {
 
     private void sendMessage(Object message) {
         Log.d(TAG, "Emitting message to " + peerSocketID);
-        SocketConnection.getInstance().getWebSocket().send(message.toString());
-//        // Ensure WebSocketWrapper is initialized and available
-//        WebSocketWrapper webSocketWrapper = new WebSocketWrapper("ws://192.168.1.220:8090");
-//        WebSocket webSocket = SocketConnection.getInstance().getWebSocket();
-//        if (webSocket != null) {
-//            webSocket.send(message.toString());
-//        } else {
-//            Log.e(TAG, "WebSocket is not available");
-//        }
+        try {
+            JSONObject sendMessage = new JSONObject();
+            sendMessage.put("event", "webrtc_msg");
+            sendMessage.put("socketID", peerSocketID);
+            sendMessage.put("data", message);
+
+            SocketConnection.getInstance().getWebSocket().send(sendMessage.toString());
+        } catch (JSONException e) {
+            Log.e(TAG, "JSONException on sendMessage: " + e.getMessage());
+        }
     }
 
     private void createVideoTrackFromVideoCapturer() {
@@ -150,7 +152,7 @@ public class WebRTCClient {
 
     private PeerConnection createPeerConnection() {
         ArrayList<PeerConnection.IceServer> iceServers = new ArrayList<>();
-        PeerConnection.IceServer stun =  PeerConnection.IceServer.builder("stun:stun.l.google.com:19302").createIceServer();
+        PeerConnection.IceServer stun =  PeerConnection.IceServer.builder("stun:192.168.1.220:8090").createIceServer();
         iceServers.add(stun);
         PeerConnection.RTCConfiguration rtcConfig = new PeerConnection.RTCConfiguration(iceServers);
 
@@ -203,7 +205,8 @@ public class WebRTCClient {
                     Log.d(TAG, "onIceCandidate: sending candidate " + message);
                     sendMessage(message);
                 } catch (JSONException e) {
-                    e.printStackTrace();
+                    Log.e(TAG, "JSONException " + e.getMessage());
+//                    e.printStackTrace();
                 }
             }
 

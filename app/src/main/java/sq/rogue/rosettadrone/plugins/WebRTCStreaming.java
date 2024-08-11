@@ -1,7 +1,8 @@
 package sq.rogue.rosettadrone.plugins;
 
+//import android.os.Handler;
 import android.util.Log;
-
+import java.util.concurrent.TimeUnit;
 //import java.io.IOException;
 //import java.nio.ByteBuffer;
 
@@ -10,59 +11,61 @@ import dji.common.product.Model;
 // import io.socket.client.Socket;
 
 // import sq.rogue.rosettadrone.DroneModel;
+//import okhttp3.WebSocket;
 import sq.rogue.rosettadrone.Plugin;
 import sq.rogue.rosettadrone.RDApplication;
-//import sq.rogue.rosettadrone.plugins.WebRTC.DJIStreamer;
+import sq.rogue.rosettadrone.plugins.WebRTC.DJIStreamer;
 
-import sq.rogue.rosettadrone.plugins.WebRTC.SocketConnection;
+//import sq.rogue.rosettadrone.plugins.WebRTC.SocketConnection;
+import sq.rogue.rosettadrone.plugins.WebRTC.WebRTCMediaOptions;
+import  sq.rogue.rosettadrone.plugins.WebRTC.websocket.Socket;
+import  sq.rogue.rosettadrone.plugins.WebRTC.websocket.SocketBuilder;
+import  sq.rogue.rosettadrone.plugins.WebRTC.websocket.OnStateChangeListener;
+import  sq.rogue.rosettadrone.plugins.WebRTC.websocket.SocketState;
+
 
 public class WebRTCStreaming extends Plugin {
     private static final String TAG = "WebRTCStreaming";
-    //private DJIStreamer djiStreamer;
-//    private SocketConnection socket;
+    private final String WEBSOCKET_URL = "ws://192.168.1.220:8090";
+    private DJIStreamer djiStreamer;
+    private Socket mSocket;
     private Model aircraftModel;
 //    WebRTCStreaming.TestSender testSender;
     private static final boolean TEST = false; // Send a testing stream
 
-//    public static class TestSender extends Thread {
-//        public Socket instance;
-//        public boolean stop = false;
-//
-//        @Override
-//        public void run() {
-//            int offset = 0;
-//            while (!stop) {
-//                try {
-//                    int w = 1280;
-//                    int h = 720;
-//
-//                    int bufferSize = w * h * 3 / 2;
-//                    byte[] bytes = new byte[bufferSize];
-//
-//                    for (int i = 0; i < bytes.length; i++) {
-//                        bytes[i] = (byte) ((i + offset) % 256);
-//                    }
-//                    offset++;
-//
-//                    ByteBuffer buffer = ByteBuffer.wrap(bytes);
-////                    streamer.sendYuvData(null, buffer, bufferSize, w, h);
-//                    instance.send()
-//
-//                    Thread.sleep(1000 / fps);
-//
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                }
-//            }
-//        }
-//    }
-
     public void start() {
         pluginManager.mainActivity.useCustomDecoder = false; // Messes up the buffer received by onYuvDataReceived()
         pluginManager.mainActivity.useOutputSurface = false; // Avoid crash when clicking on minimap
-        Log.e(TAG, "SocketConnection() call");
-        SocketConnection socket = SocketConnection.getInstance();
-        Log.e(TAG, "start() call");
+        // Handler mainHandler = new Handler(pluginManager.mainActivity.getMainLooper());
+//        Log.e(TAG, "Socket start");
+
+        // init websocket
+        mSocket = SocketBuilder.with(WEBSOCKET_URL)
+                .setPingInterval(5, TimeUnit.SECONDS).build();
+
+        // add ws states listeners
+        mSocket.addOnChangeStateListener(new OnStateChangeListener() {
+            // Socket connection events
+            @Override
+            public void onChange(SocketState status) {
+                switch (status) {
+                    case OPEN:
+                        // new OnlineEvent();
+                        break;
+                    case CLOSING: case CLOSED: case RECONNECTING:
+                    case RECONNECT_ATTEMPT: case CONNECT_ERROR:
+                        // new OfflineEvent();
+                        break;
+                }
+            }
+            @Override
+            public void onClosed(int code, String reason) {
+                // socket should be always connected
+                // Even it's closed, open the connection again
+                mSocket.connect();
+            }
+        });
+        mSocket.connect();
 
         if(TEST || RDApplication.isTestMode) {
             // TODO
@@ -81,7 +84,7 @@ public class WebRTCStreaming extends Plugin {
             }
             else {
                 Log.d(TAG, " djiStreamer start");
-//                djiStreamer = new DJIStreamer(pluginManager.mainActivity, aircraftModel);
+                djiStreamer = new DJIStreamer(pluginManager.mainActivity, aircraftModel);
                 Log.d(TAG, " djiStreamer started");
             }
         }
@@ -103,9 +106,9 @@ public class WebRTCStreaming extends Plugin {
 //            pluginManager.mainActivity.mCodecManager.enabledYuvData(false);
         }
 
-//        if(djiStreamer != null) {
-//            socket.getSocket().close();
-//        }
+        if(djiStreamer != null) {
+            mSocket.close();
+        }
     }
 
     public boolean isEnabled() {
