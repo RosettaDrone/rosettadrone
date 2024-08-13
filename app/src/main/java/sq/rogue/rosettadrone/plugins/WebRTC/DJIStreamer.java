@@ -20,10 +20,10 @@ public class DJIStreamer {
     private final Hashtable<String, WebRTCClient> ongoingConnections = new Hashtable<>();
     private final Model aircraftModel;
 
-    public DJIStreamer(Context context, Model aircraftModel){
+    public DJIStreamer(Context context, Model aircraftModel, String stunServer){
         this.aircraftModel = aircraftModel;
         this.context = context;
-        setupSocketEvent();
+        setupSocketEvent(stunServer);
     }
 
     private WebRTCClient getClient(String socketID){
@@ -35,9 +35,9 @@ public class DJIStreamer {
         ongoingConnections.remove(socketID);
     }
 
-    private WebRTCClient addNewClient(String socketID){
+    private WebRTCClient addNewClient(String socketID, String stunServer){
         VideoCapturer videoCapturer = new DJIVideoCapturer(aircraftModel);
-        WebRTCClient client = new WebRTCClient(socketID, context, videoCapturer, new WebRTCMediaOptions());
+        WebRTCClient client = new WebRTCClient(socketID, context, videoCapturer, new WebRTCMediaOptions(), stunServer);
         client.setConnectionChangedListener(new WebRTCClient.PeerConnectionChangedListener() {
             @Override
             public void onDisconnected() {
@@ -49,7 +49,7 @@ public class DJIStreamer {
         return client;
     }
 
-    private void setupSocketEvent(){
+    private void setupSocketEvent(String stunServer){
         Socket.getInstance().with(context).setOnEventResponseListener("webrtc_msg", (event, data) -> {
             try {
                 JSONObject jsonData = new JSONObject(data);
@@ -59,7 +59,7 @@ public class DJIStreamer {
 
                 if (client == null){
                     // A new client wants to establish a P2P
-                    client = addNewClient(peerSocketID);
+                    client = addNewClient(peerSocketID, stunServer);
                 }
 
                 // Then just pass the message to the client
