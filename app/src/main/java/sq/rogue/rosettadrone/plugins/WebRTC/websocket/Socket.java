@@ -148,10 +148,10 @@ public class Socket {
                 JSONObject text = new JSONObject();
                 text.put("event", event);
                 text.put("data", new JSONObject(data));
-                Log.d(TAG, "Try to send data: \n"+ text.toString());
+
                 return mRealWebSocket.send(text.toString());
             } catch (JSONException e) {
-                Log.e(TAG, "Try to send data with wrong JSON format");
+                Log.e(TAG, "JSONException when sending data: " + e.getMessage());
             }
         }
         return false;
@@ -299,7 +299,7 @@ public class Socket {
         @Override
         public void onMessage(WebSocket webSocket, String text) {
             // print received message in log
-            Log.d(TAG, "New Message received \n" + text);
+            // Log.d(TAG, "New Message received \n" + text);
 
             // call message listener
             postEvent(new SocketEvents.BaseMessageEvent(text));
@@ -317,8 +317,7 @@ public class Socket {
                 postEvent(new SocketEvents.BaseMessageEvent(event));
             } catch (JSONException e) {
                 // Message text not in JSON format or don't have {event}|{data} object
-                Log.d(TAG,"Unknown message format.");
-                Log.d(TAG,"JSONException:" + e.getMessage());
+                Log.e(TAG,"JSONException:" + e.getMessage());
             }
         }
 
@@ -354,7 +353,7 @@ public class Socket {
         public void onFailure(WebSocket webSocket, Throwable t, Response response) {
             if (!isForceTermination) {
                 isForceTermination = false; // reset flag
-                Log.d(TAG, "Socket connection fail, try to reconnect. (" + reconnectionAttempts + ")");
+                Log.e(TAG, "Socket connection fail, try to reconnect. (" + reconnectionAttempts + ")", t);
                 changeState(SocketState.CONNECT_ERROR);
                 reconnect();
             }

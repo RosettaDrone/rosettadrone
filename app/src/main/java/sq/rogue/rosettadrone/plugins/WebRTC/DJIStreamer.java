@@ -1,21 +1,12 @@
 package sq.rogue.rosettadrone.plugins.WebRTC;
 
 import android.content.Context;
-//import android.os.Handler;
 import android.util.Log;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.webrtc.VideoCapturer;
-
 import java.util.Hashtable;
-
 import dji.common.product.Model;
-//import dji.sdk.sdkmanager.DJISDKManager;
-//import static io.socket.client.Socket.EVENT_DISCONNECT;
-
-//import com.example.SocketConnection;
-
 import sq.rogue.rosettadrone.plugins.WebRTC.websocket.Socket;
 
 /**
@@ -23,16 +14,13 @@ import sq.rogue.rosettadrone.plugins.WebRTC.websocket.Socket;
  * with clients, who desire videofeed.
  */
 public class DJIStreamer {
-    private static final String TAG = "DJIStreamer";
+    private static final String TAG = DJIStreamer.class.getSimpleName();
 
-//    private String droneDisplayName = "";
     private final Context context;
     private final Hashtable<String, WebRTCClient> ongoingConnections = new Hashtable<>();
-//    private final SocketConnection socket;
     private final Model aircraftModel;
 
     public DJIStreamer(Context context, Model aircraftModel){
-//        this.droneDisplayName = DJISDKManager.getInstance().getProduct().getModel().getDisplayName();
         this.aircraftModel = aircraftModel;
         this.context = context;
         setupSocketEvent();
@@ -63,35 +51,22 @@ public class DJIStreamer {
 
     private void setupSocketEvent(){
         Socket.getInstance().with(context).setOnEventResponseListener("webrtc_msg", (event, data) -> {
+            try {
+                JSONObject jsonData = new JSONObject(data);
+                String peerSocketID = jsonData.getString("socketID"); // The web-client sending a message
 
-//            Handler mainHandler = new Handler(context.getMainLooper());
-//            Runnable myRunnable = new Runnable() {
-//                @Override
-//                public void run() {
-                    try {
-                        Log.d(TAG, "Received WebRTCMessage data: " + data);
-                        JSONObject jsonData = new JSONObject(data);
-                        String peerSocketID = jsonData.getString("socketID"); // The web-client sending a message
-                        Log.d(TAG, "Received WebRTCMessage: " + peerSocketID);
+                WebRTCClient client = getClient(peerSocketID);
 
-                        WebRTCClient client = getClient(peerSocketID);
+                if (client == null){
+                    // A new client wants to establish a P2P
+                    client = addNewClient(peerSocketID);
+                }
 
-                        if (client == null){
-                            // A new client wants to establish a P2P
-                            client = addNewClient(peerSocketID);
-                            Log.d(TAG, "New WebRTCClient created");
-                        }
-
-                        // Then just pass the message to the client
-//                        JSONObject message = (JSONObject) args[1];
-                        client.handleWebRTCMessage(jsonData);
-                    } catch (JSONException e) {
-                        Log.e(TAG, "ERROR: Receiving WebRTCMessage: " + e.getMessage());
-                        throw new RuntimeException(e);
-                    }
-//                }
-//            };
-//            mainHandler.post(myRunnable);
+                // Then just pass the message to the client
+                client.handleWebRTCMessage(jsonData);
+            } catch (JSONException e) {
+                Log.e(TAG, "JSONException: " + e.getMessage());
+            }
         });
     }
 }

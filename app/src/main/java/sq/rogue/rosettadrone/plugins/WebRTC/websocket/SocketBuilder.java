@@ -4,7 +4,6 @@ import androidx.annotation.NonNull;
 import java.util.concurrent.TimeUnit;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-//import okhttp3.logging.HttpLoggingInterceptor;
 
 /**
  * Builder class to build websocket connection
@@ -12,13 +11,8 @@ import okhttp3.Request;
 public class SocketBuilder {
 
     private Request.Builder request;
-//    private HttpLoggingInterceptor logging =
-//            new HttpLoggingInterceptor()
-//                    .setLevel(HttpLoggingInterceptor.Level.HEADERS);
 
-    private OkHttpClient.Builder httpClient =
-            new OkHttpClient.Builder();
-//                    .addInterceptor(logging);
+    private OkHttpClient.Builder httpClient = new OkHttpClient.Builder();
 
     private SocketBuilder(Request.Builder request) {
         this.request = request;

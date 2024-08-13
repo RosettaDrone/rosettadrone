@@ -4,6 +4,7 @@ import static org.webrtc.SessionDescription.Type.OFFER;
 
 import android.content.Context;
 import android.util.Log;
+import java.util.ArrayList;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -22,10 +23,10 @@ import org.webrtc.VideoCapturer;
 import org.webrtc.VideoSource;
 import org.webrtc.VideoTrack;
 
-import java.util.ArrayList;
+import sq.rogue.rosettadrone.plugins.WebRTC.websocket.Socket;
 
 public class WebRTCClient {
-    private static final String TAG = "WebRTCClient";
+    private static final String TAG = WebRTCClient.class.getSimpleName();
     private final Context context;
 
     // WebRTC related variables
@@ -80,7 +81,7 @@ public class WebRTCClient {
 
     public void handleWebRTCMessage(JSONObject message){
         try {
-            Log.d(TAG, "connectToSignallingServer: got message " + message);
+            // Log.d(TAG, "connectToSignallingServer: got message " + message);
             if (message.getString("type").equals("offer")) {
                 Log.d(TAG, "connectToSignallingServer: received an offer");
                 peerConnection.setRemoteDescription(new SimpleSdpObserver(), new SessionDescription(OFFER, message.getString("sdp")));
@@ -92,8 +93,7 @@ public class WebRTCClient {
             }
         }
         catch (JSONException e) {
-            Log.d(TAG, "Exception during WebRTC message : " + e.getMessage());
-//            e.printStackTrace();
+            Log.d(TAG, "JSONException: " + e.getMessage());
         }
     }
 
@@ -108,24 +108,22 @@ public class WebRTCClient {
                     message.put("sdp", sessionDescription.description);
                     sendMessage(message);
                 } catch (JSONException e) {
-                    Log.e(TAG, "JSONException " + e.getMessage());
-//                    e.printStackTrace();
+                    Log.e(TAG, "JSONException: " + e.getMessage());
                 }
             }
         }, new MediaConstraints());
     }
 
     private void sendMessage(Object message) {
-        Log.d(TAG, "Emitting message to " + peerSocketID);
+        // Log.d(TAG, "Emitting message to " + peerSocketID);
         try {
-            JSONObject sendMessage = new JSONObject();
-            sendMessage.put("event", "webrtc_msg");
+            // append target socketID to sent data.
+            JSONObject sendMessage = new JSONObject(message.toString());
             sendMessage.put("socketID", peerSocketID);
-            sendMessage.put("data", message);
 
-            SocketConnection.getInstance().getWebSocket().send(sendMessage.toString());
+            Socket.getInstance().send("webrtc_msg", sendMessage);
         } catch (JSONException e) {
-            Log.e(TAG, "JSONException on sendMessage: " + e.getMessage());
+            Log.e(TAG, "JSONException: " + e.getMessage());
         }
     }
 
@@ -202,11 +200,9 @@ public class WebRTCClient {
                     message.put("id", iceCandidate.sdpMid);
                     message.put("candidate", iceCandidate.sdp);
 
-                    Log.d(TAG, "onIceCandidate: sending candidate " + message);
                     sendMessage(message);
                 } catch (JSONException e) {
                     Log.e(TAG, "JSONException " + e.getMessage());
-//                    e.printStackTrace();
                 }
             }
 
