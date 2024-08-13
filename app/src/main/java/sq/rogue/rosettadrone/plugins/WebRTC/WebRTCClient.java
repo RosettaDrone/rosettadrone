@@ -49,14 +49,14 @@ public class WebRTCClient {
         return factory;
     }
 
-    public WebRTCClient(String peerSocketID, Context context, VideoCapturer videoCapturer, WebRTCMediaOptions options){
+    public WebRTCClient(String peerSocketID, Context context, VideoCapturer videoCapturer, WebRTCMediaOptions options, String stunServer){
         this.peerSocketID = peerSocketID;
         this.context = context;
         this.options = options;
         this.videoCapturer = videoCapturer;
 
         createVideoTrackFromVideoCapturer();
-        initializePeerConnection();
+        initializePeerConnection(stunServer);
         startStreamingVideo();
     }
 
@@ -138,8 +138,8 @@ public class WebRTCClient {
         videoTrackFromCamera.setEnabled(true);
     }
 
-    private void initializePeerConnection() {
-        peerConnection = createPeerConnection();
+    private void initializePeerConnection(String stunServer) {
+        peerConnection = createPeerConnection(stunServer);
     }
 
     private void startStreamingVideo() {
@@ -148,9 +148,9 @@ public class WebRTCClient {
         peerConnection.addStream(mediaStream);
     }
 
-    private PeerConnection createPeerConnection() {
+    private PeerConnection createPeerConnection(String stunServer) {
         ArrayList<PeerConnection.IceServer> iceServers = new ArrayList<>();
-        PeerConnection.IceServer stun =  PeerConnection.IceServer.builder("stun:192.168.1.220:8090").createIceServer();
+        PeerConnection.IceServer stun =  PeerConnection.IceServer.builder(stunServer).createIceServer();
         iceServers.add(stun);
         PeerConnection.RTCConfiguration rtcConfig = new PeerConnection.RTCConfiguration(iceServers);
 

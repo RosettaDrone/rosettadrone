@@ -13,18 +13,16 @@ import sq.rogue.rosettadrone.plugins.WebRTC.websocket.SocketState;
 
 public class WebRTCStreaming extends Plugin {
     private static final String TAG = WebRTCStreaming.class.getSimpleName();
-    private final String WEBSOCKET_URL = "ws://192.168.1.220:8090";
     private DJIStreamer djiStreamer;
     private Socket mSocket;
     private static final boolean TEST = false; // Send a testing stream
 
-    public void start() {
-        pluginManager.mainActivity.useCustomDecoder = false; // Messes up the buffer received by onYuvDataReceived()
-        pluginManager.mainActivity.useOutputSurface = false; // Avoid crash when clicking on minimap
-
+    public void initWebSocket() {
         // init websocket
-        mSocket = SocketBuilder.with(WEBSOCKET_URL)
-                .setPingInterval(5, TimeUnit.SECONDS).build();
+        mSocket = SocketBuilder
+                .with(getPrefString("pref_webrtc_signaling_server", "ws://192.168.1.220:8090"))
+                .setPingInterval(5, TimeUnit.SECONDS)
+                .build();
 
         // add ws states listeners
         mSocket.addOnChangeStateListener(new OnStateChangeListener() {
@@ -49,7 +47,9 @@ public class WebRTCStreaming extends Plugin {
             }
         });
         mSocket.connect();
+    }
 
+    public void initStreaming() {
         if(TEST || RDApplication.isTestMode) {
             // TODO: fake video streaming?
         }
@@ -61,10 +61,21 @@ public class WebRTCStreaming extends Plugin {
                 pluginManager.mainActivity.finish();
             }
             else {
-                djiStreamer = new DJIStreamer(pluginManager.mainActivity, pluginManager.mainActivity.mModel.m_model);
+                djiStreamer = new DJIStreamer(pluginManager.mainActivity,
+                        pluginManager.mainActivity.mModel.m_model,
+                        getPrefString("pref_webrtc_stun_server", "stun:stun.l.google.com:19302"));
             }
         }
+    }
 
+    public void start() {
+        pluginManager.mainActivity.useCustomDecoder = false; // Messes up the buffer received by onYuvDataReceived()
+        pluginManager.mainActivity.useOutputSurface = false; // Avoid crash when clicking on minimap
+
+        if (getPrefBoolean("pref_enable_webrtc", false)) {
+            initWebSocket();
+            initStreaming();
+        }
     }
 
     public void onVideoChange() {
@@ -80,7 +91,8 @@ public class WebRTCStreaming extends Plugin {
         }
 
         // TODO: properly close client connections.
-        mSocket.terminate();
+        if (pluginManager.mainActivity.sharedPreferences.getBoolean("pref_enable_webrtc", false))
+            mSocket.terminate();
     }
 
     public boolean isEnabled() {

@@ -29,4 +29,13 @@ public class Plugin {
 
     public void settingsChanged() {
     }
+
+    public String getPrefString(String pref, String defPref) {
+        return pluginManager.mainActivity.sharedPreferences.getString(pref, defPref);
+    }
+
+    public Boolean getPrefBoolean(String pref, Boolean defPref) {
+        return pluginManager.mainActivity.sharedPreferences.getBoolean(pref, defPref);
+    }
+
 }

@@ -320,6 +320,28 @@
     </PreferenceCategory>
 
     <PreferenceCategory
+        android:key="webrtc_prefs"
+        android:title="@string/webrtc_settings">
+
+        <androidx.preference.SwitchPreferenceCompat
+            android:key="pref_enable_webrtc"
+            android:title="@string/pref_enable_webrtc"
+            android:defaultValue="false" />
+
+        <androidx.preference.EditTextPreference
+            android:defaultValue="ws://127.0.0.1:8090"
+            android:dependency="pref_enable_webrtc"
+            android:key="pref_webrtc_signaling_server"
+            android:title="@string/pref_webrtc_signaling_address" />
+        <androidx.preference.EditTextPreference
+            android:defaultValue="stun:stun.l.google.com:19302"
+            android:dependency="pref_enable_webrtc"
+            android:key="pref_webrtc_stun_server"
+            android:title="@string/pref_webrtc_stun_address" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
         android:key="log_prefs"
         android:title="@string/log_settings">
 
