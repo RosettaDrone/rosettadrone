@@ -148,6 +148,10 @@ public class DJIVideoCapturer implements VideoCapturer {
 
     @Override
     public void stopCapture() throws InterruptedException {
+        codecManager.enabledYuvData(false);
+        codecManager.setYuvDataCallback(null);
+        codecManager.destroyCodec();
+        codecManager = null;
     }
 
     @Override

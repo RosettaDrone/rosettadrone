@@ -93,7 +93,7 @@ public class WebRTCClient {
             }
         }
         catch (JSONException e) {
-            Log.d(TAG, "JSONException: " + e.getMessage());
+            Log.e(TAG, "JSONException: " + e.getMessage());
         }
     }
 
@@ -146,6 +146,42 @@ public class WebRTCClient {
         MediaStream mediaStream = getFactory(context).createLocalMediaStream(options.MEDIA_STREAM_ID);
         mediaStream.addTrack(videoTrackFromCamera);
         peerConnection.addStream(mediaStream);
+    }
+
+    public void stopCapture() {
+        // Stop video capture if it is active
+        try {
+            if (videoCapturer != null) {
+                videoCapturer.stopCapture();
+            }
+        } catch (InterruptedException e) {
+            Log.e(TAG, "Error stopping video capture: " + e.getMessage());
+        } finally {
+            // Dispose of video capturer to free its resources
+            if (videoCapturer != null) {
+                videoCapturer.dispose();
+                Log.d(TAG, "Video capturer disposed.");
+            }
+            Log.d(TAG, "WebRTC client resources clean complete.");
+        }
+    }
+
+    public void close() {
+        // Close the peer connection if it exists
+        if (peerConnection != null) {
+            peerConnection.close();
+            peerConnection.dispose();
+            Log.d(TAG, "PeerConnection disposed.");
+        }
+
+        // Optionally dispose of the PeerConnectionFactory if this is the last WebRTCClient instance
+        if (factory != null) {
+            factory.dispose();
+            factory = null;
+            Log.d(TAG, "PeerConnectionFactory disposed.");
+        }
+
+        Log.d(TAG, "WebRTC client close complete.");
     }
 
     private PeerConnection createPeerConnection(String stunServer) {

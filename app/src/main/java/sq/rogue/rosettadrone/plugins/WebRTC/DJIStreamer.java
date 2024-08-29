@@ -69,4 +69,14 @@ public class DJIStreamer {
             }
         });
     }
+
+    public void closeVideoStream() {
+        Log.i(TAG, "closeVideoStream()");
+        ongoingConnections.keySet().forEach(socketID -> {
+            WebRTCClient client = getClient(socketID);
+            client.stopCapture();
+            client.close();
+            removeClient(socketID);
+        });
+    }
 }

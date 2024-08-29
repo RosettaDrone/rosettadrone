@@ -144,9 +144,9 @@
 
     <!-- WebRTC -->
     <string name="webrtc_settings">WebRTC Video</string>
-    <string name="pref_enable_webrtc">Enable WebRTC vide streaming</string>
-    <string name="pref_webrtc_signaling_address">WebRTC Signaling server address</string>
-    <string name="pref_webrtc_stun_address">WebRTC STUN server address</string>
+    <string name="pref_enable_webrtc">Enable WebRTC video streaming</string>
+    <string name="pref_webrtc_signaling_address">Signaling server address</string>
+    <string name="pref_webrtc_stun_address">STUN server address</string>
 
     <!-- Communication Channels -->
     <string name="dji">DJI</string>

@@ -16,8 +16,11 @@ public class WebRTCStreaming extends Plugin {
     private DJIStreamer djiStreamer;
     private Socket mSocket;
     private static final boolean TEST = false; // Send a testing stream
+    private String stunServer;
 
     public void initWebSocket() {
+        Log.d(TAG, "initWebSocket");
+        stunServer = getPrefString("pref_webrtc_stun_server", "stun:stun.l.google.com:19302");
         // init websocket
         mSocket = SocketBuilder
                 .with(getPrefString("pref_webrtc_signaling_server", "ws://192.168.1.220:8090"))
@@ -60,21 +63,30 @@ public class WebRTCStreaming extends Plugin {
                 pluginManager.mainActivity.logMessageDJI(msg);
                 pluginManager.mainActivity.finish();
             }
-            else {
+            else if (djiStreamer == null) {
                 djiStreamer = new DJIStreamer(pluginManager.mainActivity,
-                        pluginManager.mainActivity.mModel.m_model,
-                        getPrefString("pref_webrtc_stun_server", "stun:stun.l.google.com:19302"));
+                        pluginManager.mainActivity.mModel.m_model, stunServer);
             }
         }
     }
 
     public void start() {
-        pluginManager.mainActivity.useCustomDecoder = false; // Messes up the buffer received by onYuvDataReceived()
-        pluginManager.mainActivity.useOutputSurface = false; // Avoid crash when clicking on minimap
-
         if (getPrefBoolean("pref_enable_webrtc", false)) {
+            pluginManager.mainActivity.useCustomDecoder = false; // Messes up the buffer received by onYuvDataReceived()
+            pluginManager.mainActivity.useOutputSurface = false; // Avoid crash when clicking on minimap
             initWebSocket();
+        }
+    }
+
+    public void resume() {
+        if (getPrefBoolean("pref_enable_webrtc", false)) {
             initStreaming();
+        }
+    }
+
+    public void pause() {
+        if (getPrefBoolean("pref_enable_webrtc", false) && djiStreamer != null) {
+            djiStreamer.closeVideoStream();
         }
     }
 
@@ -87,11 +99,10 @@ public class WebRTCStreaming extends Plugin {
         if(TEST || RDApplication.isTestMode) {
             // TODO: stop fake video stream;
         } else {
-            // TODO: stop DJIStreamer clients?;
+            pause();
         }
 
-        // TODO: properly close client connections.
-        if (pluginManager.mainActivity.sharedPreferences.getBoolean("pref_enable_webrtc", false))
+        if (getPrefBoolean("pref_enable_webrtc", false) && mSocket != null)
             mSocket.terminate();
     }
 

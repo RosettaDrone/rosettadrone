@@ -11,7 +11,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class PluginManager {
-    private final String TAG = DroneModel.class.getSimpleName();
+    private final String TAG = PluginManager.class.getSimpleName();
 
     public MainActivity mainActivity;
 
@@ -56,6 +56,10 @@ public class PluginManager {
             plugin.stop();
         }
     }
+
+    public void pause() { for (Plugin plugin : plugins) { plugin.pause(); } }
+
+    public void resume() { for (Plugin plugin : plugins) { plugin.resume(); } }
 
     public void onVideoChange() {
         for (Plugin plugin : plugins) {
