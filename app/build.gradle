@@ -8,7 +8,7 @@ android {
     compileSdkVersion 33
     defaultConfig {
         applicationId "sq.rogue.rosettadrone"
-        minSdkVersion 22
+        minSdkVersion 24
         targetSdkVersion 33
         versionCode 1
         versionName '5.2.0'    // This is the one to modify...
@@ -164,6 +164,17 @@ dependencies {
     implementation 'javax.mail:mail:1.4.7'                              // 1.4.7
     //  exclude 'javax.activation:activation:1.1'
     //  implementation 'com.sun.mail:android-activation:1.6.6'
+    // WebRTC library
+    implementation 'org.webrtc:google-webrtc:1.0.32006'
+    // Websocket implementation
+    implementation 'com.squareup.okhttp3:okhttp:4.10.0'
+    // Websocket utils for event-driven approach.
+    implementation 'io.reactivex.rxjava3:rxandroid:3.0.2'
+    // Because RxAndroid releases are few and far between, it is recommended you also
+    // explicitly depend on RxJava's latest version for bug fixes and new features.
+    // (see https://github.com/ReactiveX/RxJava/releases for latest 3.x.x version)
+    implementation 'io.reactivex.rxjava3:rxjava:3.1.5'
+
 }
 
 

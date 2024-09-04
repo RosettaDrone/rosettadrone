@@ -376,6 +376,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         */
 
         resumeVideo();
+        pluginManager.resume();
     }
 
     void resumeVideo() {
@@ -429,6 +430,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     protected void onPause() {
         Log.e(TAG, "onPause()");
         super.onPause();
+        pluginManager.pause();
     }
 
     @Override
