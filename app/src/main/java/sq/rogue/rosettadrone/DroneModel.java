@@ -204,7 +204,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
     public float mission_alt = 0;
 
-    Model m_model;
+    public Model m_model;
     Camera m_camera;
     Aircraft m_aircraft;
 
