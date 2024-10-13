@@ -19,6 +19,11 @@ allprojects {
     repositories {
         google()
         jcenter()
+
+        /* HACK: https://github.com/RosettaDrone/rosettadrone/issues/172#issuecomment-2337197564 */
+        maven { url 'https://maven.aliyun.com/repository/public' }
+        maven { url 'https://maven.aliyun.com/repository/google' }
+        maven { url 'https://repo.huaweicloud.com/repository/maven'}
     }
 }
 
