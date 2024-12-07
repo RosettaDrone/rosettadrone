@@ -782,18 +782,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         // SafeMode button
         mBtnSafety = findViewById(R.id.btn_safety);
         mBtnSafety.setOnClickListener(v -> {
-            Drawable connectedDrawable;
             stat = !stat;
-            if (stat) {
-                connectedDrawable = getResources().getDrawable(R.drawable.ic_lock_outline_secondary_24dp, null);
-                mBtnSafety.setBackground(connectedDrawable);
-                findViewById(R.id.btn_takeoff).setVisibility(View.INVISIBLE);
-            } else {
-                connectedDrawable = getResources().getDrawable(R.drawable.ic_lock_open_black_24dp, null);
-                mBtnSafety.setBackground(connectedDrawable);
-                findViewById(R.id.btn_takeoff).setVisibility(View.VISIBLE);
-            }
-            mModel.setSafetyEnabled(stat);
+            setSafeMode(stat);
             NotificationHandler.notifySnackbar(findViewById(R.id.snack),
                     (mModel.isSafetyEnabled()) ? R.string.safety_on : R.string.safety_off, LENGTH_LONG);
         });
@@ -810,21 +800,29 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         pluginManager.start();
 
         if(RDApplication.isTestMode) {
+            setSafeMode(false);
             mModel.mMotorsArmed = true;
             onDroneConnected();
+
         } else {
-            // Click on SafeMode button (enable SafeMode)
-            Handler mTimerHandler = new Handler(Looper.getMainLooper());
-            mTimerHandler.postDelayed(enableSafeMode, 3000);
+            setSafeMode(true);
         }
     }
 
-    private Runnable enableSafeMode = new Runnable() {
-        @Override
-        public void run() {
-            mBtnSafety.callOnClick();
+    private void setSafeMode(boolean enabled) {
+        Drawable connectedDrawable;
+        if (enabled) {
+            connectedDrawable = getResources().getDrawable(R.drawable.ic_lock_outline_secondary_24dp, null);
+            mBtnSafety.setBackground(connectedDrawable);
+            findViewById(R.id.btn_takeoff).setVisibility(View.INVISIBLE);
+        } else {
+            connectedDrawable = getResources().getDrawable(R.drawable.ic_lock_open_black_24dp, null);
+            mBtnSafety.setBackground(connectedDrawable);
+            findViewById(R.id.btn_takeoff).setVisibility(View.VISIBLE);
         }
-    };
+
+        mModel.setSafetyEnabled(enabled);
+    }
 
     @Override
     protected void onNewIntent(@NonNull Intent intent) {
