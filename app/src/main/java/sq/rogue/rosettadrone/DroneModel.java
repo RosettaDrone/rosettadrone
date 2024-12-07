@@ -1970,11 +1970,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         //setMavFlightMode(ArduCopterFlightModes.LAND);
         mFlightController.startLanding(djiError -> {
             if (djiError == null) {
-                if(!useMissionManager) {
-                    // TODO: Wait until landed
-                    // Keeping old version
-                    landed();
-                }
+                landed();
 
             } else {
                 Log.e(TAG, "do_land(): " + djiError.toString());
