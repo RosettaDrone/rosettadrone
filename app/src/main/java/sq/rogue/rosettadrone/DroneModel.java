@@ -2086,7 +2086,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         double vy;
         double vz;
 
-        double yawRate;
+        double yawRate; // deg/sec
 
         YawDirection yawDirection = YawDirection.DEST; // Where to look while moving
 
@@ -2504,15 +2504,24 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     int velLogCounter = 0;
-    void setVelocities(double roll, double pitch, double throttle, double yaw) {
+
+    /**
+     * Set drone velocities.
+     *
+     * @param roll
+     * @param pitch
+     * @param throttle
+     * @param yawRate deg/sec
+     */
+    void setVelocities(double roll, double pitch, double throttle, double yawRate) {
         if(isForbiddenSwitchMode()) return;
 
         if(DEBUG_MOTION || velLogCounter++ >= 1000 / MOTION_PERIOD_MS) { // 1 log per second
             velLogCounter = 0;
-            Log.i(TAG, "setVelocities = fwd: " + roll + " ; right: " + pitch + " ; up: " + throttle + " ; yaw: " + yaw);
+            Log.i(TAG, "setVelocities = fwd: " + roll + " ; right: " + pitch + " ; up: " + throttle + " ; yaw: " + yawRate);
         }
 
-        mFlightController.sendVirtualStickFlightControlData(new FlightControlData((float)pitch, (float)roll, (float)yaw, (float)throttle), djiError -> {
+        mFlightController.sendVirtualStickFlightControlData(new FlightControlData((float)pitch, (float)roll, (float)yawRate, (float)throttle), djiError -> {
             if (djiError != null) Log.e(TAG, "SendVelocityDataTask Error: " + djiError.toString());
         });
     }

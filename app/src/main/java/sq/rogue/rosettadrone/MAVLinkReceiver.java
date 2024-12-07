@@ -346,7 +346,7 @@ public class MAVLinkReceiver {
                 DroneModel.Motion motion = mModel.newMotion(MAVLINK_MSG_ID_SET_POSITION_TARGET_LOCAL_NED, msg_param.type_mask);
                 motion.setDestination(msg_param.coordinate_frame, msg_param.x, msg_param.y, msg_param.z);
                 motion.yaw = msg_param.yaw;
-                motion.yawRate = msg_param.yaw_rate;
+                motion.yawRate = Math.toDegrees(msg_param.yaw_rate);
                 motion.vx = msg_param.vx;
                 motion.vy = msg_param.vy;
                 motion.vz = msg_param.vz;
@@ -547,7 +547,7 @@ public class MAVLinkReceiver {
         } else {
             motion.setDestination(msg.coordinate_frame, msg.lat_int, msg.lon_int, msg.alt);
             motion.yaw = msg.yaw;
-            motion.yawRate = msg.yaw_rate;
+            motion.yawRate = Math.toDegrees(msg.yaw_rate);
         }
         mModel.startMotion(motion);
     }
