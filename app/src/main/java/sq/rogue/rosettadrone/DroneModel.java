@@ -1274,9 +1274,9 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
             int blockSeconds = 5;
             Log.i(TAG, "RC joystick moved => cancelling all tasks and blocking MAVLink motion for " + blockSeconds + " seconds");
+            timerIgnoreMavLink = System.currentTimeMillis() + blockSeconds * 1000;
             cancelAllTasks();
             setVirtualSticksEnabled(false);
-            timerIgnoreMavLink = System.currentTimeMillis() + blockSeconds * 1000;
         }
     }
 
@@ -1892,7 +1892,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         Log.i(TAG, "Starting take off...");
 
         if(useMissionControlClass) {
-            // TODO: Why do we want to start/resume a mission after taking off?. Should we start a mission when setting mode to auto (like Mission Planner)?
+            // TODO: Remove this code? Why do we want to start/resume a WaypointMission after taking off?. This is not part of MAVLink spec.
             if (getWaypointMissionOperator().getCurrentState() == WaypointMissionState.EXECUTION_PAUSED) {
                 resumeWaypointMission();
             }
@@ -1912,8 +1912,11 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
         } else {
             FlightControllerState coord = mFlightController.getState();
+            // TODO: BUG: Sometimes isFlying() returns true even when not flying.
             if(coord.isFlying()) {
+                send_text("Already flying");
                 Log.i(TAG, "doTakeOff(): already flying => ignore takeoff and only ascend");
+                if(sendResponses) send_command_ack(MAV_CMD_NAV_TAKEOFF, MAV_RESULT.MAV_RESULT_ACCEPTED);
                 ascend(alt);
 
             } else {
@@ -1921,7 +1924,9 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                     @Override
                     public void onResult(DJIError djiError) {
                         if (djiError == null) {
+                            if(sendResponses) send_command_ack(MAV_CMD_NAV_TAKEOFF, MAV_RESULT.MAV_RESULT_ACCEPTED); // Works with MAVSDK
                             ascend(alt);
+
                         } else {
                             Log.e(TAG, "startTakeoff() error: " + djiError.toString());
 
@@ -1965,8 +1970,12 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     void doLand() {
-        parent.logMessageDJI("Landing...");
+        if(System.currentTimeMillis() < timerIgnoreMavLink) return; // Prevent landing again if already landing.
+
+        timerIgnoreMavLink = System.currentTimeMillis() + 5 * 1000;
         cancelAllTasks();
+
+        parent.logMessageDJI("Landing...");
         //setMavFlightMode(ArduCopterFlightModes.LAND);
         mFlightController.startLanding(djiError -> {
             if (djiError == null) {
@@ -2071,10 +2080,10 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
 
         int coordFrame;
 
-        double lat; // Lat
-        double lng; // Lng
-        double alt; // Alt
-        double yaw;
+        double lat; // Latitude
+        double lng; // Longitude
+        double alt; // Altitude
+        double yaw; // Deg
 
         double speed = 3; // m/s
 
@@ -2082,7 +2091,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         double vy;
         double vz;
 
-        double yawRate; // deg/sec
+        double yawRate; // Deg/sec
 
         YawDirection yawDirection = YawDirection.DEST; // Where to look while moving
 
@@ -2200,6 +2209,13 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
             if(mask.ignoreVelZ) throttle = 0;
             if(mask.ignoreYawRate) yawRate = 0;
 
+            if(!motion.mask.ignoreYaw) {
+                double currentYaw = getCurrentYaw();
+                double yawError = rotation(yaw, currentYaw);
+                yawRate = miniPIDHeading.getOutput(-yawError, 0);
+                Log.i(TAG, "YAWRATE: yaw: " + yaw + " ; currentYaw: " + currentYaw + " ; err: " + yawError);
+            }
+
             setVelocities(roll, pitch, throttle, yawRate);
         }
     }
@@ -2285,10 +2301,10 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
         @Override
         public void run() {
             if (motion.isVelocityCommand) {
-                motion.processVelocities(motion.coordFrame);
-
-                motion.velocityTicks--;
-                if (motion.velocityTicks <= 0) {
+                if (motion.velocityTicks > 0) {
+                    motion.processVelocities(motion.coordFrame);
+                    motion.velocityTicks--;
+                } else {
                     cancelMotion();
                 }
 
@@ -2355,7 +2371,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
                 }
 
                 yawError = rotation(targetYaw, yaw);
-                Log.i(TAG, "YAW - target: " + targetYaw + " ; yaw: " + yaw + " ; err: " + yawError);
+                if(DEBUG_MOTION) Log.i(TAG, "YAW - target: " + targetYaw + " ; yaw: " + yaw + " ; err: " + yawError);
             }
 
             // Check if we reached destination point
@@ -2467,6 +2483,7 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     void setVirtualSticksEnabled(boolean setEnabled) {
+        if(System.currentTimeMillis() < timerIgnoreMavLink) return;
         mFlightController.setVirtualStickModeEnabled(setEnabled, djiError -> {
             if (djiError != null) {
                 Log.e(TAG, "setVirtualStickModeEnabled() failed (will retry): " + djiError.toString());
@@ -2871,17 +2888,31 @@ public class DroneModel implements CommonCallbacks.CompletionCallback {
     }
 
     /**
-     * Shortest angle between two angles.
+     * Shortest angle between two angles (including sign for direction).
      * @param alpha Angle in range [0, 360]
      * @param beta Angle in range [0, 360]
      * @return Result will be [-180, 180].
      */
+    public static double rotation(double alpha, double beta) {
+        alpha = alpha % 360;
+        beta = beta % 360;
+        double phi = Math.abs(beta - alpha) % 360; // This is either the distance or 360 - distance
+        double distance = (phi > 180) ? 360 - phi : phi;
+
+        if ((alpha - beta >= 0 && alpha - beta <= 180) || (alpha - beta <= -180 && alpha - beta >= -360)) {
+            return distance;
+        } else {
+            return -distance;
+        }
+    }
+    /*
     private double rotation(double alpha, double beta) {
         double phi = Math.abs(beta - alpha) % 360;       // This is either the distance or 360 - distance
         double distance = phi > 180 ? 360 - phi : phi;
         double sign = (alpha - beta >= 0 && alpha - beta <= 180) || (alpha - beta <= -180 && alpha - beta >= -360) ? distance : distance * -1;
         return sign;
     }
+    */
 
     /**
      * Calculate the intermediate position on the Earth's surface based on a starting position and a distance and direction of travel.

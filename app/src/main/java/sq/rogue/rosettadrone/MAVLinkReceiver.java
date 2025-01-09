@@ -345,7 +345,7 @@ public class MAVLinkReceiver {
                 msg_set_position_target_local_ned msg_param = (msg_set_position_target_local_ned) msg;
                 DroneModel.Motion motion = mModel.newMotion(MAVLINK_MSG_ID_SET_POSITION_TARGET_LOCAL_NED, msg_param.type_mask);
                 motion.setDestination(msg_param.coordinate_frame, msg_param.x, msg_param.y, msg_param.z);
-                motion.yaw = msg_param.yaw;
+                motion.yaw = Math.toDegrees(msg_param.yaw);
                 motion.yawRate = Math.toDegrees(msg_param.yaw_rate);
                 motion.vx = msg_param.vx;
                 motion.vy = msg_param.vy;
